@@ -10,7 +10,8 @@ Smol 3D for Linux
     [ ] Default draw
     [ ] Default resize
      ~  No default interaction
-[ ] Cube/Cuboid primitive mesh
+    [ ] Default (empty) window
+[ ] Cube/Cuboid primitive mesh: Parameterize the Songho cube
 [ ] Cube/Cuboid primitive model
     [ ] Vertex buffer
     [ ] How does example do color?
@@ -39,17 +40,89 @@ Smol 3D for Linux
     [ ] KB input
     [ ] Mouse input
     [ ] JS input
+[ ] Evaluate Modular Refactor:
+    [ ] Consider Interfaces for each kind of activity: { Graphics, Control, Intelligence, More? }
+    [ ] Does it make sense to have an interface for each?
+    [ ] Does an interface imply a plugin interface?
+    [ ] If using plugins, Connect at interface in a way that reduces pointer math and communication overhead
+        For example, Using multiple interfaces handled with an inheritance list 
+        that facilitates information flow through pointers on both sides such that s/getters are never used?
+        https://www.arbinada.com/en/node/1466
 [ ] Player Class
     [ ] FPV Camera
     [ ] KB input
     [ ] Mouse input
     [ ] JS input
-[ ] Flying Camera
-    [ ] "Descent" ownship motion 
-        [ ] Assumed neutral bouyancy (levitate)
-        [ ] Damped stop after key-up
-    
-/***** Architecture 2: Scenes *****/
+[ ] Flying Camera: "Descent" ownship motion 
+    [ ] Mouse: { X: Yaw , Y: Pitch }
+    [ ] KB: { W/S: Fwd/Bck , A/D: Strafe }
+    [ ] JS: { Left  Stick: { X: ??? , Y: ??? } , 
+              Right Stick: { X: ??? , Y: ??? } ,
+              Buttons: { ??? }                 }
+    [ ] Assumed neutral bouyancy (levitate)
+    { } Damped stop after key-up    
+[ ] Evaluate Boost Interop: Time to get modern!
+    [ ] Status of Boost OGL Support   & Evaluate refactor
+    [ ] Status of Boost Eigen Support & Evaluate refactor
+
+
+/***** DECISION POINT *****/
+[[ ]] WHAT IS THIS SOFTWARE? ~ WHAT WOULD DR. WATSON DO?
+      1. Benefits
+      2. Needs
+      3. Existing expertise
+      4. Is there an easy alternative?
+      5. Are there { stable, widely-used, good-quality, C++ } libs that can prevent massive wheel-inventing?
+      CHOOSE SUBSET -and- ASSIGN PRIORITY:
+      
+      /** Renderers **/
+       * Cost/Benefit
+            + Looks cool
+            + Minimal scope
+            - Competes with research projects
+       * Scope & Prerequisites
+            ~ Abstraction of the OpenGL rendering pipeline
+            ~ Opportunity to limit scope to short-term projects
+      [ ] Generative Art Program
+      [ ] Scientific Visualization Package
+      
+      /** Simulators **/
+       * Cost/Benefit
+            - Rendering pipeline is only a small part
+            - Functional Core is potentially massive
+            + Experience from MS thesis
+            - Competes with OnShape development effort
+            + Scratches the itch
+            - Relies on domain knowledge in areas I have not looked at in a long time
+            - Poor simulation fidelity: 
+                    - This is a research area outside my own
+                    - Suitable for course/hobby grade design work ONLY
+       * Scope & Prerequisites
+            ~ { simulation, event } management
+            ~ Separation of rendering and simulation
+      [ ] Robotics/AI/Swarm simulation platform
+      [ ] 3D Game Engine
+       * ADDITIONAL Scope & Prerequisites
+            ~ Careful attention to numeric stability
+              Consideration and testing of integration techniques (UT Sim. Graphics)
+            ~ Domain knowledge
+      [ ] Engineering Simulation Suite
+      
+      /** All-in-One **/
+       * Cost/Benefit
+            + Will provide { reward, experience } for years
+            + Meets multiple side project goals
+            + Broadest possible community
+            - MASSIVE { time, effort } investment required
+            - Competes with widely-used packages developed by large teams
+            - Difficult
+       * Scope & Prerequisites
+            ~ ALL OF THE ABOVE
+[[ ]] ORGANIZE THE REMAINING DEV PLAN ACCORDINGLY
+      [ ] Move pruned subgoals to de-prioritzed projects
+
+
+/***** Architecture 2: Scenes & Interactions *****/
  ~  Have Fun
  ~  NOTE: The entire scene is always loaded
 [ ] Scene Graph
@@ -58,7 +131,7 @@ Smol 3D for Linux
 [ ] Agent Class
     [ ] State exchange format (Graphs? Children hashed?)
     [ ] Slot for brain
-    [ ] Boids
+    [ ] Boids Demo
 [ ] Add Bullet Physics
     [ ] Install/import?
     [ ] Bullet Model Properties
@@ -79,25 +152,50 @@ Smol 3D for Linux
     [ ] Decide First/Third PV
     [ ] Independent Aim/Steer
 
+
 /***** Architecture 3: Advanced Simulation *****/
  ~  Fast & Parallel
-[ ] Dynamic and Optimized Loading
+[ ] Modeling software integration
+    [ ] Parse Blender OBJ format (textured?)
+    [ ] Parse popular CAD format
+[ ] Serialization (Use Boost?)
+    [ ] Entities / Agents: Store params
+    [ ] Scene graphs: Make reconstructing the graph EASY
+        [ ] Terrain: How to chunk?
+        [ ] Mark agents in/active
+[ ] Advanced memory management: Dynamic and Optimized Un/Loading
     [ ] Investigate a loading thread
-    [ ] Subtree loading decisions
+    [ ] Investigate background loading
+    [ ] Subtree/chunk loading decisions like minecraft
+    [ ] Decide on a "chunk size"
     [ ] Investigate loading thread w/ queue
+    [ ] Garbage collection thread: Can I delay destruction of a shared pointer with no references?
+    [ ] Investigate unloading thread w/ queue
+[ ] Investigate compute shaders
+    [ ] OpenCL
+    [ ] OpenGL
+    [ ] Decide which is { faster to run, easier to write }
 [ ] Destructible Entities
+    [ ] Bullet Stress Test, # of Physics Entities at 60 fps
+        [ ] Nvidia GPU
+        [ ] Intel  NUC
+        [ ] Decide on # of allowed physics entities
     [ ] Pre-compute fractures
-    [ ] Investigate comput shaders
-        [ ] OpenCL
-        [ ] OpenGL
-        [ ] Decide which is { faster to run, easier to write }
+[ ] Investigate hierarchical collisition detections
+    [ ] Bullet should do this?
+    [ ] If not, then use RAPID (MS Thesis code)
 [ ] Learning Agents & Self-Play
     [ ] Non-rendered simulation
     [ ] Agent creation manager
-[ ] Network play
-    [ ] Multiple players
-    [ ] Hosted world
-    [ ] Agent exchange
+[ ] Advanced shading
+    [ ] Subdivide drawing mesh for more appealing shading: https://www.cs.ucr.edu/~craigs/courses/2016-fall-cs-130/lab-09.html
+    [ ] Special Topics
+        [ ] cube map arrays
+        [ ] Scrape class notes
+    [ ] Evaluate lighted projectiles
+    [ ] Investigate shadow casting
+    [ ] Investigate ray tracing: Does OpenGL take advantage of ray tracing hardware?
+
 
 /***** Architecture 4: A Sim for All Seasons *****/
  ~  Share what you made
@@ -106,6 +204,10 @@ Smol 3D for Linux
     [ ] Robot State
     [ ] Joint State
     [ ] Controller interface
+[ ] Network play
+    [ ] Multiple players
+    [ ] Hosted world
+    [ ] Agent exchange
 [ ] Python API
 [ ] Golang API
 [ ] Publish
@@ -114,6 +216,21 @@ Smol 3D for Linux
     [ ] Python package
     [ ] Golang package
     [ ] Add to Ubuntu multiverse
+
+
+/***** Architecture 5: Let's Code (Applied) Physics *****/    
+[ ] FEA / Beam Elements: Compute solver (See above decision)
+    [ ] Voxelize: Soft robots , https://www.creativemachineslab.com/voxcad.html
+    [ ] Dynamic Truss Strain & Fracture
+    [ ] Deformable objects
+[ ] Sound propagation
+    [ ] Folded-horn Waveguide for Subwoofer
+[ ] Fluid dynamics
+[ ] Electrodynamics
+    [ ] Magnets
+        [ ] Motor field optimizer
+        [ ] Plasma confinement optimizer
+    [ ] Generative 
 ```
 ### Dependencies
 #### OpenGL
