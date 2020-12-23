@@ -294,7 +294,7 @@ int initGLUT(int argc, char **argv)
     // register GLUT callback functions
     glutDisplayFunc(displayCB);
     glutTimerFunc(33, timerCB, 33);                 // redraw only every given millisec
-    //glutIdleFunc(idleCB);                           // redraw when idle
+    // glutIdleFunc(idleCB);                           // redraw when idle
     glutReshapeFunc(reshapeCB);
     glutKeyboardFunc(keyboardCB);
     glutMouseFunc(mouseCB);

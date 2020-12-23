@@ -27,10 +27,11 @@
 *.lib
 
 # Executables
+# `**/` , Match to arbitrary depth
 *.exe
 *.out
 *.app
 *.o
-*/*.o
-*/*/*.o
-*/*/*/*.o
+**/*.o 
+bin/
+**/bin/

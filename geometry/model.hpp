@@ -44,6 +44,7 @@ class Model{
 GLuint   vboId; // ID of the VBO
 GLfloat* VBO; // - Vertex Buffer Array
 GLfloat* N; // --- Normals
+GLfloat* C; // --- Colors
 };
 
 
