@@ -64,7 +64,9 @@ Smol 3D for Linux
 [ ] Evaluate Boost Interop: Time to get modern!
     [ ] Status of Boost OGL Support   & Evaluate refactor
     [ ] Status of Boost Eigen Support & Evaluate refactor
-
+[ ] Evaluate drawing pipeline optimization
+    [ ] Find out where VBO and other graphic memory is stored
+    [ ] Buffers contiguous in memory?
 
 /***** DECISION POINT *****/
 [[ ]] WHAT IS THIS SOFTWARE? ~ WHAT WOULD DR. WATSON DO?
@@ -128,6 +130,9 @@ Smol 3D for Linux
 [ ] Scene Graph
     [ ] Subtree complexity measure
     [ ] Subtree drawing
+[ ] Evaluate Entity Component System
+    [ ] Different components for { Drawing, Mesh, Physics }
+    [ ] Will the capabilities of objects really be that different?
 [ ] Agent Class
     [ ] State exchange format (Graphs? Children hashed?)
     [ ] Slot for brain
