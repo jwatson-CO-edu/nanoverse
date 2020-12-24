@@ -7,10 +7,10 @@ Smol 3D for Linux
 [Y] Find/Compile VBO Example - 2020-12-23 , http://www.songho.ca/opengl/gl_vbo.html , vboSimple.zip
 [ ] Context creation process w/ defaults
     [Y] Default params - 2020-12-23 , Struct with default params
-    [ ] Default draw
-    [ ] Default resize
+    [Y] Default draw - 2020-12-23
+    [Y] Default resize - 2020-12-23
      ~  No default interaction
-    [ ] Default (empty) window
+    [ ] Default Demo window - Should be an example how things are rendered.
 [ ] Cube/Cuboid primitive mesh: Parameterize the Songho cube
 [ ] Cube/Cuboid primitive model
     [ ] Vertex buffer

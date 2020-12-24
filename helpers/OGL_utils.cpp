@@ -10,9 +10,26 @@ Template Version: 2020-12
 
 /***** Utility Functions *************************************************************************/
 
-void glVec3e( const vec3e& v ){  glVertex3f( v[0] , v[1] , v[2] );  } // Set a vertex with an Eigen vector
-void glNrm3e( const vec3e& n ){  glNormal3f( n[0] , n[1] , n[2] );  } // Set a normal with an Eigen vector
-void glClr3e( const vec3e& c ){  glColor3f(  c[0] , c[1] , c[2] );  } // Set the color with an Eigen vector
+/*** Window & Context ***/
+int init_GLUT( 
+	int argc, char **argv , // -------- Terminal args
+	OGL_ContextConfig& params , // ----- Window param structure
+	void (*displayCB)() // ------------ Display callback
+){
+	// Start FreeGLUT with the specified parameters
+	glutInit( &argc, argv ); // ---------------------------------------- 1. Start the OGL utilities
+	glutInitDisplayMode( params.displayMode ); // ---------------------- 2. Set the display mode
+	glutInitWindowSize( params.screenDims[0], params.screenDims[1] ); // 3. Set initial window size
+	glutInitWindowPosition( params.screenPosInit[0] , // --------------- 4. Set initial win position
+							params.screenPosInit[1] ); 
+	params.winHandle = glutCreateWindow( argv[0] ); // ----------------- 5. Create OGL window, get handle
+	glutDisplayFunc( displayCB ); // ----------------------------------- 6. Set window display callback func
+	glutReshapeFunc( reshapeCB ); // ----------------------------------- 7. Set window reshape callback func
+}
+
+void init_OGL(){
+
+}
 
 /*** Errors ***/
 
@@ -64,6 +81,13 @@ void Print( string format , ... ){
 
 
 /*** Simple Graphics ***/
+
+// Set a vertex with an Eigen vector
+static inline void glVec3e( const vec3e& v ){  glVertex3f( v[0] , v[1] , v[2] );  } 
+// Set a normal with an Eigen vector
+static inline void glNrm3e( const vec3e& n ){  glNormal3f( n[0] , n[1] , n[2] );  } 
+// Set the color with an Eigen vector
+static inline void glClr3e( const vec3e& c ){  glColor3f(  c[0] , c[1] , c[2] );  } 
 
 void draw_origin( float scale ){
 	//  Draw scaled axes at origin in [R,G,B] for [X,Y,Z]
@@ -134,6 +158,10 @@ void draw_grid_org_XY( float gridSize , uint xPlusMinus , uint yPlusMinus ,
 		
 	glEnd();
 }
+
+/*** Defaults ***/
+void dflt_displayCB(){ /* NO-OP */ }
+void reshapeCB( int a, int b ){ /* NO-OP */ }
 
 
 /***** CLASNAME_! ********************************************************************************/

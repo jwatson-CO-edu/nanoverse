@@ -312,7 +312,7 @@ int initGLUT(int argc, char **argv)
 void initGL()
 {
     glShadeModel(GL_SMOOTH);                    // shading mathod: GL_SMOOTH or GL_FLAT
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 4);      // 4-byte pixel alignment
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 8);      // 8-byte pixel alignment for 64bit machine
 
     // enable /disable features
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);

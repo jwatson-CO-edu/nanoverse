@@ -27,27 +27,30 @@ Template Version: 2020-12
 #include "config.hpp"
 
 /***** Constants *****/
-const float MATL_WHITE[] = { 1 , 1 , 1 , 1 };
-const float MATL_BLACK[] = { 0 , 0 , 0 , 1 };
+const GLclampf MATL_WHITE[] = { 1 , 1 , 1 , 1 };
+const GLclampf MATL_BLACK[] = { 0 , 0 , 0 , 1 };
 
 /***** Namespace *****/
 using std::string;
 
 /***** Forward Declarations *****/
-struct OGL_ContextConfg;
+struct OGL_ContextConfig;
 
 /***** Utility Functions *************************************************************************/
 
 /*** Window & Context ***/
-int init_GLUT( 
-	OGL_ContextConfg& params , // ----- Window param structure
-	void (*displayCB)() , // ---------- Display callback
-	void (*reshapeCB)( int , int ) // - Window reshape callback
+int init_GLUT( // Start FreeGLUT with the specified parameters
+	int argc, char **argv , // -------- Terminal args
+	OGL_ContextConfig& params , // ---- Window param structure
+	void (*displayCB)() // ------------ Display callback
 );
 
-void init_OGL();
+void init_OGL(); // FIXME: WRITE THIS FUNCTION
+// TODO: WRITE A FUNCTION FOR SETTING ONE LIGHT SOURCE
+// TODO: CREATE A DEFAULT LIGHT SOURCE
 
-int set_redraw_function(
+int set_redraw_functions(
+	void (*reshapeCB)( int , int ) = nullptr , // - Window reshape callback
 	void (*timerCB)( int ) = nullptr , // Periodic redraw function (Only set ONE)
 	int  refreshPeriod_ms  = 0 , // ----- Period to run `timerCB`
 	void (*idleCB)() /*-*/ = nullptr // - Idle redraw function (Only set ONE)
@@ -72,9 +75,14 @@ void draw_origin( float scale );
 void draw_grid_org_XY( float gridSize , uint xPlusMinus , uint yPlusMinus , 
 					   float lineThic , vec3e color );
 
+/*** Defaults ***/
+void dflt_displayCB();
+void reshapeCB( int a, int b );
+
+
 /***** OGL_ContextConfg **************************************************************************/
 
-struct OGL_ContextConfg{
+struct OGL_ContextConfig{
 // Container for all the settings required/desired for an OpenGL context
 
 /*** Vars ***/
@@ -82,16 +90,44 @@ u_int32_t displayMode;
 u_int32_t screenDims[2];
 u_int32_t screenPosInit[2];
 int /*-*/ winHandle;
+bool /**/ fastMode;
+GLenum    shadeModel;
+GLenum    qualityHints;
+GLclampf  BGcolor[4];
+GLint     stencilBuffer;
+GLclampd  clearDepth;
 
 /*** Functions ***/
-OGL_ContextConfg(){
+OGL_ContextConfig(){
 	// Default constructor gives the most-common / easiest settings for a context
+	
+	/* Window Creation Params */ 
 	displayMode /**/ = GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH | GLUT_STENCIL;
 	screenDims[0]    = 600;
 	screenDims[1]    = 600;
 	screenPosInit[0] = 100;
 	screenPosInit[1] = 100;
+
+	/* OGL Params */
+	shadeModel   = ( fastMode ? GL_FLAT    : GL_SMOOTH );
+	qualityHints = ( fastMode ? GL_FASTEST : GL_NICEST );
 }
+
+};
+
+struct LightSourceConfig{
+// Container for the configuration vars for 1 light source
+
+/*** Vars ***/
+GLenum  name; // ------- GL_LIGHT0/1/2/...
+GLfloat lightKa[4]; // - Ambient  light
+GLfloat lightKd[4]; // - Diffuse  light
+GLfloat lightKs[4]; // - Specular light
+bool    isPositional; // Is this light at a certain position?
+GLfloat position[4]; //- Position to render light from
+
+/*** Functions ***/
+
 
 };
 
