@@ -1,7 +1,7 @@
 /***********  
-TEMPLATE.cpp
-James Watson , YYYY-MM
-A_ONE_LINE_DESCRIPTION_OF_THE_FILE
+OGL_utils.cpp
+James Watson , 2021-01
+Common OGL templates and functions
 
 Template Version: 2020-12
 ***********/
@@ -27,8 +27,54 @@ int init_GLUT(
 	glutReshapeFunc( reshapeCB ); // ----------------------------------- 7. Set window reshape callback func
 }
 
-void init_OGL(){
+void init_OGL( OGL_ContextConfig& params ){
+	// Initialize OpenGL according to the performance preference
+	glShadeModel( params.shadeModel ); // ----- Shader model: Smooth -or- Flat
+	glPixelStorei( GL_UNPACK_ALIGNMENT, 8 ); // 8-byte pixel alignment for 64bit machine
+	glHint( GL_PERSPECTIVE_CORRECTION_HINT, params.qualityHints );
+	glEnable( GL_DEPTH_TEST );
+    glEnable( GL_LIGHTING   );
+    glEnable( GL_TEXTURE_2D );
+    glEnable( GL_CULL_FACE  );
+	// track material ambient and diffuse from surface color
+	// call it before glEnable(GL_COLOR_MATERIAL)
+    glColorMaterial( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE );
+    glEnable( GL_COLOR_MATERIAL );
+	glClearColor( // background color
+		params.BGcolor[0], params.BGcolor[1], params.BGcolor[2], params.BGcolor[3] 
+	);                   
+	glClearStencil( 0 );  // clear stencil buffer
+    glClearDepth( 1.0f ); // 0 is near, 1 is far
+    glDepthFunc( GL_LEQUAL );
+}
 
+void create_light_source( LightSourceConfig& liteSpec ){
+	// Create a lightsource with the given specification
+	glLightfv( liteSpec.name, GL_AMBIENT,  liteSpec.lightKa );
+    glLightfv( liteSpec.name, GL_DIFFUSE,  liteSpec.lightKd );
+    glLightfv( liteSpec.name, GL_SPECULAR, liteSpec.lightKs );
+
+	// position the light
+    if( liteSpec.isPositional ){
+		glLightfv( liteSpec.name, GL_POSITION, liteSpec.position );
+	}
+    
+    glEnable( liteSpec.name ); // MUST enable each light source after configuration
+}
+
+void default_light_source(){
+	// Create a default light source
+	// 1. Init the light params
+	LightSourceConfig config{
+		GL_LIGHT0, // ----------- Light name
+		{}, // Ambient  light
+		{}, // Diffuse  light
+		{}, // Specular light
+		false, // --------------- Is this light at a certain position?
+		{ 0.0, 0.0, 0.0, 0.0 } // Position to render light from
+	};
+	// 2. Set the light params
+	create_light_source( config );
 }
 
 /*** Errors ***/

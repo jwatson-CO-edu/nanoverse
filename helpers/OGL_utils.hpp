@@ -1,9 +1,9 @@
 #pragma once // This also helps things not to be loaded twice , but not always . See below
 
 /***********  
-TEMPLATE.hpp
-James Watson , YYYY-MM
-A_ONE_LINE_DESCRIPTION_OF_THE_FILE
+OGL_utils.hpp
+James Watson , 2021-01
+Common OGL templates and functions
 
 Template Version: 2020-12
 ***********/
@@ -29,12 +29,16 @@ Template Version: 2020-12
 /***** Constants *****/
 const GLclampf MATL_WHITE[] = { 1 , 1 , 1 , 1 };
 const GLclampf MATL_BLACK[] = { 0 , 0 , 0 , 1 };
+const GLenum   LIGHTS[]     = {
+	GL_LIGHT0 , GL_LIGHT1 , GL_LIGHT2 , GL_LIGHT3 , GL_LIGHT4 , GL_LIGHT5 , GL_LIGHT6 , GL_LIGHT7 
+};
 
 /***** Namespace *****/
 using std::string;
 
 /***** Forward Declarations *****/
 struct OGL_ContextConfig;
+struct LightSourceConfig;
 
 /***** Utility Functions *************************************************************************/
 
@@ -45,9 +49,10 @@ int init_GLUT( // Start FreeGLUT with the specified parameters
 	void (*displayCB)() // ------------ Display callback
 );
 
-void init_OGL(); // FIXME: WRITE THIS FUNCTION
-// TODO: WRITE A FUNCTION FOR SETTING ONE LIGHT SOURCE
-// TODO: CREATE A DEFAULT LIGHT SOURCE
+void init_OGL( OGL_ContextConfig& params ); // Initialize OpenGL according to the performance preference
+
+void create_light_source( LightSourceConfig& liteSpec ); // Create a lightsource with the given specification
+void default_light_source(); // --------------------------- Create a default light source
 
 int set_redraw_functions(
 	void (*reshapeCB)( int , int ) = nullptr , // - Window reshape callback
@@ -114,6 +119,9 @@ OGL_ContextConfig(){
 }
 
 };
+
+
+/***** LightSourceConfig *************************************************************************/
 
 struct LightSourceConfig{
 // Container for the configuration vars for 1 light source
