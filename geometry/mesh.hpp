@@ -35,6 +35,7 @@ EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 /*** Functions ***/
 
 /* Construction */
+bool load_geo_from_file( string fPath );
 
 /* Getters */
 matXe& get_vertices();

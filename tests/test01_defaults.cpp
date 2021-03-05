@@ -14,9 +14,10 @@ Template Version: 2018-06-06
 /********** Init *********************************************************************************/
 
 /***** Includes *****/
-/** Standard **/
-#include <string>
-#include <iostream>
+
+/*** Standard ***/
+
+/*** Eigen ***/
 
 /** Special **/
 
@@ -24,11 +25,7 @@ Template Version: 2018-06-06
 #include "../helpers/config.hpp"
 #include "../helpers/OGL_utils.hpp"
 
-/***** Namespaces & Aliases *****/
-using std::string;
-using std::cout;
-using std::cerr;
-using std::endl;
+
 
 /***** Constants & Globals *****/
 
@@ -37,7 +34,7 @@ using std::endl;
 
 
 
-/********** Utility Functions ********************************************************************/
+/********** Draw Loop ****************************************************************************/
 
 void display(){
     // Check for errors
@@ -56,7 +53,9 @@ int main( int argc , char** argv ){ // Main takes the terminal command and flags
 
     // 1. Init GLUT
     OGL_ContextConfig params = OGL_ContextConfig();
-    cout << "Calling `init_GLUT` with result:" << init_GLUT( argc, argv , params , display ) << endl;
+    cout << "Calling `init_GLUT` with result:" << 
+         init_GLUT( argc, argv , params , display ) 
+         << endl;
 
     // 2. Init OGL
     init_OGL( params );

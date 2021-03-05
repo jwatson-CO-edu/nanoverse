@@ -40,9 +40,10 @@ using std::string;
 struct OGL_ContextConfig;
 struct LightSourceConfig;
 
-/***** Utility Functions *************************************************************************/
+/********** Setup Functions **********************************************************************/
 
-/*** Window & Context ***/
+/***** Window & Context ************************/
+
 int init_GLUT( // Start FreeGLUT with the specified parameters
 	int argc, char **argv , // -------- Terminal args
 	OGL_ContextConfig& params , // ---- Window param structure
@@ -51,9 +52,6 @@ int init_GLUT( // Start FreeGLUT with the specified parameters
 
 void init_OGL( OGL_ContextConfig& params ); // Initialize OpenGL according to the performance preference
 
-void create_light_source( LightSourceConfig& liteSpec ); // Create a lightsource with the given specification
-void default_light_source(); // --------------------------- Create a default light source
-
 int set_redraw_functions(
 	void (*reshapeCB)( int , int ) = nullptr , // - Window reshape callback
 	void (*timerCB)( int ) = nullptr , // Periodic redraw function (Only set ONE)
@@ -61,28 +59,36 @@ int set_redraw_functions(
 	void (*idleCB)() /*-*/ = nullptr // - Idle redraw function (Only set ONE)
 );
 
-int set_GLUT_interaction_handlers( // TODO: Use SDL2 instead?
+int set_GLUT_interaction_handlers( // FUTURE: Use SDL2 instead?
 	void (*keyboardCB)( u_char , int , int ) , // kb handler
 	void (*mouseCB)( int , int , int , int ) , // mouse button handler
 	void (*mouseMotionCB)( int , int ) // ------- mouse motion handler
 );
 
-/*** Errors ***/
+/*** Defaults Window Functions ***/
+void dflt_displayCB();
+void reshapeCB( int a, int b );
+
+/***** Errors **********************************/
 bool ErrCheck( const char* where ); // --- See if OpenGL has raised any errors
 void Fatal( const char* format , ... ); // Scream and Run
+
+
+/***** Simple Graphics *************************/
 
 /*** Text ***/
 void Print( const char* format , ... );
 
-/*** Simple Graphics ***/
+/*** Lighting ***/
+void create_light_source( LightSourceConfig& liteSpec ); // Create a lightsource with the given specification
+void default_light_source(); // --------------------------- Create a default light source
+
 void draw_origin( float scale );
 
 void draw_grid_org_XY( float gridSize , uint xPlusMinus , uint yPlusMinus , 
 					   float lineThic , vec3e color );
 
-/*** Defaults ***/
-void dflt_displayCB();
-void reshapeCB( int a, int b );
+
 
 
 /***** OGL_ContextConfg **************************************************************************/

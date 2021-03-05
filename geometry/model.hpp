@@ -35,16 +35,19 @@ http://www.songho.ca/opengl/gl_vbo.html
 
 
 class Model{
-// Virtual class for all other single-mesh models to inherit
+// Minimum Viable Polygon
 /***** Public *****/ public:
 
 ~Model(); // Destructor
 
 /***** Protected *****/ protected:
-GLuint   vboId; // ID of the VBO
-GLfloat* VBO; // - Vertex Buffer Array
-GLfloat* N; // --- Normals
-GLfloat* C; // --- Colors
+Mesh     geo;
+
+
+// GLuint   vboId; // ID of the VBO
+// GLfloat* VBO; // - Vertex Buffer Array
+// GLfloat* N; // --- Normals
+// GLfloat* C; // --- Colors
 };
 
 

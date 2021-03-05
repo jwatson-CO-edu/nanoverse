@@ -10,12 +10,25 @@
 
 //~ #define MG_DUBBL // Use doubles for all Eigen operations
 
+/***** Includes *****/
+
+/*** Standard ***/
+#include <string>
+#include <iostream>
+
 /*** Eigen ***/
 #include <Eigen/Core> // ---- The living heart of Eigen
 #include <Eigen/Dense> // --- Cross Product , etc.
 #include <Eigen/Geometry> //- Quaternion , etc
 
 /***** Shortcuts and Aliases *****/
+
+/*** Standard ***/
+using std::string;
+using std::cout;
+using std::cerr;
+using std::endl;
+
 /*** Eigen ***/
 #ifdef MG_FLOAT
 	using vec2e = Eigen::Vector2f;
