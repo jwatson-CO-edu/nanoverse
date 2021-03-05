@@ -21,6 +21,11 @@
 #include <Eigen/Dense> // --- Cross Product , etc.
 #include <Eigen/Geometry> //- Quaternion , etc
 
+/*** OGL ***/
+#include <GL/gl.h>
+#include <GL/glut.h>
+
+
 /***** Shortcuts and Aliases *****/
 
 /*** Standard ***/

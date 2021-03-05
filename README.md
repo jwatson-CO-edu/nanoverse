@@ -1,16 +1,18 @@
 # nanoverse
-Smol 3D for Linux
+Minimum Viable 3D for Linux
+* All units in meters `[m]`
+
 ### Dev Plan
 ```
 /***** Architecture 1: Making Triangles Dance *****/
  ~  Functional Core
 [Y] Find/Compile VBO Example - 2020-12-23 , http://www.songho.ca/opengl/gl_vbo.html , vboSimple.zip
-[ ] Context creation process w/ defaults
+[Y] Context creation process w/ defaults >> COMPLETE - 2021-03-04
     [Y] Default params - 2020-12-23 , Struct with default params
     [Y] Default draw - 2020-12-23
     [Y] Default resize - 2020-12-23
      ~  No default interaction
-    [ ] Default Demo window - Should be an example how things are rendered.
+    [Y] Default Demo window - Should be an example how things are rendered. - 2021-03-04
 [ ] Cube/Cuboid primitive mesh: Parameterize the Songho cube
 [ ] Cube/Cuboid primitive model
     [ ] Vertex buffer
