@@ -1,3 +1,6 @@
+# Custom
+.vscode/
+
 # Prerequisites
 *.d
 
@@ -35,6 +38,3 @@
 **/*.o 
 bin/
 **/bin/
-
-# Custom
-.vscode/
