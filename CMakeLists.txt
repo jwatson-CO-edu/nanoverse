@@ -16,9 +16,10 @@ include_directories( ${OPENGL_INCLUDE_DIRS}  ${GLUT_INCLUDE_DIRS} )
 
 # ~ Source Dirs ~
 include_directories( 
+    STL # ---- STL Reader by Sebastian Reiter, https://github.com/sreiter/stl_reader
+    glm # ---- OpenGL Mathematics, https://github.com/g-truc/glm
     helpers #- Utility functions for OpenGL
     geometry # Meshes 'n Such
-    STL # ---- STL Reader by Sebastian Reiter, https://github.com/sreiter/stl_reader
     tests # -- Library tests
 ) 
 
