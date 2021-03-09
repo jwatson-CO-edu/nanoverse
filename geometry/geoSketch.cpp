@@ -69,23 +69,23 @@ Cuboid::Cuboid( typeF sideX, typeF sideY, typeF sideZ ){
 // of 36 vertices (6 sides * 2 tris * 3 vertices = 36 vertices). And, each
 // vertex is 3 components (x,y,z) of floats, therefore, the size of vertex
 // array is 108 floats (36 * 3 = 108).
-V  <<  hX, 1, 1,  -hX, 1, 1,  -hX,-1, 1,      // v0-v1-v2 (front)
-      -hX,-1, 1,   hX,-1, 1,   hX, 1, 1,      // v2-v3-v0
+V  <<  hX, hY, hZ,  -hX, hY, hZ,  -hX,-hY, hZ,  // v0-v1-v2 (front)
+      -hX,-hY, hZ,   hX,-hY, hZ,   hX, hY, hZ,  // v2-v3-v0
 
-       hX, 1, 1,   hX,-1, 1,   hX,-1,-1 ;      // v0-v3-v4 (right)
-       hX,-1,-1,   hX, 1,-1,   1, 1, 1 ;      // v4-v5-v0
+       hX, hY, hZ,   hX,-hY, hZ,   hX,-hY,-hZ ; // v0-v3-v4 (right)
+       hX,-hY,-hZ,   hX, hY,-hZ,   hX, hY, hZ ; // v4-v5-v0
 
-       hX, 1, 1,   hX, 1,-1,  -1, 1,-1 ;      // v0-v5-v6 (top)
-      -hX, 1,-1,  -hX, 1, 1,   1, 1, 1 ;      // v6-v1-v0
+       hX, hY, hZ,   hX, hY,-hZ,  -hX, hY,-hZ ; // v0-v5-v6 (top)
+      -hX, hY,-hZ,  -hX, hY, hZ,   hX, hY, hZ ; // v6-v1-v0
 
-      -hX, 1, 1,  -hX, 1,-1,  -1,-1,-1 ;      // v1-v6-v7 (left)
-      -hX,-1,-1,  -hX,-1, 1,  -1, 1, 1 ;      // v7-v2-v1
+      -hX, hY, hZ,  -hX, hY,-hZ,  -hX,-hY,-hZ ; // v1-v6-v7 (left)
+      -hX,-hY,-hZ,  -hX,-hY, hZ,  -hX, hY, hZ ; // v7-v2-v1
 
-      -hX,-1,-1,   hX,-1,-1,   1,-1, 1 ;      // v7-v4-v3 (bottom)
-       hX,-1, 1,  -hX,-1, 1,  -1,-1,-1 ;      // v3-v2-v7
+      -hX,-hY,-hZ,   hX,-hY,-hZ,   hX,-hY, hZ ; // v7-v4-v3 (bottom)
+       hX,-hY, 1,   -hX,-hY, hZ,  -hX,-hY,-hZ ; // v3-v2-v7
 
-       hX,-1,-1,  -hX,-1,-1,  -1, 1,-1 ;      // v4-v7-v6 (back)
-      -hX, 1,-1,   hX, 1,-1,   1,-1,-1 ;    // v6-v5-v4
+       hX,-hY,-hZ,  -hX,-hY,-hZ,  -hX, hY,-hZ ; // v4-v7-v6 (back)
+      -hX, hY,-hZ,   hX, hY,-hZ,   hX,-hY,-hZ ; // v6-v5-v4
 }
 
 /***** Dart **************************************************************************************/
@@ -101,4 +101,23 @@ Dart( typeF lenX, typeF lenY, typeF lenZ );
 
 
 //~~~~~~~~ END ~~ Mesh Namespace ~~ END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+}
+
+
+
+
+/*************************************************************************************************
+ *          Model Namespace                                                                      *
+ *************************************************************************************************/ 
+namespace Model{
+
+
+/***** Mesh **************************************************************************************/
+
+class Model{ public: EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+};
+
+
+//~~~~~~~~ END ~~ Model Namespace ~~ END ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 }
