@@ -30,10 +30,16 @@ Minimum Viable 3D for Linux
 [ ] Shader Experiment(s)
     [ ] CAD-style outlines (Vertex shader?) with flat colors and simplest shading
         [ ] Sharp edges
+            * https://gamedev.stackexchange.com/a/86413
+            * https://en.wikibooks.org/wiki/GLSL_Programming/Unity/Toon_Shading#Outlines
         [ ] Object-background edge
+            * https://www.codeproject.com/Articles/8499/Generating-Outlines-in-OpenGL
+        [ ] https://github.com/nvpro-samples/gl_cadscene_rendertechniques
     [ ] Cel Shader, Unsure of what kind of shader does what I want
-        [ ] Search: "OpenGL cel toon shader vertex shader"
-        [ ] Search: "OpenGL cel toon shader fragment shader"
+        [ ] https://www.lighthouse3d.com/tutorials/glsl-12-tutorial/toon-shading-version-iii/
+        [ ] https://stackoverflow.com/a/5796168
+        [ ] http://rbwhitaker.wikidot.com/toon-shader
+        [ ] http://www.cs.sjsu.edu/~bruce/fall_2016_cs_116a_lecture_glsl_opengl_shading_language_part_1_of_2.html
     [ ] Investigate using outlines and cel shading simultaneously
     [ ] Nvidia Test
     [ ] Intel NUC Test
