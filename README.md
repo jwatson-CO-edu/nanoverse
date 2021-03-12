@@ -13,11 +13,10 @@ Minimum Viable 3D for Linux
     [Y] Default resize - 2020-12-23
      ~  No default interaction
     [Y] Default Demo window - Should be an example how things are rendered. - 2021-03-04
-[ ] Cube/Cuboid primitive mesh: Parameterize the Songho cube
+[Y] Cube/Cuboid primitive mesh: Parameterize the Songho cube
 [ ] Cube/Cuboid primitive model
-    [ ] Vertex buffer
-    [ ] How does example do color?
-    [ ] Draw
+    [ ] Vertex array rendering
+    [ ] Vertex buffer rendering
     [ ] Investigate facet optimization (Search: "OpenGL index buffer")
 [ ] Entity Base Class
     [ ] Draw mesh

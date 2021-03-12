@@ -153,10 +153,10 @@ namespace Model{
 
 class Model{ public: EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-GLfloat*  vertices;
-GLfloat*  normals;
-GLfloat*  colors;
-GLboolean bufferMode;
+GLfloat*  vertices; // - Vertex array
+GLfloat*  normals; // -- Normal array
+GLfloat*  colors; // --- Color array
+GLboolean bufferMode; // Using buffer objects to render? (Default: 0)
 
 Model(){
      bufferMode = 0;
@@ -174,8 +174,8 @@ void load_colors( const matXe& mColrMatx ){
      // Allocate colors and copy from the matrix
 }
 
-Model( const Mesh::Mesh& mesh ){
-     bufferMode = 0;
+Model( const Mesh::Mesh& mesh, GLboolean buffMode_ = 0 ){
+     bufferMode = buffMode_;
 }
 
 ~Model(){
