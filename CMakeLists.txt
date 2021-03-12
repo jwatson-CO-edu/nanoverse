@@ -9,6 +9,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -lglut -lGLU -lGL")
 
 # ~ Libraries ~
 find_package( Eigen3 3.3 REQUIRED NO_MODULE )
+set( EIGEN_LIB "Eigen3::Eigen" )
 
 find_package( OpenGL REQUIRED )
 find_package( GLUT REQUIRED   )
@@ -27,4 +28,7 @@ include_directories(
 # ~~~ Defaults Test ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 add_executable( test01 tests/test01_defaults.cpp helpers/OGL_utils.cpp )
-target_link_libraries( test01 Eigen3::Eigen ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} )
+target_link_libraries( test01 ${EIGEN_LIB} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} )
+
+add_executable( test02 tests/test02_drawCube.cpp helpers/OGL_utils.cpp geometry/geoSketch.cpp )
+target_link_libraries( test02 ${EIGEN_LIB} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} )
