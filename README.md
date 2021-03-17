@@ -16,6 +16,8 @@ Minimum Viable 3D for Linux
 [Y] Cube/Cuboid primitive mesh: Parameterize the Songho cube
 [ ] Cube/Cuboid primitive model
     [ ] Vertex array rendering
+        [ ] Draw cube
+        [ ] Transform model (For now, only support absolute xforms)
     [ ] Vertex buffer rendering
     [ ] Investigate facet optimization (Search: "OpenGL index buffer")
 [ ] Entity Base Class
