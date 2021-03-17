@@ -8,6 +8,21 @@
 /*** Local ***/
 #include "../helpers/config.hpp"
 
+/***** Utilities *******************************************************************************/
+void copy_eig_to_ogl_col_major( const matXe& src, GLfloat* dst ){
+     // Copy all the values found in `src` to `dst` in column-major order
+     // https://www.opengl.org/archives/resources/faq/technical/transformations.htm
+     // The translation components occupy the 13th, 14th, and 15th elements of the 16-element matrix 
+     // https://eigen.tuxfamily.org/dox/group__TopicStorageOrders.html
+     // The default in Eigen is column-major
+     size_t Nrow = src.rows();
+     size_t Mcol = src.cols();
+     for( size_t j = 0 ; j < Nrow ; ++j )
+          for( size_t i = 0 ; i < Nrow ; ++i )
+               *(dst + (j*Nrow + i) ) = src.coeff( i, j );
+}
+
+
 /*************************************************************************************************
  *          Mesh Namespace                                                                       *
  *************************************************************************************************/ 
@@ -164,18 +179,37 @@ Model(){
 
 void load_vertices( const matXe& mVertMatx ){
      // Allocate vertices and copy from the matrix
+     vertices = (GLfloat*) calloc( 
+          mVertMatx.rows() * mVertMatx.cols(), 
+          sizeof( GLfloat ) 
+     );
+     copy_eig_to_ogl_col_major( mVertMatx, vertices );
 }
 
 void load_normals( const matXe& mNormMatx ){
      // Allocate normals and copy from the matrix
+     normals = (GLfloat*) calloc( 
+          mNormMatx.rows() * mNormMatx.cols(), 
+          sizeof( GLfloat ) 
+     );
+     copy_eig_to_ogl_col_major( mNormMatx, normals );
 }
 
 void load_colors( const matXe& mColrMatx ){
      // Allocate colors and copy from the matrix
+     colors = (GLfloat*) calloc( 
+          mColrMatx.rows() * mColrMatx.cols(), 
+          sizeof( GLfloat ) 
+     );
+     copy_eig_to_ogl_col_major( mColrMatx, colors );
 }
 
 Model( const Mesh::Mesh& mesh, GLboolean buffMode_ = 0 ){
+     // Load vertices, normals, and colors from the model
      bufferMode = buffMode_;
+     load_vertices( mesh.V );
+     load_normals( mesh.N );
+     load_colors( mesh.C );
 }
 
 ~Model(){

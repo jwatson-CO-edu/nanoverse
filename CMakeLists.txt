@@ -30,5 +30,5 @@ include_directories(
 add_executable( test01 tests/test01_defaults.cpp helpers/OGL_utils.cpp )
 target_link_libraries( test01 ${EIGEN_LIB} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} )
 
-add_executable( test02 tests/test02_drawCube.cpp helpers/OGL_utils.cpp geometry/geoSketch.cpp )
+add_executable( test02 tests/test02_drawCube.cpp helpers/OGL_utils.cpp ) # geoSketch.cpp is IMPORTED (bad practice)
 target_link_libraries( test02 ${EIGEN_LIB} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} )
