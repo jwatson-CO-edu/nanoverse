@@ -20,12 +20,6 @@ Minimum Viable 3D for Linux
         [ ] Transform model (For now, only support absolute xforms)
     [ ] Vertex buffer rendering
     [ ] Investigate facet optimization (Search: "OpenGL index buffer")
-[ ] Entity Base Class
-    [ ] Draw mesh
-    [ ] Draw model
-        [ ] Simple Model
-        [ ] Composite Model (Merge buffers for speed?(Inherit Model))
-    [ ] Pose & Motion (Simplicity: Both static and dynamic objects inherit this)
 [ ] Camera class
     [ ] Pose & Motion
 [ ] Shader Experiment(s)
@@ -90,9 +84,8 @@ Minimum Viable 3D for Linux
 /***** Architecture 2: Frames for Run *****/
  ~  Have Fun
  ~  Be careful with your time
-[ ] Graph of relative frames like TF
-[ ] Spheres
-[ ] N-body simulation
+[ ] Spheres (Take from CU graphics/MS)
+[ ] N-body simulation, orbiting spheres
 [ ] L-system tree
 [ ] Mesh with animated shader
 [ ] Load ship models into space scene
@@ -100,9 +93,26 @@ Minimum Viable 3D for Linux
 [ ] VHS Shader
 [ ] Particle shader
 [ ] OpenCL example
+[ ] Graph of relative frames like TF
 
 
-/***** Architecture 3: Advanced Simulation *****/
+/***** Architecture 3: Let's Code (Applied) Physics *****/    
+[ ] FEA / Beam Elements: Compute solver (See above decision)
+    [ ] Voxelize: Soft robots , https://www.creativemachineslab.com/voxcad.html
+    [ ] Dynamic Truss Strain & Fracture
+    [ ] Deformable objects
+[ ] AGV Wheel contact
+    [ ] Bond Graphs?
+    [ ] Bullet?
+[ ] Fluid dynamics (SPH / Meshfree)
+[ ] Electrodynamics
+    [ ] Magnets
+        [ ] Motor field optimizer
+        [ ] Plasma confinement optimizer
+    [ ] Generative 
+
+
+/***** Architecture 4: Advanced Simulation *****/
  ~  Fast & Parallel
 [ ] Modeling software integration
     [ ] Parse Blender OBJ format (textured?)
@@ -146,7 +156,7 @@ Minimum Viable 3D for Linux
     [ ] Investigate ray tracing: Does OpenGL take advantage of ray tracing hardware?
 
 
-/***** Architecture 4: A Sim for All Seasons *****/
+/***** Architecture 5: A Sim for All Seasons *****/
  ~  Share what you made
 [ ] ROS2 Integration
     [ ] Load URDF
@@ -167,19 +177,7 @@ Minimum Viable 3D for Linux
     [ ] Add to Ubuntu multiverse
 
 
-/***** Architecture 5: Let's Code (Applied) Physics *****/    
-[ ] FEA / Beam Elements: Compute solver (See above decision)
-    [ ] Voxelize: Soft robots , https://www.creativemachineslab.com/voxcad.html
-    [ ] Dynamic Truss Strain & Fracture
-    [ ] Deformable objects
-[ ] Sound propagation
-    [ ] Folded-horn Waveguide for Subwoofer
-[ ] Fluid dynamics
-[ ] Electrodynamics
-    [ ] Magnets
-        [ ] Motor field optimizer
-        [ ] Plasma confinement optimizer
-    [ ] Generative 
+
 
 
 /***** Architecture N: Shall?  we?  play?  a?  game? *****/
@@ -194,6 +192,12 @@ Minimum Viable 3D for Linux
 [ ] Evaluate Entity Component System
     [ ] Different components for { Drawing, Mesh, Physics }
     [ ] Will the capabilities of objects really be that different?
+    [ ] Entity Base Class
+        [ ] Draw mesh
+        [ ] Draw model
+            [ ] Simple Model
+            [ ] Composite Model (Merge buffers for speed?(Inherit Model))
+        [ ] Pose & Motion (Simplicity: Both static and dynamic objects inherit this)
 [ ] Agent Class
     [ ] State exchange format (Graphs? Children hashed?)
     [ ] Slot for brain

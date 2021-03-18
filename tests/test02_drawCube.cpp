@@ -31,7 +31,7 @@ Template Version: 2018-06-06
 /***** Constants & Globals *****/
 
 // Create a cube in array mode
-Mesh::Mesh cube = Mesh::Cuboid();
+Mesh::Mesh   cube = Mesh::Cuboid();
 Model::Model mCube( cube, 0 );
 
 /********** <CLASS1> *****************************************************************************/
