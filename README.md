@@ -70,101 +70,36 @@ Minimum Viable 3D for Linux
               Buttons: { ??? }                 }
     [ ] Assumed neutral bouyancy (levitate)
     { } Damped stop after key-up    
-[ ] Evaluate Boost Interop: Time to get modern!
-    [ ] Status of Boost OGL Support   & Evaluate refactor
-    [ ] Status of Boost Eigen Support & Evaluate refactor
 [ ] Evaluate drawing pipeline optimization
     [ ] Find out where VBO and other graphic memory is stored
     [ ] Buffers contiguous in memory?
 
+
 /***** DECISION POINT *****/
-[[ ]] WHAT IS THIS SOFTWARE? ~ WHAT WOULD DR. WATSON DO?
-      1. Benefits
-      2. Needs
-      3. Existing expertise
-      4. Is there an easy alternative?
-      5. Are there { stable, widely-used, good-quality, C++ } libs that can prevent massive wheel-inventing?
-      CHOOSE SUBSET -and- ASSIGN PRIORITY:
-      
-      /** Renderers **/
-       * Cost/Benefit
-            + Looks cool
-            + Minimal scope
-            - Competes with research projects
-       * Scope & Prerequisites
-            ~ Abstraction of the OpenGL rendering pipeline
-            ~ Opportunity to limit scope to short-term projects
-      [ ] Generative Art Program
-      [ ] Scientific Visualization Package
-      
-      /** Simulators **/
-       * Cost/Benefit
-            - Rendering pipeline is only a small part
-            - Functional Core is potentially massive
-            + Experience from MS thesis
-            - Competes with OnShape development effort
-            + Scratches the itch
-            - Relies on domain knowledge in areas I have not looked at in a long time
-            - Poor simulation fidelity: 
-                    - This is a research area outside my own
-                    - Suitable for course/hobby grade design work ONLY
-       * Scope & Prerequisites
-            ~ { simulation, event } management
-            ~ Separation of rendering and simulation
-      [ ] Robotics/AI/Swarm simulation platform
-      [ ] 3D Game Engine
-       * ADDITIONAL Scope & Prerequisites
-            ~ Careful attention to numeric stability
-              Consideration and testing of integration techniques (UT Sim. Graphics)
-            ~ Domain knowledge
-      [ ] Engineering Simulation Suite
-      
-      /** All-in-One **/
-       * Cost/Benefit
-            + Will provide { reward, experience } for years
-            + Meets multiple side project goals
-            + Broadest possible community
-            - MASSIVE { time, effort } investment required
-            - Competes with widely-used packages developed by large teams
-            - Difficult
-       * Scope & Prerequisites
-            ~ ALL OF THE ABOVE
-[[ ]] ORGANIZE THE REMAINING DEV PLAN ACCORDINGLY
+[[OK]] WHAT IS THIS SOFTWARE?: -- A rendering engine for artistic projects and lightweight simulations
+    * Orbit simulation
+    * Evolving L-Systems (plants)
+    * Shader/Compute experiments
+    * OpenCL experiments
+    * Test Utah Graphics Class Techniques
+[[OK]] WHAT WOULD DR. WATSON DO?: Keep work on this toy to an absolute minimum - Scratch the itch without scarring
+[[  ]] ORGANIZE THE REMAINING DEV PLAN ACCORDINGLY
       [ ] Move pruned subgoals to de-prioritzed projects
 
 
-/***** Architecture 2: Scenes & Interactions *****/
+/***** Architecture 2: Frames for Run *****/
  ~  Have Fun
- ~  NOTE: The entire scene is always loaded
-[ ] Scene Graph
-    [ ] Subtree complexity measure
-    [ ] Subtree drawing
-[ ] Evaluate Entity Component System
-    [ ] Different components for { Drawing, Mesh, Physics }
-    [ ] Will the capabilities of objects really be that different?
-[ ] Agent Class
-    [ ] State exchange format (Graphs? Children hashed?)
-    [ ] Slot for brain
-    [ ] Boids Demo
-[ ] Add Bullet Physics
-    [ ] Install/import?
-    [ ] Bullet Model Properties
-        [ ] Collision mesh
-        [ ] Collision Model
-        [ ] Intrinsic/Extrinsic Properties
-    [ ] Subtree solvers
-[ ] Player Class Extension
-    [ ] Target selection test 
-        [ ] Investigate Bullet ray casting
-            [ ] If not, use graphics class implementation
-[ ] Bullet 4x4
-    [ ] Terrain class
-    [ ] Wheel contact: Clip/Support
-    [ ] Wheel friction model
-    [ ] Obstacle collision
-[ ] Tank
-    [ ] Decide First/Third PV
-    [ ] Independent Aim/Steer
+ ~  Be careful with your time
+[ ] Graph of relative frames like TF
+[ ] Spheres
+[ ] N-body simulation
+[ ] L-system tree
+[ ] Mesh with animated shader
+[ ] Load ship models into space scene
+[ ] Glitch shader
+[ ] VHS Shader
+[ ] Particle shader
+[ ] OpenCL example
 
 
 /***** Architecture 3: Advanced Simulation *****/
@@ -245,6 +180,44 @@ Minimum Viable 3D for Linux
         [ ] Motor field optimizer
         [ ] Plasma confinement optimizer
     [ ] Generative 
+
+
+/***** Architecture N: Shall?  we?  play?  a?  game? *****/
+ ~  Have Fun
+ ~  NOTE: The entire scene is always loaded
+[ ] Scene Graph
+    [ ] Subtree complexity measure
+    [ ] Subtree drawing
+[ ] Evaluate Boost Interop: Time to get modern!
+    [ ] Status of Boost OGL Support   & Evaluate refactor
+    [ ] Status of Boost Eigen Support & Evaluate refactor
+[ ] Evaluate Entity Component System
+    [ ] Different components for { Drawing, Mesh, Physics }
+    [ ] Will the capabilities of objects really be that different?
+[ ] Agent Class
+    [ ] State exchange format (Graphs? Children hashed?)
+    [ ] Slot for brain
+    [ ] Boids Demo
+[ ] Add Bullet Physics
+    [ ] Install/import?
+    [ ] Bullet Model Properties
+        [ ] Collision mesh
+        [ ] Collision Model
+        [ ] Intrinsic/Extrinsic Properties
+    [ ] Subtree solvers
+[ ] Player Class Extension
+    [ ] Target selection test 
+        [ ] Investigate Bullet ray casting
+            [ ] If not, use graphics class implementation
+[ ] Bullet 4x4
+    [ ] Terrain class
+    [ ] Wheel contact: Clip/Support
+    [ ] Wheel friction model
+    [ ] Obstacle collision
+[ ] Tank
+    [ ] Decide First/Third PV
+    [ ] Independent Aim/Steer
+
 ```
 ### Dependencies
 #### OpenGL
