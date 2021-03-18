@@ -22,6 +22,17 @@ void copy_eig_to_ogl_col_major( const matXe& src, GLfloat* dst ){
                *(dst + (j*Nrow + i) ) = src.coeff( i, j );
 }
 
+void set_camera( typeF posX        , typeF posY        , typeF posZ         , 
+                 typeF targetX     , typeF targetY     , typeF targetZ      ,
+                 typeF upDirX = 0.0, typeF upDirY = 0.0, typeF upDirZ = 1.0 ){
+     // AUTHOR: Song Ho Ahn (song.ahn@gmail.com)  // CREATED: 2006-11-14  // UPDATED: 2012-04-11
+     glMatrixMode( GL_MODELVIEW) ;
+     glLoadIdentity();
+     gluLookAt( posX   , posY   , posZ    , // - eye(x,y,z)
+                targetX, targetY, targetZ , // focal(x,y,z)
+                upDirX , upDirY , upDirZ  ); // - up(x,y,z)
+}
+
 
 /*************************************************************************************************
  *          Mesh Namespace                                                                       *
@@ -55,14 +66,22 @@ matXe C; // Vertex Colors
 class Cuboid : public Mesh { public: EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 // Axis-aligned Cuboid
 
-Cuboid(); // Default Cube
-Cuboid( typeF side ); // Cube with `side` length
+Cuboid(){
+     // Default Cube
+     Cuboid( 1.0, 1.0, 1.0 );
+} 
+
+Cuboid( typeF side ){
+     // Cube with sides of a given length
+     Cuboid( side, side, side );
+}
 
 
 Cuboid( typeF sideX, typeF sideY, typeF sideZ ){
-    typeF hX = sideX;
-    typeF hY = sideY;
-    typeF hZ = sideZ;
+     // Axis-aligned cuboid with an extent in each axis, ceneted on the origin
+     typeF hX = sideX;
+     typeF hY = sideY;
+     typeF hZ = sideZ;
     // cube ///////////////////////////////////////////////////////////////////////
 
 //    v6----- v5
@@ -217,11 +236,40 @@ Model( const Mesh::Mesh& mesh, GLboolean buffMode_ = 0 ){
 }
 
 void draw_array_mode(){
+     // draw a cube using vertex array method
+     // AUTHOR: Song Ho Ahn (song.ahn@gmail.com)  // CREATED: 2006-11-14  // UPDATED: 2012-04-11
+
+     // 1. Enable vertex arrays
+     glEnableClientState( GL_VERTEX_ARRAY );
+     glEnableClientState( GL_NORMAL_ARRAY );
+     glEnableClientState( GL_COLOR_ARRAY  );
+     
+     // 2. Prior to drawing, specify vertex arrays
+     glVertexPointer( 3, GL_FLOAT, 0, vertices );
+     glNormalPointer(    GL_FLOAT, 0, normals  );
+     glColorPointer(  3, GL_FLOAT, 0, colors   );
+     
+     // 3. Draw the model specified by the arrays
+     glDrawArrays( GL_TRIANGLES, 0, 36 );
+
+     // 4. Disable vertex arrays
+     glDisableClientState( GL_VERTEX_ARRAY );  
+     glDisableClientState( GL_NORMAL_ARRAY );
+     glDisableClientState( GL_COLOR_ARRAY  );
+        
 
 }
 
 void draw_buffer_mode(){
      
+}
+
+void draw(){
+     // Render the `Model` using the function appropriate to the mode
+     if( bufferMode )
+          draw_buffer_mode();
+     else
+          draw_array_mode();
 }
 
 };

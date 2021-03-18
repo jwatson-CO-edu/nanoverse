@@ -30,6 +30,9 @@ Template Version: 2018-06-06
 
 /***** Constants & Globals *****/
 
+// Create a cube in array mode
+Mesh::Mesh cube = Mesh::Cuboid();
+Model::Model mCube( cube, 0 );
 
 /********** <CLASS1> *****************************************************************************/
 
@@ -45,6 +48,8 @@ void display(){
     }else{
         cout << "There were no errors." << endl;
     }
+
+    mCube.draw();
 }
 
 
@@ -60,6 +65,10 @@ int main( int argc , char** argv ){ // Main takes the terminal command and flags
 
     // 2. Init OGL
     init_OGL( params );
+
+    set_camera( 1.0, 1.0, 1.0, 
+                0.0, 0.0, 0.0,
+                0.0, 0.0, 1.0 );
 
     // the last GLUT call (LOOP)
     // window will be shown and display callback is triggered by events
