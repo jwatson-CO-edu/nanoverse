@@ -30,40 +30,78 @@ Template Version: 2018-06-06
 
 /***** Constants & Globals *****/
 
-// Create a cube in array mode
+
+typeF /*--*/ w2h = 0.0; // Aspect ratio
+typeF /*--*/ dim = 2.0; // Scale Dimension
+int /*----*/ fov = 55; // Field of view (for perspective)
 Mesh::Mesh   cube;
 Model::Model mCube;
 
-/********** <CLASS1> *****************************************************************************/
+/********** Callbacks ****************************************************************************/
 
+static void Project(){
+	// Set projection
+	// Adapted from code provided by Willem A. (Vlakkies) Schreüder  
+	// NOTE: This function assumes that aspect rario will be computed by 'resize'
+	
+	//  Tell OpenGL we want to manipulate the projection matrix
+	glMatrixMode( GL_PROJECTION );
+	//  Undo previous transformations
+	glLoadIdentity();
+	
+	gluPerspective( fov , // -- Field of view angle, in degrees, in the y direction.
+					w2h , // -- Aspect ratio , the field of view in the x direction. Ratio of x (width) to y (height).
+					dim/4 , //- Specifies the distance from the viewer to the near clipping plane (always positive).
+					4*dim ); // Specifies the distance from the viewer to the far clipping plane (always positive).
+	
+	// Switch back to manipulating the model matrix
+	glMatrixMode( GL_MODELVIEW );
+	// Undo previous transformations
+	glLoadIdentity();
+}
 
+void reshape( int width , int height ){
+	// GLUT calls this routine when the window is resized
+	// Calc the aspect ratio: width to the height of the window
+	w2h = ( height > 0 ) ? (float) width / height : 1;
+	// Set the viewport to the entire window
+	glViewport( 0 , 0 , width , height );
+	// Set projection
+	Project();
+}
 
 /********** Draw Loop ****************************************************************************/
 
 void display(){
 
     // clear buffer
+    glClearDepth( 1.0f );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 
-    set_camera( -1.0, -1.0, -1.0, 
+    // Switch back to manipulating the model matrix
+	glMatrixMode( GL_MODELVIEW );
+
+    //  Reset previous transforms to the identity matrix
+    glLoadIdentity();
+
+    set_camera( -3.0, -3.0, -3.0, 
                 0.0, 0.0, 0.0,
                 0.0, 0.0, 1.0 );
 
     // save the initial ModelView matrix before modifying ModelView matrix
-    // glPushMatrix();
+    glPushMatrix();
 
     // tramsform camera
     // glTranslatef(0, -2.5, 0);
     // glRotatef( 0.5, 1, 0, 0);   // pitch
     // glRotatef(cameraAngleY, 0, 1, 0);   // heading
 
-    
-
     mCube.draw();
 
     // Pop the modified ModelView matrix
-    // glPopMatrix();
+    glPopMatrix();
 
+    glFlush();
     // Blit
     glutSwapBuffers();
 }
@@ -85,7 +123,7 @@ int main( int argc , char** argv ){ // Main takes the terminal command and flags
 
     cout << "Cube has " << cube.V.size() << " vertices." << endl;
 
-    set_redraw_functions();
+    set_redraw_functions( reshape );
 
     // 2. Init OGL
     init_OGL( params );

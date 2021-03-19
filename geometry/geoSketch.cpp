@@ -30,8 +30,6 @@ void set_camera( typeF posX        , typeF posY        , typeF posZ         ,
                  typeF targetX     , typeF targetY     , typeF targetZ      ,
                  typeF upDirX = 0.0, typeF upDirY = 0.0, typeF upDirZ = 1.0 ){
      // AUTHOR: Song Ho Ahn (song.ahn@gmail.com)  // CREATED: 2006-11-14  // UPDATED: 2012-04-11
-     glMatrixMode( GL_MODELVIEW ) ;
-     glLoadIdentity();
      gluLookAt( posX   , posY   , posZ    , // - eye(x,y,z)
                 targetX, targetY, targetZ , // focal(x,y,z)
                 upDirX , upDirY , upDirZ  ); // - up(x,y,z)
