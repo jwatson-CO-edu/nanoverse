@@ -67,7 +67,8 @@ int set_GLUT_interaction_handlers( // FUTURE: Use SDL2 instead?
 
 /*** Defaults Window Functions ***/
 void dflt_displayCB();
-void reshapeCB( int a, int b );
+void dflt_reshapeCB( int a, int b );
+void dflt_idleCB();
 
 /***** Errors **********************************/
 bool ErrCheck( const char* where ); // --- See if OpenGL has raised any errors

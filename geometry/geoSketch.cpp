@@ -17,16 +17,20 @@ void copy_eig_to_ogl_col_major( const matXe& src, GLfloat* dst ){
      // The default in Eigen is column-major
      size_t Nrow = src.rows();
      size_t Mcol = src.cols();
-     for( size_t j = 0 ; j < Nrow ; ++j )
-          for( size_t i = 0 ; i < Nrow ; ++i )
+     for( size_t j = 0 ; j < Mcol ; ++j )
+          for( size_t i = 0 ; i < Nrow ; ++i ){
+               // cout << "Array Offset: " << (j*Nrow + i) << endl;
                *(dst + (j*Nrow + i) ) = src.coeff( i, j );
+          }
+
+               
 }
 
 void set_camera( typeF posX        , typeF posY        , typeF posZ         , 
                  typeF targetX     , typeF targetY     , typeF targetZ      ,
                  typeF upDirX = 0.0, typeF upDirY = 0.0, typeF upDirZ = 1.0 ){
      // AUTHOR: Song Ho Ahn (song.ahn@gmail.com)  // CREATED: 2006-11-14  // UPDATED: 2012-04-11
-     glMatrixMode( GL_MODELVIEW) ;
+     glMatrixMode( GL_MODELVIEW ) ;
      glLoadIdentity();
      gluLookAt( posX   , posY   , posZ    , // - eye(x,y,z)
                 targetX, targetY, targetZ , // focal(x,y,z)
@@ -66,15 +70,9 @@ matXe C; // Vertex Colors
 class Cuboid : public Mesh { public: EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 // Axis-aligned Cuboid
 
-Cuboid(){
-     // Default Cube
-     Cuboid( 1.0, 1.0, 1.0 );
-} 
-
-Cuboid( typeF side ){
-     // Cube with sides of a given length
-     Cuboid( side, side, side );
-}
+// Delegated Constructors
+Cuboid() : Cuboid( 1.0, 1.0, 1.0 ){} // Default Cube
+Cuboid( typeF side ) : Cuboid( side, side, side ) {} // Cube with sides of a given length
 
 
 Cuboid( typeF sideX, typeF sideY, typeF sideZ ){

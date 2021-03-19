@@ -12,9 +12,9 @@ Template Version: 2020-12
 
 /*** Window & Context ***/
 int init_GLUT( 
-	int argc, char **argv , // -------- Terminal args
-	OGL_ContextConfig& params , // ----- Window param structure
-	void (*displayCB)() // ------------ Display callback
+	int argc, char **argv , // --- Terminal args
+	OGL_ContextConfig& params , // Window param structure
+	void (*displayCB)() // ------- Display callback
 ){
 	// Start FreeGLUT with the specified parameters
 	glutInit( &argc, argv ); // ---------------------------------------- 1. Start the OGL utilities
@@ -24,8 +24,32 @@ int init_GLUT(
 							params.screenPosInit[1] ); 
 	params.winHandle = glutCreateWindow( argv[0] ); // ----------------- 5. Create OGL window, get handle
 	glutDisplayFunc( displayCB ); // ----------------------------------- 6. Set window display callback func
-	glutReshapeFunc( reshapeCB ); // ----------------------------------- 7. Set window reshape callback func
+	return 0;
 }
+
+int set_redraw_functions(
+	void (*reshapeCB)( int , int ) , // - Window reshape callback
+	void (*timerCB)( int ) , // Periodic redraw function (Only set ONE)
+	int  refreshPeriod_ms , // ----- Period to run `timerCB`
+	void (*idleCB)() // - Idle redraw function (Only set ONE)
+){
+	// Set the reshape function
+	if( reshapeCB )
+		glutReshapeFunc( reshapeCB ); // Set window reshape callback func
+	else
+		glutReshapeFunc( dflt_reshapeCB );
+
+	// Set EITHER a timer function or an idle function
+	if( timerCB )
+		glutTimerFunc( refreshPeriod_ms, timerCB, refreshPeriod_ms); // redraw only every given millisec
+	else if( idleCB )
+		glutIdleFunc( idleCB ); // redraw when idle
+	else
+		glutIdleFunc( dflt_idleCB ); // redraw when idle
+}
+
+
+
 
 void init_OGL( OGL_ContextConfig& params ){
 	// Initialize OpenGL according to the performance preference
@@ -207,7 +231,8 @@ void draw_grid_org_XY( float gridSize , uint xPlusMinus , uint yPlusMinus ,
 
 /*** Defaults ***/
 void dflt_displayCB(){ /* NO-OP */ }
-void reshapeCB( int a, int b ){ /* NO-OP */ }
+void dflt_reshapeCB( int a, int b ){  cout << "New Screen Shape: (" << a << ", " << b << ")" << endl;  }
+void dflt_idleCB(){  glutPostRedisplay();  }
 
 
 /***** CLASNAME_! ********************************************************************************/
