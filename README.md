@@ -16,8 +16,9 @@ Minimum Viable 3D for Linux
 [Y] Cube/Cuboid primitive mesh: Parameterize the Songho cube
 [ ] Cube/Cuboid primitive model
     [ ] Vertex array rendering
-        [ ] Draw cube
-        [ ] Transform model (For now, only support absolute xforms)
+        [Y] Draw cube >> 2021-03-21: Make sure that your camera vectors make sense, Smooth shading needed for per-vtx colors
+        [ ] Set up light(s)
+        [ ] Transform Camera
     [ ] Vertex buffer rendering
     [ ] Investigate facet optimization (Search: "OpenGL index buffer")
 [ ] Camera class
@@ -25,7 +26,7 @@ Minimum Viable 3D for Linux
 [ ] Shader Experiment(s)
     [ ] CAD-style outlines (Vertex shader?) with flat colors and simplest shading
         [ ] Sharp edges
-            * https://gamedev.stackexchange.com/a/86413
+            * https://gamedev.stackexchange.com/a/86413, What does this do at the interface between flat triangles?
             * https://en.wikibooks.org/wiki/GLSL_Programming/Unity/Toon_Shading#Outlines
         [ ] Object-background edge
             * https://www.codeproject.com/Articles/8499/Generating-Outlines-in-OpenGL
@@ -36,26 +37,7 @@ Minimum Viable 3D for Linux
         [ ] http://rbwhitaker.wikidot.com/toon-shader
         [ ] http://www.cs.sjsu.edu/~bruce/fall_2016_cs_116a_lecture_glsl_opengl_shading_language_part_1_of_2.html
     [ ] Investigate using outlines and cel shading simultaneously
-    [ ] Nvidia Test
-    [ ] Intel NUC Test
     [ ] Add shader slots to Model class
-[ ] SDL2 Interaction
-    [ ] KB input
-    [ ] Mouse input
-    [ ] JS input
-[ ] Evaluate Modular Refactor:
-    [ ] Consider Interfaces for each kind of activity: { Graphics, Control, Intelligence, More? }
-    [ ] Does it make sense to have an interface for each?
-    [ ] Does an interface imply a plugin interface?
-    [ ] If using plugins, Connect at interface in a way that reduces pointer math and communication overhead
-        For example, Using multiple interfaces handled with an inheritance list 
-        that facilitates information flow through pointers on both sides such that s/getters are never used?
-        https://www.arbinada.com/en/node/1466
-[ ] Player Class
-    [ ] FPV Camera
-    [ ] KB input
-    [ ] Mouse input
-    [ ] JS input
 [ ] Flying Camera: "Descent" ownship motion 
     [ ] Mouse: { X: Yaw , Y: Pitch }
     [ ] KB: { W/S: Fwd/Bck , A/D: Strafe }
@@ -183,6 +165,23 @@ Minimum Viable 3D for Linux
 /***** Architecture N: Shall?  we?  play?  a?  game? *****/
  ~  Have Fun
  ~  NOTE: The entire scene is always loaded
+[ ] SDL2 Interaction
+    [ ] KB input
+    [ ] Mouse input
+    [ ] JS input
+[ ] Evaluate Modular Refactor:
+    [ ] Consider Interfaces for each kind of activity: { Graphics, Control, Intelligence, More? }
+    [ ] Does it make sense to have an interface for each?
+    [ ] Does an interface imply a plugin interface?
+    [ ] If using plugins, Connect at interface in a way that reduces pointer math and communication overhead
+        For example, Using multiple interfaces handled with an inheritance list 
+        that facilitates information flow through pointers on both sides such that s/getters are never used?
+        https://www.arbinada.com/en/node/1466
+[ ] Player Class
+    [ ] FPV Camera
+    [ ] KB input
+    [ ] Mouse input
+    [ ] JS input
 [ ] Scene Graph
     [ ] Subtree complexity measure
     [ ] Subtree drawing

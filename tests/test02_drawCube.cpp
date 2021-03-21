@@ -74,7 +74,7 @@ void reshape( int width , int height ){
 
 void display(){
 
-    glDisable( GL_CULL_FACE );
+    // glDisable( GL_CULL_FACE ); // This was not the issue and was off by default anyway
 
     // clear buffer
     glClearDepth( 1.0f );
