@@ -37,7 +37,9 @@ using std::endl;
 /*** Eigen ***/
 #ifdef MG_FLOAT
 	using vec2e = Eigen::Vector2f;
+	using vec2r = Eigen::RowVector2f;
 	using vec3e = Eigen::Vector3f;
+	using vec3r = Eigen::RowVector3f;
 	using matXe = Eigen::MatrixXf;
 	using typeF = float;
 	#define random rand_float

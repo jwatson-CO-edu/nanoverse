@@ -56,7 +56,8 @@ void init_OGL( OGL_ContextConfig& params ){
 	glShadeModel( params.shadeModel ); // ----- Shader model: Smooth -or- Flat
 	glPixelStorei( GL_UNPACK_ALIGNMENT, 8 ); // 8-byte pixel alignment for 64bit machine
 	glHint( GL_PERSPECTIVE_CORRECTION_HINT, params.qualityHints );
-	glEnable( GL_DEPTH_TEST );
+	glEnable( GL_DEPTH_TEST ); // Enable depth test
+	glDepthFunc( GL_LESS ); // // Accept fragment if it closer to the camera than the former one
     glEnable( GL_LIGHTING   );
     glEnable( GL_TEXTURE_2D );
     glEnable( GL_CULL_FACE  );
@@ -69,7 +70,7 @@ void init_OGL( OGL_ContextConfig& params ){
 	);                   
 	glClearStencil( 0 );  // clear stencil buffer
     glClearDepth( 1.0f ); // 0 is near, 1 is far
-    glDepthFunc( GL_LEQUAL );
+    
 }
 
 void create_light_source( LightSourceConfig& liteSpec ){

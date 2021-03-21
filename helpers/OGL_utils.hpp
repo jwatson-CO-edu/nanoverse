@@ -113,6 +113,9 @@ GLclampd  clearDepth;
 OGL_ContextConfig(){
 	// Default constructor gives the most-common / easiest settings for a context
 	
+	/* Performance Params */
+	fastMode = 0; // Default to prettiness over performance
+
 	/* Window Creation Params */ 
 	displayMode /**/ = GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH | GLUT_STENCIL;
 	screenDims[0]    = 600;
@@ -123,6 +126,12 @@ OGL_ContextConfig(){
 	/* OGL Params */
 	shadeModel   = ( fastMode ? GL_FLAT    : GL_SMOOTH );
 	qualityHints = ( fastMode ? GL_FASTEST : GL_NICEST );
+
+	/* Colors */
+	BGcolor[0] = 0.0;
+	BGcolor[1] = 0.0;
+	BGcolor[2] = 0.0;
+	BGcolor[3] = 1.0;
 }
 
 };

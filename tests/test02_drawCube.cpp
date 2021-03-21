@@ -74,6 +74,8 @@ void reshape( int width , int height ){
 
 void display(){
 
+    glDisable( GL_CULL_FACE );
+
     // clear buffer
     glClearDepth( 1.0f );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
@@ -84,9 +86,9 @@ void display(){
     //  Reset previous transforms to the identity matrix
     glLoadIdentity();
 
-    set_camera( -3.0, -3.0, -3.0, 
+    set_camera( 2.05, -2.05, 2.05, 
                 0.0, 0.0, 0.0,
-                0.0, 0.0, 1.0 );
+                0.005, 0.005, 1.005 );
 
     // save the initial ModelView matrix before modifying ModelView matrix
     glPushMatrix();
