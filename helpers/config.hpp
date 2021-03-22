@@ -40,6 +40,7 @@ using std::endl;
 	using vec2r = Eigen::RowVector2f;
 	using vec3e = Eigen::Vector3f;
 	using vec3r = Eigen::RowVector3f;
+	using vec4e = Eigen::Vector4f;
 	using matXe = Eigen::MatrixXf;
 	using typeF = float;
 	#define random rand_float

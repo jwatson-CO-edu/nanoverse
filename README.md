@@ -22,7 +22,7 @@ Minimum Viable 3D for Linux
     [ ] Vertex buffer rendering
     [ ] Investigate facet optimization (Search: "OpenGL index buffer")
 [ ] Camera class
-    [ ] Pose & Motion
+    [ ] Pose & Motion: be able to change position, target, and up-vec independently with others staying the same
 [ ] Shader Experiment(s)
     [ ] CAD-style outlines (Vertex shader?) with flat colors and simplest shading
         [ ] Sharp edges

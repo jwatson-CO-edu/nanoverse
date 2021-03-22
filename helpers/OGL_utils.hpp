@@ -143,15 +143,31 @@ struct LightSourceConfig{
 // Container for the configuration vars for 1 light source
 
 /*** Vars ***/
-GLenum  name; // ------- GL_LIGHT0/1/2/...
+GLenum  name; // ------- GL_LIGHT0/1/2/.../7
+char    number; // ----- 0/1/2/.../7 corresponding to `name`
 GLfloat lightKa[4]; // - Ambient  light
 GLfloat lightKd[4]; // - Diffuse  light
 GLfloat lightKs[4]; // - Specular light
 bool    isPositional; // Is this light at a certain position?
 GLfloat position[4]; //- Position to render light from
 
-/*** Functions ***/
+};
 
+void set_light_number( LightSourceConfig& config, GLenum lightName ){
+	// Convert the light name to an appropriate entry in the light bit vector
+	config.number = 1 << (lightName - 0x0400);
+}
+
+
+/***** LightArray ********************************************************************************/
+
+struct LightArray{
+
+/*** Vars ***/
+char /*--------*/ enabled;
+LightSourceConfig config[8];
+
+/*** Functions ***/
 
 };
 
