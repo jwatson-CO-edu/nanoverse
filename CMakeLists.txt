@@ -11,6 +11,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -lglut -lGLU -lGL")
 find_package( Eigen3 3.3 REQUIRED NO_MODULE )
 set( EIGEN_LIB "Eigen3::Eigen" )
 
+
+set( OpenGL_GL_PREFERENCE "GLVND" )
 find_package( OpenGL REQUIRED )
 find_package( GLUT REQUIRED   )
 include_directories( ${OPENGL_INCLUDE_DIRS}  ${GLUT_INCLUDE_DIRS} )

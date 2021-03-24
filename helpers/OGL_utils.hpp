@@ -153,10 +153,7 @@ GLfloat position[4]; //- Position to render light from
 
 };
 
-void set_light_number( LightSourceConfig& config, GLenum lightName ){
-	// Convert the light name to an appropriate entry in the light bit vector
-	config.number = 1 << (lightName - 0x0400);
-}
+void set_light_number( LightSourceConfig& config, GLenum lightName );
 
 
 /***** LightArray ********************************************************************************/
@@ -170,6 +167,10 @@ LightSourceConfig config[8];
 /*** Functions ***/
 
 };
+
+// FIXME: Write "enable_matl_lights" // Enable the use of lights in OGL
+// FIXME: Write "enable_light_config" // Set the params for a single light
+// FIXME: Write "enable_configured_lights" // Set the params for all enabled lights
 
 
 #endif

@@ -87,17 +87,39 @@ void create_light_source( LightSourceConfig& liteSpec ){
     glEnable( liteSpec.name ); // MUST enable each light source after configuration
 }
 
+void set_light_number( LightSourceConfig& config, GLenum lightName ){
+	// Convert the light name to an appropriate entry in the light bit vector
+	config.name   = lightName;
+	config.number = 1 << (lightName - 0x0400);
+}
+
 void default_light_source(){
 	// Create a default light source
 	// 1. Init the light params
-	LightSourceConfig config{
-		GL_LIGHT0, // ----------- Light name
-		{}, // Ambient  light
-		{}, // Diffuse  light
-		{}, // Specular light
-		false, // --------------- Is this light at a certain position?
-		{ 0.0, 0.0, 0.0, 0.0 } // Position to render light from
-	};
+	LightSourceConfig config;
+	set_light_number( config, GL_LIGHT0 );
+	config.isPositional = true;	// --------------- Is this light at a certain position?
+	/** Position **/
+		config.position[0] = 0.0;
+		config.position[1] = 0.0;
+		config.position[2] = 0.0;
+		config.position[3] = 1.0;
+	/** Ambient Light **/
+		config.lightKa[0] = 0.0;
+		config.lightKa[1] = 0.0;
+		config.lightKa[2] = 0.0;
+		config.lightKa[3] = 0.0;
+	/** Diffuse Light **/
+		config.lightKd[0] = 0.0;
+		config.lightKd[1] = 0.0;
+		config.lightKd[2] = 0.0;
+		config.lightKd[3] = 0.0;
+	/** Specular Light **/
+		config.lightKs[0] = 0.0;
+		config.lightKs[1] = 0.0;
+		config.lightKs[2] = 0.0;
+		config.lightKs[3] = 0.0;
+		
 	// 2. Set the light params
 	create_light_source( config );
 }
