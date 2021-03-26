@@ -8,9 +8,12 @@ Template Version: 2020-12
 
 #include "OGL_utils.hpp"
 
-/***** Utility Functions *************************************************************************/
+/********** Setup Functions **********************************************************************/
 
-/*** Window & Context ***/
+
+/***** Window & Context ************************/
+
+
 int init_GLUT( 
 	int argc, char **argv , // --- Terminal args
 	OGL_ContextConfig& params , // Window param structure
@@ -26,29 +29,6 @@ int init_GLUT(
 	glutDisplayFunc( displayCB ); // ----------------------------------- 6. Set window display callback func
 	return 0;
 }
-
-int set_redraw_functions(
-	void (*reshapeCB)( int , int ) , // - Window reshape callback
-	void (*timerCB)( int ) , // Periodic redraw function (Only set ONE)
-	int  refreshPeriod_ms , // ----- Period to run `timerCB`
-	void (*idleCB)() // - Idle redraw function (Only set ONE)
-){
-	// Set the reshape function
-	if( reshapeCB )
-		glutReshapeFunc( reshapeCB ); // Set window reshape callback func
-	else
-		glutReshapeFunc( dflt_reshapeCB );
-
-	// Set EITHER a timer function or an idle function
-	if( timerCB )
-		glutTimerFunc( refreshPeriod_ms, timerCB, refreshPeriod_ms); // redraw only every given millisec
-	else if( idleCB )
-		glutIdleFunc( idleCB ); // redraw when idle
-	else
-		glutIdleFunc( dflt_idleCB ); // redraw when idle
-}
-
-
 
 
 void init_OGL( OGL_ContextConfig& params ){
@@ -73,25 +53,104 @@ void init_OGL( OGL_ContextConfig& params ){
     
 }
 
+
+int set_redraw_functions( void (*reshapeCB)( int , int ) , // - Window reshape callback
+						  void (*timerCB)( int ) , // Periodic redraw function (Only set ONE)
+						  int  refreshPeriod_ms , // ----- Period to run `timerCB`
+						  void (*idleCB)() ){// - Idle redraw function (Only set ONE)
+	// Set the reshape function
+	if( reshapeCB )
+		glutReshapeFunc( reshapeCB ); // Set window reshape callback func
+	else
+		glutReshapeFunc( dflt_reshapeCB );
+
+	// Set EITHER a timer function or an idle function
+	if( timerCB )
+		glutTimerFunc( refreshPeriod_ms, timerCB, refreshPeriod_ms); // redraw only every given millisec
+	else if( idleCB )
+		glutIdleFunc( idleCB ); // redraw when idle
+	else
+		glutIdleFunc( dflt_idleCB ); // redraw when idle
+}
+
+
+// FIXME: Write `set_GLUT_interaction_handlers` 
+
+
+/*** Defaults ***/
+void dflt_displayCB(){ /* NO-OP */ }
+void dflt_reshapeCB( int a, int b ){  cout << "New Screen Shape: (" << a << ", " << b << ")" << endl;  }
+void dflt_idleCB(){  glutPostRedisplay();  }
+
+
+
+/***** Errors **********************************/
+
+
+bool ErrCheck( const char* where ){
+	// See if OpenGL has raised any errors
+	// Author: Willem A. (Vlakkies) Schreüder  
+	int err = glGetError();
+	if( err ){  
+		fprintf( stderr , "ERROR: %s [%s]\n" , gluErrorString( err ) , where );  
+		return true;
+	}else{  return false;  }
+}
+
+
+void Fatal( const char* format , ... ){
+	// Scream and Run
+	// Author: Willem A. (Vlakkies) Schreüder  
+	va_list args;
+	va_start( args , format );
+	vfprintf( stderr , format , args );
+	va_end( args );
+	exit( 1 );
+}
+
+
+/***** Simple Graphics *************************/
+
+
+/*** Text ***/
+
+void Print( const char* format , ... ){
+	// Convenience routine to output raster text , Use VARARGS to make this more flexible   
+	// Author: Willem A. (Vlakkies) Schreüder  
+	char    buf[ LEN ];
+	char*   ch = buf;
+	va_list args;
+	//  Turn the parameters into a character string
+	va_start( args , format );
+	vsnprintf( buf , LEN , format , args );
+	va_end( args );
+	//  Display the characters one at a time at the current raster position
+	while( *ch ){  glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18 , *ch++ );  }
+}
+
+
+void Print( string format , ... ){
+	// 'std::string' version of the above
+	va_list args;
+	va_start( args , format );
+	Print( format.c_str() , args );
+	va_end( args );
+}
+
+
+
+/*** Lighting ***/
+
 void create_light_source( LightSourceConfig& liteSpec ){
 	// Create a lightsource with the given specification
-	glLightfv( liteSpec.name, GL_AMBIENT,  liteSpec.lightKa );
-    glLightfv( liteSpec.name, GL_DIFFUSE,  liteSpec.lightKd );
-    glLightfv( liteSpec.name, GL_SPECULAR, liteSpec.lightKs );
-
-	// position the light
-    if( liteSpec.isPositional ){
-		glLightfv( liteSpec.name, GL_POSITION, liteSpec.position );
-	}
-    
+	glLightfv( liteSpec.name, GL_AMBIENT,  liteSpec.lightKa ); // Set ambient  lighting
+    glLightfv( liteSpec.name, GL_DIFFUSE,  liteSpec.lightKd ); // Set disfuse  lighting
+    glLightfv( liteSpec.name, GL_SPECULAR, liteSpec.lightKs ); // Set specular lighting
+	 // position the light
+    if( liteSpec.isPositional ){  glLightfv( liteSpec.name, GL_POSITION, liteSpec.position );  }
     glEnable( liteSpec.name ); // MUST enable each light source after configuration
 }
 
-void set_light_number( LightSourceConfig& config, GLenum lightName ){
-	// Convert the light name to an appropriate entry in the light bit vector
-	config.name   = lightName;
-	config.number = 1 << (lightName - 0x0400);
-}
 
 void default_light_source(){
 	// Create a default light source
@@ -124,78 +183,32 @@ void default_light_source(){
 	create_light_source( config );
 }
 
-/*** Errors ***/
 
-bool ErrCheck( const char* where ){
-	// See if OpenGL has raised any errors
-	// Author: Willem A. (Vlakkies) Schreüder  
-	int err = glGetError();
-	if( err ){  
-		fprintf( stderr , "ERROR: %s [%s]\n" , gluErrorString( err ) , where );  
-		return true;
-	}else{  return false;  }
-}
-
-void Fatal( const char* format , ... ){
-	// Scream and Run
-	// Author: Willem A. (Vlakkies) Schreüder  
-	va_list args;
-	va_start( args , format );
-	vfprintf( stderr , format , args );
-	va_end( args );
-	exit( 1 );
+void set_light_number( LightSourceConfig& config, GLenum lightName ){
+	// Convert the light name to an appropriate entry in the light bit vector
+	config.name   = lightName;
+	config.number = 1 << (lightName - 0x0400);
 }
 
 
-/*** Text ***/
-void Print( const char* format , ... ){
-	// Convenience routine to output raster text , Use VARARGS to make this more flexible   
-	// Author: Willem A. (Vlakkies) Schreüder  
-	char    buf[ LEN ];
-	char*   ch = buf;
-	va_list args;
-	//  Turn the parameters into a character string
-	va_start( args , format );
-	vsnprintf( buf , LEN , format , args );
-	va_end( args );
-	//  Display the characters one at a time at the current raster position
-	while( *ch ){
-		glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18 , *ch++ );
-	}
-}
 
-void Print( string format , ... ){
-	// 'std::string' version of the above
-	va_list args;
-	va_start( args , format );
-	Print( format.c_str() , args );
-	va_end( args );
-}
+/*** Props ***/
 
-
-/*** Simple Graphics ***/
-
-// Set a vertex with an Eigen vector
-static inline void glVec3e( const vec3e& v ){  glVertex3f( v[0] , v[1] , v[2] );  } 
-// Set a normal with an Eigen vector
-static inline void glNrm3e( const vec3e& n ){  glNormal3f( n[0] , n[1] , n[2] );  } 
-// Set the color with an Eigen vector
-static inline void glClr3e( const vec3e& c ){  glColor3f(  c[0] , c[1] , c[2] );  } 
 
 void draw_origin( float scale ){
 	//  Draw scaled axes at origin in [R,G,B] for [X,Y,Z]
 	glLineWidth( 1.5 );
-	
+	// Draw arrow bodies
 	glBegin( GL_LINES );
-		glColor3f( 1 , 0 , 0 ); // R
-		glVertex3d( 0     , 0 , 0 ); // Bgn
-		glVertex3d( scale , 0 , 0 ); // End
-		glColor3f( 0 , 1 , 0 ); // G
-		glVertex3d( 0     , 0 , 0 ); // Bgn
-		glVertex3d( 0 , scale , 0 ); // End
-		glColor3f( 99/255.0 , 133/255.0 , 255/255.0 ); // B-ish
-		glVertex3d( 0 , 0 , 0 ); // Bgn 
-		glVertex3d( 0 , 0 , scale ); // End
+		glColor3f( 1 , 0 , 0 ); // ---- Red
+		glVertex3d( 0     , 0 , 0 ); // X_tail
+		glVertex3d( scale , 0 , 0 ); // X_head
+		glColor3f( 0 , 1 , 0 ); // ---- Green
+		glVertex3d( 0     , 0 , 0 ); // Y_tail
+		glVertex3d( 0 , scale , 0 ); // Y_head
+		glColor3f( 99/255.0 , 133/255.0 , 255/255.0 ); // Blue-like
+		glVertex3d( 0 , 0 , 0 ); // --- Z_tail
+		glVertex3d( 0 , 0 , scale ); // Z_head
 	glEnd();
 	
 	//  Label axes
@@ -218,7 +231,6 @@ void draw_grid_org_XY( float gridSize , uint xPlusMinus , uint yPlusMinus ,
 		  yMax =   gridSize * yPlusMinus ;
 	
 	glLineWidth( lineThic );
-	glClr3e( color ); 
 	
 	glBegin( GL_LINES );
 	
@@ -248,14 +260,10 @@ void draw_grid_org_XY( float gridSize , uint xPlusMinus , uint yPlusMinus ,
 			glVertex3d( xMin , -gridSize * i , 0 ); // Bgn
 			glVertex3d( xMax , -gridSize * i , 0 ); // End
 		}
-		
 	glEnd();
 }
 
-/*** Defaults ***/
-void dflt_displayCB(){ /* NO-OP */ }
-void dflt_reshapeCB( int a, int b ){  cout << "New Screen Shape: (" << a << ", " << b << ")" << endl;  }
-void dflt_idleCB(){  glutPostRedisplay();  }
+
 
 
 /***** CLASNAME_! ********************************************************************************/

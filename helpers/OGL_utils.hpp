@@ -84,8 +84,8 @@ void Print( const char* format , ... );
 void create_light_source( LightSourceConfig& liteSpec ); // Create a lightsource with the given specification
 void default_light_source(); // --------------------------- Create a default light source
 
+/*** Props ***/
 void draw_origin( float scale );
-
 void draw_grid_org_XY( float gridSize , uint xPlusMinus , uint yPlusMinus , 
 					   float lineThic , vec3e color );
 
@@ -167,6 +167,8 @@ LightSourceConfig config[8];
 /*** Functions ***/
 
 };
+
+void enable_matl_lights(); // Standard function calls for enabling lights
 
 // FIXME: Write "enable_matl_lights" // Enable the use of lights in OGL
 // FIXME: Write "enable_light_config" // Set the params for a single light
