@@ -64,10 +64,12 @@ Minimum Viable 3D for Linux
 
 
 /***** Architecture 2: Frames for Run *****/
+ ~  Purpose: Digital sculpture platform with a dash of simulation
  ~  Have Fun
  ~  Be careful with your time
 [ ] Spheres (Take from CU graphics/MS)
 [ ] N-body simulation, orbiting spheres
+[ ] Boids: https://www.youtube.com/watch?v=bqtqltqcQhw
 [ ] Slime molds as surface coloration on a mobius strip model: https://www.youtube.com/watch?v=X-iSQQgOd1A
 [ ] L-system tree
 [ ] Mesh with animated shader
