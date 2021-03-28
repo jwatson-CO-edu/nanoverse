@@ -59,8 +59,8 @@ Minimum Viable 3D for Linux
     * OpenCL experiments
     * Test Utah Graphics Class Techniques
 [[OK]] WHAT WOULD DR. WATSON DO?: Keep work on this toy to an absolute minimum - Scratch the itch without scarring
-[[  ]] ORGANIZE THE REMAINING DEV PLAN ACCORDINGLY
-      [ ] Move pruned subgoals to de-prioritzed projects
+[[OK]] ORGANIZE THE REMAINING DEV PLAN ACCORDINGLY
+      [Y] Move pruned subgoals to de-prioritzed projects
 
 
 /***** Architecture 2: Frames for Run *****/
@@ -68,6 +68,7 @@ Minimum Viable 3D for Linux
  ~  Be careful with your time
 [ ] Spheres (Take from CU graphics/MS)
 [ ] N-body simulation, orbiting spheres
+[ ] Slime molds as surface coloration on a mobius strip model: https://www.youtube.com/watch?v=X-iSQQgOd1A
 [ ] L-system tree
 [ ] Mesh with animated shader
 [ ] Load ship models into space scene
