@@ -8,6 +8,11 @@ Template Version: 2020-12
 
 #include "OGL_utils.hpp"
 
+/**************************************************************************************************
+ *          CONFIGURATION:                                                                        *
+ **************************************************************************************************/
+
+
 /********** Setup Functions **********************************************************************/
 
 
@@ -38,16 +43,8 @@ void init_OGL( OGL_ContextConfig& params ){
 	glHint( GL_PERSPECTIVE_CORRECTION_HINT, params.qualityHints );
 	glEnable( GL_DEPTH_TEST ); // Enable depth test
 	glDepthFunc( GL_LESS ); // // Accept fragment if it closer to the camera than the former one
-    glEnable( GL_LIGHTING   );
     glEnable( GL_TEXTURE_2D );
     glEnable( GL_CULL_FACE  );
-	// track material ambient and diffuse from surface color
-	// call it before glEnable(GL_COLOR_MATERIAL)
-    glColorMaterial( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE );
-    glEnable( GL_COLOR_MATERIAL );
-	glClearColor( // background color
-		params.BGcolor[0], params.BGcolor[1], params.BGcolor[2], params.BGcolor[3] 
-	);                   
 	glClearStencil( 0 );  // clear stencil buffer
     glClearDepth( 1.0f ); // 0 is near, 1 is far
     
@@ -109,34 +106,10 @@ void Fatal( const char* format , ... ){
 }
 
 
-/***** Simple Graphics *************************/
 
-
-/*** Text ***/
-
-void Print( const char* format , ... ){
-	// Convenience routine to output raster text , Use VARARGS to make this more flexible   
-	// Author: Willem A. (Vlakkies) Schreüder  
-	char    buf[ LEN ];
-	char*   ch = buf;
-	va_list args;
-	//  Turn the parameters into a character string
-	va_start( args , format );
-	vsnprintf( buf , LEN , format , args );
-	va_end( args );
-	//  Display the characters one at a time at the current raster position
-	while( *ch ){  glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18 , *ch++ );  }
-}
-
-
-void Print( string format , ... ){
-	// 'std::string' version of the above
-	va_list args;
-	va_start( args , format );
-	Print( format.c_str() , args );
-	va_end( args );
-}
-
+/**************************************************************************************************
+ *          LIGHTING:                                                                             *
+ **************************************************************************************************/
 
 
 /*** Lighting ***/
@@ -190,7 +163,51 @@ void set_light_number( LightSourceConfig& config, GLenum lightName ){
 	config.number = 1 << (lightName - 0x0400);
 }
 
+void enable_matl_lights( OGL_ContextConfig& params ){
+	// Standard function calls for enabling lights
+	// track material ambient and diffuse from surface color
+	// call it before glEnable(GL_COLOR_MATERIAL)
+	glEnable( GL_LIGHTING   );
+    glColorMaterial( GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE );
+    glEnable( GL_COLOR_MATERIAL );
+	glClearColor( // background color
+		params.BGcolor[0], params.BGcolor[1], params.BGcolor[2], params.BGcolor[3] 
+	);                   
+} 
 
+
+
+
+/**************************************************************************************************
+ *          TOYS:                                                                                 *
+ **************************************************************************************************/
+
+/***** Simple Graphics *************************/
+
+/*** Text ***/
+
+void Print( const char* format , ... ){
+	// Convenience routine to output raster text , Use VARARGS to make this more flexible   
+	// Author: Willem A. (Vlakkies) Schreüder  
+	char    buf[ LEN ];
+	char*   ch = buf;
+	va_list args;
+	//  Turn the parameters into a character string
+	va_start( args , format );
+	vsnprintf( buf , LEN , format , args );
+	va_end( args );
+	//  Display the characters one at a time at the current raster position
+	while( *ch ){  glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18 , *ch++ );  }
+}
+
+
+void Print( string format , ... ){
+	// 'std::string' version of the above
+	va_list args;
+	va_start( args , format );
+	Print( format.c_str() , args );
+	va_end( args );
+}
 
 /*** Props ***/
 
@@ -262,8 +279,3 @@ void draw_grid_org_XY( float gridSize , uint xPlusMinus , uint yPlusMinus ,
 		}
 	glEnd();
 }
-
-
-
-
-/***** CLASNAME_! ********************************************************************************/

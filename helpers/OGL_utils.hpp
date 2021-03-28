@@ -36,6 +36,10 @@ const GLenum   LIGHTS[]     = {
 /***** Namespace *****/
 using std::string;
 
+/**************************************************************************************************
+ *          CONFIGURATION:                                                                        *
+ **************************************************************************************************
+
 /***** Forward Declarations *****/
 struct OGL_ContextConfig;
 struct LightSourceConfig;
@@ -73,23 +77,6 @@ void dflt_idleCB();
 /***** Errors **********************************/
 bool ErrCheck( const char* where ); // --- See if OpenGL has raised any errors
 void Fatal( const char* format , ... ); // Scream and Run
-
-
-/***** Simple Graphics *************************/
-
-/*** Text ***/
-void Print( const char* format , ... );
-
-/*** Lighting ***/
-void create_light_source( LightSourceConfig& liteSpec ); // Create a lightsource with the given specification
-void default_light_source(); // --------------------------- Create a default light source
-
-/*** Props ***/
-void draw_origin( float scale );
-void draw_grid_org_XY( float gridSize , uint xPlusMinus , uint yPlusMinus , 
-					   float lineThic , vec3e color );
-
-
 
 
 /***** OGL_ContextConfg **************************************************************************/
@@ -136,6 +123,10 @@ OGL_ContextConfig(){
 
 };
 
+/**************************************************************************************************
+ *          LIGHTING:                                                                             *
+ **************************************************************************************************/
+
 
 /***** LightSourceConfig *************************************************************************/
 
@@ -153,6 +144,10 @@ GLfloat position[4]; //- Position to render light from
 
 };
 
+/*** Creation/Configuration ***/
+void create_light_source( LightSourceConfig& liteSpec ); // Create a lightsource with the given specification
+void default_light_source(); // --------------------------- Create a default light source
+
 void set_light_number( LightSourceConfig& config, GLenum lightName );
 
 
@@ -168,11 +163,28 @@ LightSourceConfig config[8];
 
 };
 
-void enable_matl_lights(); // Standard function calls for enabling lights
+void enable_matl_lights( OGL_ContextConfig& params ); // Standard function calls for enabling lights
 
-// FIXME: Write "enable_matl_lights" // Enable the use of lights in OGL
+
 // FIXME: Write "enable_light_config" // Set the params for a single light
 // FIXME: Write "enable_configured_lights" // Set the params for all enabled lights
+
+
+
+
+/**************************************************************************************************
+ *          TOYS:                                                                                 *
+ **************************************************************************************************
+
+/***** Simple Graphics *************************/
+
+/*** Text ***/
+void Print( const char* format , ... );
+
+/*** Props ***/
+void draw_origin( float scale );
+void draw_grid_org_XY( float gridSize , uint xPlusMinus , uint yPlusMinus , 
+					   float lineThic , vec3e color );
 
 
 #endif
