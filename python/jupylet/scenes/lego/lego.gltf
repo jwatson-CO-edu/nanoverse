@@ -1,0 +1,602 @@
+{
+    "asset" : {
+        "generator" : "Khronos glTF Blender I/O v1.2.75",
+        "version" : "2.0"
+    },
+    "extensionsUsed" : [
+        "KHR_lights_punctual"
+    ],
+    "extensionsRequired" : [
+        "KHR_lights_punctual"
+    ],
+    "extensions" : {
+        "KHR_lights_punctual" : {
+            "lights" : [
+                {
+                    "color" : [
+                        0.9918188452720642,
+                        1,
+                        0.7817586660385132
+                    ],
+                    "intensity" : 0.4000000059604645,
+                    "type" : "directional",
+                    "range" : 40,
+                    "name" : "Light"
+                },
+                {
+                    "color" : [
+                        0.9918188452720642,
+                        1,
+                        0.7817586660385132
+                    ],
+                    "intensity" : 600,
+                    "spot" : {
+                        "innerConeAngle" : 0.556323685321221,
+                        "outerConeAngle" : 0.6544984579086304
+                    },
+                    "type" : "spot",
+                    "name" : "Light.001"
+                },
+                {
+                    "color" : [
+                        0.6443370580673218,
+                        0.7807339429855347,
+                        1
+                    ],
+                    "intensity" : 800,
+                    "type" : "point",
+                    "name" : "Light.002"
+                }
+            ]
+        }
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "extras" : {
+                "automirror" : {
+                    "axis" : 2
+                },
+                "glTF2ExportSettings" : {
+                    "export_apply" : 1,
+                    "export_cameras" : 1,
+                    "export_extras" : 1,
+                    "export_format" : "GLTF_SEPARATE",
+                    "export_lights" : 1
+                }
+            },
+            "name" : "Scene",
+            "nodes" : [
+                1,
+                2,
+                3,
+                4,
+                5,
+                7,
+                9,
+                11
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "camera" : 0,
+            "name" : "Camera_Orientation",
+            "rotation" : [
+                -0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ]
+        },
+        {
+            "children" : [
+                0
+            ],
+            "name" : "Camera",
+            "rotation" : [
+                0.2734896242618561,
+                0.7098985910415649,
+                -0.47507956624031067,
+                0.4422067701816559
+            ],
+            "translation" : [
+                12.965968132019043,
+                7.492461204528809,
+                -7.442296981811523
+            ]
+        },
+        {
+            "mesh" : 0,
+            "name" : "Plane",
+            "translation" : [
+                -4.150783061981201,
+                -0.0038092732429504395,
+                3.271779775619507
+            ]
+        },
+        {
+            "mesh" : 1,
+            "name" : "brick.red",
+            "translation" : [
+                0,
+                0.5729984045028687,
+                0
+            ]
+        },
+        {
+            "mesh" : 2,
+            "name" : "brick.green",
+            "rotation" : [
+                0,
+                0.3476148545742035,
+                0,
+                0.9376373887062073
+            ],
+            "translation" : [
+                -1.7403709888458252,
+                0.5729984045028687,
+                -3.3481061458587646
+            ]
+        },
+        {
+            "mesh" : 3,
+            "name" : "brick.blue",
+            "rotation" : [
+                0.13238175213336945,
+                -0.5705916285514832,
+                -0.1961686611175537,
+                0.7863956689834595
+            ],
+            "translation" : [
+                2.010190963745117,
+                1.526623249053955,
+                1.5374150276184082
+            ]
+        },
+        {
+            "extensions" : {
+                "KHR_lights_punctual" : {
+                    "light" : 0
+                }
+            },
+            "name" : "Light.Sun_Orientation",
+            "rotation" : [
+                -0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ]
+        },
+        {
+            "children" : [
+                6
+            ],
+            "name" : "Light.Sun",
+            "rotation" : [
+                -0.059600360691547394,
+                0.777386486530304,
+                -0.4088803231716156,
+                0.47427302598953247
+            ],
+            "translation" : [
+                4.337205410003662,
+                7.054111957550049,
+                -10.70150089263916
+            ]
+        },
+        {
+            "extensions" : {
+                "KHR_lights_punctual" : {
+                    "light" : 1
+                }
+            },
+            "name" : "Light.Spot_Orientation",
+            "rotation" : [
+                -0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ]
+        },
+        {
+            "children" : [
+                8
+            ],
+            "name" : "Light.Spot",
+            "rotation" : [
+                0.41487202048301697,
+                0.6555900573730469,
+                -0.18511120975017548,
+                0.603172242641449
+            ],
+            "translation" : [
+                12.118377685546875,
+                6.476860523223877,
+                3.545900344848633
+            ]
+        },
+        {
+            "extensions" : {
+                "KHR_lights_punctual" : {
+                    "light" : 2
+                }
+            },
+            "name" : "Light.Point_Orientation",
+            "rotation" : [
+                -0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ]
+        },
+        {
+            "children" : [
+                10
+            ],
+            "name" : "Light.Point",
+            "rotation" : [
+                0.17904013395309448,
+                0.6275654435157776,
+                0.372477650642395,
+                0.6598231792449951
+            ],
+            "translation" : [
+                -4.10420036315918,
+                6.476860523223877,
+                10.23625659942627
+            ]
+        }
+    ],
+    "cameras" : [
+        {
+            "name" : "Camera",
+            "perspective" : {
+                "yfov" : 0.6408749286431772,
+                "zfar" : 100,
+                "znear" : 0.10000000149011612
+            },
+            "type" : "perspective"
+        }
+    ],
+    "materials" : [
+        {
+            "doubleSided" : true,
+            "emissiveFactor" : [
+                0,
+                0,
+                0
+            ],
+            "name" : "plane",
+            "pbrMetallicRoughness" : {
+                "baseColorFactor" : [
+                    0.4158526659011841,
+                    0.2878284156322479,
+                    0.1900862157344818,
+                    1
+                ],
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.7509090900421143
+            }
+        },
+        {
+            "doubleSided" : true,
+            "emissiveFactor" : [
+                0,
+                0,
+                0
+            ],
+            "name" : "red-brick",
+            "pbrMetallicRoughness" : {
+                "baseColorFactor" : [
+                    0.8000000715255737,
+                    0.019248954951763153,
+                    0.02262989617884159,
+                    1
+                ],
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.4981817901134491
+            }
+        },
+        {
+            "doubleSided" : true,
+            "emissiveFactor" : [
+                0,
+                0,
+                0
+            ],
+            "name" : "green-brick",
+            "pbrMetallicRoughness" : {
+                "baseColorFactor" : [
+                    0.04753918945789337,
+                    0.8000000715255737,
+                    0.04252930358052254,
+                    1
+                ],
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.4981817901134491
+            }
+        },
+        {
+            "doubleSided" : true,
+            "emissiveFactor" : [
+                0,
+                0,
+                0
+            ],
+            "name" : "blue-brick",
+            "pbrMetallicRoughness" : {
+                "baseColorFactor" : [
+                    0.018920190632343292,
+                    0.020610282197594643,
+                    0.8000000715255737,
+                    1
+                ],
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.4981817901134491
+            }
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Plane",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 0,
+                        "NORMAL" : 1,
+                        "TEXCOORD_0" : 2
+                    },
+                    "indices" : 3,
+                    "material" : 0
+                }
+            ]
+        },
+        {
+            "name" : "Cube",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 4,
+                        "NORMAL" : 5,
+                        "TEXCOORD_0" : 6
+                    },
+                    "indices" : 7,
+                    "material" : 1
+                }
+            ]
+        },
+        {
+            "name" : "Cube.001",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 8,
+                        "NORMAL" : 9,
+                        "TEXCOORD_0" : 10
+                    },
+                    "indices" : 7,
+                    "material" : 2
+                }
+            ]
+        },
+        {
+            "name" : "Cube.002",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 11,
+                        "NORMAL" : 12,
+                        "TEXCOORD_0" : 13
+                    },
+                    "indices" : 7,
+                    "material" : 3
+                }
+            ]
+        }
+    ],
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5126,
+            "count" : 4,
+            "max" : [
+                38.861568450927734,
+                0,
+                38.861568450927734
+            ],
+            "min" : [
+                -38.861568450927734,
+                0,
+                -38.861568450927734
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 4,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 4,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5123,
+            "count" : 6,
+            "type" : "SCALAR"
+        },
+        {
+            "bufferView" : 4,
+            "componentType" : 5126,
+            "count" : 19635,
+            "max" : [
+                2.244880199432373,
+                0.8941131830215454,
+                0.9997923374176025
+            ],
+            "min" : [
+                -2.244880199432373,
+                -0.5863540172576904,
+                -0.9997923374176025
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 5,
+            "componentType" : 5126,
+            "count" : 19635,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 6,
+            "componentType" : 5126,
+            "count" : 19635,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 7,
+            "componentType" : 5123,
+            "count" : 80448,
+            "type" : "SCALAR"
+        },
+        {
+            "bufferView" : 8,
+            "componentType" : 5126,
+            "count" : 19635,
+            "max" : [
+                2.244880199432373,
+                0.8941131830215454,
+                0.9997923374176025
+            ],
+            "min" : [
+                -2.244880199432373,
+                -0.5863540172576904,
+                -0.9997923374176025
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 9,
+            "componentType" : 5126,
+            "count" : 19635,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 10,
+            "componentType" : 5126,
+            "count" : 19635,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 11,
+            "componentType" : 5126,
+            "count" : 19635,
+            "max" : [
+                2.244880199432373,
+                0.8941131830215454,
+                0.9997923374176025
+            ],
+            "min" : [
+                -2.244880199432373,
+                -0.5863540172576904,
+                -0.9997923374176025
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 12,
+            "componentType" : 5126,
+            "count" : 19635,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 13,
+            "componentType" : 5126,
+            "count" : 19635,
+            "type" : "VEC2"
+        }
+    ],
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 48,
+            "byteOffset" : 0
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 48,
+            "byteOffset" : 48
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 32,
+            "byteOffset" : 96
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 12,
+            "byteOffset" : 128
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 235620,
+            "byteOffset" : 140
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 235620,
+            "byteOffset" : 235760
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 157080,
+            "byteOffset" : 471380
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 160896,
+            "byteOffset" : 628460
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 235620,
+            "byteOffset" : 789356
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 235620,
+            "byteOffset" : 1024976
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 157080,
+            "byteOffset" : 1260596
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 235620,
+            "byteOffset" : 1417676
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 235620,
+            "byteOffset" : 1653296
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 157080,
+            "byteOffset" : 1888916
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 2045996,
+            "uri" : "lego.bin"
+        }
+    ]
+}
