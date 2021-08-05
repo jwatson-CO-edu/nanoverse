@@ -1,6 +1,9 @@
 # Custom
 .vscode/
 build/
+*/.ipynb_checkpoints/
+*/*/.ipynb_checkpoints/
+*/*/*/.ipynb_checkpoints/
 
 # Prerequisites
 *.d
