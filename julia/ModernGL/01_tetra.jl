@@ -23,11 +23,11 @@ println(createcontextinfo())
 ##### Create Tetrahedron #####
 # https://math.stackexchange.com/questions/562741/what-are-the-coordinates-of-the-vertices-of-a-regular-tetrahedron-relative-to-i
 
-tetraVerts = GLfloat[
-    -1.0,  0.0, -1/sqrt(2)
-     1.0,  0.0, -1/sqrt(2)
-     0.0, -1.0,  1/sqrt(2)
-     0.0,  1.0,  1/sqrt(2)
+verts = GLfloat[
+    -1.0,  0.0, -1/sqrt(2),
+     1.0,  0.0, -1/sqrt(2),
+     0.0, -1.0,  1/sqrt(2),
+     0.0,  1.0,  1/sqrt(2),
 ]
 
 # Generate a vertex array and array buffer for our data
@@ -35,7 +35,7 @@ vao = glGenVertexArray()
 glBindVertexArray(vao)
 vbo = glGenBuffer()
 glBindBuffer(GL_ARRAY_BUFFER, vbo)
-glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW)
+glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW)
 
 # Create and initialize shaders
 const vsh = """
