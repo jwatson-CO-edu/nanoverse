@@ -1,22 +1,16 @@
 # nanoverse
-Minimum Viable 3D for Linux
+A rendering engine for artistic projects and lightweight simulations
+* Keep work on this toy to an absolute minimum
 * All units in meters `[m]`
 
 ### Dev Plan
 ```
 /***** Architecture 1: Making Triangles Dance *****/
  ~  Functional Core
-[Y] Find/Compile VBO Example - 2020-12-23 , http://www.songho.ca/opengl/gl_vbo.html , vboSimple.zip
-[Y] Context creation process w/ defaults >> COMPLETE - 2021-03-04
-    [Y] Default params - 2020-12-23 , Struct with default params
-    [Y] Default draw - 2020-12-23
-    [Y] Default resize - 2020-12-23
-     ~  No default interaction
-    [Y] Default Demo window - Should be an example how things are rendered. - 2021-03-04
-[Y] Cube/Cuboid primitive mesh: Parameterize the Songho cube
+[ ] Rotate the camera around the VBO triangle
+[ ] Wrap the setup into functions
 [ ] Cube/Cuboid primitive model
     [ ] Vertex array rendering
-        [Y] Draw cube >> 2021-03-21: Make sure that your camera vectors make sense, Smooth shading needed for per-vtx colors
         [ ] Set up light(s)
         [ ] Transform Camera
     [ ] Vertex buffer rendering
@@ -51,45 +45,26 @@ Minimum Viable 3D for Linux
     [ ] Buffers contiguous in memory?
 
 
-/***** DECISION POINT *****/
-[[OK]] WHAT IS THIS SOFTWARE?: -- A rendering engine for artistic projects and lightweight simulations
-    * Orbit simulation
-    * Evolving L-Systems (plants)
-    * Shader/Compute experiments
-    * OpenCL experiments
-    * Test Utah Graphics Class Techniques
-[[OK]] WHAT WOULD DR. WATSON DO?: Keep work on this toy to an absolute minimum - Scratch the itch without scarring
-[[OK]] ORGANIZE THE REMAINING DEV PLAN ACCORDINGLY
-      [Y] Move pruned subgoals to de-prioritzed projects
-
-
 /***** Architecture 2: Frames for Run *****/
  ~  Purpose: Digital sculpture platform with a dash of simulation
- ~  Have Fun
  ~  Be careful with your time
 [ ] Spheres (Take from CU graphics/MS)
 [ ] N-body simulation, orbiting spheres
 [ ] Boids: https://www.youtube.com/watch?v=bqtqltqcQhw
-[ ] Slime molds as surface coloration on a mobius strip model: https://www.youtube.com/watch?v=X-iSQQgOd1A
 [ ] L-system tree
 [ ] Mesh with animated shader
 [ ] Load ship models into space scene
 [ ] Glitch shader
 [ ] VHS Shader
 [ ] Particle shader
-[ ] OpenCL example
-[ ] Graph of relative frames like TF
 
 
-/***** Architecture 3: Let's Code (Applied) Physics *****/    
-[ ] FEA / Beam Elements: Compute solver (See above decision)
-    [ ] Voxelize: Soft robots , https://www.creativemachineslab.com/voxcad.html
-    [ ] Dynamic Truss Strain & Fracture
-    [ ] Deformable objects
-[ ] AGV Wheel contact
-    [ ] Bond Graphs?
-    [ ] Bullet?
-[ ] Fluid dynamics (SPH / Meshfree)
+/***** Architecture 3: Let's Code (Applied) Physics *****/ 
+ ~  Purpose: Daydream itch
+[ ] Download Clifford lib
+[ ] Clifford projectile
+[ ] Clifford planets
+[ ] Clifford electrodynamics
 [ ] Electrodynamics
     [ ] Magnets
         [ ] Motor field optimizer
