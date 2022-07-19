@@ -1,0 +1,1 @@
+import ogre_python.ogre as ogre
