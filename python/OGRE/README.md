@@ -12,3 +12,4 @@
 1. `mkdir build && cd $_`
 1. `cmake ..`
 1. `sudo make install -j4`
+1. If SWIG was installed before building OGRE, the Python API (`ogre-python`) will automatically become available under Python 3.8. (2022-07-21), `import Ogre`
