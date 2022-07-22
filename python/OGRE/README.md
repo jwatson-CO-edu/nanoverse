@@ -12,9 +12,3 @@
 1. `mkdir build && cd $_`
 1. `cmake ..`
 1. `sudo make install -j4`
-
-
-
-
-
-1. `sudo apt install libogre-2.2 libogre-2.2-dev ogre-2.2-doc ogre-2.2-tools`
