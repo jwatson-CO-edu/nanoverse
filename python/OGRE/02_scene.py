@@ -18,6 +18,13 @@ def main():
 
     scn_mgr.setAmbientLight( [0.7, 0.7, 0.7] ) # NOTE: This affects objects NOT BG color!
 
+    ent1 = scn_mgr.createEntity( "Knot", "./Mesh/knot.mesh" )
+    ent1.setMaterialName( 'Examples/RustySteel' )
+    node1 = scn_mgr.rootSceneNode.createChildSceneNode( "RobotNode" )
+    node1.attachObject( ent1 )
+
+    scn_mgr.setSkyDome(True, 'Examples/CloudySky', 4.0, 8.0)
+
     # DEBUG: Write available `SceneManager` members to a file so that we can follow the deprecated tutorial
     with open( "SceneManager-contents.txt", 'w' ) as f:
         f.writelines( [str(elem)+'\n' for elem in dir( scn_mgr )] )
