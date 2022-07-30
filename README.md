@@ -7,10 +7,10 @@ A rendering engine for artistic projects and lightweight simulations
 ### Dev Plan 1: PhD Treats (Tentatively useful)
 ```
 /***** Jupyter 1: Making Triangles Dance *****/
-[ ] Animated ship on starfield
-    [ ] Fix Phong lighting
-[ ] Controllable ship on grid field
-    [ ] Pygame needed for controller input?  Does it work in Jupyter?
+[N] Animated ship on starfield - 2022-07-29: pythreejs is NOT made for programmatic animation
+    [N] Fix Phong lighting
+[N] Controllable ship on grid field - 2022-07-29: pythreejs is NOT made for programmatic animation
+    [N] Pygame needed for controller input?  Does it work in Jupyter?
 
 
 /***** Jupyter 2: Research Applications *****/
