@@ -7,6 +7,7 @@ build/
 */*/*/.ipynb_checkpoints/
 */*/__pycache__/
 python/OGRE/pugixml/
+zig/mach/
 
 # Prerequisites
 *.d
