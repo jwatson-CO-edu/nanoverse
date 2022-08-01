@@ -5,6 +5,7 @@ build/
 */.ipynb_checkpoints/
 */*/.ipynb_checkpoints/
 */*/*/.ipynb_checkpoints/
+*/*/__pycache__/
 python/OGRE/pugixml/
 
 # Prerequisites
