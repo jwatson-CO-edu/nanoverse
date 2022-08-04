@@ -39,10 +39,14 @@ A rendering engine for jupyter visualization and artistic projects
     [ ] Stretch RGB over point cloud (Graphics Class)
     { } Fuse pictures
 [ ] Render a ROS sensor frame in Jupyter
-```
+
 
 /***** Rendering 2: Restore *****/
 [ ] Draw RestoreBot
+[ ] Draw RestoreCart2 relative to RestoreBot
+```
+
+
 
 
 ### Dev Plan 2: Pure Frivolity (Dangerous!)
