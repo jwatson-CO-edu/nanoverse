@@ -1,12 +1,12 @@
 # nanoverse
-A rendering engine for artistic projects and lightweight simulations
+A rendering engine for jupyter visualization and artistic projects
 * Keep work on this toy to a responsible minimum
 * All units in meters `[m]`
 
 
 ### Dev Plan 1: PhD Treats (Tentatively useful)
 ```
-/***** Jupyter 1: Making Triangles Dance *****/
+/***** Jupyter 1: Making Triangles Dance, SKIPPED *****/
 [N] Animated ship on starfield - 2022-07-29: pythreejs is NOT made for programmatic animation
     [N] Fix Phong lighting
 [N] Controllable ship on grid field - 2022-07-29: pythreejs is NOT made for programmatic animation
@@ -15,33 +15,37 @@ A rendering engine for artistic projects and lightweight simulations
 
 /***** Jupyter 2: Research Applications *****/
 [ ] Recreate UR5 model from Graphics Class
-    [ ] Investigate pythreejs shape primitives rather than rewriting your own!
-[ ] Put text in the 3D environment
-[ ] Wrap the setup into functions --> module file
+    [Y] Investigate pythreejs shape primitives rather than rewriting your own! - 2022-08-04: Links {1,2,3} drawn with p3js cylinders + wireframe!
+    [ ] Port robot drawing procedure from C++ graphics assignment
+    [ ] Draw TCP frame (see ref frame obj)
 [ ] Recreate reference frame object
+    [ ] Put text in the 3D environment
+    [ ] Label axes
+[Y] Wrap the setup into functions - 2022-08-04: Simplest rendering function for display and debugging
 
 
 /***** Jupyter 3: Robot state *****/
 [ ] Query robot and render joint state
+[ ] Port FT drawing code from robot manip class (open3d --to-> pythreejs)
 [ ] Query sensor and render FT state
-[ ] Render gripper state
+[ ] Render gripper state (simply)
 
 
-/***** Rendering 1: Research Applications *****/
-[ ] Textured object
-[ ] Textured dinosaur (Graphics Class)
-
-
-/***** Rendering 2: Restore *****/
+/***** Rendering 1: Restore *****/
 [ ] Render Restorebot data
     [ ] Point cloud
+    [ ] Textured object
+    [ ] Textured dinosaur (Graphics Class)
     [ ] Stretch RGB over point cloud (Graphics Class)
     { } Fuse pictures
 [ ] Render a ROS sensor frame in Jupyter
 ```
 
+/***** Rendering 2: Restore *****/
+[ ] Draw RestoreBot
 
-### Dev Plan 2: Pure Frivolity (Dangerous)
+
+### Dev Plan 2: Pure Frivolity (Dangerous!)
 ```
 /***** Architecture 1: Mach Test (Zig) *****/
  ~  Functional Core
