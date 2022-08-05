@@ -21,6 +21,7 @@ A rendering engine for jupyter visualization and artistic projects
 [ ] Recreate reference frame object
     [ ] Put text in the 3D environment
     [ ] Label axes
+[ ] Can I animate simply by calling render repeatedly?: https://threejs.org/docs/#manual/en/introduction/Creating-a-scene
 [Y] Wrap the setup into functions - 2022-08-04: Simplest rendering function for display and debugging
 
 
