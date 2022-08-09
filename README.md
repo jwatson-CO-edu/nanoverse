@@ -22,6 +22,8 @@ A rendering engine for jupyter visualization and artistic projects
     [ ] Put text in the 3D environment
     [ ] Label axes
 [Y] Wrap the setup into functions - 2022-08-04: Simplest rendering function for display and debugging
+[Y] Animation - 2022-08-09: Simplest animation is changing a field and re-rendering the frame, but
+                            in this scheme there is no buffering, so it is very slow and jumpy
 
 
 /***** Jupyter 3: Robot state *****/
