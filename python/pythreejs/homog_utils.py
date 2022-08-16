@@ -293,6 +293,7 @@ def winding_num_2D( point , polygon ):
                 w -= 0.5 # possible  CW encirclement pending
     return w
 
+
 def point_in_poly_2D( point , polygon ):
     """ Return True if the 'polygon' contains the 'point', otherwise return False, based on the winding number """
     return not ( winding_num_2D( point , polygon ) == 0.0 )  # The winding number gives the number of times a polygon encircles a point 
