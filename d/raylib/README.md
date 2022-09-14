@@ -17,3 +17,6 @@
 1. Code
 1. `dub add raylib-d`
 1. `dub build`
+
+# Resources
+* https://www.reddit.com/r/raylib/comments/v2su1s/help_with_dynamic_mesh_creation_in_raylib/
