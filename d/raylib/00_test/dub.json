@@ -1,0 +1,13 @@
+{
+	"authors": [
+		"James"
+	],
+	"copyright": "Copyright © 2022, James",
+	"dependencies": {
+		"raylib-d": "~>4.2.0"
+	},
+	"libs-posix": [ "raylib" ],
+	"description": "A minimal D application.",
+	"license": "MIT",
+	"name": "00_test"
+}
