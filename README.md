@@ -1,14 +1,61 @@
 # nanoverse
-A rendering engine for artistic projects and lightweight simulations
-* Keep work on this toy to an absolute minimum
+A rendering engine for jupyter visualization and artistic projects
+* Keep work on this toy to a responsible minimum
 * All units in meters `[m]`
 
-### Dev Plan
+
+### Dev Plan 1: PhD Treats (Tentatively useful)
 ```
-/***** Architecture 1: Making Triangles Dance *****/
+/***** Jupyter 1: Making Triangles Dance, SKIPPED *****/
+[N] Animated ship on starfield - 2022-07-29: pythreejs is NOT made for programmatic animation
+    [N] Fix Phong lighting
+[N] Controllable ship on grid field - 2022-07-29: pythreejs is NOT made for programmatic animation
+    [N] Pygame needed for controller input?  Does it work in Jupyter?
+
+
+/***** Jupyter 2: Research Applications *****/
+[ ] Recreate UR5 model from Graphics Class
+    [Y] Investigate pythreejs shape primitives rather than rewriting your own! - 2022-08-04: Links {1,2,3} drawn with p3js cylinders + wireframe!
+    [ ] Port robot drawing procedure from C++ graphics assignment
+    [ ] Draw TCP frame (see ref frame obj)
+[ ] Recreate reference frame object
+    [ ] Put text in the 3D environment
+    [ ] Label axes
+[ ] Can I animate simply by calling render repeatedly?: https://threejs.org/docs/#manual/en/introduction/Creating-a-scene
+[Y] Wrap the setup into functions - 2022-08-04: Simplest rendering function for display and debugging
+[Y] Animation - 2022-08-09: Simplest animation is changing a field and re-rendering the frame, but
+                            in this scheme there is no buffering, so it is very slow and jumpy
+
+
+/***** Jupyter 3: Robot state *****/
+[ ] Query robot and render joint state
+[ ] Port FT drawing code from robot manip class (open3d --to-> pythreejs)
+[ ] Query sensor and render FT state
+[ ] Render gripper state (simply)
+
+
+/***** Rendering 1: Restore *****/
+[ ] Render Restorebot data
+    [ ] Point cloud
+    [ ] Textured object
+    [ ] Textured dinosaur (Graphics Class)
+    [ ] Stretch RGB over point cloud (Graphics Class)
+    { } Fuse pictures
+[ ] Render a ROS sensor frame in Jupyter
+
+
+/***** Rendering 2: Restore *****/
+[ ] Draw RestoreBot
+[ ] Draw RestoreCart2 relative to RestoreBot
+```
+
+
+
+
+### Dev Plan 2: Pure Frivolity (Dangerous!)
+```
+/***** Architecture 1: Mach Test (Zig) *****/
  ~  Functional Core
-[ ] Rotate the camera around the VBO triangle
-[ ] Wrap the setup into functions
 [ ] Cube/Cuboid primitive model
     [ ] Vertex array rendering
         [ ] Set up light(s)
@@ -40,17 +87,13 @@ A rendering engine for artistic projects and lightweight simulations
               Buttons: { ??? }                 }
     [ ] Assumed neutral bouyancy (levitate)
     { } Damped stop after key-up    
-[ ] Evaluate drawing pipeline optimization
-    [ ] Find out where VBO and other graphic memory is stored
-    [ ] Buffers contiguous in memory?
 
 
-/***** Architecture 2: Frames for Run *****/
+/***** Architecture 2: Frames for Fun *****/
  ~  Purpose: Digital sculpture platform with a dash of simulation
  ~  Be careful with your time
 [ ] Spheres (Take from CU graphics/MS)
 [ ] N-body simulation, orbiting spheres
-[ ] Boids: https://www.youtube.com/watch?v=bqtqltqcQhw
 [ ] L-system tree
 [ ] Mesh with animated shader
 [ ] Load ship models into space scene
@@ -61,7 +104,7 @@ A rendering engine for artistic projects and lightweight simulations
 
 /***** Architecture 3: Let's Code (Applied) Physics *****/ 
  ~  Purpose: Daydream itch
-[ ] Download Clifford lib
+[ ] Find/Create Clifford lib in Zig
 [ ] Clifford projectile
 [ ] Clifford planets
 [ ] Clifford electrodynamics
@@ -77,11 +120,6 @@ A rendering engine for artistic projects and lightweight simulations
 [ ] Modeling software integration
     [ ] Parse Blender OBJ format (textured?)
     [ ] Parse popular CAD format
-[ ] Serialization (Use Boost?)
-    [ ] Entities / Agents: Store params
-    [ ] Scene graphs: Make reconstructing the graph EASY
-        [ ] Terrain: How to chunk?
-        [ ] Mark agents in/active
 [ ] Advanced memory management: Dynamic and Optimized Un/Loading
     [ ] Investigate a loading thread
     [ ] Investigate background loading
@@ -127,26 +165,21 @@ A rendering engine for artistic projects and lightweight simulations
     [ ] Multiple players
     [ ] Hosted world
     [ ] Agent exchange
-[ ] Python API
-[ ] Golang API
+[ ] Live Coding IDE
 [ ] Publish
     [ ] Linux .deb distribution
         [ ] How to handle dependencies?
     [ ] Python package
     [ ] Golang package
     [ ] Add to Ubuntu multiverse
+```
 
 
-
-
-
+### Dev Plan 3: Pure Folly (Do not attempt before establishing career!)
+```
 /***** Architecture N: Shall?  we?  play?  a?  game? *****/
  ~  Have Fun
  ~  NOTE: The entire scene is always loaded
-[ ] SDL2 Interaction
-    [ ] KB input
-    [ ] Mouse input
-    [ ] JS input
 [ ] Evaluate Modular Refactor:
     [ ] Consider Interfaces for each kind of activity: { Graphics, Control, Intelligence, More? }
     [ ] Does it make sense to have an interface for each?
@@ -155,18 +188,15 @@ A rendering engine for artistic projects and lightweight simulations
         For example, Using multiple interfaces handled with an inheritance list 
         that facilitates information flow through pointers on both sides such that s/getters are never used?
         https://www.arbinada.com/en/node/1466
-[ ] Player Class
+[ ] Player Class (Is this already supported in Mach?)
     [ ] FPV Camera
     [ ] KB input
     [ ] Mouse input
     [ ] JS input
-[ ] Scene Graph
+[ ] Scene Graph (Is this already supported in Mach?)
     [ ] Subtree complexity measure
     [ ] Subtree drawing
-[ ] Evaluate Boost Interop: Time to get modern!
-    [ ] Status of Boost OGL Support   & Evaluate refactor
-    [ ] Status of Boost Eigen Support & Evaluate refactor
-[ ] Evaluate Entity Component System
+[ ] Evaluate Entity Component System (Is this already supported in Mach?)
     [ ] Different components for { Drawing, Mesh, Physics }
     [ ] Will the capabilities of objects really be that different?
     [ ] Entity Base Class
@@ -175,11 +205,11 @@ A rendering engine for artistic projects and lightweight simulations
             [ ] Simple Model
             [ ] Composite Model (Merge buffers for speed?(Inherit Model))
         [ ] Pose & Motion (Simplicity: Both static and dynamic objects inherit this)
-[ ] Agent Class
+[ ] Agent Class (Is this already supported in Mach?)
     [ ] State exchange format (Graphs? Children hashed?)
     [ ] Slot for brain
-    [ ] Boids Demo
-[ ] Add Bullet Physics
+    [ ] Advanced Boids Demo
+[ ] Add Bullet Physics (Is this already supported in Mach?)
     [ ] Install/import?
     [ ] Bullet Model Properties
         [ ] Collision mesh
@@ -197,7 +227,7 @@ A rendering engine for artistic projects and lightweight simulations
     [ ] Obstacle collision
 [ ] Tank
     [ ] Decide First/Third PV
-    [ ] Independent Aim/Steer
+    [ ] Independent Aim/Steer (w/ dual views!)
 
 ```
 # Dependencies

@@ -1,9 +1,13 @@
 # Custom
 .vscode/
 build/
+.ipynb_checkpoints/
 */.ipynb_checkpoints/
 */*/.ipynb_checkpoints/
 */*/*/.ipynb_checkpoints/
+*/*/__pycache__/
+python/OGRE/pugixml/
+zig/mach/
 
 # Prerequisites
 *.d
