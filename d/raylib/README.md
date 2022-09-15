@@ -3,6 +3,7 @@
 1. `cd /tmp`
 1. `git clone https://github.com/raysan5/raylib.git raylib`
 1. `cd raylib`
+1. `git checkout 4.2.0` # 2022-09-14: Or the version currently targeted by `raylib-d`
 1. `mkdir build && cd build`
 1. `cmake -DBUILD_SHARED_LIBS=ON ..`
 1. `make -j2`

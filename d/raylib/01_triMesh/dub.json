@@ -1,0 +1,15 @@
+{
+	"authors": [
+		"James"
+	],
+	"copyright": "Copyright © 2022, James",
+	"dependencies": {
+		"raylib-d": "~>4.2.0"
+	},
+	"description": "A minimal D application.",
+	"libs-posix": [
+		"raylib"
+	],
+	"license": "MIT",
+	"name": "01_trimesh"
+}
