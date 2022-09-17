@@ -10,7 +10,6 @@ python/OGRE/pugixml/
 zig/mach/
 
 # Prerequisites
-*.d
 
 # Compiled Object files
 *.slo
