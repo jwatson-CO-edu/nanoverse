@@ -6,8 +6,10 @@
 	"dependencies": {
 		"raylib-d": "~>4.2.0"
 	},
-	"libs-posix": [ "raylib" ],
 	"description": "A minimal D application.",
+	"libs-posix": [
+		"raylib"
+	],
 	"license": "MIT",
 	"name": "00_test"
 }

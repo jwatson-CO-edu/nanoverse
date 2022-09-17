@@ -9,6 +9,7 @@
 1. `make -j2`
 1. `sudo make install`
 1. `sudo reboot now`
+1. `sudo ldconfig` # Linker needs to be updated
 
 # Dlang Raylib API
 1. Install Dlang
