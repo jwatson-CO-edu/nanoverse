@@ -9,6 +9,9 @@ build/
 python/OGRE/pugixml/
 zig/mach/
 
+d/raylib/*/*.app
+
+
 # Prerequisites
 
 # Compiled Object files
