@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/02_glidergrid
+02_glidergrid.so
+02_glidergrid.dylib
+02_glidergrid.dll
+02_glidergrid.a
+02_glidergrid.lib
+02_glidergrid-test-*
+*.exe
+*.o
+*.obj
+*.lst
