@@ -2,7 +2,7 @@
 
 /*
 ***** DEV PLAN *****
-[ ] Draw the entire glider
+[ ] Draw the entire glider: https://github.com/jwatson-CO-edu/nanoverse/blob/main/python/pythreejs/50_starfield.ipynb
 [ ] Rotate glider
 [ ] Roll glider while flying in a circle
 	* https://www.raylib.com/examples/models/loader.html?name=models_yaw_pitch_roll
@@ -35,7 +35,10 @@ class TriMesh{
     	mesh.indices       = cast(ushort*)malloc(ushort.sizeof * mesh.vertexCount);
 	}
 
+	/// Methods ///
+
 	public bool push_vertex( float x, float y, float z ){
+		// Add a vertex
 		if(vDex+3 > mesh.vertexCount*3){  return false;  }else{
 			mesh.vertices[vDex + 0] = x;
 			mesh.vertices[vDex + 1] = y;
@@ -46,6 +49,7 @@ class TriMesh{
 	}
 
 	public bool push_triangle( ushort p1, ushort p2, ushort p3 ){
+		// Add a triangle in CCW order spanning 3 vertex indices
 		if(iDex+3 > mesh.vertexCount){  return false;  }else{
 			mesh.indices[iDex + 0] = p1;
 			mesh.indices[iDex + 1] = p2;
@@ -56,6 +60,7 @@ class TriMesh{
 	}
 
 	public void load_geo(){
+		// Send triangle mesh geometry to RayLib, needed for drawing
 		UploadMesh(&mesh, true);
     	model = LoadModelFromMesh(mesh);
 	}
