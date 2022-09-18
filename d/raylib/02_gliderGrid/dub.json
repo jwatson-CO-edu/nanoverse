@@ -4,8 +4,11 @@
 	],
 	"copyright": "Copyright © 2022, James",
 	"dependencies": {
-		"raylib-d": "==4.2.0"
+		"raylib-d": "~>4.2.1"
 	},
+	"libs-posix": [
+		"raylib"
+	],
 	"description": "Delta Glider over a flat grid field",
 	"license": "MIT",
 	"name": "02_glidergrid",

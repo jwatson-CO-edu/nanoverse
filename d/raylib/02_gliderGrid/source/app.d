@@ -1,13 +1,22 @@
 // Adapted from: https://www.reddit.com/r/raylib/comments/v2su1s/help_with_dynamic_mesh_creation_in_raylib/
 
+/*
+***** DEV PLAN *****
+[ ] Draw the entire glider
+[ ] Rotate glider
+[ ] Roll glider while flying in a circle
+	* https://www.raylib.com/examples/models/loader.html?name=models_yaw_pitch_roll
+	* https://bedroomcoders.co.uk/aligning-a-model-with-a-terrain-raylib/
+*/
+
 import core.stdc.stdlib; // `malloc`
 import raylib; // --------- easy graphics
 
 class TriMesh{
 	/// Members ///
 	int   N_tri; // Number of triangles 
-	ulong vDex;
-	ulong iDex;
+	ulong vDex; //- Index offset for vertex coords
+	ulong iDex; //- Index offset for face index
 	Mesh  mesh; //- Raylib mesh geometry
 	Model model; // Raylib drawable model
 
@@ -45,67 +54,53 @@ class TriMesh{
 			return true;
 		}
 	}
+
+	public void load_geo(){
+		UploadMesh(&mesh, true);
+    	model = LoadModelFromMesh(mesh);
+	}
 }
 
 void main()
 {
-	// // call this before using raylib
-	// validateRaylibBinding();
+	// call this before using raylib
+	validateRaylibBinding();
 	
-    // // Window / Display Params
-    // InitWindow(800, 600, "Hello, Raylib-D!");
-    // SetTargetFPS(60);
-    // rlDisableBackfaceCulling();
-    // rlEnableSmoothLines();
+    // Window / Display Params
+    InitWindow(800, 600, "Hello, Raylib-D!");
+    SetTargetFPS(60);
+    rlDisableBackfaceCulling();
+    rlEnableSmoothLines();
 
-    // // Camera
-    // Camera camera = Camera(
-    //     Vector3(5.0, 5.0, 5.0), 
-    //     Vector3(0.0, 0.0, 0.0), 
-    //     Vector3(0.0, 1.0, 0.0), 
-    //     45.0, 
-    //     0
-    // );
+    // Camera
+    Camera camera = Camera(
+        Vector3(5.0, 5.0, 5.0), 
+        Vector3(0.0, 0.0, 0.0), 
+        Vector3(0.0, 1.0, 0.0), 
+        45.0, 
+        0
+    );
 
-    // // Entities
-    // int n = 1;
-    // Mesh mesh = Mesh();
-    // mesh.triangleCount = n;
-    // mesh.vertexCount   = n * 3;
-    // mesh.vertices      = cast(float*)malloc(float.sizeof * mesh.vertexCount * 3);
-    // mesh.indices       = cast(ushort*)malloc(ushort.sizeof * mesh.vertexCount);
-    
-    // mesh.vertices[0]   = 0.0;
-    // mesh.vertices[1]   = 0.0;
-    // mesh.vertices[2]   = 0.0;
-    
-    // mesh.vertices[3]   = 0.0;
-    // mesh.vertices[4]   = 0.0;
-    // mesh.vertices[5]   = 1.0;
-    
-    // mesh.vertices[6]   = 0.0;
-    // mesh.vertices[7]   = 1.0;
-    // mesh.vertices[8]   = 0.0;
-    
-    // mesh.indices[0]    = 0;
-    // mesh.indices[1]    = 1;
-    // mesh.indices[2]    = 2;
+	TriMesh tmsh = new TriMesh(1);
+	tmsh.push_vertex( 0.0, 0.0, 0.0 );
+	tmsh.push_vertex( 0.0, 0.0, 1.0 );
+	tmsh.push_vertex( 0.0, 1.0, 0.0 );
+	tmsh.push_triangle( 0, 1, 2 );
+	tmsh.load_geo();
 
-    // UploadMesh(&mesh, true);
-    // Model model = LoadModelFromMesh(mesh);
+	while (!WindowShouldClose())
+	{
+		BeginDrawing();
+		ClearBackground(Colors.RAYWHITE);
 
-    // while (!WindowShouldClose())
-	// {
-	// 	BeginDrawing();
-	// 	ClearBackground(Colors.RAYWHITE);
+        BeginMode3D(camera);
+        // DrawModelWires(tmsh.model, Vector3(0.0, 0.0, 0.0), 1.00, Colors.RED);
+        DrawModel(tmsh.model, Vector3(0.0, 0.0, 0.0), 1.00, Colors.RED);
+        DrawGrid(10, 1.0);
+        EndMode3D();
 
-    //     BeginMode3D(camera);
-    //     DrawModelWires(model, Vector3(0.0, 0.0, 0.0), 1.00, Colors.RED);
-    //     DrawGrid(10, 1.0);
-    //     EndMode3D();
-
-	// 	DrawText("Hello, World!", 400, 300, 28, Colors.BLACK);
-	// 	EndDrawing();
-	// }
-	// CloseWindow();
+		DrawText("Hello, World!", 400, 300, 28, Colors.BLACK);
+		EndDrawing();
+	}
+	CloseWindow();
 }
