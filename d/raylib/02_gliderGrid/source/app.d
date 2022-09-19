@@ -3,8 +3,8 @@
 /*
 ***** DEV PLAN *****
 [Y] Draw the entire glider - 2022-09-19: Complete and correct, but with no shading
-[ ] Rotate glider
-[ ] Roll glider while flying in a circle
+[Y] Rotate glider - 2022-09-19: Complete and correct, but with no shading
+[Y] Roll glider while flying in a circle
 	* https://www.raylib.com/examples/models/loader.html?name=models_yaw_pitch_roll
 	* https://bedroomcoders.co.uk/aligning-a-model-with-a-terrain-raylib/
 { } Simple lighting / shading?
@@ -23,9 +23,11 @@ class TriMesh{
 	float x; // --- World X pos
 	float y; // --- World Y pos
 	float z; // --- World Z pos
+	Matrix R; // -- World rotation
 	float r; // --- Local roll  angle
 	float p; // --- Local pitch angle
 	float w; // --- Local yaw   angle
+	Matrix T; // -- World orientation
 
 	/// Constructors ///
 	this( int n ){
@@ -40,6 +42,14 @@ class TriMesh{
     	mesh.vertexCount   = n * 3;
 		mesh.vertices      = cast(float*)malloc(float.sizeof * mesh.vertexCount * 3);
     	mesh.indices       = cast(ushort*)malloc(ushort.sizeof * mesh.vertexCount);
+
+		// Init pose
+		x = 0.0; // --- World X pos
+		y = 0.0; // --- World Y pos
+		z = 0.0; // --- World Z pos
+		r = 0.0; // --- Local roll  angle
+		p = 0.0; // --- Local pitch angle
+		w = 0.0; // --- Local yaw   angle
 	}
 
 	/// Methods ///
@@ -80,12 +90,34 @@ class TriMesh{
 	}
 
 	public void set_RPY( float r_, float p_, float y_ ){
-		// Set the local Roll, Pitch, Yaw of the model
-		r = r_;
-		p = p_;
-		w = y_;
+		// Set the world Roll, Pitch, Yaw of the model
+		R = MatrixRotateXYZ( Vector3( p_, y_, r_ ) );
 	}
 
+	public void rotate_RPY( float r_, float p_, float y_ ){
+		r += r_;
+		p += p_;
+		w += y_;
+		T = MatrixMultiply( R, MatrixRotateXYZ( Vector3( p, w, r ) ) );
+	}
+
+	public void z_thrust( float d = 0.0 ){
+		// Advance a plane model in the forward direction (local Z)
+		Vector3 vec = Vector3Transform(Vector3( 0.0, 0.0, d ), T);
+		x += vec.x;
+		y += vec.y;
+		z += vec.z;
+	}
+
+	public void draw(){
+		// Draw the model at the current pose
+		// DrawModelWires(tmsh.model, Vector3(0.0, 0.0, 0.0), 1.00, Colors.RED);
+		
+        // DrawModel(model, Vector3(x, y, z), 1.0, Colors.RED);
+
+		model.transform = T;
+        DrawModelWires(model, Vector3(x, y, z), 1.0, Colors.RED);
+	}
 }
 
 void main()
@@ -96,14 +128,14 @@ void main()
     // Window / Display Params
     InitWindow(800, 600, "Hello, Raylib-D!");
     SetTargetFPS(60);
-    // rlDisableBackfaceCulling();
+    rlDisableBackfaceCulling();
     rlEnableSmoothLines();
 
     // Camera
     Camera camera = Camera(
         Vector3(10.0, 10.0, 10.0), 
-        Vector3(0.0, 0.0, 0.0), 
-        Vector3(0.0, 1.0, 0.0), 
+        Vector3(5.0, 0.0, 0.0), 
+        Vector3(0.0, 0.0, 1.0), 
         45.0, 
         0
     );
@@ -116,12 +148,12 @@ void main()
 
 	TriMesh tmsh = new TriMesh( 8 ); // MUST match the total number of triangles to draw!
 	// Verts
-	tmsh.push_vertex(  0.0               ,  0.0       , 0.0                   ); // 0, Front
-	tmsh.push_vertex( -wingspan*fusFrac/2,  0.0       , +wingspan*thickFrac/2 ); // 1, Top peak
-	tmsh.push_vertex( -wingspan*fusFrac/2,  0.0       , -wingspan*thickFrac/2 ); // 2, Bottom peak
-	tmsh.push_vertex( -wingspan*fusFrac  ,  0.0       , 0.0                   ); // 3, Back
-	tmsh.push_vertex( -wingspan*sweptFrac, -wingspan/2, 0.0                   ); // 4, Left wingtip
-	tmsh.push_vertex( -wingspan*sweptFrac, +wingspan/2, 0.0                   ); // 5, Right wingtip 
+	tmsh.push_vertex(  0.0        ,  0.0                  , 0.0                 + wingspan*sweptFrac/2.0 ); // 0, Front
+	tmsh.push_vertex(  0.0        , +wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0 ); // 1, Top peak
+	tmsh.push_vertex(  0.0        , -wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0 ); // 2, Bottom peak
+	tmsh.push_vertex(  0.0        ,  0.0                  , -wingspan*fusFrac   + wingspan*sweptFrac/2.0 ); // 3, Back
+	tmsh.push_vertex( -wingspan/2 ,  0.0                  , -wingspan*sweptFrac + wingspan*sweptFrac/2.0 ); // 4, Left wingtip
+	tmsh.push_vertex( +wingspan/2 ,  0.0                  , -wingspan*sweptFrac + wingspan*sweptFrac/2.0 ); // 5, Right wingtip 
 	// Faces
 	tmsh.push_triangle( 0,4,1 ); // Left  Top    Front
 	tmsh.push_triangle( 1,4,3 ); // Left  Top    Back 
@@ -134,18 +166,29 @@ void main()
 
 	tmsh.load_geo();
 
+	tmsh.set_RPY( 0.0, 0.0, 0.0 ); // 3.1416/2.0
+	tmsh.rotate_RPY( 0.0, -3.1416/2.0, 0.0 );
+
 	while (!WindowShouldClose())
 	{
 		BeginDrawing();
 		ClearBackground(Colors.RAYWHITE);
 
         BeginMode3D(camera);
-        // DrawModelWires(tmsh.model, Vector3(0.0, 0.0, 0.0), 1.00, Colors.RED);
-        DrawModel(tmsh.model, Vector3(0.0, 0.0, 0.0), 1.0, Colors.RED);
-        DrawGrid(10, 1.0);
+        
+		
+		tmsh.rotate_RPY( 0.0, 0.0, 2.0*3.1416/60.0/4.0 ); // Test local yaw
+		tmsh.rotate_RPY( 2.0*3.1416/60.0/4.0, 0.0, 0.0 ); // Test local roll
+		// tmsh.rotate_RPY( 0.0, 2.0*3.1416/60.0/4.0, 0.0 ); // Test local pitch
+
+		tmsh.z_thrust( 10.0/60.0 );
+
+		tmsh.draw();
+
+        // DrawGrid(10, 1.0);
         EndMode3D();
 
-		DrawText("Hello, World!", 400, 300, 28, Colors.BLACK);
+		// DrawText("Hello, World!", 400, 300, 28, Colors.BLACK);
 		EndDrawing();
 	}
 	CloseWindow();
