@@ -111,10 +111,6 @@ class TriMesh{
 
 	public void draw(){
 		// Draw the model at the current pose
-		// DrawModelWires(tmsh.model, Vector3(0.0, 0.0, 0.0), 1.00, Colors.RED);
-		
-        // DrawModel(model, Vector3(x, y, z), 1.0, Colors.RED);
-
 		model.transform = T;
         DrawModelWires(model, Vector3(x, y, z), 1.0, Colors.RED);
 	}
