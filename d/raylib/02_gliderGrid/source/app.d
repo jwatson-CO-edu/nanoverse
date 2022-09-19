@@ -2,11 +2,12 @@
 
 /*
 ***** DEV PLAN *****
-[ ] Draw the entire glider: https://github.com/jwatson-CO-edu/nanoverse/blob/main/python/pythreejs/50_starfield.ipynb
+[Y] Draw the entire glider - 2022-09-19: Complete and correct, but with no shading
 [ ] Rotate glider
 [ ] Roll glider while flying in a circle
 	* https://www.raylib.com/examples/models/loader.html?name=models_yaw_pitch_roll
 	* https://bedroomcoders.co.uk/aligning-a-model-with-a-terrain-raylib/
+{ } Simple lighting / shading?
 */
 
 import core.stdc.stdlib; // `malloc`
@@ -19,6 +20,12 @@ class TriMesh{
 	ulong iDex; //- Index offset for face index
 	Mesh  mesh; //- Raylib mesh geometry
 	Model model; // Raylib drawable model
+	float x; // --- World X pos
+	float y; // --- World Y pos
+	float z; // --- World Z pos
+	float r; // --- Local roll  angle
+	float p; // --- Local pitch angle
+	float w; // --- Local yaw   angle
 
 	/// Constructors ///
 	this( int n ){
@@ -64,6 +71,21 @@ class TriMesh{
 		UploadMesh(&mesh, true);
     	model = LoadModelFromMesh(mesh);
 	}
+
+	public void set_XYZ( float x_, float y_, float z_ ){
+		// Set the world XYZ position of the model
+		x = x_;
+		y = y_;
+		z = z_;
+	}
+
+	public void set_RPY( float r_, float p_, float y_ ){
+		// Set the local Roll, Pitch, Yaw of the model
+		r = r_;
+		p = p_;
+		w = y_;
+	}
+
 }
 
 void main()
@@ -74,23 +96,42 @@ void main()
     // Window / Display Params
     InitWindow(800, 600, "Hello, Raylib-D!");
     SetTargetFPS(60);
-    rlDisableBackfaceCulling();
+    // rlDisableBackfaceCulling();
     rlEnableSmoothLines();
 
     // Camera
     Camera camera = Camera(
-        Vector3(5.0, 5.0, 5.0), 
+        Vector3(10.0, 10.0, 10.0), 
         Vector3(0.0, 0.0, 0.0), 
         Vector3(0.0, 1.0, 0.0), 
         45.0, 
         0
     );
 
-	TriMesh tmsh = new TriMesh(1);
-	tmsh.push_vertex( 0.0, 0.0, 0.0 );
-	tmsh.push_vertex( 0.0, 0.0, 1.0 );
-	tmsh.push_vertex( 0.0, 1.0, 0.0 );
-	tmsh.push_triangle( 0, 1, 2 );
+	// Build Delta Glider //
+	float wingspan  = 10.0;
+	float fusFrac   =    0.5;
+	float sweptFrac =    0.75;
+	float thickFrac =    0.25;
+
+	TriMesh tmsh = new TriMesh( 8 ); // MUST match the total number of triangles to draw!
+	// Verts
+	tmsh.push_vertex(  0.0               ,  0.0       , 0.0                   ); // 0, Front
+	tmsh.push_vertex( -wingspan*fusFrac/2,  0.0       , +wingspan*thickFrac/2 ); // 1, Top peak
+	tmsh.push_vertex( -wingspan*fusFrac/2,  0.0       , -wingspan*thickFrac/2 ); // 2, Bottom peak
+	tmsh.push_vertex( -wingspan*fusFrac  ,  0.0       , 0.0                   ); // 3, Back
+	tmsh.push_vertex( -wingspan*sweptFrac, -wingspan/2, 0.0                   ); // 4, Left wingtip
+	tmsh.push_vertex( -wingspan*sweptFrac, +wingspan/2, 0.0                   ); // 5, Right wingtip 
+	// Faces
+	tmsh.push_triangle( 0,4,1 ); // Left  Top    Front
+	tmsh.push_triangle( 1,4,3 ); // Left  Top    Back 
+	tmsh.push_triangle( 5,0,1 ); // Right Top    Front
+	tmsh.push_triangle( 5,1,3 ); // Right Top    Back 
+	tmsh.push_triangle( 0,2,4 ); // Left  Bottom Front
+	tmsh.push_triangle( 2,3,4 ); // Left  Bottom Back
+	tmsh.push_triangle( 0,5,2 ); // Right Bottom Front
+	tmsh.push_triangle( 2,5,3 ); // Right Bottom Back
+
 	tmsh.load_geo();
 
 	while (!WindowShouldClose())
@@ -100,7 +141,7 @@ void main()
 
         BeginMode3D(camera);
         // DrawModelWires(tmsh.model, Vector3(0.0, 0.0, 0.0), 1.00, Colors.RED);
-        DrawModel(tmsh.model, Vector3(0.0, 0.0, 0.0), 1.00, Colors.RED);
+        DrawModel(tmsh.model, Vector3(0.0, 0.0, 0.0), 1.0, Colors.RED);
         DrawGrid(10, 1.0);
         EndMode3D();
 
