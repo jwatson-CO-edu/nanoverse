@@ -50,49 +50,30 @@ A rendering engine for jupyter visualization and artistic projects
 ```
 
 
-
-
 ### Dev Plan 2: Pure Frivolity (Dangerous!)
 ```
-/***** Architecture 1: Mach Test (Zig) *****/
- ~  Functional Core
-[ ] Cube/Cuboid primitive model
-    [ ] Vertex array rendering
-        [ ] Set up light(s)
-        [ ] Transform Camera
-    [ ] Vertex buffer rendering
-    [ ] Investigate facet optimization (Search: "OpenGL index buffer")
-[ ] Camera class
-    [ ] Pose & Motion: be able to change position, target, and up-vec independently with others staying the same
-[ ] Shader Experiment(s)
-    [ ] CAD-style outlines (Vertex shader?) with flat colors and simplest shading
-        [ ] Sharp edges
-            * https://gamedev.stackexchange.com/a/86413, What does this do at the interface between flat triangles?
-            * https://en.wikibooks.org/wiki/GLSL_Programming/Unity/Toon_Shading#Outlines
-        [ ] Object-background edge
-            * https://www.codeproject.com/Articles/8499/Generating-Outlines-in-OpenGL
-        [ ] https://github.com/nvpro-samples/gl_cadscene_rendertechniques
-    [ ] Cel Shader, Unsure of what kind of shader does what I want
-        [ ] https://www.lighthouse3d.com/tutorials/glsl-12-tutorial/toon-shading-version-iii/
-        [ ] https://stackoverflow.com/a/5796168
-        [ ] http://rbwhitaker.wikidot.com/toon-shader
-        [ ] http://www.cs.sjsu.edu/~bruce/fall_2016_cs_116a_lecture_glsl_opengl_shading_language_part_1_of_2.html
-    [ ] Investigate using outlines and cel shading simultaneously
-    [ ] Add shader slots to Model class
-[ ] Flying Camera: "Descent" ownship motion 
-    [ ] Mouse: { X: Yaw , Y: Pitch }
-    [ ] KB: { W/S: Fwd/Bck , A/D: Strafe }
-    [ ] JS: { Left  Stick: { X: ??? , Y: ??? } , 
-              Right Stick: { X: ??? , Y: ??? } ,
-              Buttons: { ??? }                 }
-    [ ] Assumed neutral bouyancy (levitate)
-    { } Damped stop after key-up    
-
+/***** Architecture 1: Dlang + RayLib *****/
+ ~  Purpose: Let yourself have some graphics, as a treat!
+[ ] Grid Glider
+    [Y] Glider with planelike motion - 2022-09-19: Really need to calm down on the graphics, you don't need them!
+    [ ] Glider flies over flat XY grid
+    [ ] Camera follow glider
+    [ ] Test joystick input
+    [ ] Player glider with grid always in FOV
+    [ ] Simple lighting and Flat shading
+[ ] Terrain generation
+    [ ] Perlin Noise
+    [ ] Marching cubes
+    [ ] Glider collision with landscape
+[ ] Landscape generation
+    [ ] Trees
+    [ ] Grass
+    [ ] Water (Simplest)
+    [ ] Floating islands
 
 /***** Architecture 2: Frames for Fun *****/
  ~  Purpose: Digital sculpture platform with a dash of simulation
  ~  Be careful with your time
-[ ] Spheres (Take from CU graphics/MS)
 [ ] N-body simulation, orbiting spheres
 [ ] L-system tree
 [ ] Mesh with animated shader
@@ -104,7 +85,7 @@ A rendering engine for jupyter visualization and artistic projects
 
 /***** Architecture 3: Let's Code (Applied) Physics *****/ 
  ~  Purpose: Daydream itch
-[ ] Find/Create Clifford lib in Zig
+[ ] Find/Create Clifford lib in Dlang
 [ ] Clifford projectile
 [ ] Clifford planets
 [ ] Clifford electrodynamics
@@ -116,7 +97,22 @@ A rendering engine for jupyter visualization and artistic projects
 
 
 /***** Architecture 4: Advanced Simulation *****/
+ ~  Purpose: Play with a 3D game engine (Godot)
  ~  Fast & Parallel
+[ ] A Peaceful Drive (My Ideal PC Game)
+    [ ] Terrain and Landscape generation
+    [ ] Choose physics engine
+    [ ] Glider with satisfying dynamics and controls
+    [ ] Rover with satisfying dynamics and controls
+    [ ] Glider <--> Rover transformation
+    [ ] Save game w/ persistent landscape
+    [ ] Marker system
+    [ ] Screenshots 
+    [ ] Steam integration
+        [ ] Savegames
+        [ ] Screenshots
+        [ ] World sharing
+        [ ] Co-op play
 [ ] Modeling software integration
     [ ] Parse Blender OBJ format (textured?)
     [ ] Parse popular CAD format
@@ -156,6 +152,7 @@ A rendering engine for jupyter visualization and artistic projects
 
 /***** Architecture 5: A Sim for All Seasons *****/
  ~  Share what you made
+[ ] FINCH Integration
 [ ] ROS2 Integration
     [ ] Load URDF
     [ ] Robot State
