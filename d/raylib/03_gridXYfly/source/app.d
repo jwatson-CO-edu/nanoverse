@@ -1,0 +1,177 @@
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
+
+import core.stdc.stdlib; // `malloc`
+import raylib; // --------- easy graphics
+
+
+
+////////// GRAPHICS CLASSES ////////////////////////////////////////////////////////////////////////
+
+class TriMesh{
+	/// Members ///
+	int   N_tri; // Number of triangles 
+	ulong vDex; //- Index offset for vertex coords
+	ulong iDex; //- Index offset for face index
+	Mesh  mesh; //- Raylib mesh geometry
+	Model model; // Raylib drawable model
+	float x; // --- World X pos
+	float y; // --- World Y pos
+	float z; // --- World Z pos
+	Matrix R; // -- World rotation
+	float r; // --- Local roll  angle
+	float p; // --- Local pitch angle
+	float w; // --- Local yaw   angle
+	Matrix T; // -- World orientation
+
+	/// Constructors ///
+	this( int n ){
+		// Init mesh
+		vDex  = 0;
+		iDex  = 0;
+		N_tri = n;
+		mesh  = Mesh();
+		
+		// Init geo memory
+		mesh.triangleCount = n;
+    	mesh.vertexCount   = n * 3;
+		mesh.vertices      = cast(float*)malloc(float.sizeof * mesh.vertexCount * 3);
+    	mesh.indices       = cast(ushort*)malloc(ushort.sizeof * mesh.vertexCount);
+
+		// Init pose
+		x = 0.0; // --- World X pos
+		y = 0.0; // --- World Y pos
+		z = 0.0; // --- World Z pos
+		r = 0.0; // --- Local roll  angle
+		p = 0.0; // --- Local pitch angle
+		w = 0.0; // --- Local yaw   angle
+	}
+
+	/// Methods ///
+
+	public bool push_vertex( float x, float y, float z ){
+		// Add a vertex
+		if(vDex+3 > mesh.vertexCount*3){  return false;  }else{
+			mesh.vertices[vDex + 0] = x;
+			mesh.vertices[vDex + 1] = y;
+			mesh.vertices[vDex + 2] = z;
+			vDex += 3;
+			return true;
+		}
+	}
+
+	public bool push_triangle( ushort p1, ushort p2, ushort p3 ){
+		// Add a triangle in CCW order spanning 3 vertex indices
+		if(iDex+3 > mesh.vertexCount){  return false;  }else{
+			mesh.indices[iDex + 0] = p1;
+			mesh.indices[iDex + 1] = p2;
+			mesh.indices[iDex + 2] = p3;
+			iDex += 3;
+			return true;
+		}
+	}
+
+	public void load_geo(){
+		// Send triangle mesh geometry to RayLib, needed for drawing
+		UploadMesh(&mesh, true);
+    	model = LoadModelFromMesh(mesh);
+	}
+
+	public void set_XYZ( float x_, float y_, float z_ ){
+		// Set the world XYZ position of the model
+		x = x_;
+		y = y_;
+		z = z_;
+	}
+
+	public void set_RPY( float r_, float p_, float y_ ){
+		// Set the world Roll, Pitch, Yaw of the model
+		R = MatrixRotateXYZ( Vector3( p_, y_, r_ ) );
+	}
+
+	public void rotate_RPY( float r_, float p_, float y_ ){
+		r += r_;
+		p += p_;
+		w += y_;
+		T = MatrixMultiply( R, MatrixRotateXYZ( Vector3( p, w, r ) ) );
+	}
+
+	public void z_thrust( float d = 0.0 ){
+		// Advance a plane model in the forward direction (local Z)
+		Vector3 vec = Vector3Transform(Vector3( 0.0, 0.0, d ), T);
+		x += vec.x;
+		y += vec.y;
+		z += vec.z;
+	}
+
+	public void draw(){
+		// Draw the model at the current pose
+		model.transform = T;
+        DrawModelWires(model, Vector3(x, y, z), 1.0, Colors.RED);
+	}
+}
+
+class FrameAxes{
+	// Classic XYX-RGB axes
+	float   len; // -- Length of basis vectors
+	Vector3 origin; // World position
+	Matrix  T; // ---- World orientation
+
+	this(){
+		len    = 1.0;
+		origin = Vector3( 0.0, 0.0, 0.0 );
+		T      = identity();
+	}
+
+	this( float unitLen, Vector3 orig, Matrix transform ){
+		len    = unitLen;
+		origin = orig;
+		T      = transform;
+	}
+
+	public void draw(){
+		// Render classic coordinate axes
+		DrawLine3D( // X basis
+			origin, 
+			Vector3Add( origin, Vector3Transform( Vector3( len, 0.0, 0.0 ), T)  ),
+			Colors.RED
+		);
+		DrawLine3D( // Y basis
+			origin, 
+			Vector3Add( origin, Vector3Transform( Vector3( 0.0, len, 0.0 ), T)  ),
+			Colors.GREEN
+		);
+		DrawLine3D( // Z basis
+			origin, 
+			Vector3Add( origin, Vector3Transform( Vector3( 0.0, 0.0, len ), T)  ),
+			Colors.BLUE
+		);
+	}
+}
+
+class GridXY{
+	// XY grid to replace the stock XZ grid (Z is UP!)
+	Vector3   origin; // ----- Location of grid center
+	float     unitLen; // ---- Dimension of grid unit
+	uint      oneSideLen_u; // Extent of grid in each direction +/-, in units
+	Color     color; // ------ Color of grid lines
+	bool      drawAxes; // --- Whether or not to draw axes
+	FrameAxes frame; // ------ Optional coordinate frame
+
+	this(){
+		origin       = Vector3( 0.0, 0.0, 0.0 ); // Location of grid center
+		unitLen      =  1.0; // ------------------- Dimension of grid unit
+		oneSideLen_u = 10; // --------------------- Extent of grid in each direction +/-, in units
+		color        = Colors.BLACK; // ----------- Color of grid lines
+		drawAxes     = true; // ------------------- Whether or not to draw axes
+		frame        = new FrameAxes(); // -------- Optional coordinate frame
+	}
+
+	this( /* FIXME: PARAMS */ ){
+		// FIXME: START HERE
+	}
+
+	public void draw(){
+		// Render an XY grid, with optional coordinate axes (frame debugging)
+
+	}
+}

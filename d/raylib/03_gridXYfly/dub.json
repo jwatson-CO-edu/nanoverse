@@ -1,0 +1,12 @@
+{
+	"authors": [
+		"james"
+	],
+	"copyright": "Copyright © 2022, james",
+	"dependencies": {
+		"raylib-d": "~>4.2.1"
+	},
+	"description": "Replace the XZ grid with an XY grid because Z is the true UP",
+	"license": "MIT",
+	"name": "03_gridxyfly"
+}

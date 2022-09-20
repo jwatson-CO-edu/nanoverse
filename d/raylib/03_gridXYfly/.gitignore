@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/03_gridxyfly
+03_gridxyfly.so
+03_gridxyfly.dylib
+03_gridxyfly.dll
+03_gridxyfly.a
+03_gridxyfly.lib
+03_gridxyfly-test-*
+*.exe
+*.o
+*.obj
+*.lst

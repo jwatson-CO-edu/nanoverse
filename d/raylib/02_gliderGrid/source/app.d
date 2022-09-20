@@ -7,7 +7,7 @@
 [Y] Roll glider while flying in a circle
 	* https://www.raylib.com/examples/models/loader.html?name=models_yaw_pitch_roll
 	* https://bedroomcoders.co.uk/aligning-a-model-with-a-terrain-raylib/
-{ } Simple lighting / shading?
+{N} Simple lighting / shading? - This is for later
 */
 
 import core.stdc.stdlib; // `malloc`
