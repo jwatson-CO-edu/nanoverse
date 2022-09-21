@@ -2,7 +2,7 @@
 
 import core.stdc.stdlib; // `malloc`
 import raylib; // --------- easy graphics
-
+import std.stdio; // ------ writeline
 
 
 ////////// GRAPHICS CLASSES ////////////////////////////////////////////////////////////////////////
@@ -46,6 +46,8 @@ class TriMesh{
 		r = 0.0; // --- Local roll  angle
 		p = 0.0; // --- Local pitch angle
 		w = 0.0; // --- Local yaw   angle
+		R = MatrixIdentity();
+		T = MatrixIdentity();
 	}
 
 	/// Methods ///
@@ -76,6 +78,7 @@ class TriMesh{
 		// Send triangle mesh geometry to RayLib, needed for drawing
 		UploadMesh(&mesh, true);
     	model = LoadModelFromMesh(mesh);
+		// writeln( "geo loaded" );
 	}
 
 	public void set_XYZ( float x_, float y_, float z_ ){
@@ -95,6 +98,7 @@ class TriMesh{
 		p += p_;
 		w += y_;
 		T = MatrixMultiply( R, MatrixRotateXYZ( Vector3( p, w, r ) ) );
+		writeln( T );
 	}
 
 	public void z_thrust( float d = 0.0 ){
@@ -103,6 +107,7 @@ class TriMesh{
 		x += vec.x;
 		y += vec.y;
 		z += vec.z;
+		// writeln( "go", x, y, z );
 	}
 
 	public void draw(){
@@ -120,22 +125,23 @@ class DeltaShip:TriMesh{
 		// TriMesh constructor
 		super( 8 );
 		// Verts
-		push_vertex(  0.0        ,  0.0                  , 0.0                 + wingspan*sweptFrac/2.0 ); // 0, Front
-		push_vertex(  0.0        , +wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0 ); // 1, Top peak
-		push_vertex(  0.0        , -wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0 ); // 2, Bottom peak
-		push_vertex(  0.0        ,  0.0                  , -wingspan*fusFrac   + wingspan*sweptFrac/2.0 ); // 3, Back
-		push_vertex( -wingspan/2 ,  0.0                  , -wingspan*sweptFrac + wingspan*sweptFrac/2.0 ); // 4, Left wingtip
-		push_vertex( +wingspan/2 ,  0.0                  , -wingspan*sweptFrac + wingspan*sweptFrac/2.0 ); // 5, Right wingtip
+		super.push_vertex(  0.0        ,  0.0                  , 0.0                 + wingspan*sweptFrac/2.0 ); // 0, Front
+		super.push_vertex(  0.0        , +wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0 ); // 1, Top peak
+		super.push_vertex(  0.0        , -wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0 ); // 2, Bottom peak
+		super.push_vertex(  0.0        ,  0.0                  , -wingspan*fusFrac   + wingspan*sweptFrac/2.0 ); // 3, Back
+		super.push_vertex( -wingspan/2 ,  0.0                  , -wingspan*sweptFrac + wingspan*sweptFrac/2.0 ); // 4, Left wingtip
+		super.push_vertex( +wingspan/2 ,  0.0                  , -wingspan*sweptFrac + wingspan*sweptFrac/2.0 ); // 5, Right wingtip
 		// Faces
-		push_triangle( 0,4,1 ); // Left  Top    Front
-		push_triangle( 1,4,3 ); // Left  Top    Back 
-		push_triangle( 5,0,1 ); // Right Top    Front
-		push_triangle( 5,1,3 ); // Right Top    Back 
-		push_triangle( 0,2,4 ); // Left  Bottom Front
-		push_triangle( 2,3,4 ); // Left  Bottom Back
-		push_triangle( 0,5,2 ); // Right Bottom Front
-		push_triangle( 2,5,3 ); // Right Bottom Back
-		
+		super.push_triangle( 0,4,1 ); // Left  Top    Front
+		super.push_triangle( 1,4,3 ); // Left  Top    Back 
+		super.push_triangle( 5,0,1 ); // Right Top    Front
+		super.push_triangle( 5,1,3 ); // Right Top    Back 
+		super.push_triangle( 0,2,4 ); // Left  Bottom Front
+		super.push_triangle( 2,3,4 ); // Left  Bottom Back
+		super.push_triangle( 0,5,2 ); // Right Bottom Front
+		super.push_triangle( 2,5,3 ); // Right Bottom Back
+		// load
+		super.load_geo();
 	}
 }
 
@@ -283,8 +289,10 @@ void main(){
 	GridXY    worldGrid  = new GridXY();
 	DeltaShip glider     = new DeltaShip( 2.0 );
 	// Set up geo, set level
-	glider.load_geo();
-	glider.rotate_RPY( 0.0, -3.1416/2.0, 0.0 );
+	// glider.load_geo();
+	// glider.TriMesh.rotate_RPY( 0.0, -3.1416/2.0, 0.0 );
+	// glider.set_XYZ(0.0, 0.0, 0.0);
+	// glider.set_RPY( 0.0, 0.0, 0.0 ); // 3.1416/2.0
 
 	while (!WindowShouldClose()){
 		BeginDrawing();
@@ -292,7 +300,7 @@ void main(){
 
         BeginMode3D(camera);
 
-		glider.z_thrust( 2/60 );
+		glider.z_thrust( 2.0/60.0 );
 		glider.draw();
 
 		// worldFrame.draw();
