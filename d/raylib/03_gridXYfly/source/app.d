@@ -7,6 +7,8 @@ import raylib; // --------- easy graphics
 
 ////////// GRAPHICS CLASSES ////////////////////////////////////////////////////////////////////////
 
+///// Models / Meshes ////////////////////////////
+
 class TriMesh{
 	/// Members ///
 	int   N_tri; // Number of triangles 
@@ -110,6 +112,10 @@ class TriMesh{
 	}
 }
 
+
+
+///// Line Segments //////////////////////////////
+
 class FrameAxes{
 	// Classic XYX-RGB axes
 	float   len; // -- Length of basis vectors
@@ -119,13 +125,19 @@ class FrameAxes{
 	this(){
 		len    = 1.0;
 		origin = Vector3( 0.0, 0.0, 0.0 );
-		T      = identity();
+		T      = MatrixIdentity();
 	}
 
 	this( float unitLen, Vector3 orig, Matrix transform ){
 		len    = unitLen;
 		origin = orig;
 		T      = transform;
+	}
+
+	this( float unitLen, Vector3 orig ){
+		len    = unitLen;
+		origin = orig;
+		T      = MatrixIdentity();
 	}
 
 	public void draw(){
@@ -166,12 +178,98 @@ class GridXY{
 		frame        = new FrameAxes(); // -------- Optional coordinate frame
 	}
 
-	this( /* FIXME: PARAMS */ ){
-		// FIXME: START HERE
+	this( Vector3 orig, float unit = 1.0, uint oneSide_u = 10, Color clr = Colors.BLACK, bool axes = true ){
+		origin       = orig; // Location of grid center
+		unitLen      = unit; // ------------------- Dimension of grid unit
+		oneSideLen_u = oneSide_u; // --------------------- Extent of grid in each direction +/-, in units
+		color        = clr; // ----------- Color of grid lines
+		drawAxes     = true; // ------------------- Whether or not to draw axes
+		if( drawAxes ){
+			frame = new FrameAxes( unitLen, Vector3Add( origin, Vector3( 0.0, 0.0, unitLen ) ) );
+		}
 	}
 
 	public void draw(){
 		// Render an XY grid, with optional coordinate axes (frame debugging)
+		float dHalf = unitLen * oneSideLen_u;
+		// Draw the center cross
+		DrawLine3D( 
+			Vector3Add( origin, Vector3( -dHalf, 0.0, 0.0 )  ),
+			Vector3Add( origin, Vector3(  dHalf, 0.0, 0.0 )  ),
+			color
+		);
+		DrawLine3D( 
+			Vector3Add( origin, Vector3( 0.0, -dHalf, 0.0 )  ),
+			Vector3Add( origin, Vector3( 0.0,  dHalf, 0.0 )  ),
+			color
+		);
+		// Draw X and Y lines, double-sided
+		for (uint i = 1; i < oneSideLen_u; i++){
 
+			DrawLine3D( 
+				Vector3Add( origin, Vector3( -dHalf,  unitLen*i, 0.0 )  ),
+				Vector3Add( origin, Vector3(  dHalf,  unitLen*i, 0.0 )  ),
+				color
+			);
+			DrawLine3D( 
+				Vector3Add( origin, Vector3( -dHalf, -unitLen*i, 0.0 )  ),
+				Vector3Add( origin, Vector3(  dHalf, -unitLen*i, 0.0 )  ),
+				color
+			);
+
+			DrawLine3D( 
+				Vector3Add( origin, Vector3( unitLen*i, -dHalf, 0.0 )  ),
+				Vector3Add( origin, Vector3( unitLen*i,  dHalf, 0.0 )  ),
+				color
+			);
+			DrawLine3D( 
+				Vector3Add( origin, Vector3( -unitLen*i, -dHalf, 0.0 )  ),
+				Vector3Add( origin, Vector3( -unitLen*i,  dHalf, 0.0 )  ),
+				color
+			);
+		}
+		// Draw optional axes
+		if( drawAxes ){    }
 	}
+}
+
+void main(){
+	// call this before using raylib
+	validateRaylibBinding();
+	
+    // Window / Display Params
+    InitWindow(800, 600, "Hello, Raylib-D!");
+    SetTargetFPS(60);
+    rlDisableBackfaceCulling();
+    rlEnableSmoothLines();
+
+	// Camera
+    Camera camera = Camera(
+        Vector3(5.0, 5.0, 5.0), 
+        Vector3(0.0, 0.0, 0.0), 
+        Vector3(0.0, 0.0, 1.0), 
+        45.0, 
+        0
+    );
+
+	FrameAxes worldFrame = new FrameAxes();
+	GridXY    worldGrid  = new GridXY();
+
+	while (!WindowShouldClose()){
+		BeginDrawing();
+		ClearBackground(Colors.RAYWHITE);
+
+        BeginMode3D(camera);
+
+		// worldFrame.draw();
+		worldGrid.draw();
+
+		// DrawGrid(10, 1.0);
+        EndMode3D();
+
+		// DrawText("Hello, World!", 400, 300, 28, Colors.BLACK);
+		EndDrawing();
+	}
+
+	CloseWindow();
 }
