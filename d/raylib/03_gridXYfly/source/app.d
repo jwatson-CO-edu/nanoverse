@@ -40,14 +40,14 @@ class TriMesh{
     	mesh.indices       = cast(ushort*)malloc(ushort.sizeof * mesh.vertexCount);
 
 		// Init pose
-		x = 0.0; // --- World X pos
-		y = 0.0; // --- World Y pos
-		z = 0.0; // --- World Z pos
-		r = 0.0; // --- Local roll  angle
-		p = 0.0; // --- Local pitch angle
-		w = 0.0; // --- Local yaw   angle
-		R = MatrixIdentity();
-		T = MatrixIdentity();
+		x = 0.0; // ------------ World X pos
+		y = 0.0; // ------------ World Y pos
+		z = 0.0; // ------------ World Z pos
+		r = 0.0; // ------------ Local roll  angle
+		p = 0.0; // ------------ Local pitch angle
+		w = 0.0; // ------------ Local yaw   angle
+		R = MatrixIdentity(); // Init identity
+		T = MatrixIdentity(); // Init identity
 	}
 
 	/// Methods ///
