@@ -113,6 +113,33 @@ class TriMesh{
 }
 
 
+class DeltaShip:TriMesh{
+	// A cool and simple starship / glider 
+
+	this( float wingspan = 10.0, float fusFrac = 0.5, float sweptFrac = 0.75, float thickFrac = 0.25 ){
+		// TriMesh constructor
+		super( 8 );
+		// Verts
+		push_vertex(  0.0        ,  0.0                  , 0.0                 + wingspan*sweptFrac/2.0 ); // 0, Front
+		push_vertex(  0.0        , +wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0 ); // 1, Top peak
+		push_vertex(  0.0        , -wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0 ); // 2, Bottom peak
+		push_vertex(  0.0        ,  0.0                  , -wingspan*fusFrac   + wingspan*sweptFrac/2.0 ); // 3, Back
+		push_vertex( -wingspan/2 ,  0.0                  , -wingspan*sweptFrac + wingspan*sweptFrac/2.0 ); // 4, Left wingtip
+		push_vertex( +wingspan/2 ,  0.0                  , -wingspan*sweptFrac + wingspan*sweptFrac/2.0 ); // 5, Right wingtip
+		// Faces
+		push_triangle( 0,4,1 ); // Left  Top    Front
+		push_triangle( 1,4,3 ); // Left  Top    Back 
+		push_triangle( 5,0,1 ); // Right Top    Front
+		push_triangle( 5,1,3 ); // Right Top    Back 
+		push_triangle( 0,2,4 ); // Left  Bottom Front
+		push_triangle( 2,3,4 ); // Left  Bottom Back
+		push_triangle( 0,5,2 ); // Right Bottom Front
+		push_triangle( 2,5,3 ); // Right Bottom Back
+		
+	}
+}
+
+
 
 ///// Line Segments //////////////////////////////
 
@@ -175,7 +202,7 @@ class GridXY{
 		oneSideLen_u = 10; // --------------------- Extent of grid in each direction +/-, in units
 		color        = Colors.BLACK; // ----------- Color of grid lines
 		drawAxes     = true; // ------------------- Whether or not to draw axes
-		frame        = new FrameAxes(); // -------- Optional coordinate frame
+		frame        = new FrameAxes( unitLen, Vector3Add( origin, Vector3( 0.0, 0.0, unitLen ) ) ); // -------- Optional coordinate frame
 	}
 
 	this( Vector3 orig, float unit = 1.0, uint oneSide_u = 10, Color clr = Colors.BLACK, bool axes = true ){
@@ -229,7 +256,7 @@ class GridXY{
 			);
 		}
 		// Draw optional axes
-		if( drawAxes ){    }
+		if( drawAxes ){  frame.draw();  }
 	}
 }
 
@@ -245,7 +272,7 @@ void main(){
 
 	// Camera
     Camera camera = Camera(
-        Vector3(5.0, 5.0, 5.0), 
+        Vector3(10.0, 10.0, 10.0), 
         Vector3(0.0, 0.0, 0.0), 
         Vector3(0.0, 0.0, 1.0), 
         45.0, 
@@ -254,12 +281,19 @@ void main(){
 
 	FrameAxes worldFrame = new FrameAxes();
 	GridXY    worldGrid  = new GridXY();
+	DeltaShip glider     = new DeltaShip( 2.0 );
+	// Set up geo, set level
+	glider.load_geo();
+	glider.rotate_RPY( 0.0, -3.1416/2.0, 0.0 );
 
 	while (!WindowShouldClose()){
 		BeginDrawing();
 		ClearBackground(Colors.RAYWHITE);
 
         BeginMode3D(camera);
+
+		glider.z_thrust( 2/60 );
+		glider.draw();
 
 		// worldFrame.draw();
 		worldGrid.draw();
