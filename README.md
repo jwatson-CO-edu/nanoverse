@@ -54,22 +54,69 @@ A rendering engine for jupyter visualization and artistic projects
 ```
 /***** Architecture 1: Dlang + RayLib *****/
  ~  Purpose: Let yourself have some graphics, as a treat!
-[ ] Grid Glider
+
+[ ] Grid Glider - Delta Glider
     [Y] Glider with planelike motion - 2022-09-19: Really need to calm down on the graphics, you don't need them!
-    [ ] Glider flies over flat XY grid
+    [Y] Glider flies over flat XY grid - 2022-09-22: Smooth flight and pleasing grid that fills the draw distance w/o slowdown
     [ ] Camera follow glider
+    [ ] Ship keyboard steering with camera follow
     [ ] Test joystick input
-    [ ] Player glider with grid always in FOV
+    [ ] Player glider with joystick input
     [ ] Simple lighting and Flat shading
-[ ] Terrain generation
-    [ ] Perlin Noise
+    [ ] Visually pleasing contrail
+    [ ] Randomly populate grid with filled squares
+    [ ] Floating triangle debris
+    [ ] Video -or- animated GIF output --to-> IG
+
+ * Context switch to FINCH
+
+[ ] Piped Ribbons - Generative art
+    [ ] Ribbon
+        [ ] Triangle strip
+        [ ] Alpha fades to nothing at trailing end
+        [ ] Shine fades to nothing at trailing end
+        [ ] Ribbon traces a circle
+    [ ] Randomly trace a 3D grid, with 90deg curved turn limit with grid radius
+    [ ] Multiple, random non-colliding ribbons
+    [ ] Multiple, random non-colliding ribbons in a loop and orbiting camera
+    [ ] Video -or- animated GIF output --to-> IG
+
+ * Context switch to FINCH
+
+[ ] Terrain generation - Delta Glider
+    [ ] Perlin Noise grid
     [ ] Marching cubes
     [ ] Glider collision with landscape
-[ ] Landscape generation
+    [ ] Video -or- animated GIF output --to-> IG
+
+ * Context switch to FINCH
+
+[ ] Engineering Center FROM SPACE - Generative art
+    [ ] Generative angular castle (A la EC)
+    [ ] Windows
+    [ ] Textures
+    [ ] Rotating "turrets"
+    [ ] Friggin' laser beams
+    { } Fends off Delta Gliders?
+        { } EXPLOSIONS ?!?
+    [ ] Loop
+    [ ] Video -or- animated GIF output --to-> IG
+
+ * Context switch to FINCH
+
+[ ] Landscape generation - Delta Glider
     [ ] Trees
     [ ] Grass
     [ ] Water (Simplest)
     [ ] Floating islands
+    [ ] Video -or- animated GIF output --to-> IG
+
+ * Context switch to FINCH
+
+[ ] Tetrahedra - Generative Art
+    [ ] ???
+
+ * Context switch to FINCH
 
 /***** Architecture 2: Frames for Fun *****/
  ~  Purpose: Digital sculpture platform with a dash of simulation

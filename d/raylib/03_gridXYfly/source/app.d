@@ -107,7 +107,6 @@ class TriMesh{
 		x += vec.x;
 		y += vec.y;
 		z += vec.z;
-		// writeln( "go", x, y, z );
 	}
 
 	public void draw(){
@@ -216,7 +215,7 @@ class GridXY{
 		unitLen      = unit; // ------------------- Dimension of grid unit
 		oneSideLen_u = oneSide_u; // --------------------- Extent of grid in each direction +/-, in units
 		color        = clr; // ----------- Color of grid lines
-		drawAxes     = true; // ------------------- Whether or not to draw axes
+		drawAxes     = axes; // ------------------- Whether or not to draw axes
 		if( drawAxes ){
 			frame = new FrameAxes( unitLen, Vector3Add( origin, Vector3( 0.0, 0.0, unitLen ) ) );
 		}
@@ -266,6 +265,52 @@ class GridXY{
 	}
 }
 
+
+
+////////// CAMERA //////////////////////////////////////////////////////////////////////////////////
+
+class FlightThirdP_Camera{
+	// Camera control for a 3rd person view of an aircraft/spacecraft
+	// 2022-09-22: Right now fixing the camera to the ship by a rigid "stick" 
+	//             without obstacle avoidance or damping
+
+	Camera  camera; // --- The actual RayLib camera
+	Vector3 trgtCenter; // Position of the target
+	Matrix  trgtXform; //- Orientation of the target
+	Vector3 offset_t; // - Desired camera offset in the target's frame
+
+	this( Vector3 desiredOffset_V3, Vector3 tCenter, Matrix tXform ){
+		trgtCenter = tCenter; // Position of the target
+		trgtXform  = tXform; // -------- Orientation of the target
+		offset_t   = desiredOffset_V3; // --------- Desired camera offset in the target's frame
+		camera = Camera(
+			Vector3Add( tCenter, Vector3Transform( offset_t, trgtXform) ), // Camera location, world frame
+			tCenter, // ----------------------------------------------------- Camera target, world frame
+			Vector3Transform( Vector3(0.0, 0.0, 1.0), trgtXform), // -------- Up vector
+			45.0, 
+			0
+		);
+	}
+
+	public void update_target_position( Vector3 tCenter ){
+		// FIXME: START HERE
+	}
+	
+	public void update_target_orientation( Matrix tXform ){
+		
+	}
+
+	public void advance_camera(){
+		// Move the camera after all the target updates are in
+	}
+	
+}
+
+
+
+////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
+
+
 void main(){
 	// call this before using raylib
 	validateRaylibBinding();
@@ -285,13 +330,19 @@ void main(){
         0
     );
 
-	FrameAxes worldFrame = new FrameAxes();
-	GridXY    worldGrid  = new GridXY();
-	DeltaShip glider     = new DeltaShip( 2.0 );
+	// FrameAxes worldFrame = new FrameAxes();
+	GridXY    worldGrid  = new GridXY( 
+		Vector3(0.0, 0.0, 0.0), 
+		1.0, 
+		1000, // https://github.com/raysan5/raylib/issues/1051#issue-543279679
+		Colors.GRAY, // https://robloach.github.io/raylib-cpp/classraylib_1_1_color.html
+		false
+	);
+	DeltaShip glider = new DeltaShip( 2.0 );
 	// Set up geo, set level
 	// glider.load_geo();
-	// glider.TriMesh.rotate_RPY( 0.0, -3.1416/2.0, 0.0 );
-	// glider.set_XYZ(0.0, 0.0, 0.0);
+	glider.TriMesh.rotate_RPY( 0.0, -3.1416/2.0, 0.0 );
+	glider.set_XYZ(0.0, 0.0, 2.0);
 	// glider.set_RPY( 0.0, 0.0, 0.0 ); // 3.1416/2.0
 
 	while (!WindowShouldClose()){
