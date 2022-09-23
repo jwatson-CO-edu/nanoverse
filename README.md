@@ -59,7 +59,7 @@ A rendering engine for jupyter visualization and artistic projects
     [Y] Glider with planelike motion - 2022-09-19: Really need to calm down on the graphics, you don't need them!
     [Y] Glider flies over flat XY grid - 2022-09-22: Smooth flight and pleasing grid that fills the draw distance w/o slowdown
     [Y] Camera follow glider - 2022-09-22: Camera stuck fast to glider!
-    [ ] Ship keyboard steering with camera follow
+    [Y] Ship keyboard steering with camera follow - 2022-09-23: Very easy!
     [ ] Test joystick input
     [ ] Player glider with joystick input
     [ ] Simple lighting and Flat shading

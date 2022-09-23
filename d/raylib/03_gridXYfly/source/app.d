@@ -99,7 +99,8 @@ class TriMesh{
 		r += r_;
 		p += p_;
 		w += y_;
-		T = MatrixMultiply( R, MatrixRotateXYZ( Vector3( p, w, r ) ) );
+		// T = MatrixMultiply( R, MatrixRotateXYZ( Vector3( p, w, r ) ) );
+		T = MatrixMultiply( MatrixRotateXYZ( Vector3( p, w, r ) ), R );
 		writeln( T );
 	}
 
@@ -338,15 +339,15 @@ void main(){
 	// FrameAxes worldFrame = new FrameAxes();
 	GridXY    worldGrid  = new GridXY( 
 		Vector3(0.0, 0.0, 0.0), 
-		1.0, 
-		1000, // https://github.com/raysan5/raylib/issues/1051#issue-543279679
+		  1.0, 
+		500, // https://github.com/raysan5/raylib/issues/1051#issue-543279679
 		Colors.GRAY, // https://robloach.github.io/raylib-cpp/classraylib_1_1_color.html
 		false
 	);
 	DeltaShip glider = new DeltaShip( 2.0 );
 	// Set up geo, set level
 	// glider.load_geo();
-	glider.TriMesh.rotate_RPY( 0.0, -3.1416/2.0, 0.0 );
+	glider.rotate_RPY( 0.0, -3.1416/2.0, 0.0 );
 	glider.set_XYZ(0.0, 0.0, 2.0);
 	// glider.set_RPY( 0.0, 0.0, 0.0 ); // 3.1416/2.0
 
@@ -357,13 +358,23 @@ void main(){
 	);
 
 	while (!WindowShouldClose()){
+
+		/// Update ///
+		if( IsKeyDown( KeyboardKey.KEY_LEFT  ) ){  glider.rotate_RPY( 0.0,  0.0,          3.1416/120.0 );  }
+		if( IsKeyDown( KeyboardKey.KEY_RIGHT ) ){  glider.rotate_RPY( 0.0,  0.0,         -3.1416/120.0 );  }
+		if( IsKeyDown( KeyboardKey.KEY_UP    ) ){  glider.rotate_RPY( 0.0,  3.1416/120.0, 0.0          );  }
+		if( IsKeyDown( KeyboardKey.KEY_DOWN  ) ){  glider.rotate_RPY( 0.0, -3.1416/120.0, 0.0          );  }
+
+		camera.update_target_position( glider.get_XYZ() );
+		camera.update_target_orientation( glider.T );
+		camera.advance_camera();
+
+		/// Rendering ///
+
 		BeginDrawing();
 		ClearBackground(Colors.RAYWHITE);
 
 		
-		camera.update_target_position( glider.get_XYZ() );
-		camera.update_target_orientation( glider.T );
-		camera.advance_camera();
         camera.begin();
 		
 

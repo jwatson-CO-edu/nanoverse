@@ -1,0 +1,16 @@
+{
+	"authors": [
+		"james"
+	],
+	"copyright": "Copyright © 2022, james",
+	"dependencies": {
+		"raylib-d": "~>4.2.1"
+	},
+	"libs-posix": [
+		"raylib"
+	],
+	"description": "Test joystick input",
+	"license": "MIT",
+	"name": "04_jsinput",
+	"target": "04_jsinput.app"
+}

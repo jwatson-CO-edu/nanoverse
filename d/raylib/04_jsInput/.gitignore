@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/04_jsinput
+04_jsinput.so
+04_jsinput.dylib
+04_jsinput.dll
+04_jsinput.a
+04_jsinput.lib
+04_jsinput-test-*
+*.exe
+*.o
+*.obj
+*.lst
