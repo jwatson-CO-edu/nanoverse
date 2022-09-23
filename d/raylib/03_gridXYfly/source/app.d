@@ -81,6 +81,8 @@ class TriMesh{
 		// writeln( "geo loaded" );
 	}
 
+	public Vector3 get_XYZ(){  return Vector3( x, y, z );  }
+
 	public void set_XYZ( float x_, float y_, float z_ ){
 		// Set the world XYZ position of the model
 		x = x_;
@@ -292,17 +294,20 @@ class FlightThirdP_Camera{
 		);
 	}
 
-	public void update_target_position( Vector3 tCenter ){
-		// FIXME: START HERE
-	}
+	public void update_target_position( Vector3 tCenter ){  trgtCenter = tCenter;  }
 	
-	public void update_target_orientation( Matrix tXform ){
-		
-	}
+	public void update_target_orientation( Matrix tXform ){  trgtXform = tXform;  }
 
 	public void advance_camera(){
 		// Move the camera after all the target updates are in
+		camera.position = Vector3Add( trgtCenter, Vector3Transform( offset_t, trgtXform) );
+		camera.target   = trgtCenter;
+		camera.up       =  Vector3Transform( Vector3(0.0, 0.0, 1.0), trgtXform);
+		// camera.Update();
 	}
+
+	public void begin(){  BeginMode3D(camera);  }
+	public void end(){  EndMode3D();  }
 	
 }
 
@@ -322,13 +327,13 @@ void main(){
     rlEnableSmoothLines();
 
 	// Camera
-    Camera camera = Camera(
-        Vector3(10.0, 10.0, 10.0), 
-        Vector3(0.0, 0.0, 0.0), 
-        Vector3(0.0, 0.0, 1.0), 
-        45.0, 
-        0
-    );
+    // Camera camera = Camera(
+    //     Vector3(10.0, 10.0, 10.0), 
+    //     Vector3(0.0, 0.0, 0.0), 
+    //     Vector3(0.0, 0.0, 1.0), 
+    //     45.0, 
+    //     0
+    // );
 
 	// FrameAxes worldFrame = new FrameAxes();
 	GridXY    worldGrid  = new GridXY( 
@@ -345,11 +350,22 @@ void main(){
 	glider.set_XYZ(0.0, 0.0, 2.0);
 	// glider.set_RPY( 0.0, 0.0, 0.0 ); // 3.1416/2.0
 
+	FlightThirdP_Camera camera = new FlightThirdP_Camera(
+		Vector3( 0.0,  2.5, -6.0 ),
+		glider.get_XYZ(),
+		glider.T
+	);
+
 	while (!WindowShouldClose()){
 		BeginDrawing();
 		ClearBackground(Colors.RAYWHITE);
 
-        BeginMode3D(camera);
+		
+		camera.update_target_position( glider.get_XYZ() );
+		camera.update_target_orientation( glider.T );
+		camera.advance_camera();
+        camera.begin();
+		
 
 		glider.z_thrust( 2.0/60.0 );
 		glider.draw();
@@ -358,7 +374,8 @@ void main(){
 		worldGrid.draw();
 
 		// DrawGrid(10, 1.0);
-        EndMode3D();
+        
+		camera.end();
 
 		// DrawText("Hello, World!", 400, 300, 28, Colors.BLACK);
 		EndDrawing();
