@@ -99,8 +99,8 @@ class TriMesh{
 		r += r_;
 		p += p_;
 		w += y_;
-		// T = MatrixMultiply( R, MatrixRotateXYZ( Vector3( p, w, r ) ) );
-		T = MatrixMultiply( MatrixRotateXYZ( Vector3( p, w, r ) ), R );
+		T = MatrixMultiply( R, MatrixRotateXYZ( Vector3( p, w, r ) ) ); // This is incorrect, use the example!
+		// T = MatrixMultiply( MatrixRotateXYZ( Vector3( p, w, r ) ), R );
 		writeln( T );
 	}
 
@@ -344,10 +344,18 @@ void main(){
 		Colors.GRAY, // https://robloach.github.io/raylib-cpp/classraylib_1_1_color.html
 		false
 	);
+	GridXY    skyGrid  = new GridXY( 
+		Vector3(0.0, 0.0, 200.0), 
+		  1.0, 
+		500, // https://github.com/raysan5/raylib/issues/1051#issue-543279679
+		Colors.BLUE, // https://robloach.github.io/raylib-cpp/classraylib_1_1_color.html
+		false
+	);
+
 	DeltaShip glider = new DeltaShip( 2.0 );
 	// Set up geo, set level
 	// glider.load_geo();
-	glider.rotate_RPY( 0.0, -3.1416/2.0, 0.0 );
+	glider.rotate_RPY( 0.0, 3.1416/2.0, 0.0 );
 	glider.set_XYZ(0.0, 0.0, 2.0);
 	// glider.set_RPY( 0.0, 0.0, 0.0 ); // 3.1416/2.0
 
@@ -383,6 +391,7 @@ void main(){
 
 		// worldFrame.draw();
 		worldGrid.draw();
+		// skyGrid.draw();
 
 		// DrawGrid(10, 1.0);
         
