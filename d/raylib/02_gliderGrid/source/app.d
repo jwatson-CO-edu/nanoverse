@@ -27,6 +27,9 @@ class TriMesh{
 	float r; // --- Local roll  angle
 	float p; // --- Local pitch angle
 	float w; // --- Local yaw   angle
+	Matrix mx; // -- Local pitch
+	Matrix my; // -- Local yaw
+	Matrix mz; // -- Local roll
 	Matrix T; // -- World orientation
 
 	/// Constructors ///
@@ -98,7 +101,12 @@ class TriMesh{
 		r += r_;
 		p += p_;
 		w += y_;
-		T = MatrixMultiply( R, MatrixRotateXYZ( Vector3( p, w, r ) ) );
+		mx = MatrixRotateX( p );
+		my = MatrixRotateY( w );
+		mz = MatrixRotateZ( r );
+		T  = MatrixMultiply( mx, my );
+		T  = MatrixMultiply( mz, T  );
+		T  = MatrixMultiply( T , R  );
 	}
 
 	public void z_thrust( float d = 0.0 ){
