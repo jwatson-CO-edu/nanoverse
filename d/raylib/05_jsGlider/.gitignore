@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/05_jsglider
+05_jsglider.so
+05_jsglider.dylib
+05_jsglider.dll
+05_jsglider.a
+05_jsglider.lib
+05_jsglider-test-*
+*.exe
+*.o
+*.obj
+*.lst

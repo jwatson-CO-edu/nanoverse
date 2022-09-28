@@ -1,0 +1,12 @@
+{
+	"authors": [
+		"jwatson"
+	],
+	"copyright": "Copyright © 2022, jwatson",
+	"dependencies": {
+		"raylib-d": "~>4.2.2"
+	},
+	"description": "Glider over a grid field with flat shading",
+	"license": "MIT",
+	"name": "06_glidershaded"
+}

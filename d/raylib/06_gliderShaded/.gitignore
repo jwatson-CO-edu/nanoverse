@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/06_glidershaded
+06_glidershaded.so
+06_glidershaded.dylib
+06_glidershaded.dll
+06_glidershaded.a
+06_glidershaded.lib
+06_glidershaded-test-*
+*.exe
+*.o
+*.obj
+*.lst
