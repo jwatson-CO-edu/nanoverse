@@ -19,7 +19,11 @@ void main(){
 
 	/// Input Devices ///
 	bool         GP0_found  = IsGamepadAvailable(0);
-	const(char)* gpMsg      =  toStringz( "Gamepad 0 Available?: " ~ to!string( GP0_found ) ); // Test if gamepad 0 was found
+	bool         GP1_found  = IsGamepadAvailable(1);
+	bool         GP2_found  = IsGamepadAvailable(2);
+	const(char)* gpMsg0     =  toStringz( "Gamepad 0 Available?: " ~ to!string( GP0_found ) ); // Test if gamepad 0 was found
+	const(char)* gpMsg1     =  toStringz( "Gamepad 1 Available?: " ~ to!string( GP1_found ) ); // Test if gamepad 1 was found
+	const(char)* gpMsg2     =  toStringz( "Gamepad 2 Available?: " ~ to!string( GP2_found ) ); // Test if gamepad 2 was found
 
 	while (!WindowShouldClose()){
 
@@ -35,7 +39,9 @@ void main(){
 		DrawCircle(600, 300, 12.5, Colors.BLUE);
 
 		
-		DrawText( gpMsg, 25, 25, 28, Colors.BLACK);
+		DrawText( gpMsg0, 25, 25, 28, Colors.BLACK);
+		DrawText( gpMsg1, 25, 50, 28, Colors.BLACK);
+		DrawText( gpMsg2, 25, 75, 28, Colors.BLACK);
 
 		EndDrawing();
 
