@@ -21,15 +21,24 @@ void main(){
 	bool         GP0_found  = IsGamepadAvailable(0);
 	bool         GP1_found  = IsGamepadAvailable(1);
 	bool         GP2_found  = IsGamepadAvailable(2);
-	const(char)* gpMsg0     =  toStringz( "Gamepad 0 Available?: " ~ to!string( GP0_found ) ); // Test if gamepad 0 was found
-	const(char)* gpMsg1     =  toStringz( "Gamepad 1 Available?: " ~ to!string( GP1_found ) ); // Test if gamepad 1 was found
-	const(char)* gpMsg2     =  toStringz( "Gamepad 2 Available?: " ~ to!string( GP2_found ) ); // Test if gamepad 2 was found
+	const(char)* gpMsg0     = cast(char*) new char[128];
+	const(char)* gpMsg1     = cast(char*) new char[128];
+	const(char)* gpMsg2     = cast(char*) new char[128];
 
 	while (!WindowShouldClose()){
 
 		/// Rendering ///
 
 		BeginDrawing();
+
+		// Check Inputs // 
+		GP0_found  = IsGamepadAvailable(0);
+	    GP1_found  = IsGamepadAvailable(1);
+		GP2_found  = IsGamepadAvailable(2);
+		gpMsg0     =  toStringz( "Gamepad 0 Available?: " ~ to!string( GP0_found ) ); // Test if gamepad 0 was found
+		gpMsg1     =  toStringz( "Gamepad 1 Available?: " ~ to!string( GP1_found ) ); // Test if gamepad 1 was found
+		gpMsg2     =  toStringz( "Gamepad 2 Available?: " ~ to!string( GP2_found ) ); // Test if gamepad 2 was found
+
 		ClearBackground(Colors.RAYWHITE);
 
 		DrawRectangleLines(100, 200, 200, 200, Colors.BLACK);
