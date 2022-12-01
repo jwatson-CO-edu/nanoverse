@@ -89,16 +89,16 @@ void UpdateLightValues( Shader shader, Light light ){
 
     // Send to shader light position values
     float[3] position = [ light.position.x, light.position.y, light.position.z ];
-    SetShaderValue( shader, light.positionLoc, position, ShaderUniformDataType.SHADER_UNIFORM_VEC3 );
+    SetShaderValue( shader, light.positionLoc, position.ptr, ShaderUniformDataType.SHADER_UNIFORM_VEC3 );
 
     // Send to shader light target position values
     float[3] target = [light.target.x, light.target.y, light.target.z];
-    SetShaderValue( shader, light.targetLoc, target, ShaderUniformDataType.SHADER_UNIFORM_VEC3 );
+    SetShaderValue( shader, light.targetLoc, target.ptr, ShaderUniformDataType.SHADER_UNIFORM_VEC3 );
 
     // Send to shader light color values
     float[4] color = [ light.color.r/255.0f, light.color.g/255.0f, 
                        light.color.b/255.0f, light.color.a/255.0f ];
-    SetShaderValue(shader, light.colorLoc, color, ShaderUniformDataType.SHADER_UNIFORM_VEC4);
+    SetShaderValue(shader, light.colorLoc, color.ptr, ShaderUniformDataType.SHADER_UNIFORM_VEC4);
 }
 
 

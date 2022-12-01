@@ -4,6 +4,8 @@ import core.stdc.stdlib; // `malloc`
 import raylib; // --------- easy graphics
 import std.stdio; // ------ writeline
 
+import rlights;
+
 
 ////////// GRAPHICS CLASSES ////////////////////////////////////////////////////////////////////////
 
@@ -125,7 +127,8 @@ class TriMesh{
 	public void draw(){
 		// Draw the model at the current pose
 		model.transform = T;
-        DrawModelWires(model, Vector3(x, y, z), 1.0, Colors.RED);
+        // DrawModelWires(model, Vector3(x, y, z), 1.0, Colors.RED);
+        DrawModel(model, Vector3(x, y, z), 1.0, Colors.RED);
 	}
 }
 
@@ -326,7 +329,7 @@ class FlightThirdP_Camera{
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
-uint MAX_LIGHTS = 4;
+// uint MAX_LIGHTS = 4;
 
 void main(){
 	// call this before using raylib
@@ -376,11 +379,11 @@ void main(){
 	// Assign our lighting shader to model
 	glider.model.materials[0].shader = shader;
 	// Create lights
-    Light[MAX_LIGHTS] lights; // = { 0 };
-    lights[0] = CreateLight(LIGHT_POINT, Vector3( -2, 1, -2 ), Vector3Zero(), Colors.YELLOW, shader);
-    lights[1] = CreateLight(LIGHT_POINT, Vector3( 2, 1, 2 ), Vector3Zero(), Colors.RED, shader);
-    lights[2] = CreateLight(LIGHT_POINT, Vector3( -2, 1, 2 ), Vector3Zero(), Colors.GREEN, shader);
-    lights[3] = CreateLight(LIGHT_POINT, Vector3( 2, 1, -2 ), Vector3Zero(), Colors.BLUE, shader);
+    Light[LIGHT_CONST.MAX_LIGHTS] lights; // = { 0 };
+    lights[0] = CreateLight( LightType.LIGHT_POINT, Vector3( -2, 1, -2 ), Vector3Zero(), Colors.YELLOW, shader);
+    lights[1] = CreateLight( LightType.LIGHT_POINT, Vector3( 2, 1, 2 ), Vector3Zero(), Colors.RED, shader);
+    lights[2] = CreateLight( LightType.LIGHT_POINT, Vector3( -2, 1, 2 ), Vector3Zero(), Colors.GREEN, shader);
+    lights[3] = CreateLight( LightType.LIGHT_POINT, Vector3( 2, 1, -2 ), Vector3Zero(), Colors.BLUE, shader);
 
 	FlightThirdP_Camera camera = new FlightThirdP_Camera(
 		Vector3( 0.0,  2.5, -6.0 ),
