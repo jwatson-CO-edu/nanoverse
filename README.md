@@ -55,15 +55,15 @@ A rendering engine for jupyter visualization and artistic projects
 /***** Architecture 1: Dlang + RayLib *****/
  ~  Purpose: Let yourself have some graphics, as a treat!
 
-[ ] Grid Glider - Delta Glider
+[>] Grid Glider - Delta Glider
     [Y] Glider with planelike motion - 2022-09-19: Really need to calm down on the graphics, you don't need them!
     [Y] Glider flies over flat XY grid - 2022-09-22: Smooth flight and pleasing grid that fills the draw distance w/o slowdown
     [Y] Camera follow glider - 2022-09-22: Camera stuck fast to glider!
     [Y] Ship keyboard steering with camera follow - 2022-09-23: Very easy!
-    [ ] Test joystick input
+    [>] Test joystick input
     [ ] Player glider with joystick input
-    [ ] Simple lighting and Flat shading
-    [ ] Visually pleasing contrail
+    [>] Simple lighting and Flat shading
+    [ ] Visually pleasing contrail ribbon
     [ ] Randomly populate grid with filled squares
     [ ] Floating triangle debris
     [ ] Video -or- animated GIF output --to-> IG
@@ -274,17 +274,5 @@ A rendering engine for jupyter visualization and artistic projects
     [ ] Independent Aim/Steer (w/ dual views!)
 
 ```
-# Dependencies
-## OpenGL
-1. `sudo add-apt-repository ppa:oibaf/graphics-drivers`
-2. `sudo apt update`
-3. `sudo apt install mesa-utils freeglut3-dev`
-## Nim
-1. `nimble install https://github.com/nimgl/opengl.git`
-2. `nimble install https://github.com/nimgl/glfw.git`
-## Eigen
-1. Download Eigen3: http://eigen.tuxfamily.org/index.php?title=Main_Page  
-(Then navigate to the director to where it was downloaded)  
-1. `mkdir build && cd $_`
-2. `cmake ..`
-3. `sudo make install`
+# Resources
+

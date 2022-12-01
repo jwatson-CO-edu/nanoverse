@@ -10,6 +10,7 @@ python/OGRE/pugixml/
 zig/mach/
 
 d/raylib/*/*.app
+d/raylib/*/*.so*
 
 
 # Prerequisites

@@ -4,7 +4,7 @@
 	],
 	"copyright": "Copyright © 2022, james",
 	"dependencies": {
-		"raylib-d": "~>4.2.1"
+		"raylib-d": "~>4.2.4"
 	},
 	"libs-posix": [
 		"raylib"
