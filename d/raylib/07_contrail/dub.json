@@ -1,0 +1,9 @@
+{
+	"authors": [
+		"james"
+	],
+	"copyright": "Copyright © 2022, james",
+	"description": "Glider leaves an exhaust trail",
+	"license": "MIT",
+	"name": "07_contrail"
+}

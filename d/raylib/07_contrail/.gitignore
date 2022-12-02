@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/07_contrail
+07_contrail.so
+07_contrail.dylib
+07_contrail.dll
+07_contrail.a
+07_contrail.lib
+07_contrail-test-*
+*.exe
+*.o
+*.obj
+*.lst

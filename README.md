@@ -62,8 +62,11 @@ A rendering engine for jupyter visualization and artistic projects
     [Y] Ship keyboard steering with camera follow - 2022-09-23: Very easy!
     [>] Test joystick input
     [ ] Player glider with joystick input
-    [>] Simple lighting and Flat shading
+    [Y] Simple lighting and Flat shading, 2022-12-01: Ambient lighting is probably enough
     [ ] Visually pleasing contrail ribbon
+        [ ] Triangle strip
+        [ ] Alpha fades to nothing at trailing end
+        [ ] Shine fades to nothing at trailing end
     [ ] Randomly populate grid with filled squares
     [ ] Floating triangle debris
     [ ] Video -or- animated GIF output --to-> IG
@@ -72,9 +75,6 @@ A rendering engine for jupyter visualization and artistic projects
 
 [ ] Piped Ribbons - Generative art
     [ ] Ribbon
-        [ ] Triangle strip
-        [ ] Alpha fades to nothing at trailing end
-        [ ] Shine fades to nothing at trailing end
         [ ] Ribbon traces a circle
     [ ] Randomly trace a 3D grid, with 90deg curved turn limit with grid radius
     [ ] Multiple, random non-colliding ribbons
