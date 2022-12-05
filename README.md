@@ -60,7 +60,7 @@ A rendering engine for jupyter visualization and artistic projects
     [Y] Glider flies over flat XY grid - 2022-09-22: Smooth flight and pleasing grid that fills the draw distance w/o slowdown
     [Y] Camera follow glider - 2022-09-22: Camera stuck fast to glider!
     [Y] Ship keyboard steering with camera follow - 2022-09-23: Very easy!
-    [>] Test joystick input
+    [Y] Test joystick input - 2022-12-04: If the gamepad does not work, it may not be on the list!, https://github.com/gabomdq/SDL_GameControllerDB/blob/master/gamecontrollerdb.txt
     [ ] Player glider with joystick input
     [Y] Simple lighting and Flat shading, 2022-12-01: Ambient lighting is probably enough
     [ ] Visually pleasing contrail ribbon

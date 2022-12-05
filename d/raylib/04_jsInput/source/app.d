@@ -40,22 +40,41 @@ void main(){
 
 		ClearBackground( Colors.RAYWHITE );
 
-		// writeln( GetGamepadAxisMovement(0, GamepadAxis.GAMEPAD_AXIS_RIGHT_X) );
-		writeln( GetGamepadAxisCount(0) ); // 6
-
 		// Right Stick
-		DrawRectangleLines( 100, 200, 200, 200, Colors.BLACK );
-		DrawCircle( cast(int)(200 + GetGamepadAxisMovement(0, GamepadAxis.GAMEPAD_AXIS_RIGHT_X)*200),
-                    cast(int)(300 + GetGamepadAxisMovement(0, GamepadAxis.GAMEPAD_AXIS_RIGHT_Y)*200), 
+		DrawRectangleLines( 400, 200, 100, 100, Colors.BLACK );
+		DrawCircle( cast(int)(450 + GetGamepadAxisMovement(0, GamepadAxis.GAMEPAD_AXIS_RIGHT_X)*50),
+                    cast(int)(250 + GetGamepadAxisMovement(0, GamepadAxis.GAMEPAD_AXIS_RIGHT_Y)*50), 
 					12.5, Colors.BLUE);
 
 		// Left Stick
-		DrawRectangleLines( 500, 200, 200, 200, Colors.BLACK );
-		DrawCircle( cast(int)(600 + GetGamepadAxisMovement(0, GamepadAxis.GAMEPAD_AXIS_LEFT_X)*200),
-                    cast(int)(300 + GetGamepadAxisMovement(0, GamepadAxis.GAMEPAD_AXIS_LEFT_Y)*200), 
+		DrawRectangleLines( 250, 200, 100, 100, Colors.BLACK );
+		DrawCircle( cast(int)(300 + GetGamepadAxisMovement(0, GamepadAxis.GAMEPAD_AXIS_LEFT_X)*50),
+                    cast(int)(250 + GetGamepadAxisMovement(0, GamepadAxis.GAMEPAD_AXIS_LEFT_Y)*50), 
 					12.5, Colors.BLUE);
 
+		// Face Buttons
+		DrawCircle( 650, 200, 25, IsGamepadButtonDown(0, GamepadButton.GAMEPAD_BUTTON_RIGHT_FACE_UP) ? 
+			Colors.GREEN : Colors.RED);
+		DrawCircle( 600, 250, 25, IsGamepadButtonDown(0, GamepadButton.GAMEPAD_BUTTON_RIGHT_FACE_LEFT) ? 
+			Colors.GREEN : Colors.RED);
+		DrawCircle( 700, 250, 25, IsGamepadButtonDown(0, GamepadButton.GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) ? 
+			Colors.GREEN : Colors.RED);
+		DrawCircle( 650, 300, 25, IsGamepadButtonDown(0, GamepadButton.GAMEPAD_BUTTON_RIGHT_FACE_DOWN) ? 
+			Colors.GREEN : Colors.RED);
+
+		// D-Pad
+		DrawRectangle( 100, 175, 25, 50, IsGamepadButtonDown(0, GamepadButton.GAMEPAD_BUTTON_LEFT_FACE_UP) ? 
+			Colors.GREEN : Colors.BLACK);
+		DrawRectangle(  37, 238, 50, 25, IsGamepadButtonDown(0, GamepadButton.GAMEPAD_BUTTON_LEFT_FACE_LEFT) ? 
+			Colors.GREEN : Colors.BLACK);
+		DrawRectangle( 138, 238, 50, 25, IsGamepadButtonDown(0, GamepadButton.GAMEPAD_BUTTON_LEFT_FACE_RIGHT) ? 
+			Colors.GREEN : Colors.BLACK);
+		DrawRectangle( 100, 275, 25, 50, IsGamepadButtonDown(0, GamepadButton.GAMEPAD_BUTTON_LEFT_FACE_DOWN) ? 
+			Colors.GREEN : Colors.BLACK);
 		
+		
+
+		// Gamepads detected
 		DrawText( gpMsg0, 25, 25, 28, Colors.BLACK );
 		DrawText( gpMsg1, 25, 50, 28, Colors.BLACK );
 		DrawText( gpMsg2, 25, 75, 28, Colors.BLACK );
