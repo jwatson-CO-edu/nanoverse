@@ -63,10 +63,11 @@ A rendering engine for jupyter visualization and artistic projects
     [Y] Test joystick input - 2022-12-04: If the gamepad does not work, it may not be on the list!, https://github.com/gabomdq/SDL_GameControllerDB/blob/master/gamecontrollerdb.txt
     [ ] Player glider with joystick input
     [Y] Simple lighting and Flat shading, 2022-12-01: Ambient lighting is probably enough
-    [ ] Visually pleasing contrail ribbon
-        [ ] Triangle strip
-        [ ] Alpha fades to nothing at trailing end
-        [ ] Shine fades to nothing at trailing end
+    [Y] Visually pleasing contrail ribbon, 2022-12-05: Timer was the tricky part.
+        [Y] Triangle strip, 2022-12-05: Timer was the tricky part.
+        [Y] Alpha fades to nothing at trailing end, 2022-12-05: Timer was the tricky part.
+        [N] Shine fades to nothing at trailing end, 2022-12-05: Unsure how to apply shader to a single triangle
+    [ ] Dragging camera (Starfox)
     [ ] Randomly populate grid with filled squares
     [ ] Floating triangle debris
     [ ] Video -or- animated GIF output --to-> IG

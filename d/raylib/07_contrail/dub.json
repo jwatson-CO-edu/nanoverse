@@ -3,6 +3,12 @@
 		"james"
 	],
 	"copyright": "Copyright © 2022, james",
+	"dependencies": {
+		"raylib-d": "~>4.2.4"
+	},
+	"libs-posix": [
+		"raylib"
+	],
 	"description": "Glider leaves an exhaust trail",
 	"license": "MIT",
 	"name": "07_contrail"

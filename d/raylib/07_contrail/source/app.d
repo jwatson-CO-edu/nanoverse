@@ -1,8 +1,10 @@
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
-import core.stdc.stdlib; // `malloc`
+
 import raylib; // --------- easy graphics
 import std.stdio; // ------ writeline
+import std.range;
+import core.time;
 
 import rlights;
 import toybox;
@@ -10,62 +12,59 @@ import toybox;
 
 ////////// CONTRAIL ////////////////////////////////////////////////////////////////////////////////
 
-class FlexMesh{
-	// Mesh with easier access to underlying points
-	int   N_tri; // Number of triangles 
-	Mesh  mesh; //- Raylib mesh geometry
-	Model model; // Raylib drawable model
+class Contrail{
+	// Queue of triangles representing a plume that decays from back to front
+	Vector3[2][] coords; // - 3D coordinates that define the trail, back of list is the head
+	ushort /*-*/ N_seg; // -- Number of total segments the trail can contain
+	ushort /*-*/ C_seg; // -- Count of current segments that the trail contains
+	Color /*--*/ color; // -- Color of the trail
+	float /*--*/ bgnAlpha; // Alpha value at the head of the trail
+	float /*--*/ endAlpha; // Alpha value at the tail of the trail
+	
 
 	/// Constructors ///
-	this( int n ){
-		N_tri = n;
-		mesh  = Mesh();
-		
-		// Init geo memory
-		mesh.triangleCount = n;
-    	mesh.vertexCount   = n * 3;
-		// vertices /*-----*/ = cast(float* ) new float[  mesh.vertexCount*3 ];
-    	// indices /*------*/ = cast(ushort*) new ushort[ mesh.vertexCount   ];
-		// colors /*-------*/ = cast(ubyte* ) new ubyte[  mesh.vertexCount*4 ];
-		mesh.vertices /**/ = cast(float* ) malloc( float.sizeof  * mesh.vertexCount * 3);
-    	mesh.indices /*-*/ = cast(ushort*) malloc( ushort.sizeof * mesh.vertexCount    );
-		mesh.colors /*--*/ = cast(ubyte* ) malloc( ubyte.sizeof  * mesh.vertexCount * 4);
+	this( ushort n, Color c, float bgnA = 1.0f, float endA = 0.0f ){
+		N_seg    = n;
+		C_seg    = 0;
+		color    = c;
+		bgnAlpha = bgnA;
+		endAlpha = endA;
 	}
 
-	bool assign_vertices( ushort len, float[] vertData, ushort bgn = 0 ){
-		if( (len+bgn-1) < (mesh.vertexCount*3) ){
-			for( ushort i = bgn; i < len+bgn; i++ ){
-				mesh.vertices[i] = vertData[i-bgn];
+	ushort push_segment( Vector3 pnt1, Vector3 pnt2 ){
+		// Vector3[2] leadingEdge = [ pnt1, pnt2 ];
+		if( C_seg < N_seg ){
+			C_seg++;
+			// coords ~=  leadingEdge;
+			coords ~= [ pnt1, pnt2 ];
+		}else{
+			coords.popFront();
+			// coords ~= leadingEdge;
+			coords ~= [ pnt1, pnt2 ];
+		}
+		return C_seg;
+	}
+
+	void draw_segments(){
+		float divAlpha = (bgnAlpha - endAlpha) / N_seg;
+		float curAlpha = bgnAlpha;
+		if( C_seg > 1 ){
+			for( ushort i = cast(ushort)(C_seg-1); i >= 1; i-- ){
+				DrawTriangle3D(
+					coords[i][1], coords[i][0], coords[i-1][0], 
+					ColorAlpha( color, curAlpha )
+				);
+				DrawTriangle3D(
+					coords[i-1][0], coords[i-1][1], coords[i][1], 
+					ColorAlpha( color, curAlpha )
+				);
+				curAlpha -= divAlpha;
 			}
-			return true;
-		}else  return false;
+		}
 	}
-
-	bool assign_indices( ushort len, ushort[] dexData, ushort bgn = 0 ){
-		if( (len+bgn-1) < (mesh.vertexCount) ){
-			for( ushort i = bgn; i < len+bgn; i++ ){
-				mesh.indices[i] = dexData[i-bgn];
-			}
-			return true;
-		}else  return false;
-	}
-
-	bool assign_colors( ushort len, ushort[] clrData, ushort bgn = 0 ){
-		if( (len+bgn-1) < (mesh.vertexCount*4) ){
-			for( ushort i = bgn; i < len+bgn; i++ ){
-				mesh.colors[i] = clrData[i-bgn];
-			}
-			return true;
-		}else  return false;
-	}
-
-	public void load_geo(){
-		// Send triangle mesh geometry to RayLib, needed for drawing
-		UploadMesh(&mesh, true);
-    	model = LoadModelFromMesh( mesh );
-	}
-
 }
+
+
 
 
 
@@ -116,7 +115,8 @@ class FlightThirdP_Camera{
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
-// uint MAX_LIGHTS = 4;
+auto clock = MonoTime();
+float curr_time_s(){  return cast(float)(clock.currTime().ticks()) / cast(float)(clock.ticksPerSecond());  }
 
 void main(){
 	// call this before using raylib
@@ -129,6 +129,9 @@ void main(){
     rlEnableSmoothLines();
 
 	
+	float tBgn = curr_time_s();
+	float tEnd;
+	Vector3 posn;
 
 	// FrameAxes worldFrame = new FrameAxes();
 	GridXY    worldGrid  = new GridXY( 
@@ -149,12 +152,15 @@ void main(){
 	DeltaShip glider = new DeltaShip( 2.0 );
 	glider.rotate_RPY( 0.0, 3.1416/2.0, 0.0 );
 	glider.set_XYZ(0.0, 0.0, 2.0);
+
+	Contrail contrail = new Contrail( 20, Colors.GRAY, 1.0f, 0.0f );
+
 	// glider.set_RPY( 0.0, 0.0, 0.0 ); // 3.1416/2.0
 
 	// Shaders
 	// https://www.raylib.com/examples/shaders/loader.html?name=shaders_basic_lighting
 	// Load basic lighting shader
-	Shader shader = LoadShader("source/lighting.vs", "source/lighting.fs");
+	Shader shader = LoadShader("shaders/lighting.vs", "shaders/lighting.fs");
 	// Get some required shader locations
 	shader.locs[ShaderLocationIndex.SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
 	// Ambient light level (some basic lighting)
@@ -201,6 +207,17 @@ void main(){
 
 		glider.z_thrust( 2.0/60.0 );
 		glider.draw();
+		tEnd = curr_time_s();
+		if( (tEnd - tBgn) > 0.10 ){
+			posn = glider.get_XYZ();
+			// writeln( posn );
+			contrail.push_segment(
+				Vector3Add( posn, Vector3Transform( Vector3( -0.125, 0.0, 0.0 ), glider.T) ),
+				Vector3Add( posn, Vector3Transform( Vector3(  0.125, 0.0, 0.0 ), glider.T) )
+			);
+			tBgn = curr_time_s();
+		}
+		contrail.draw_segments();
 
 		// worldFrame.draw();
 		worldGrid.draw();
