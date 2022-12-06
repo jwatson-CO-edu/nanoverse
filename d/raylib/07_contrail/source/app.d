@@ -5,6 +5,9 @@ import raylib; // --------- easy graphics
 import std.stdio; // ------ writeline
 import std.range;
 import core.time;
+import core.math; // `sqrt`
+import std.math.exponential; // `pow`
+import std.random;
 
 import rlights;
 import toybox;
@@ -65,11 +68,127 @@ class Contrail{
 }
 
 
+////////// ACCESSORIES /////////////////////////////////////////////////////////////////////////////
 
+class RectXY{
+	// Filled, axis-aligned rectangle on the XY plane, +Z is UP
+	Vector3    center;
+	float /**/ xSide;
+	float /**/ ySide;
+	Vector3[4] corners;
+	Color /**/ color;
 
+	this( Vector3 cntr, float xLen, float yLen, Color clr ){
+		center = cntr;
+		xSide  = xLen;
+		ySide  = yLen;
+		color  = clr;
+		/*   +X
+		    1---0  
+		 +Y | / |
+		    2---3 */
+		corners[0] = Vector3( cntr.x + xLen/2.0, cntr.y - yLen/2.0, cntr.z );
+		corners[1] = Vector3( cntr.x + xLen/2.0, cntr.y + yLen/2.0, cntr.z );
+		corners[2] = Vector3( cntr.x - xLen/2.0, cntr.y + yLen/2.0, cntr.z );
+		corners[3] = Vector3( cntr.x - xLen/2.0, cntr.y - yLen/2.0, cntr.z );
+	}
+
+	void draw(){
+		DrawTriangle3D( corners[0], corners[1], corners[2], color );
+		DrawTriangle3D( corners[0], corners[2], corners[3], color );
+	}
+}
+
+class Triangle{
+	// A lone, filled triangle in 3D space
+	Vector3[3] corners;
+	Color /**/ color;
+
+	this( Vector3 p1, Vector3 p2, Vector3 p3, Color clr ){
+		corners[0] = p1;
+		corners[1] = p2;
+		corners[2] = p3;
+	}
+
+	void draw(){
+		DrawTriangle3D( corners[0], corners[1], corners[2], color );
+	}
+}
+
+////////// VECTOR MATH /////////////////////////////////////////////////////////////////////////////
+
+float vec3_mag( Vector3 vec ){  return sqrt( pow( vec.x, 2 ) + pow( vec.y, 2 ) + pow( vec.z, 2 ) );  }
+
+Vector3 vec3_divide( Vector3 vec, float div ){
+	return Vector3(
+		vec.x / div,
+		vec.y / div,
+		vec.z / div
+	);
+}
+
+Vector3 vec3_unit( Vector3 vec ){
+	float mag = vec3_mag( vec );
+	if( mag == 0.0 )  
+		return vec;
+	else 
+		return vec3_divide( vec, mag );
+}
+
+Vector3 vec3_mult( Vector3 vec, float factor ){
+	return Vector3(
+		vec.x * factor,
+		vec.y * factor,
+		vec.z * factor
+	);
+}
 
 
 ////////// CAMERA //////////////////////////////////////////////////////////////////////////////////
+
+class FlightFollowThirdP_Camera{
+	// Aircraft drags the camera like in games
+
+	Camera  camera; // --- The actual RayLib camera
+	Vector3 trgtCenter; // Position of the target
+	// Matrix  trgtXform; //- Orientation of the target
+	float   offset_d; // - Desired camera offset in meters
+
+	this( float desiredOffset_m, Vector3 tCenter, Matrix tXform ){
+		trgtCenter = tCenter; 
+		// trgtXform  = tXform; 
+		offset_d   = desiredOffset_m;
+
+		camera = Camera(
+			Vector3Add( tCenter, Vector3Transform( Vector3( 0.0, 0.0, -offset_d ), tXform) ), // Camera location, world frame
+			tCenter, // ----------------------------------------------------- Camera target, world frame
+			Vector3(0.0, 0.0, 1.0), // -------- Up vector
+			45.0, // FOV
+			0 // ???
+		);
+	}
+
+	public void update_target_position( Vector3 tCenter ){  trgtCenter = tCenter;  }
+	
+	// public void update_target_orientation( Matrix tXform ){  trgtXform = tXform;  }
+
+	public void advance_camera(){
+		// Move the camera after all the target updates are in
+
+		Vector3 dragVec = vec3_mult( 
+			vec3_unit( Vector3Subtract( camera.position, trgtCenter ) ), 
+			offset_d 
+		);
+		camera.position = Vector3Add( trgtCenter, dragVec );
+		camera.target   = trgtCenter;
+		// camera.up       =  Vector3Transform( Vector3(0.0, 0.0, 1.0), trgtXform);
+		// camera.Update();
+	}
+
+	public void begin(){  BeginMode3D(camera);  }
+	public void end(){  EndMode3D();  }
+
+}
 
 class FlightThirdP_Camera{
 	// Camera control for a 3rd person view of an aircraft/spacecraft
@@ -128,10 +247,13 @@ void main(){
     rlDisableBackfaceCulling();
     rlEnableSmoothLines();
 
-	
+	// Timing
 	float tBgn = curr_time_s();
 	float tEnd;
 	Vector3 posn;
+
+	// Randomness
+	auto rnd = Random( unpredictableSeed );
 
 	// FrameAxes worldFrame = new FrameAxes();
 	GridXY    worldGrid  = new GridXY( 
@@ -141,6 +263,63 @@ void main(){
 		Colors.GRAY, // https://robloach.github.io/raylib-cpp/classraylib_1_1_color.html
 		false
 	);
+	
+	RectXY[] panels;
+	for( uint i = 0; i < 8000; i++ ){
+		panels ~= new RectXY( 
+			Vector3(
+				uniform(-201, 199, rnd) + 0.5f,
+				uniform(-201, 199, rnd) + 0.5f,
+				0.0
+			), 
+			1.0, 1.0, Colors.GRAY );
+	}
+
+	Triangle[] tris;
+	Vector3 cntr, p1, p2, p3;
+	float maxRad = 20.0f;
+	for( uint i = 0; i < 1000; i++ ){
+		cntr = Vector3(
+			uniform( -200.0f, 200.0f, rnd ),
+			uniform( -200.0f, 200.0f, rnd ),
+			uniform(    0.0f, 100.0f, rnd )
+		);
+		p1 = Vector3Add(
+			cntr,
+			Vector3(
+				uniform(-maxRad, maxRad, rnd),
+				uniform(-maxRad, maxRad, rnd),
+				uniform(-maxRad, maxRad, rnd)
+			)
+		);
+		p2 = Vector3Add(
+			cntr,
+			Vector3(
+				uniform(-maxRad, maxRad, rnd),
+				uniform(-maxRad, maxRad, rnd),
+				uniform(-maxRad, maxRad, rnd)
+			)
+		);
+		p3 = Vector3Add(
+			cntr,
+			Vector3(
+				uniform(-maxRad, maxRad, rnd),
+				uniform(-maxRad, maxRad, rnd),
+				uniform(-maxRad, maxRad, rnd)
+			)
+		);
+		tris ~= new Triangle( 
+			p1, p2, p3, 
+			ColorFromNormalized( Vector4(
+				uniform( -1.0, 1.0, rnd),
+				uniform( -1.0, 1.0, rnd),
+				uniform( -1.0, 1.0, rnd),
+				uniform( -1.0, 1.0, rnd)
+			) )
+		);
+	}
+
+
 	GridXY    skyGrid  = new GridXY( 
 		Vector3(0.0, 0.0, 200.0), 
 		  1.0, 
@@ -178,8 +357,8 @@ void main(){
     lights[2] = CreateLight( LightType.LIGHT_POINT, Vector3( -2, 1, 2 ), Vector3Zero(), Colors.GREEN, shader);
     lights[3] = CreateLight( LightType.LIGHT_POINT, Vector3( 2, 1, -2 ), Vector3Zero(), Colors.BLUE, shader);
 
-	FlightThirdP_Camera camera = new FlightThirdP_Camera(
-		Vector3( 0.0,  2.5, -6.0 ),
+	FlightFollowThirdP_Camera camera = new FlightFollowThirdP_Camera(
+		7.0,
 		glider.get_XYZ(),
 		glider.T
 	);
@@ -193,7 +372,7 @@ void main(){
 		if( IsKeyDown( KeyboardKey.KEY_DOWN  ) ){  glider.rotate_RPY( 0.0, -3.1416/120.0, 0.0          );  }
 
 		camera.update_target_position( glider.get_XYZ() );
-		camera.update_target_orientation( glider.T );
+		// camera.update_target_orientation( glider.T );
 		camera.advance_camera();
 
 		/// Rendering ///
@@ -221,7 +400,13 @@ void main(){
 
 		// worldFrame.draw();
 		worldGrid.draw();
+		foreach( RectXY panel; panels ){
+			panel.draw();
+		}
 		// skyGrid.draw();
+		foreach( Triangle tri; tris ){
+			tri.draw();
+		}
 
 		// DrawGrid(10, 1.0);
         

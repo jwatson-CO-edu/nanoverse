@@ -67,8 +67,8 @@ A rendering engine for jupyter visualization and artistic projects
         [Y] Triangle strip, 2022-12-05: Timer was the tricky part.
         [Y] Alpha fades to nothing at trailing end, 2022-12-05: Timer was the tricky part.
         [N] Shine fades to nothing at trailing end, 2022-12-05: Unsure how to apply shader to a single triangle
-    [ ] Dragging camera (Starfox)
-    [ ] Randomly populate grid with filled squares
+    [Y] Dragging camera (Starfox), 2022-12-06: Pleasing to look at!
+    [Y] Randomly populate grid with filled squares, 2022-12-06: Adds visual interest
     [ ] Floating triangle debris
     [ ] Video -or- animated GIF output --to-> IG
 
