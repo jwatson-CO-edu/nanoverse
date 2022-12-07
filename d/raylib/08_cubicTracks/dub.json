@@ -1,0 +1,15 @@
+{
+	"authors": [
+		"james"
+	],
+	"copyright": "Copyright © 2022, james",
+	"dependencies": {
+		"raylib-d": "~>4.2.4"
+	},
+	"libs-posix": [
+		"raylib"
+	],
+	"description": "Test of tracks for ribbons",
+	"license": "MIT",
+	"name": "08_cubictracks"
+}

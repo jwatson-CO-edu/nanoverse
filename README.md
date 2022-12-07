@@ -75,8 +75,6 @@ A rendering engine for jupyter visualization and artistic projects
  * Context switch to FINCH
 
 [ ] Piped Ribbons - Generative art
-    [ ] Ribbon
-        [ ] Ribbon traces a circle
     [ ] Randomly trace a 3D grid, with 90deg curved turn limit with grid radius
     [ ] Multiple, random non-colliding ribbons
     [ ] Multiple, random non-colliding ribbons in a loop and orbiting camera

@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/08_cubictracks
+08_cubictracks.so
+08_cubictracks.dylib
+08_cubictracks.dll
+08_cubictracks.a
+08_cubictracks.lib
+08_cubictracks-test-*
+*.exe
+*.o
+*.obj
+*.lst
