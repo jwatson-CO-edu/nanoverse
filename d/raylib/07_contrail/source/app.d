@@ -337,7 +337,7 @@ void main(){
 	glider.rotate_RPY( 0.0, 3.1416/2.0, 0.0 );
 	glider.set_XYZ(0.0, 0.0, 2.0);
 
-	Contrail contrail = new Contrail( 20, Colors.GRAY, 1.0f, 0.0f );
+	Contrail contrail = new Contrail( 20, Colors.ORANGE, 1.0f, 0.0f );
 
 	// glider.set_RPY( 0.0, 0.0, 0.0 ); // 3.1416/2.0
 
@@ -382,8 +382,8 @@ void main(){
 
 		// gamepad input
 		if( IsGamepadAvailable(0) ){
-			glider.rotate_RPY( 0.0, 0.0, -frameRotateRad*GetGamepadAxisMovement(0, GamepadAxis.GAMEPAD_AXIS_RIGHT_X) );
-			glider.rotate_RPY( 0.0, -frameRotateRad*GetGamepadAxisMovement(0, GamepadAxis.GAMEPAD_AXIS_RIGHT_Y), 0.0 );
+			glider.rotate_RPY( 0.0, 0.0, -frameRotateRad*GetGamepadAxisMovement(0, GamepadAxis.GAMEPAD_AXIS_LEFT_X) );
+			glider.rotate_RPY( 0.0, -frameRotateRad*GetGamepadAxisMovement(0, GamepadAxis.GAMEPAD_AXIS_LEFT_Y), 0.0 );
 		}
 
 		camera.update_target_position( glider.get_XYZ() );
@@ -398,9 +398,9 @@ void main(){
 		
         camera.begin();
 		
-		float frameThrust = 2.0/60.0;
+		float frameThrust = 3.0/60.0;
 		if( IsGamepadAvailable(0) )
-			glider.z_thrust( frameThrust - frameThrust*GetGamepadAxisMovement(0, GamepadAxis.GAMEPAD_AXIS_LEFT_Y) );
+			glider.z_thrust( frameThrust - frameThrust*GetGamepadAxisMovement(0, GamepadAxis.GAMEPAD_AXIS_RIGHT_Y) );
 		else
 			glider.z_thrust( frameThrust );
 		glider.draw();
@@ -409,8 +409,8 @@ void main(){
 			posn = glider.get_XYZ();
 			// writeln( posn );
 			contrail.push_segment(
-				Vector3Add( posn, Vector3Transform( Vector3( -0.125, 0.0, 0.0 ), glider.T) ),
-				Vector3Add( posn, Vector3Transform( Vector3(  0.125, 0.0, 0.0 ), glider.T) )
+				Vector3Add( posn, Vector3Transform( Vector3( -0.125, 0.0, 0.5 ), glider.T) ),
+				Vector3Add( posn, Vector3Transform( Vector3(  0.125, 0.0, 0.5 ), glider.T) )
 			);
 			tBgn = curr_time_s();
 		}
