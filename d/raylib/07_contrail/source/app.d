@@ -108,6 +108,7 @@ class Triangle{
 		corners[0] = p1;
 		corners[1] = p2;
 		corners[2] = p3;
+		color /**/ = clr;
 	}
 
 	void draw(){
@@ -242,7 +243,7 @@ void main(){
 	validateRaylibBinding();
 	
     // Window / Display Params
-    InitWindow(800, 600, "Hello, Raylib-D!");
+    InitWindow(1200, 900, "Delta Glider");
     SetTargetFPS(60);
     rlDisableBackfaceCulling();
     rlEnableSmoothLines();
@@ -277,12 +278,12 @@ void main(){
 
 	Triangle[] tris;
 	Vector3 cntr, p1, p2, p3;
-	float maxRad = 20.0f;
+	float maxRad = 5.0f;
 	for( uint i = 0; i < 1000; i++ ){
 		cntr = Vector3(
-			uniform( -200.0f, 200.0f, rnd ),
-			uniform( -200.0f, 200.0f, rnd ),
-			uniform(    0.0f, 100.0f, rnd )
+			uniform( -100.0f, 100.0f, rnd ),
+			uniform( -100.0f, 100.0f, rnd ),
+			uniform(    0.0f,  50.0f, rnd )
 		);
 		p1 = Vector3Add(
 			cntr,
@@ -308,13 +309,17 @@ void main(){
 				uniform(-maxRad, maxRad, rnd)
 			)
 		);
+		write( p1 );
+		write( p2 );
+		writeln( p3 );
 		tris ~= new Triangle( 
 			p1, p2, p3, 
+			// Colors.BLUE
 			ColorFromNormalized( Vector4(
-				uniform( -1.0, 1.0, rnd),
-				uniform( -1.0, 1.0, rnd),
-				uniform( -1.0, 1.0, rnd),
-				uniform( -1.0, 1.0, rnd)
+				uniform( 0.0, 1.0, rnd),
+				uniform( 0.0, 1.0, rnd),
+				uniform( 0.0, 1.0, rnd),
+				uniform( 0.0, 1.0, rnd)
 			) )
 		);
 	}
@@ -363,13 +368,23 @@ void main(){
 		glider.T
 	);
 
+	float frameRotateRad = 3.1416/120.0;
+
 	while (!WindowShouldClose()){
 
 		/// Update ///
-		if( IsKeyDown( KeyboardKey.KEY_LEFT  ) ){  glider.rotate_RPY( 0.0,  0.0,          3.1416/120.0 );  }
-		if( IsKeyDown( KeyboardKey.KEY_RIGHT ) ){  glider.rotate_RPY( 0.0,  0.0,         -3.1416/120.0 );  }
-		if( IsKeyDown( KeyboardKey.KEY_UP    ) ){  glider.rotate_RPY( 0.0,  3.1416/120.0, 0.0          );  }
-		if( IsKeyDown( KeyboardKey.KEY_DOWN  ) ){  glider.rotate_RPY( 0.0, -3.1416/120.0, 0.0          );  }
+
+		// Keyboard input
+		if( IsKeyDown( KeyboardKey.KEY_LEFT  ) ){  glider.rotate_RPY( 0.0,  0.0,            frameRotateRad );  }
+		if( IsKeyDown( KeyboardKey.KEY_RIGHT ) ){  glider.rotate_RPY( 0.0,  0.0,           -frameRotateRad );  }
+		if( IsKeyDown( KeyboardKey.KEY_UP    ) ){  glider.rotate_RPY( 0.0,  frameRotateRad, 0.0          );  }
+		if( IsKeyDown( KeyboardKey.KEY_DOWN  ) ){  glider.rotate_RPY( 0.0, -frameRotateRad, 0.0          );  }
+
+		// gamepad input
+		if( IsGamepadAvailable(0) ){
+			glider.rotate_RPY( 0.0, 0.0, -frameRotateRad*GetGamepadAxisMovement(0, GamepadAxis.GAMEPAD_AXIS_RIGHT_X) );
+			glider.rotate_RPY( 0.0, -frameRotateRad*GetGamepadAxisMovement(0, GamepadAxis.GAMEPAD_AXIS_RIGHT_Y), 0.0 );
+		}
 
 		camera.update_target_position( glider.get_XYZ() );
 		// camera.update_target_orientation( glider.T );
@@ -383,8 +398,11 @@ void main(){
 		
         camera.begin();
 		
-
-		glider.z_thrust( 2.0/60.0 );
+		float frameThrust = 2.0/60.0;
+		if( IsGamepadAvailable(0) )
+			glider.z_thrust( frameThrust - frameThrust*GetGamepadAxisMovement(0, GamepadAxis.GAMEPAD_AXIS_LEFT_Y) );
+		else
+			glider.z_thrust( frameThrust );
 		glider.draw();
 		tEnd = curr_time_s();
 		if( (tEnd - tBgn) > 0.10 ){

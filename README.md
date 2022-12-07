@@ -61,7 +61,7 @@ A rendering engine for jupyter visualization and artistic projects
     [Y] Camera follow glider - 2022-09-22: Camera stuck fast to glider!
     [Y] Ship keyboard steering with camera follow - 2022-09-23: Very easy!
     [Y] Test joystick input - 2022-12-04: If the gamepad does not work, it may not be on the list!, https://github.com/gabomdq/SDL_GameControllerDB/blob/master/gamecontrollerdb.txt
-    [ ] Player glider with joystick input
+    [Y] Player glider with joystick input, 2022-12-06: Easy!
     [Y] Simple lighting and Flat shading, 2022-12-01: Ambient lighting is probably enough
     [Y] Visually pleasing contrail ribbon, 2022-12-05: Timer was the tricky part.
         [Y] Triangle strip, 2022-12-05: Timer was the tricky part.
@@ -69,8 +69,8 @@ A rendering engine for jupyter visualization and artistic projects
         [N] Shine fades to nothing at trailing end, 2022-12-05: Unsure how to apply shader to a single triangle
     [Y] Dragging camera (Starfox), 2022-12-06: Pleasing to look at!
     [Y] Randomly populate grid with filled squares, 2022-12-06: Adds visual interest
-    [ ] Floating triangle debris
-    [ ] Video -or- animated GIF output --to-> IG
+    [Y] Floating triangle debris, 2022-12-06: Easy!
+    [>] Video -or- animated GIF output --to-> IG
 
  * Context switch to FINCH
 
