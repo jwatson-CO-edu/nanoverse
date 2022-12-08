@@ -80,18 +80,45 @@ int[3] random_Grid3_neighbor( int[3] origin, int halfLimit ){
 
 int[3][] get_unoccupied_vonNeumann_neighbors( Grid3 grid, int[3] address ){
 	// Return all the von Neumann neighbors to `grid` `address` not marked occupied, If none then return empty
+	int[3]   chkAddr;
+	int[3][] rtnAddr;
+
 	// 1. Get all neighbors
 
-	// FIXME, START HERE: ITERATE OVER NEIGHBORS IN EACH DIMENSION
+	foreach( int dx; [-1,1] ){
+		chkAddr = [ address[0]+dx, address[1], address[2] ];
+		// 2. If neighbor is unoccupied, add it to the vector
+		if( check_address( chkAddr, grid.halfLimit ) )  rtnAddr ~= chkAddr;
+	}
 
-	// 2. If neighbor is unoccupied, add it to the vector
+	foreach( int dy; [-1,1] ){
+		chkAddr = [ address[0], address[1]+dy, address[2] ];
+		// 2. If neighbor is unoccupied, add it to the vector
+		if( check_address( chkAddr, grid.halfLimit ) )  rtnAddr ~= chkAddr;
+	}
+
+	foreach( int dz; [-1,1] ){
+		chkAddr = [ address[0], address[1], address[2]+dz ];
+		// 2. If neighbor is unoccupied, add it to the vector
+		if( check_address( chkAddr, grid.halfLimit ) )  rtnAddr ~= chkAddr;
+	}
+
 	// N. Return neighbors or empty
+	return rtnAddr;
 }
 
-void gen_cycle_on_3D_grid( int halfLimit ){
+void gen_cycle_on_3D_grid( Grid3 grid, float epsilon ){
 	// Generate a wandering cycle on a 3D regular grid
 	// Decide whether to wander or return for this step
-	// 1. FIXME: GET RANDOM NEIGHBOR AND CHECK THAT IT DOES NOT GET US STUCK
+
+	// FIXME, START HERE: CHECK IF WE ARE VERY CLOSE TO CLOSING THE LOOP
+
+	if( uniform( 0.0, 1.0, rnd) < epsilon ){
+		// 1. FIXME: GET RANDOM NEIGHBOR AND CHECK THAT IT DOES NOT GET US STUCK
+	}else{
+
+	}
+	
 
 }
 
