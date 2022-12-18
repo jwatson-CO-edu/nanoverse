@@ -7,7 +7,7 @@ import std.math.exponential; // `pow`
 import std.random;
 import core.stdc.stdlib; //abs
 
-// import raylib; // --------- easy graphics
+import raylib; // --------- easy graphics
 
 // import toybox;
 
@@ -80,6 +80,7 @@ class Grid3i{
 			edges ~= new Edge3i( nodes[ p1 ], nodes[ p2 ] );
 			nodes[ p1 ].occupied = true;
 			nodes[ p2 ].occupied = true;
+			return true;
 		}else  return false;
  	}
 
@@ -170,7 +171,7 @@ void gen_cycle_on_3D_grid( Grid3i grid, float epsilon ){
 
 	// FIXME, START HERE: CHECK IF WE ARE VERY CLOSE TO CLOSING THE LOOP
 
-	if( uniform( 0.0, 1.0, rnd) < epsilon ){
+	if( uniform( 0.0f, 1.0f, rnd) < epsilon ){
 		// 1. FIXME: GET RANDOM NEIGHBOR AND CHECK THAT IT DOES NOT GET US STUCK
 	}else{
 
