@@ -1,0 +1,12 @@
+{
+	"authors": [
+		"james"
+	],
+	"copyright": "Copyright © 2022, james",
+	"dependencies": {
+		"raylib-d": "~>4.2.4"
+	},
+	"description": "Test smoothness and basic (1st-order) continuity of linear splines, to be applied to the ribbon chaser art project",
+	"license": "MIT",
+	"name": "08_linearsplines"
+}

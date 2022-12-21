@@ -1,5 +1,5 @@
 # nanoverse
-A rendering engine for artistic projects
+Artistic projects rendered in various frameworks and engines, written in (and grouped by) various languages 
 * Keep work on this toy to a responsible minimum
 * All units in meters `[m]`
 

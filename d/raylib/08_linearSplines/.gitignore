@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/08_linearsplines
+08_linearsplines.so
+08_linearsplines.dylib
+08_linearsplines.dll
+08_linearsplines.a
+08_linearsplines.lib
+08_linearsplines-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst
