@@ -6,6 +6,9 @@
 	"dependencies": {
 		"raylib-d": "~>4.2.4"
 	},
+	"libs-posix": [
+		"raylib"
+	],
 	"description": "Test smoothness and basic (1st-order) continuity of linear splines, to be applied to the ribbon chaser art project",
 	"license": "MIT",
 	"name": "08_linearsplines"
