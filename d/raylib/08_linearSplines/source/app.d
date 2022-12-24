@@ -111,6 +111,24 @@ Edge3f*[] get_linear_mid_spline( Edge3f* e1, Edge3f* e2, uint steps = 10 ){
 }
 
 
+Edge3f*[] spline_loop_from_edge_loop( Edge3f*[] edges, uint steps = 10 ){
+    // Create splines between segment loop midpoints such as to create a smooth loop of splines 
+    Edge3f*[] rtnSplines; 
+    Edge3f*   lastEdge = edges[0];
+    // foreach( Edge3f* currEdge; edges[1..$-1] ){
+    foreach( Edge3f* currEdge; edges ){
+        rtnSplines ~= get_linear_mid_spline( lastEdge, currEdge, steps );
+        lastEdge = currEdge;
+    }
+    // Close the spline
+    rtnSplines ~= get_linear_mid_spline( lastEdge, edges[0], steps );
+    // Close the loop
+    // rtnSplines[$-1].head = rtnSplines[0].tail;
+    rtnSplines[0].head = rtnSplines[$-1].tail;
+    return rtnSplines;
+}
+
+
 void paint_edges( Edge3f*[] edges ){
     foreach( Edge3f* edge; edges ){
         DrawLine3D( // X basis
@@ -145,15 +163,17 @@ void main(){
     // Create geometry
 
     Node3f    p1     = Node3f( Vector3(0,0,0) ); 
-    Node3f    p2     = Node3f( Vector3(0,1,0) ); 
-    Node3f    p3     = Node3f( Vector3(0,0,1) ); 
-    Node3f    p4     = Node3f( Vector3(0,1,1) ); 
+    Node3f    p2     = Node3f( Vector3(0,2,0) ); 
+    Node3f    p3     = Node3f( Vector3(0,0,2) ); 
+    Node3f    p4     = Node3f( Vector3(0,2,2) ); 
     Edge3f    e1     = Edge3f( &p2, &p1 );
     Edge3f    e2     = Edge3f( &p1, &p3 );
     Edge3f    e3     = Edge3f( &p3, &p4 );
     Edge3f    e4     = Edge3f( &p4, &p2 );
     Edge3f*[] edges  = [&e1, &e2, &e3, &e4];
-    Edge3f*[] spline = get_linear_mid_spline( &e1, &e2, 10 );
+    // Edge3f*[] spline = get_linear_mid_spline( &e1, &e2, 10 );
+    Edge3f*[] spline = spline_loop_from_edge_loop( edges, 10 );
+    
 	
     // Window / Display Params
     InitWindow( 1200, 900, "Linear Splines" );
@@ -182,7 +202,7 @@ void main(){
         BeginMode3D( camera );
         
         // Paint track
-        paint_edges( edges  );
+        // paint_edges( edges  );
         paint_edges( spline );
 
         // Follow track
