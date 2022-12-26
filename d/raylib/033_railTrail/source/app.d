@@ -220,6 +220,96 @@ Edge3f*[] random_loop_noisy_grid( Vector3 start, float unitJump, Vector3 noiseBo
 }
 
 
+////////// RAIL TRAIL //////////////////////////////////////////////////////////////////////////////
+
+float defaultTurn = 3 * PI/180;
+
+// class Contrail{
+class RailTrail{
+	// Queue of triangles representing a plume that decays from back to front
+
+	// Rendering Vars
+	Vector3[2][] coords; // - 3D coordinates that define the trail, back of list is the head
+	ushort /*-*/ N_seg; // -- Number of total segments the trail can contain
+	ushort /*-*/ C_seg; // -- Count of current segments that the trail contains
+	Color /*--*/ color; // -- Color of the trail
+	float /*--*/ bgnAlpha; // Alpha value at the head of the trail
+	float /*--*/ endAlpha; // Alpha value at the tail of the trail
+	
+	// Leading edge vars
+	Edge3f*[] rail; // -- Path for the contrail to follow (NOTE: Assumed to be a loop)
+	ulong     segDex; //- Index of the current segment at which the leading edge is drawn 
+	ulong     lasDex; //- Index of the last    segment 
+	float     edgHlf; //- Half length of the leading edge // Length// = 4.0;
+	float     edgAng; //- Angle of the leading edge relative to the segment normal // = 0.0;
+	float     frmTrn; //- Radians that the leading edge should turn about the rail per frame 
+	Vector3   edgDir; //- Direction that the leading edge points in 3D space
+	Edge3f*   lastSeg; // Pointer to the last    rail segment
+	Edge3f*   currSeg; // Pointer to the current rail segment
+	Vector3   n_s; // --- Current segment normal (used to calculate `edgAng`)
+	Vector3   n_last; //- Last    segment normal // = Vector3( 1, 1, 0 );
+	
+	/// Constructors ///
+	this( Edge3f*[] path, float leadLength, ushort n, Color c, 
+		  float bgnA = 1.0f, float endA = 0.0f, float deltaAng = defaultTurn,  ){
+
+		// Init rendering Vars
+		N_seg    = n;
+		C_seg    = 0;
+		color    = c;
+		bgnAlpha = bgnA;
+		endAlpha = endA;
+
+		// Init leading edge vars
+		rail    = path;
+		segDex  = 0;
+		lasDex  = rail.length-1;
+		edgHlf  = leadLength / 2.0;
+		frmTrn  = deltaAng
+		currSeg = rail[ segDex ];
+		lastSeg = rail[ lasDex ];
+		edgDir  = Vector3Normalize( Vector3CrossProduct( get_direction( currSeg ), Vector3( 1, 0, 0 ) ) );
+		n_last  = Vector3CrossProduct( get_direction( lastSeg ), get_direction( currSeg ) );;
+	}
+
+	ushort push_segment( Vector3 pnt1, Vector3 pnt2 ){
+		// Vector3[2] leadingEdge = [ pnt1, pnt2 ];
+		if( C_seg < N_seg ){
+			C_seg++;
+			// coords ~=  leadingEdge;
+			coords ~= [ pnt1, pnt2 ];
+		}else{
+			coords.popFront();
+			// coords ~= leadingEdge;
+			coords ~= [ pnt1, pnt2 ];
+		}
+		return C_seg;
+	}
+
+	void draw_segments(){
+		float divAlpha = (bgnAlpha - endAlpha) / N_seg;
+		float curAlpha = bgnAlpha;
+		if( C_seg > 1 ){
+			for( ushort i = cast(ushort)(C_seg-1); i >= 1; i-- ){
+				DrawTriangle3D(
+					coords[i][1], coords[i][0], coords[i-1][0], 
+					ColorAlpha( color, curAlpha )
+				);
+				DrawTriangle3D(
+					coords[i-1][0], coords[i-1][1], coords[i][1], 
+					ColorAlpha( color, curAlpha )
+				);
+				curAlpha -= divAlpha;
+			}
+		}
+	}
+
+	void advance_one_segment(){
+		// Move the leading edge ahead one segment and push one contrail segment
+		
+	}
+}
+
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
@@ -248,8 +338,8 @@ void main(){
 	float   sphRad  = 1.0;
 	ulong   segDex  = 0;
 	ulong   lasDex  = 0;
-	float   edgHlf  = 4.0;
-	float   edgAng  = 0.0;
+	float   barHlf  = 4.0;
+	float   barAng  = 0.0;
 	float   frmTrn  = 3 * PI/180;
     
 	
@@ -273,7 +363,7 @@ void main(){
     // Vector3 trailFront = edges[ edgeDex ].head.point;
 
 	// Init bar direction
-	Vector3 edgDir  = Vector3Normalize( Vector3CrossProduct( get_direction( rail[ segDex ] ), Vector3( 1, 0, 0 ) ) );
+	Vector3 barDir  = Vector3Normalize( Vector3CrossProduct( get_direction( rail[ segDex ] ), Vector3( 1, 0, 0 ) ) );
 	Edge3f* lastSeg = null;
 	Edge3f* currSeg = null;
 	lasDex = rail.length-1;
@@ -308,29 +398,29 @@ void main(){
             n_s = Vector3Negate( n_s );
         }
 		// Calculate angle between the segment normal and the bar
-		edgAng = Vector3Angle( edgDir, n_s );
+		barAng = Vector3Angle( barDir, n_s );
 		// If the angle is positive or negative when measured from the segment normal to the bar, then negate angle
-		if( Vector3DotProduct( edgDir, Vector3CrossProduct( n_s, get_direction( lastSeg ) ) ) < 0.0 )
-			edgAng *= -1.0;
+		if( Vector3DotProduct( barDir, Vector3CrossProduct( n_s, get_direction( lastSeg ) ) ) < 0.0 )
+			barAng *= -1.0;
 		// Rotate from the segment normal about the current segment, adding frame rotation delta
-		edgDir = Vector3Normalize( Vector3RotateByAxisAngle( n_s, get_direction( currSeg ), -(edgAng+frmTrn) ) );
+		barDir = Vector3Normalize( Vector3RotateByAxisAngle( n_s, get_direction( currSeg ), -(barAng+frmTrn) ) );
 
 		// if( count % 2 == 0 ){
-		// 	edgDir = Vector3Normalize( Vector3RotateByAxisAngle( n_s, get_direction( currSeg ), -(edgAng+frmTrn) ) );
+		// 	barDir = Vector3Normalize( Vector3RotateByAxisAngle( n_s, get_direction( currSeg ), -(barAng+frmTrn) ) );
 		// }else{
-		// 	edgDir = Vector3Normalize( Vector3RotateByAxisAngle( n_s, get_direction( currSeg ), -edgAng ) );
+		// 	barDir = Vector3Normalize( Vector3RotateByAxisAngle( n_s, get_direction( currSeg ), -barAng ) );
 		// }
 		
 		// Draw bar side 1
 		DrawLine3D( 
 			rail[ segDex ].tail.point,
-			Vector3Add( rail[ segDex ].tail.point, Vector3Scale( edgDir,  edgHlf ) ),
+			Vector3Add( rail[ segDex ].tail.point, Vector3Scale( barDir,  barHlf ) ),
 			Colors.BLUE
 		);
 		// Draw bar side 2
 		DrawLine3D( 
 			rail[ segDex ].tail.point,
-			Vector3Add( rail[ segDex ].tail.point, Vector3Scale( edgDir, -edgHlf ) ),
+			Vector3Add( rail[ segDex ].tail.point, Vector3Scale( barDir, -barHlf ) ),
 			Colors.BLUE
 		);
 

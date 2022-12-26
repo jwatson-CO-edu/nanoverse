@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/033_railtrail
+033_railtrail.so
+033_railtrail.dylib
+033_railtrail.dll
+033_railtrail.a
+033_railtrail.lib
+033_railtrail-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst
