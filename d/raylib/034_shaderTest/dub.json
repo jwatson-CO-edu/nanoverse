@@ -1,0 +1,12 @@
+{
+	"authors": [
+		"james"
+	],
+	"copyright": "Copyright © 2022, james",
+	"dependencies": {
+		"raylib-d": "~>4.2.4"
+	},
+	"description": "Playing with shaders in Raylib",
+	"license": "MIT",
+	"name": "034_shadertest"
+}

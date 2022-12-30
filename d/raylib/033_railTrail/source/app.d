@@ -6,6 +6,7 @@ import core.math; // `sqrt`
 import std.math.exponential; // `pow`
 import std.random;
 import core.stdc.stdlib; //abs
+import std.range;
 
 import raylib; // --------- easy graphics
 
@@ -251,7 +252,7 @@ class RailTrail{
 	
 	/// Constructors ///
 	this( Edge3f*[] path, float leadLength, ushort n, Color c, 
-		  float bgnA = 1.0f, float endA = 0.0f, float deltaAng = defaultTurn,  ){
+		  float bgnA = 1.0f, float endA = 0.0f, float deltaAng = defaultTurn ){
 
 		// Init rendering Vars
 		N_seg    = n;
@@ -265,11 +266,11 @@ class RailTrail{
 		segDex  = 0;
 		lasDex  = rail.length-1;
 		edgHlf  = leadLength / 2.0;
-		frmTrn  = deltaAng
+		frmTrn  = deltaAng;
 		currSeg = rail[ segDex ];
 		lastSeg = rail[ lasDex ];
 		edgDir  = Vector3Normalize( Vector3CrossProduct( get_direction( currSeg ), Vector3( 1, 0, 0 ) ) );
-		n_last  = Vector3CrossProduct( get_direction( lastSeg ), get_direction( currSeg ) );;
+		n_last  = Vector3CrossProduct( get_direction( lastSeg ), get_direction( currSeg ) );
 	}
 
 	ushort push_segment( Vector3 pnt1, Vector3 pnt2 ){
@@ -304,9 +305,35 @@ class RailTrail{
 		}
 	}
 
-	void advance_one_segment(){
+	void advance_by_one_rail_segment(){
 		// Move the leading edge ahead one segment and push one contrail segment
-		
+
+		// Get current and last segments
+		segDex  = (segDex+1) % (rail.length);
+		lasDex  = (lasDex+1) % (rail.length);
+		currSeg = rail[ segDex ];
+		lastSeg = rail[ lasDex ];
+
+		// Get the normal of a plane containing the segments
+		n_s = Vector3CrossProduct( get_direction( lastSeg ), get_direction( currSeg ) );
+        if( Vector3DotProduct( n_s, n_last ) < 0.0 ){
+            n_s = Vector3Negate( n_s );
+        }
+
+		// Calculate angle between the segment normal and the bar
+		edgAng = Vector3Angle( edgDir, n_s );
+		// If the angle is positive or negative when measured from the segment normal to the bar, then negate angle
+		if( Vector3DotProduct( edgDir, Vector3CrossProduct( n_s, get_direction( lastSeg ) ) ) < 0.0 )
+			edgAng *= -1.0;
+
+		// Rotate from the segment normal about the current segment, adding frame rotation delta
+		edgDir = Vector3Normalize( Vector3RotateByAxisAngle( n_s, get_direction( currSeg ), -(edgAng+frmTrn) ) );
+
+		// Push trail segment
+		push_segment( 
+			Vector3Add( currSeg.tail.point, Vector3Scale( edgDir,  edgHlf ) ), 
+			Vector3Add( currSeg.tail.point, Vector3Scale( edgDir, -edgHlf ) )
+		);
 	}
 }
 
@@ -327,24 +354,67 @@ void main(){
     // call this before using raylib
 	validateRaylibBinding();
 
-    // Create geometry
-	float     unitJump    = 5.0f;
-    float     unitNoise   = 1.0f;
-    Vector3   noiseBounds = Vector3( unitNoise, unitNoise, unitNoise );
-    Edge3f*[] edges /*-*/ = random_loop_noisy_grid( Vector3( 0.0, 0.0, 0.0 ), unitJump, noiseBounds, 0.25 );
-	Edge3f*[] rail /*--*/ = spline_loop_from_edge_loop( edges, 10 );
+	// Create path
+	float /*--*/ unitJump    = 5.0f;
+    float /*--*/ unitNoise   = 1.0f;
+    Vector3 /**/ noiseBounds = Vector3( unitNoise, unitNoise, unitNoise );
+	const ushort N = 6;
+	Edge3f*[][N] jumps;
+	Edge3f*[][N] rails;
+	RailTrail[N] ribbons;
 
-	Vector3 sphCntr = rail[0].tail.point;
-	float   sphRad  = 1.0;
-	ulong   segDex  = 0;
-	ulong   lasDex  = 0;
-	float   barHlf  = 4.0;
-	float   barAng  = 0.0;
-	float   frmTrn  = 3 * PI/180;
-    
-	
+    // Edge3f*[] edges /*-*/ = random_loop_noisy_grid( Vector3( 0.0, 0.0, 0.0 ), unitJump, noiseBounds, 0.25 );
+	// Edge3f*[] rail /*--*/ = spline_loop_from_edge_loop( edges, 10 );
+
+	for( ushort i = 0; i < N; i++ ){
+		jumps[i] = random_loop_noisy_grid( Vector3( 
+			uniform( -5.0, 5.0, rnd ), 
+			uniform( -5.0, 5.0, rnd ), 
+			uniform( -5.0, 5.0, rnd ) 
+		), unitJump, noiseBounds, 0.25 );
+		while( jumps[i].length < 10 ){
+			jumps[i] = random_loop_noisy_grid( Vector3( 
+				uniform( -5.0, 5.0, rnd ), 
+				uniform( -5.0, 5.0, rnd ), 
+				uniform( -5.0, 5.0, rnd ) 
+			), unitJump, noiseBounds, 0.25 );
+		}
+		rails[i] = spline_loop_from_edge_loop( jumps[i], 10 );
+	}
+
+	// Create self-chasing tail
+	ribbons[0] = new RailTrail(
+		rails[0], 8.0, 30, Colors.RED, 
+		1.0f, 0.0f, defaultTurn
+	); 
+
+	ribbons[1] = new RailTrail(
+		rails[1], 8.0, 30, Colors.YELLOW, 
+		1.0f, 0.0f, defaultTurn
+	); 
+
+	ribbons[2] = new RailTrail(
+		rails[2], 8.0, 30, Colors.BLUE, 
+		1.0f, 0.0f, defaultTurn
+	); 
+
+	ribbons[3] = new RailTrail(
+		rails[3], 8.0, 30, Colors.ORANGE, 
+		1.0f, 0.0f, defaultTurn
+	); 
+
+	ribbons[4] = new RailTrail(
+		rails[4], 8.0, 30, Colors.GREEN, 
+		1.0f, 0.0f, defaultTurn
+	); 
+
+	ribbons[5] = new RailTrail(
+		rails[5], 8.0, 30, Colors.PURPLE, 
+		1.0f, 0.0f, defaultTurn
+	); 
+
     // Window / Display Params
-    InitWindow( 1200, 900, "Smooth Rails" );
+    InitWindow( 1320, 990, "Chasing Ribbons" );
     SetTargetFPS( 60 );
     rlDisableBackfaceCulling();
     rlEnableSmoothLines();
@@ -358,19 +428,6 @@ void main(){
         0
     );
 
-    // float   dPerFrame  = 0.2;
-    // int     edgeDex    = 0;
-    // Vector3 trailFront = edges[ edgeDex ].head.point;
-
-	// Init bar direction
-	Vector3 barDir  = Vector3Normalize( Vector3CrossProduct( get_direction( rail[ segDex ] ), Vector3( 1, 0, 0 ) ) );
-	Edge3f* lastSeg = null;
-	Edge3f* currSeg = null;
-	lasDex = rail.length-1;
-	Vector3 n_s;
-	Vector3 n_last = Vector3( 1, 1, 0 );
-	ulong count = 0;
-
     while ( !WindowShouldClose() ){
 		BeginDrawing();
 		// ClearBackground( Colors.RAYWHITE );
@@ -378,58 +435,13 @@ void main(){
 
         BeginMode3D( camera );
         
-        // Paint track
-        // paint_edges( edges  );
-        paint_edges( rail );
-
-		// Track Follower
-		
-		// Get current and last segments
-		if( count % 2 == 0 ){
-			segDex  = (segDex+1) % (rail.length);
-			lasDex  = (lasDex+1) % (rail.length);
+        
+		// trail.advance_by_one_rail_segment();
+		// trail.draw_segments();
+		foreach( RailTrail ribbon; ribbons ){
+			ribbon.advance_by_one_rail_segment();
+			ribbon.draw_segments();
 		}
-		currSeg = rail[ segDex ];
-		lastSeg = rail[ lasDex ];
-
-		// Get the normal of a plane containing the segments
-		n_s = Vector3CrossProduct( get_direction( lastSeg ), get_direction( currSeg ) );
-        if( Vector3DotProduct( n_s, n_last ) < 0.0 ){
-            n_s = Vector3Negate( n_s );
-        }
-		// Calculate angle between the segment normal and the bar
-		barAng = Vector3Angle( barDir, n_s );
-		// If the angle is positive or negative when measured from the segment normal to the bar, then negate angle
-		if( Vector3DotProduct( barDir, Vector3CrossProduct( n_s, get_direction( lastSeg ) ) ) < 0.0 )
-			barAng *= -1.0;
-		// Rotate from the segment normal about the current segment, adding frame rotation delta
-		barDir = Vector3Normalize( Vector3RotateByAxisAngle( n_s, get_direction( currSeg ), -(barAng+frmTrn) ) );
-
-		// if( count % 2 == 0 ){
-		// 	barDir = Vector3Normalize( Vector3RotateByAxisAngle( n_s, get_direction( currSeg ), -(barAng+frmTrn) ) );
-		// }else{
-		// 	barDir = Vector3Normalize( Vector3RotateByAxisAngle( n_s, get_direction( currSeg ), -barAng ) );
-		// }
-		
-		// Draw bar side 1
-		DrawLine3D( 
-			rail[ segDex ].tail.point,
-			Vector3Add( rail[ segDex ].tail.point, Vector3Scale( barDir,  barHlf ) ),
-			Colors.BLUE
-		);
-		// Draw bar side 2
-		DrawLine3D( 
-			rail[ segDex ].tail.point,
-			Vector3Add( rail[ segDex ].tail.point, Vector3Scale( barDir, -barHlf ) ),
-			Colors.BLUE
-		);
-
-		// DrawSphere( rail[ segDex ].tail.point, sphRad, Colors.BLUE );
-		// segDex = (segDex+1) % (rail.length);
-		// if( segDex == 0 )  segDex = 1;
-		// writeln( segDex );
-
-
 
 
         EndMode3D();
@@ -437,9 +449,9 @@ void main(){
 		// DrawText("Hello, World!", 400, 300, 28, Colors.BLACK);
 		EndDrawing();
 
-		count++;
+		// count++;
 	}
 	CloseWindow();
 
-    writeln( rail.length );
+    // writeln( rail.length );
 }

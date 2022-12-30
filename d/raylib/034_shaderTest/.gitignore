@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/034_shadertest
+034_shadertest.so
+034_shadertest.dylib
+034_shadertest.dll
+034_shadertest.a
+034_shadertest.lib
+034_shadertest-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst
