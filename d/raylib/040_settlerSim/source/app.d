@@ -92,19 +92,86 @@ struct PortSC{
 
 ////////// GAME BOARD //////////////////////////////////////////////////////////////////////////////
 
-Vector2[6]  REL_NODE_LOCS;
-Vector2[6]  TILE_CENTERS;
+Vector2[ 6] REL_NODE_LOCS; // Node locations relative to the tile center
+Vector2[19] TILE_CENTERS; //- Tile center locations, absolute coordinates
 
 struct BoardSC{
 	// Container for everything on the game board
-	SC_Resource[] bank;  // Total unowned resources
-	LandSC*[]     hexes; // Land tiles
-	NodeSC*[]     nodes; // Land vertices
-	EdgeSC*[]     edges; // Segments between nodes, possibly holding roads
 
-	bool add_tile(){
-		// FIXME, START HERE: MAKE SURE NODES AND EDGES ARE PROPERLY CONNECTED BY DISTANCE
-		return true;
+	/// Members ///
+	SC_Resource[] bank;  // --------- Total unowned resources
+	LandSC*[]     hexes; // --------- Land tiles
+	NodeSC*[]     nodes; // --------- Land vertices
+	EdgeSC*[]     edges; // --------- Segments between nodes, possibly holding roads
+
+	/// Methods ///
+	
+	bool add_tile( LandSC* nuTile ){
+		// Add a tile to the game board and make the appropriate connections
+		Vector2 searchLoc; // ----- Potential location for a node
+		bool    foundNode = false; // Did a linear search return a hit?
+		NodeSC* nuNode    = null; // New node to add
+		NodeSC* lastNode  = null; // Other end of a connection
+		EdgeSC* nuEdge    = null; // New edge to add
+
+		// If the (4-player) board is not full, then proceed with adding a tile
+		if( hexes.length < TILE_CENTERS.length ){
+
+			// Add the tile
+			hexes ~= nuTile;
+
+			// For each of the possible node locations
+			foreach( Vector2 rel; REL_NODE_LOCS ){
+
+				foundNode = false;
+
+				// Get the absolute node location
+				searchLoc = Vector2Add( nuTile.location, rel );
+				
+				// Search for an existing node
+				foreach( NodeSC* node; nodes ){
+					// Check the distance between the prospective node and the existing node
+					if( Vector2DistanceSqr( node.loc, searchLoc ) < (EDGE_LEN/2.0f) ){
+						// If node already exists, then add a pointer to it
+						nuTile.nodes ~= node;
+						foundNode = true;
+						break;
+					}
+				}
+				// If node DNE, then create and set pointer to it
+				if( !foundNode ){
+					nuNode = new NodeSC( searchLoc, true );
+					nuTile.nodes ~= node; // Add to tile nodes
+					nodes ~= node; // Add to node collection
+				}
+			}
+
+			// For each of the nodes attached to the tile
+			ushort i = 0;
+			lastNode = nuTile.nodes[$-1];
+			foreach( NodeSC* node; nuTile.nodes ){ // Assume that the nodes were added in clockwise order, above
+				foundNode = false;
+				// Check that there isn't already a connection between this node and last
+				foreach( EdgeSC* edge; node.edg ){
+					if( ((edge.ends[0] == lastNode) && (edge.ends[1] == node)) 
+						|| 
+						((edge.ends[1] == lastNode) && (edge.ends[0] == node)) ){
+						foundNode = true;
+						break;
+					}
+				}
+				// If there is not a connection, then add an edge
+				if( !foundNode ){
+
+				}
+				lastNode = node;
+			}
+
+			// Report success for tile add
+			return true;
+		}
+		// Else the board was full, report failure for tile add
+		return false;
 	}
 
 	void draw_tiles(){
@@ -151,7 +218,58 @@ void main(){
 		),
 
 		// Row 3
+		Vector2( 
+			400 - 2*EDGE_LEN*cos(pi/6.0), 
+			200 + 6*EDGE_LEN*cos(pi/3.0) 
+		),
+		Vector2( 
+			400 - 2*EDGE_LEN*cos(pi/6.0) + 2*EDGE_LEN*cos(pi/6.0),
+			200 + 6*EDGE_LEN*cos(pi/3.0) 
+		),
+		Vector2( 
+			400 - 2*EDGE_LEN*cos(pi/6.0) + 4*EDGE_LEN*cos(pi/6.0),
+			200 + 6*EDGE_LEN*cos(pi/3.0) 
+		),
+		Vector2( 
+			400 - 2*EDGE_LEN*cos(pi/6.0) + 6*EDGE_LEN*cos(pi/6.0),
+			200 + 6*EDGE_LEN*cos(pi/3.0) 
+		),
+		Vector2( 
+			400 - 2*EDGE_LEN*cos(pi/6.0) + 8*EDGE_LEN*cos(pi/6.0),
+			200 + 6*EDGE_LEN*cos(pi/3.0) 
+		),
 
+		// Row 4
+		Vector2( 
+			400 - EDGE_LEN*cos(pi/6.0), 
+			200 + 8*EDGE_LEN*cos(pi/3.0) 
+		),
+		Vector2( 
+			400 - EDGE_LEN*cos(pi/6.0) + 2*EDGE_LEN*cos(pi/6.0), 
+			200 + 8*EDGE_LEN*cos(pi/3.0) 
+		),
+		Vector2( 
+			400 - EDGE_LEN*cos(pi/6.0) + 4*EDGE_LEN*cos(pi/6.0), 
+			200 + 8*EDGE_LEN*cos(pi/3.0) 
+		),
+		Vector2( 
+			400 - EDGE_LEN*cos(pi/6.0) + 6*EDGE_LEN*cos(pi/6.0), 
+			200 + 8*EDGE_LEN*cos(pi/3.0) 
+		),
+
+		// Row 5
+		Vector2( 
+			400, 
+			200 + 10*EDGE_LEN*cos(pi/3.0) 
+		),
+		Vector2( 
+			400 + 2*EDGE_LEN*cos(pi/6.0), 
+			200 + 10*EDGE_LEN*cos(pi/3.0) 
+		),
+		Vector2( 
+			400 + 4*EDGE_LEN*cos(pi/6.0), 
+			200 + 10*EDGE_LEN*cos(pi/3.0) 
+		),
 	];
 
 	LandSC l1 = LandSC(
