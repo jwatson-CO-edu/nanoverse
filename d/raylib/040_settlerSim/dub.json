@@ -1,0 +1,15 @@
+{
+	"authors": [
+		"james"
+	],
+	"copyright": "Copyright © 2022, james",
+	"dependencies": {
+		"raylib-d": "~>4.2.4"
+	},
+	"libs-posix": [
+		"raylib"
+	],
+	"description": "A simulation of house-rules Settlers of C*t*n",
+	"license": "MIT",
+	"name": "040_settlersim"
+}

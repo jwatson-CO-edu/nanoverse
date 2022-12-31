@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/040_settlersim
+040_settlersim.so
+040_settlersim.dylib
+040_settlersim.dll
+040_settlersim.a
+040_settlersim.lib
+040_settlersim-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst
