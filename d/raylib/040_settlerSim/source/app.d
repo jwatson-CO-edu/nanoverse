@@ -1,5 +1,6 @@
 import std.stdio;
 import std.math;
+import std.conv;
 
 import raylib; // --------- easy graphics
 import raylib.raymath; // --------- easy graphics
@@ -45,8 +46,8 @@ struct StructSC{
 
 struct EdgeSC{
 	// Edge container, holds roads
-	StructSC   road;
 	NodeSC*[2] ends;
+	StructSC   road;
 }
 
 struct LandSC{
@@ -69,7 +70,6 @@ struct NodeSC{
 	StructSC   con; // Structure contents
 	GreyManSC* vst; // Pointer to The Grey Man, when present
 	EdgeSC*[]  edg; // Edges connected to node
-
 }
 
 class GreyManSC{
@@ -131,9 +131,10 @@ struct BoardSC{
 				// Search for an existing node
 				foreach( NodeSC* node; nodes ){
 					// Check the distance between the prospective node and the existing node
-					if( Vector2DistanceSqr( node.loc, searchLoc ) < (EDGE_LEN/2.0f) ){
+					if( Vector2DistanceSqr( node.loc, searchLoc ) < (EDGE_LEN/4.0f) ){
 						// If node already exists, then add a pointer to it
 						nuTile.nodes ~= node;
+						nodes ~= nuNode; // Add to node collection
 						foundNode = true;
 						break;
 					}
@@ -162,7 +163,8 @@ struct BoardSC{
 				}
 				// If there is not a connection, then add an edge
 				if( !foundNode ){
-
+					nuEdge = new EdgeSC( [node, lastNode] );
+					edges ~= nuEdge; 
 				}
 				lastNode = node;
 			}
@@ -175,7 +177,9 @@ struct BoardSC{
 	}
 
 	void draw_tiles(){
-
+		foreach( LandSC* tile, hexes ){
+			
+		}
 	}
 
 	void draw_nodes(){
@@ -272,12 +276,19 @@ void main(){
 		),
 	];
 
-	LandSC l1 = LandSC(
+	BoardSC board = BoardSC(); 
+
+	// LandSC l1 = LandSC(
+	board.add_tile( new LandSC(
 		TILE_CENTERS[0], //- Location in 2D space
 		6, // Dice rolls that yields the resource
 		SC_Resource.ROCKS, // ---- Type of land this is
 		Colors.GRAY // --- Display color
-	);
+	) );
+
+	writeln( "There are " ~ board.hexes.length.to!string ~ " tiles." );
+	writeln( "There are " ~ board.nodes.length.to!string ~ " nodes." );
+	writeln( "There are " ~ board.edges.length.to!string ~ " edges." );
 
 	LandSC l2 = LandSC(
 		TILE_CENTERS[3], //- Location in 2D space
@@ -315,8 +326,8 @@ void main(){
 
 		ClearBackground( Colors.DARKBLUE );
 
-		l1.draw();
-		l2.draw();
+		// l1.draw();
+		// l2.draw();
 		
 		EndDrawing();
 
