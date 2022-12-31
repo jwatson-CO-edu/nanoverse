@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/041_tanked
+041_tanked.so
+041_tanked.dylib
+041_tanked.dll
+041_tanked.a
+041_tanked.lib
+041_tanked-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst

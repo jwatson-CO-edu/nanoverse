@@ -141,8 +141,8 @@ struct BoardSC{
 				// If node DNE, then create and set pointer to it
 				if( !foundNode ){
 					nuNode = new NodeSC( searchLoc, true );
-					nuTile.nodes ~= node; // Add to tile nodes
-					nodes ~= node; // Add to node collection
+					nuTile.nodes ~= nuNode; // Add to tile nodes
+					nodes ~= nuNode; // Add to node collection
 				}
 			}
 

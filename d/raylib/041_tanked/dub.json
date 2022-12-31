@@ -1,0 +1,15 @@
+{
+	"authors": [
+		"james"
+	],
+	"copyright": "Copyright © 2022, james",
+	"dependencies": {
+		"raylib-d": "~>4.2.4"
+	},
+	"libs-posix": [
+		"raylib"
+	],
+	"description": "A sprite test with segmented tanks",
+	"license": "MIT",
+	"name": "041_tanked"
+}
