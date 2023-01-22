@@ -494,7 +494,7 @@ void main(){
 	validateRaylibBinding();
 
 	// Window / Display Params
-    InitWindow(1200, 900, "Settlers of C*t*n Simulation");
+    InitWindow( 1200, 900, "Settlers of C*t*n Simulation" );
     SetTargetFPS(60);
 
 	writeln( "##### Settlers of C*t*n Simulation, Version 2022-12 #####" );

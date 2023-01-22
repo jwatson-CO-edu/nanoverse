@@ -1,0 +1,15 @@
+{
+	"authors": [
+		"james"
+	],
+	"copyright": "Copyright © 2023, james",
+	"dependencies": {
+		"raylib-d": "~>4.2.4"
+	},
+	"libs-posix": [
+		"raylib"
+	],
+	"description": "Valentino Braitenberg Vehicles",
+	"license": "MIT",
+	"name": "050_braitenberg"
+}

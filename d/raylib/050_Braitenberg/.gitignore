@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/050_braitenberg
+050_braitenberg.so
+050_braitenberg.dylib
+050_braitenberg.dll
+050_braitenberg.a
+050_braitenberg.lib
+050_braitenberg-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst
