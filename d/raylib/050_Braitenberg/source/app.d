@@ -3,7 +3,7 @@ import std.stdio;
 import raylib;
 
 
-////////// BRAITENBERG COMPONENTS //////////////////////////////////////////////////////////////////
+////////// BRAITENBERG TYPES ///////////////////////////////////////////////////////////////////////
 
 /* Steps //
 1. Components receive messages on attachment nodes, in order, so that they know where they came from
@@ -55,6 +55,7 @@ struct Component_BV{
 	static ulong /*-------------*/ ID = 0; // - Total number of IDs created
 	void function( Component_BV* ) update; // - Per-step actions   for this component
 	void function( Component_BV* ) transmit; // Per-step messaging for this component
+	Vehicle_BV* /*--------------*/ parent; // - The vehicle that this component belongs to
 
 	void step(){  update( &this );    } // `update` this component
 	void send(){  transmit( &this );  } // `transmit` from this component
@@ -79,9 +80,23 @@ struct Vehicle_BV{
 		foreach( Component_BV* part; parts ){  part.step();  }
 		// 3. Send messages
 		foreach( Component_BV* part; parts ){  part.send();  }
-
 	}
 }
+
+struct Prop_BV{
+	// A thing that is not a vehicle, like a light source
+}
+
+
+struct World_BV{
+	// Contains all vehicles and the things that they interact with
+}
+
+
+////////// BRAITENBERG OBJECTS /////////////////////////////////////////////////////////////////////
+
+
+
 
 
 void main(){

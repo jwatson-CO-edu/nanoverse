@@ -8,7 +8,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 * Purpose: Let yourself have some graphics, as a treat!  
 
 ```
-[>] Grid Glider - Delta Glider
+[Y] Grid Glider - Delta Glider
     [Y] Glider with planelike motion - 2022-09-19: Really need to calm down on the graphics, you don't need them!
     [Y] Glider flies over flat XY grid - 2022-09-22: Smooth flight and pleasing grid that fills the draw distance w/o slowdown
     [Y] Camera follow glider - 2022-09-22: Camera stuck fast to glider!
@@ -23,18 +23,24 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     [Y] Dragging camera (Starfox), 2022-12-06: Pleasing to look at!
     [Y] Randomly populate grid with filled squares, 2022-12-06: Adds visual interest
     [Y] Floating triangle debris, 2022-12-06: Easy!
-    [>] Video -or- animated GIF output --to-> IG
+    [Y] Video -or- animated GIF output --to-> IG, 2022-12-2X: Shared 
 
- 
+[>] Braitenberg Vehicles
+    [>] Test message passing system
+    [ ] Implement components for the first vehicle
+    [ ] Implement the first vehicle
+        [ ] Test movement in text
+    [ ] Add graphical representation for the components so far
+    [ ] Graphical representation of an entire vehicle
+    [ ] Vehicle moves through the environment
 
-[ ] Piped Ribbons - Generative art
-    [ ] Randomly trace a 3D grid, with 90deg curved turn limit with radius that lands mid-segment
-    [ ] Ribbons as contrails
-        [ ] Deterministic turning rules that allow predictable loop
-        [ ] Multiple, random non-colliding ribbons
-        [ ] Multiple, random non-colliding ribbons in a loop and orbiting camera
-    [ ] Ribbons as shaded meshes
-        [ ] FlexMesh: Simpler mesh that supports changing points
+[>] Piped Ribbons - Generative art
+    [Y] Randomly trace a 3D grid, with 90deg curved turn limit with radius that lands mid-segment
+    [Y] Ribbons as contrails, 2022-12-2X: Shared 
+        [Y] Deterministic turning rules that allow predictable loop, 2022-12-2X: Shared 
+        [Y] Multiple, random non-colliding ribbons, 2022-12-2X: Shared 
+    [>] Ribbons as shaded meshes
+        [ ] Test simple shaders && Learn about them
         [ ] Add simple shader
         [ ] Add luminocity to shader
         [ ] Add decay from leading edge to shader
