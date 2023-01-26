@@ -11,11 +11,13 @@ struct TestStruct{
 }
 
 void main(){
-    TestStruct ts = TestStruct(
-        2,
-        3,
-        function( TestStruct s ){ return s.a + s.b; }
-    );
+    TestStruct ts = {
+        a: 2, b: 3,
+        op: (s) {
+            return s.a + s.b;
+        }
+    };
 
-    writeln( ts.run() );
+    writeln( ts.op(ts) );
+    writeln( ts.run()  );
 }

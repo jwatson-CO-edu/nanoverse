@@ -53,8 +53,8 @@ struct Component_BV{
 	float[string] /*------------*/ params; // - Parameters that govern placement and behavior
 	Msg_BV[] /*-----------------*/ input; // -- Message inbox
 	static ulong /*-------------*/ ID = 0; // - Total number of IDs created
-	void function( Component_BV* ) update; // - Per-step actions   for this component
-	void function( Component_BV* ) transmit; // Per-step messaging for this component
+	void function( Component_BV* ) update; // - Strategy: Per-step actions   for this component
+	void function( Component_BV* ) transmit; // Strategy: Per-step messaging for this component
 	Vehicle_BV* /*--------------*/ parent; // - The vehicle that this component belongs to
 
 	void step(){  update( &this );    } // `update` this component
@@ -71,16 +71,19 @@ struct Vehicle_BV{
 	Vector2 /*---*/ position; // -- <x,y> position of the vehicle center
 	float /*-----*/ orientation; // Absolute orientation of the vehicle
 	Node_BV*[] /**/ nodes; // ----- Attachment points for components
-	Component_BV*[] parts; // ----- Components that provide updates
+	Component_BV*[] comps; // ----- Components that provide updates
 
 	void step(){
 		// 1. Route messages
 		foreach( Node_BV* node; nodes ){  node.route_messages();  }
 		// 2. Update parts
-		foreach( Component_BV* part; parts ){  part.step();  }
+		foreach( Component_BV* comp; comps ){  comp.step();  }
 		// 3. Send messages
-		foreach( Component_BV* part; parts ){  part.send();  }
+		foreach( Component_BV* comp; comps ){  comp.send();  }
 	}
+
+	void attach_comp( Component_BV* comp ){  comps ~= comp;  } // Attach a `Component_BV` for updating
+	void attach_node( Node_BV* node ){  nodes ~= node;  } // Attach a `Node_BV` for updating
 }
 
 struct Prop_BV{
