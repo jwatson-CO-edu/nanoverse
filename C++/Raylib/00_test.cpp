@@ -1,4 +1,5 @@
 // https://github.com/raysan5/raylib#basic-example
+// gcc 00_test.cpp -lraylib
 
 #include "raylib.h"
 
