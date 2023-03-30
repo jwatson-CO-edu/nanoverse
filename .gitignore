@@ -12,6 +12,8 @@ zig/mach/
 d/raylib/*/*.app
 d/raylib/*/*.so*
 
+*/*/a.out
+*/*/*/a.out
 
 # Prerequisites
 
