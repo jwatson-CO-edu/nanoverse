@@ -25,29 +25,6 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     [Y] Floating triangle debris, 2022-12-06: Easy!
     [Y] Video -or- animated GIF output --to-> IG, 2022-12-2X: Shared 
 
-[>] Braitenberg Vehicles
-    [>] Test message passing system
-    [ ] Implement components for the first vehicle
-    [ ] Implement the first vehicle
-        [ ] Test movement in text
-    [ ] Add graphical representation for the components so far
-    [ ] Graphical representation of an entire vehicle
-    [ ] Vehicle moves through the environment
-
-[>] Piped Ribbons - Generative art
-    [Y] Randomly trace a 3D grid, with 90deg curved turn limit with radius that lands mid-segment
-    [Y] Ribbons as contrails, 2022-12-2X: Shared 
-        [Y] Deterministic turning rules that allow predictable loop, 2022-12-2X: Shared 
-        [Y] Multiple, random non-colliding ribbons, 2022-12-2X: Shared 
-    [>] Ribbons as shaded meshes
-        [ ] Test simple shaders && Learn about them
-        [ ] Add simple shader
-        [ ] Add luminocity to shader
-        [ ] Add decay from leading edge to shader
-    [ ] Video -or- animated GIF output --to-> IG
-
-
- 
 
 [ ] Terrain generation - Delta Glider
     [ ] Perlin Noise grid hills
@@ -77,6 +54,28 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     [ ] Grass
     [ ] Water (Simplest)
     [ ] Floating islands
+    [ ] Video -or- animated GIF output --to-> IG
+
+
+[>] Braitenberg Vehicles
+    [>] Test message passing system
+    [ ] Implement components for the first vehicle
+    [ ] Implement the first vehicle
+        [ ] Test movement in text
+    [ ] Add graphical representation for the components so far
+    [ ] Graphical representation of an entire vehicle
+    [ ] Vehicle moves through the environment
+
+[>] Piped Ribbons - Generative art
+    [Y] Randomly trace a 3D grid, with 90deg curved turn limit with radius that lands mid-segment
+    [Y] Ribbons as contrails, 2022-12-2X: Shared 
+        [Y] Deterministic turning rules that allow predictable loop, 2022-12-2X: Shared 
+        [Y] Multiple, random non-colliding ribbons, 2022-12-2X: Shared 
+    [>] Ribbons as shaded meshes
+        [ ] Test simple shaders && Learn about them
+        [ ] Add simple shader
+        [ ] Add luminocity to shader
+        [ ] Add decay from leading edge to shader
     [ ] Video -or- animated GIF output --to-> IG
 
  

@@ -1,18 +1,22 @@
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>       /* time */
 
 #include "raylib.h"
 #include "raymath.h" //for vector3 math
 
-int main(void)
-{
+int main(void){
+
+    srand( time( NULL ) );
+
     // Initialization
     //--------------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
 
-    InitWindow(screenWidth, screenHeight, "raylib example.");
+    InitWindow( screenWidth, screenHeight, "raylib example." );
 
     // Create a Perlin Image
-    Image perlinImage = GenImagePerlinNoise( screenWidth, screenHeight, 0, 0, 1.5f ); 
+    Image perlinImage = GenImagePerlinNoise( screenWidth, screenHeight, 0, 0, 1.6f ); 
     
     // Images are inside the CPU and not fast. Use Textures(GPU) for quick manipulation.
     
