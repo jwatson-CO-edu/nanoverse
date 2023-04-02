@@ -46,9 +46,9 @@ int main(){
 
     // Camera
     Camera camera = Camera{
-        Vector3{ 70.0, 70.0, 70.0 }, // Position
-        Vector3{  50.0, 50.0, 0.0 }, // Target
-        Vector3{  0.0, 0.0, 1.0 }, // Up
+        Vector3{ 90.0, 90.0, 90.0 }, // Position
+        Vector3{ 50.0, 50.0,  0.0 }, // Target
+        Vector3{  0.0,  0.0,  1.0 }, // Up
         45.0, // -------------------- FOV_y
         0 // ------------------------ Projection mode
     };
