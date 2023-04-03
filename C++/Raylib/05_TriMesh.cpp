@@ -8,6 +8,8 @@
 using std::array;  
 #include <vector>     
 using std::vector;  
+#include <iostream>
+using std::cout, std::endl;
 
 #include "raylib.h"
 #include "raymath.h"
@@ -22,8 +24,10 @@ typedef unsigned char  ubyte;
 ////////// TRIMESH /////////////////////////////////////////////////////////////////////////////////
 
 class TriModel{
+public:
     // Container class for simple models
     // WARNING: UNOPTIMIZED FOR SHARED VERTICES
+    // FIXME: ALLOW FOR SHARED VERTICES
 
     // Triangles //
     ulong /*--------------*/ N_tri; //- Number of triangles
@@ -90,6 +94,11 @@ class TriModel{
 
     ///// Constructors ///////////////////////////
 
+    TriModel(){
+        // Default constructor
+        mesh = Mesh{};
+    }
+
     TriModel( ulong Ntri ){
         N_tri = Ntri;
         N_vrt = Ntri * 3;
@@ -152,7 +161,71 @@ class TriModel{
 
     ///// Rendering //////////////////////////////
 
-    virtual void draw() = 0;
+    void draw(){
+        cout << "Please implement `draw` for derived class!" << endl;
+    };
+
+};
+
+
+////////// DELTA GLIDER ////////////////////////////////////////////////////////////////////////////
+
+class DeltaGlider : public TriModel{
+    // A fun little space plane
+
+    DeltaGlider( float wingspan = 10.0f ){
+        float fusFrac   = 0.5;
+        float sweptFrac = 0.75;
+        float thickFrac = 0.25;
+
+        load_tri( // Left  Front Top
+            Vector3{  0.0f        ,  0.0f                 , 0.0f                + wingspan*sweptFrac/2.0f }, // 0, Front
+            Vector3{ -wingspan/2  ,  0.0f                 , -wingspan*sweptFrac + wingspan*sweptFrac/2.0f }, // 4, Left wingtip
+            Vector3{  0.0f        , +wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0f } //  1, Top peak
+        );
+        load_tri( // Left  Rear  Top
+            Vector3{  0.0f        , +wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0f }, // 1, Top peak
+            Vector3{ -wingspan/2  ,  0.0f                 , -wingspan*sweptFrac + wingspan*sweptFrac/2.0f }, // 4, Left wingtip
+            Vector3{  0.0f        ,  0.0f                 , -wingspan*fusFrac   + wingspan*sweptFrac/2.0f } //  3, Back
+        );
+        load_tri( // Right Front Top
+            Vector3{ +wingspan/2  ,  0.0f                 , -wingspan*sweptFrac + wingspan*sweptFrac/2.0f }, // 5, Right wingtip
+            Vector3{  0.0f        ,  0.0f                 , 0.0f                + wingspan*sweptFrac/2.0f }, // 0, Front
+            Vector3{  0.0f        , +wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0f }  // 1, Top peak
+        );
+        load_tri( // Right Rear  Top
+            Vector3{ +wingspan/2  ,  0.0f                 , -wingspan*sweptFrac + wingspan*sweptFrac/2.0f }, // 5, Right wingtip
+            Vector3{  0.0f        , +wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0f }, // 1, Top peak
+            Vector3{  0.0f        ,  0.0f                 , -wingspan*fusFrac   + wingspan*sweptFrac/2.0f } //  3, Back
+        );
+        load_tri( // Left  Front Bottom
+            Vector3{  0.0f        ,  0.0f                 , 0.0f                + wingspan*sweptFrac/2.0f }, // 0, Front
+            Vector3{  0.0f        , -wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0f }, // 2, Bottom peak
+            Vector3{ -wingspan/2  ,  0.0f                 , -wingspan*sweptFrac + wingspan*sweptFrac/2.0f }  // 4, Left wingtip
+        );
+        load_tri( // Left  Rear  Bottom
+            Vector3{  0.0f        , -wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0f }, // 2, Bottom peak
+            Vector3{  0.0f        ,  0.0f                 , -wingspan*fusFrac   + wingspan*sweptFrac/2.0f }, // 3, Back
+            Vector3{ -wingspan/2  ,  0.0f                 , -wingspan*sweptFrac + wingspan*sweptFrac/2.0f }  // 4, Left wingtip
+        );
+        load_tri( // Right Front Bottom
+            Vector3{  0.0f        ,  0.0f                 , 0.0f                + wingspan*sweptFrac/2.0f }, // 0, Front
+            Vector3{ +wingspan/2  ,  0.0f                 , -wingspan*sweptFrac + wingspan*sweptFrac/2.0f }, // 5, Right wingtip
+            Vector3{  0.0f        , -wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0f }  // 2, Bottom peak
+        );
+        load_tri( // Right Rear  Bottom
+            Vector3{  0.0f        , -wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0f }, // 2, Bottom peak
+            Vector3{ +wingspan/2  ,  0.0f                 , -wingspan*sweptFrac + wingspan*sweptFrac/2.0f }, // 5, Right wingtip
+            Vector3{  0.0f        ,  0.0f                 , -wingspan*fusFrac   + wingspan*sweptFrac/2.0f }  // 3, Back
+        );
+
+        TriModel( 8 );
+        load_geo();
+    }
+
+    void draw(){
+        // FIXME, START HERE: DRAW A WIREFRAME MODEL
+    }
 
 };
 
