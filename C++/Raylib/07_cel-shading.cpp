@@ -1,8 +1,5 @@
 // gcc 05_TriMesh.cpp -lraylib
-
-/* ////////// DEV PLAN //////////
-[ ] Investigate: https://www.reddit.com/r/raylib/comments/v2su1s/help_with_dynamic_mesh_creation_in_raylib/
-*/
+// https://bedroomcoders.co.uk/cell-shader-revisited/
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
@@ -18,6 +15,8 @@ using std::cout, std::endl;
 #include <raylib.h>
 #include <raymath.h>
 #include <rlgl.h>
+#define RLIGHTS_IMPLEMENTATION
+#include "rlights.h"
 
 typedef unsigned long  ulong;
 typedef unsigned short ushort;
@@ -31,6 +30,18 @@ float randf(){
 }
 
 void rand_seed(){  srand( time(NULL) );  } // Seed RNG with unpredictable time-based seed
+
+
+
+////////// SHADERS /////////////////////////////////////////////////////////////////////////////////
+
+void setModelShader( Model* m, Shader* s ){
+    // Assign a shader to a material index within the model
+    for (int i = 0; i < m->materialCount; i++) {
+        m->materials[i].shader = *s;
+    }    
+}
+
 
 
 ////////// TRIMESH /////////////////////////////////////////////////////////////////////////////////
@@ -274,10 +285,6 @@ class TerrainPlate : public TriModel { public:
             for( ulong j = 0; j < N-1; j++ ){
                 Vector3 v1, v2, v3, v4;
                 // Load points
-                // v1 = pts[j  ][i  ];
-                // v2 = pts[j  ][i+1];
-                // v3 = pts[j+1][i  ];
-                // v4 = pts[j+1][i+1];
                 v1 = pts[i  ][j  ];
                 v2 = pts[i  ][j+1];
                 v3 = pts[i+1][j  ];
@@ -299,11 +306,13 @@ class TerrainPlate : public TriModel { public:
     void draw(){
         // Draw facets, shift up, draw lines
         DrawModel(      model, posn1, 1.0, gndClr );  
-        DrawModelWires( model, posn2, 1.0, linClr );
+        // DrawModelWires( model, posn2, 1.0, linClr );
     }
 };
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
+const Vector2 res = { 800, 800 };
+
 int main(){
 
     /// Scene Init: Pre-Window ///
@@ -318,30 +327,83 @@ int main(){
         0 // ------------------------ Projection mode
     };
 
+    /// Shader Init: Pre-Window ///
+
+    // normal shader
+    Shader normShader = LoadShader("shaders/norm.vs", "shaders/norm.fs");
+    normShader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(normShader, "matModel");
+    
+    // outline shader
+    Shader outline = LoadShader(NULL, "shaders/outline.fs");
+
+    // lighting shader
+    Shader shader = LoadShader("shaders/toon.vs", "shaders/toon.fs");
+    shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
+
+    // make a light (max 4 but we're only using 1)
+    Light light = CreateLight(LIGHT_POINT, (Vector3){ 2,4,4 }, Vector3Zero(), WHITE, shader);
+
+    // camera orbit angle
+    float ca = 0;
+
+    RenderTexture2D target = LoadRenderTexture( res.x, res.y );
+
     /// Window Init ///
-    InitWindow(800, 450, "Terrain Gen");
+    InitWindow( res.x, res.y, "Terrain Gen" );
     SetTargetFPS( 60 );
     rlEnableSmoothLines();
-    // rlDisableBackfaceCulling(); 
+    SetConfigFlags( FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT ); // IDK!
 
     /// Scene Init: Post-Window ///
     terrain.load_geo(); // THIS MUST HAPPEN AFTER WINDOW INIT!
 
 
     while( !WindowShouldClose() ){
-        
-        /// Begin Drawing ///
-        BeginDrawing();
-        BeginMode3D( camera );
-        ClearBackground( BLACK );
 
+        // you can move the light around if you want
+        light.position.x = 12.0 * cosf(ca);
+        light.position.z = 12.0 * sinf(ca);
+
+        // update the light shader with the camera view position
+        SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
+        SetShaderValue(normShader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
+        UpdateLightValues(shader, light);
+        UpdateLightValues(normShader, light);
+        
         ///// DRAW LOOP //////////////////////////
-        terrain.draw();
+        BeginDrawing();
+        
+            // render first to the normals texture for outlining to a texture
+            BeginTextureMode( target ); 
+                ClearBackground((Color){255,255,255,255});
+                BeginMode3D(camera);
+                    setModelShader( &terrain.model, &normShader );
+                    terrain.draw();
+                EndMode3D();
+            EndTextureMode();
+
+            // draw the scene but with banded light effect
+            ClearBackground((Color){32,64,255,255});
+            BeginMode3D(camera);   
+                setModelShader(&terrain.model, &shader);
+                terrain.draw();
+            EndMode3D();
+        
+            // FIXME, START HERE: LINE 159 OF "main.c"
+        
+        // terrain.draw();
 
         /// End Drawing ///
-        EndMode3D();
         EndDrawing();
     }
+
+    UnloadShader(shader);
+    UnloadShader(outline);
+    UnloadShader(normShader);
+    UnloadModel(terrain.model);
+    UnloadRenderTexture(target);
+
+    CloseWindow();        // Close window and OpenGL context
 
     return 0;
 }

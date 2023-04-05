@@ -11,13 +11,23 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 
 [>] Terrain generation - Delta Glider
     [>] Perlin Noise grid hills
+        [Y] Unshaded with lines, 2023-04-05: Finally got random, non-vibrating triangles w/ correct orientation!
+        [>] Toon shader
+        [ ] Actual Perlin data
     [ ] Synthwave terrain
+        [ ] Write "Synthwave" shader based on toon shader
+        [ ] Add bloom glow to boundary lines
+    [ ] JS Ctrl Glider
+        [ ] Joystick test
+        [ ] Synthwave shading
     [ ] Synthwave triangles
+        [ ] Collision triangles, Spin
     [ ] Infinite grid
-    [ ] Collision triangles, Spin
     [ ] Video -or- animated GIF output --to-> IG
 
+
 [ ] Landscape generation - Delta Glider
+    [ ] Search for grass shader
     [ ] Boulders and/or mountains
     [ ] Trees as L-systems
     [ ] Grass (as shader?)
