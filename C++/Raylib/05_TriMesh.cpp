@@ -1,4 +1,8 @@
-// gcc 03_simple-terrain.cpp -lraylib
+// gcc 05_TriMesh.cpp -lraylib
+
+/* ////////// DEV PLAN //////////
+[ ] Investigate: https://www.reddit.com/r/raylib/comments/v2su1s/help_with_dynamic_mesh_creation_in_raylib/
+*/
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
@@ -18,7 +22,6 @@ using std::cout, std::endl;
 typedef unsigned long  ulong;
 typedef unsigned short ushort;
 typedef unsigned char  ubyte;
-
 
 
 ////////// TRIMESH /////////////////////////////////////////////////////////////////////////////////
@@ -65,6 +68,25 @@ public:
         tDex++;
     }
 
+    void per_tri_normals(){
+        // Just make all the normals normal to their own triangle
+        ulong   k = 0;
+        Vector3 n;
+        for( ulong i = 0; i < N_tri; i++ ){
+            n = Vector3CrossProduct( Vector3Subtract(tris[i][0],tris[i][1]), Vector3Subtract(tris[i][2],tris[i][1]));
+            cout << "\t\t\t\tNormal @ " << k << " {" << 
+                n.x << ", " <<
+                n.y << ", " <<
+                n.z << 
+            "}" << endl;
+            for( ubyte j = 0; j < 3; j++ ){
+                mesh.normals[k] = n.x;  k++;
+                mesh.normals[k] = n.y;  k++;
+                mesh.normals[k] = n.z;  k++;
+            }
+        }
+    }
+
     void build_mesh(){
         // Load the triangle data into the mesh
         ulong  k = 0;
@@ -74,23 +96,40 @@ public:
                 mesh.vertices[k] = tris[i][j].x;  k++;
                 mesh.vertices[k] = tris[i][j].y;  k++;
                 mesh.vertices[k] = tris[i][j].z;  k++;
-                mesh.indices[l]  = l; /*------*/  l++; // WARNING: UNOPTIMIZED FOR SHARED VERTICES
+                mesh.indices[l] = l; /*------*/  l++; // WARNING: UNOPTIMIZED FOR SHARED VERTICES
+                cout << "\t\t\t\tVertex " << l << " @ {" << 
+                    mesh.vertices[k-3] << ", " <<
+                    tris[i][j].y << ", " <<
+                    tris[i][j].z << 
+                "}, k = " << k << ", l = " << mesh.indices[l-1] << endl;
             }
         }
+        cout << "\t\t\tTriangles: " << N_tri << ", indices: " << l << ", floats: " << k << endl;
+        per_tri_normals();
     }
 
     void load_mesh(){
 		// Send triangle mesh geometry to RayLib, needed for drawing
-		UploadMesh( &mesh, true );
+        cout << "\t\t\t`UploadMesh()` ..." << endl;
+		// UploadMesh( &mesh, true );
+		UploadMesh( &mesh, false );
+        cout << "\t\t\t`LoadModelFromMesh()` ..." << endl;
     	model = LoadModelFromMesh( mesh );
 	}
 
     void load_geo(){
         // Get the model ready for drawing
+        cout << "\t\t`build_mesh()` ..." << endl;
         build_mesh();
+        cout << "\t\t`load_mesh()` ..." << endl;
         load_mesh();
     }
     
+
+    ///// Diagnostics ////////////////////////////
+
+    // FIXME, START HERE: DISPLAY VERTEX AND INDEX DATA, USE THE MESH DATA ONLY
+
 
     ///// Constructors ///////////////////////////
 
@@ -100,16 +139,20 @@ public:
     }
 
     TriModel( ulong Ntri ){
+        mesh  = Mesh{};
+        // mesh  = { 0 };
         N_tri = Ntri;
         N_vrt = Ntri * 3;
-        mesh = Mesh{};
-        tDex = 0;
+        tDex  = 0;
 
         // Init geo memory
 		mesh.triangleCount = N_tri;
     	mesh.vertexCount   = N_vrt;
         mesh.vertices /**/ = (float *)MemAlloc(N_vrt*3*sizeof(float)); // 3 vertices, 3 coordinates each (x, y, z)
+        mesh.normals /*-*/ = (float *)MemAlloc(N_vrt*3*sizeof(float)); // 3 vertices, 3 coordinates each (x, y, z)
         mesh.indices /*-*/ = (ushort *)MemAlloc(N_vrt*sizeof(ushort));
+        // mesh.vertices = new float[mesh.vertexCount * 3];
+        // mesh.indices  = new unsigned short[mesh.vertexCount];
 
         // Init pose
 		x = 0.0; // --- World X pos
@@ -171,12 +214,18 @@ public:
 ////////// DELTA GLIDER ////////////////////////////////////////////////////////////////////////////
 
 class DeltaGlider : public TriModel{
+public:
     // A fun little space plane
 
-    DeltaGlider( float wingspan = 10.0f ){
+    DeltaGlider( float wingspan = 10.0f ) : TriModel( 8 ){
+
+        cout << "\tGlider init ..." << endl;
+
         float fusFrac   = 0.5;
         float sweptFrac = 0.75;
         float thickFrac = 0.25;
+
+        cout << "\tAbout to load tris ..." << endl;
 
         load_tri( // Left  Front Top
             Vector3{  0.0f        ,  0.0f                 , 0.0f                + wingspan*sweptFrac/2.0f }, // 0, Front
@@ -219,12 +268,19 @@ class DeltaGlider : public TriModel{
             Vector3{  0.0f        ,  0.0f                 , -wingspan*fusFrac   + wingspan*sweptFrac/2.0f }  // 3, Back
         );
 
-        TriModel( 8 );
+        cout << "\tCreate model ..." << endl;
+
+        // TriModel( 8 );
+        cout << "\t`load_geo()` ..." << endl;
         load_geo();
+        cout << "\t`rotate_RPY()` ..." << endl;
+        rotate_RPY( 0.0, 3.1416/2.0, 0.0 );
     }
 
     void draw(){
-        // FIXME, START HERE: DRAW A WIREFRAME MODEL
+        // Draw the model
+        DrawModelWires( model, Vector3{x, y, z}, 1.0, RED );
+        // DrawModel(model, Vector3(x, y, z), 1.0, Colors.RED);  
     }
 
 };
@@ -232,5 +288,41 @@ class DeltaGlider : public TriModel{
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 int main(){
+
+    cout << "About to create glider ..." << endl;
+
+    // Ship
+    DeltaGlider glider( 10.0f );
+    cout << "About to set position ..." << endl;
+    glider.set_XYZ( 0.0, 0.0, 2.0 );
+
+    cout << "About to create camera ..." << endl;
+    
+    // Camera
+    Camera camera = Camera{
+        Vector3{ 90.0, 90.0, 90.0 }, // Position
+        Vector3{ 50.0, 50.0,  0.0 }, // Target
+        Vector3{  0.0, 0.0, 2.0 }, // Up
+        45.0, // -------------------- FOV_y
+        0 // ------------------------ Projection mode
+    };
+
+    cout << "About to start drawing ..." << endl;
+
+    while( !WindowShouldClose() ){
+        
+        /// Begin Drawing ///
+        BeginDrawing();
+        BeginMode3D( camera );
+        ClearBackground( BLACK );
+
+        ///// DRAW LOOP //////////////////////////
+        // glider.draw();
+
+        /// End Drawing ///
+        EndMode3D();
+        EndDrawing();
+    }
+
     return 0;
 }
