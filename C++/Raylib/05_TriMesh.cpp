@@ -15,9 +15,12 @@ using std::vector;
 #include <iostream>
 using std::cout, std::endl;
 
-#include "raylib.h"
-#include "raymath.h"
-#include "rlgl.h" // `rlDisableBackfaceCulling`
+// #include "raylib.h"
+// #include "raymath.h"
+// #include "rlgl.h" // `rlDisableBackfaceCulling`
+#include <raylib.h>
+#include <raymath.h>
+#include <rlgl.h>
 
 typedef unsigned long  ulong;
 typedef unsigned short ushort;
@@ -36,9 +39,10 @@ public:
     ulong /*--------------*/ N_tri; //- Number of triangles
     ulong /*--------------*/ N_vrt; // Number of vertices
     vector<array<Vector3,3>> tris; //-- Triangle data
-    ulong /*--------------*/ tDex; //- Index offset for triangle coords
+    // ulong /*--------------*/ tDex; //- Index offset for triangle coords
 
     // Model //
+	// Mesh  mesh{}; //- Raylib mesh geometry
 	Mesh  mesh; //- Raylib mesh geometry
 	Model model; // Raylib drawable model
 
@@ -65,7 +69,7 @@ public:
         pushArr[1] = v2;
         pushArr[2] = v3;
         tris.push_back( pushArr );
-        tDex++;
+        // tDex++;
     }
 
     void per_tri_normals(){
@@ -96,39 +100,30 @@ public:
                 mesh.vertices[k] = tris[i][j].x;  k++;
                 mesh.vertices[k] = tris[i][j].y;  k++;
                 mesh.vertices[k] = tris[i][j].z;  k++;
-                mesh.indices[l] = l; /*------*/  l++; // WARNING: UNOPTIMIZED FOR SHARED VERTICES
-                cout << "\t\t\t\tVertex " << l << " @ {" << 
-                    mesh.vertices[k-3] << ", " <<
-                    tris[i][j].y << ", " <<
-                    tris[i][j].z << 
-                "}, k = " << k << ", l = " << mesh.indices[l-1] << endl;
+                mesh.indices[l]  = l; /*------*/  l++; // WARNING: UNOPTIMIZED FOR SHARED VERTICES
             }
         }
         cout << "\t\t\tTriangles: " << N_tri << ", indices: " << l << ", floats: " << k << endl;
-        per_tri_normals();
+        // per_tri_normals();
     }
 
-    void load_mesh(){
-		// Send triangle mesh geometry to RayLib, needed for drawing
-        cout << "\t\t\t`UploadMesh()` ..." << endl;
-		// UploadMesh( &mesh, true );
-		UploadMesh( &mesh, false );
-        cout << "\t\t\t`LoadModelFromMesh()` ..." << endl;
-    	model = LoadModelFromMesh( mesh );
-	}
-
-    void load_geo(){
-        // Get the model ready for drawing
-        cout << "\t\t`build_mesh()` ..." << endl;
-        build_mesh();
-        cout << "\t\t`load_mesh()` ..." << endl;
-        load_mesh();
-    }
     
-
     ///// Diagnostics ////////////////////////////
 
-    // FIXME, START HERE: DISPLAY VERTEX AND INDEX DATA, USE THE MESH DATA ONLY
+    void print_verts(){
+        // Print the triangle data from the mesh
+        ulong  k = 0;
+        ushort l = 0;
+        for( ulong i = 0; i < N_tri; i++ ){
+            cout << "Tri " << i+1 << ": ";
+            for( ubyte j = 0; j < 3; j++ ){
+                cout << mesh.indices[l] << " {" << mesh.vertices[k+0] << ", " << mesh.vertices[k+1] << ", " << mesh.vertices[k+2] << "}, ";
+                k += 3;
+                l++;
+            }
+            cout << endl;
+        }
+    }
 
 
     ///// Constructors ///////////////////////////
@@ -143,13 +138,13 @@ public:
         // mesh  = { 0 };
         N_tri = Ntri;
         N_vrt = Ntri * 3;
-        tDex  = 0;
+        // tDex  = 0;
 
         // Init geo memory
 		mesh.triangleCount = N_tri;
     	mesh.vertexCount   = N_vrt;
         mesh.vertices /**/ = (float *)MemAlloc(N_vrt*3*sizeof(float)); // 3 vertices, 3 coordinates each (x, y, z)
-        mesh.normals /*-*/ = (float *)MemAlloc(N_vrt*3*sizeof(float)); // 3 vertices, 3 coordinates each (x, y, z)
+        // mesh.normals /*-*/ = (float *)MemAlloc(N_vrt*3*sizeof(float)); // 3 vertices, 3 coordinates each (x, y, z)
         mesh.indices /*-*/ = (ushort *)MemAlloc(N_vrt*sizeof(ushort));
         // mesh.vertices = new float[mesh.vertexCount * 3];
         // mesh.indices  = new unsigned short[mesh.vertexCount];
@@ -161,6 +156,8 @@ public:
 		r = 0.0; // --- Local roll  angle
 		p = 0.0; // --- Local pitch angle
 		w = 0.0; // --- Local yaw   angle
+        R = MatrixRotateXYZ( Vector3{ p, w, r } );
+        T = Matrix{ R };
     }
 
 
@@ -175,6 +172,9 @@ public:
 
     void set_RPY( float r_, float p_, float y_ ){
 		// Set the world Roll, Pitch, Yaw of the model
+        r = r_; // --- Local roll  angle
+		p = p_; // --- Local pitch angle
+		w = y_; // --- Local yaw   angle
 		R = MatrixRotateXYZ( Vector3{ p_, y_, r_ } );
         T = Matrix{ R }; 
         model.transform = T;
@@ -203,6 +203,25 @@ public:
 
 
     ///// Rendering //////////////////////////////
+    // WARNING: Requires window init to call!
+
+    void load_mesh(){
+		// Send triangle mesh geometry to RayLib, needed for drawing
+        print_verts();
+        cout << "\t\t\t`UploadMesh()` ..." << endl;
+		UploadMesh( &mesh, true );
+		// UploadMesh( &mesh, false );
+        cout << "\t\t\t`LoadModelFromMesh()` ..." << endl;
+    	model = LoadModelFromMesh( mesh );
+	}
+
+    void load_geo(){
+        // Get the model ready for drawing
+        cout << "\t\t`build_mesh()` ..." << endl;
+        build_mesh();
+        cout << "\t\t`load_mesh()` ..." << endl;
+        load_mesh();
+    }
 
     void draw(){
         cout << "Please implement `draw` for derived class!" << endl;
@@ -271,16 +290,19 @@ public:
         cout << "\tCreate model ..." << endl;
 
         // TriModel( 8 );
-        cout << "\t`load_geo()` ..." << endl;
-        load_geo();
+        // cout << "\t`load_geo()` ..." << endl;
+        // load_geo();
         cout << "\t`rotate_RPY()` ..." << endl;
-        rotate_RPY( 0.0, 3.1416/2.0, 0.0 );
+        // rotate_RPY( 0.0, 3.1416/2.0, 0.0 );
     }
+
+    ///// Rendering //////////////////////////////
+    // WARNING: Requires window init to call!
 
     void draw(){
         // Draw the model
-        DrawModelWires( model, Vector3{x, y, z}, 1.0, RED );
-        // DrawModel(model, Vector3(x, y, z), 1.0, Colors.RED);  
+        DrawModel(model, Vector3{x, y, z}, 1.0, RED);  
+        // DrawModelWires( model, Vector3{x, y, z}, 1.0, BLACK );
     }
 
 };
@@ -300,14 +322,21 @@ int main(){
     
     // Camera
     Camera camera = Camera{
-        Vector3{ 90.0, 90.0, 90.0 }, // Position
-        Vector3{ 50.0, 50.0,  0.0 }, // Target
-        Vector3{  0.0, 0.0, 2.0 }, // Up
+        Vector3{ 12.0, 12.0, 12.0 }, // Position
+        Vector3{ 0.0, 0.0, 2.0 }, // Target
+        Vector3{  0.0, 0.0, 1.0 }, // Up
         45.0, // -------------------- FOV_y
         0 // ------------------------ Projection mode
     };
 
     cout << "About to start drawing ..." << endl;
+
+    InitWindow(800, 450, "Spinning Ship");
+    SetTargetFPS( 60 );
+    // rlDisableBackfaceCulling(); 
+    rlEnableSmoothLines();
+
+    glider.load_geo(); // THIS MUST HAPPEN AFTER WINDOW INIT!
 
     while( !WindowShouldClose() ){
         
@@ -317,7 +346,8 @@ int main(){
         ClearBackground( BLACK );
 
         ///// DRAW LOOP //////////////////////////
-        // glider.draw();
+        glider.rotate_RPY( 0.0, 3.1416/180.0, 0.0 );
+        glider.draw();
 
         /// End Drawing ///
         EndMode3D();

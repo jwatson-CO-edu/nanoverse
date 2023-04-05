@@ -1,3 +1,5 @@
+// https://www.reddit.com/r/raylib/comments/v2su1s/help_with_dynamic_mesh_creation_in_raylib/
+
 #include <raylib.h>
 #include <rlgl.h>
 
