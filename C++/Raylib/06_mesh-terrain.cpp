@@ -15,9 +15,6 @@ using std::vector;
 #include <iostream>
 using std::cout, std::endl;
 
-// #include "raylib.h"
-// #include "raymath.h"
-// #include "rlgl.h" // `rlDisableBackfaceCulling`
 #include <raylib.h>
 #include <raymath.h>
 #include <rlgl.h>
@@ -25,6 +22,15 @@ using std::cout, std::endl;
 typedef unsigned long  ulong;
 typedef unsigned short ushort;
 typedef unsigned char  ubyte;
+
+////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
+
+float randf(){
+    // Return a pseudo-random number between 0.0 and 1.0
+    return  1.0f * rand() / RAND_MAX;
+}
+
+void rand_seed(){  srand( time(NULL) );  } // Seed RNG with unpredictable time-based seed
 
 
 ////////// TRIMESH /////////////////////////////////////////////////////////////////////////////////
@@ -39,10 +45,8 @@ public:
     ulong /*--------------*/ N_tri; //- Number of triangles
     ulong /*--------------*/ N_vrt; // Number of vertices
     vector<array<Vector3,3>> tris; //-- Triangle data
-    // ulong /*--------------*/ tDex; //- Index offset for triangle coords
 
     // Model //
-	// Mesh  mesh{}; //- Raylib mesh geometry
 	Mesh  mesh; //- Raylib mesh geometry
 	Model model; // Raylib drawable model
 
@@ -135,19 +139,14 @@ public:
 
     TriModel( ulong Ntri ){
         mesh  = Mesh{};
-        // mesh  = { 0 };
         N_tri = Ntri;
         N_vrt = Ntri * 3;
-        // tDex  = 0;
 
         // Init geo memory
 		mesh.triangleCount = N_tri;
     	mesh.vertexCount   = N_vrt;
         mesh.vertices /**/ = (float *)MemAlloc(N_vrt*3*sizeof(float)); // 3 vertices, 3 coordinates each (x, y, z)
-        // mesh.normals /*-*/ = (float *)MemAlloc(N_vrt*3*sizeof(float)); // 3 vertices, 3 coordinates each (x, y, z)
         mesh.indices /*-*/ = (ushort *)MemAlloc(N_vrt*sizeof(ushort));
-        // mesh.vertices = new float[mesh.vertexCount * 3];
-        // mesh.indices  = new unsigned short[mesh.vertexCount];
 
         // Init pose
 		x = 0.0; // --- World X pos
@@ -230,129 +229,63 @@ public:
 };
 
 
-////////// DELTA GLIDER ////////////////////////////////////////////////////////////////////////////
 
-class DeltaGlider : public TriModel{
-public:
-    // A fun little space plane
+////////// TERRAIN /////////////////////////////////////////////////////////////////////////////////
 
-    DeltaGlider( float wingspan = 10.0f ) : TriModel( 8 ){
+class TerrainPlate : public TriModel { public:
+    // Rectangular plate of randomized terrain
 
-        cout << "\tGlider init ..." << endl;
+    vector<vector<Vector3>> pts; // -- Grid points in 3D space
+    float /*-------------*/ scl; // -- Scale of each cell
+    ulong /*-------------*/ M; // ---- Number of rows
+    ulong /*-------------*/ N; // ---- Number of cells per row
+    Color /*-------------*/ gndClr; // Triangle fill color
+    Color /*-------------*/ linClr; // Triangle line color
+    float /*-------------*/ offset; // Z bump for lines
 
-        float fusFrac   = 0.5;
-        float sweptFrac = 0.75;
-        float thickFrac = 0.25;
+    TerrainPlate( float scale = 10.0f, ulong Mrows = 10, ulong Ncols = 10 ){
+        // Generate points and load triangles
+        
+        // 0. Init
+        M /**/ = Mrows;
+        N /**/ = Ncols;
+        scl    = scale;
+        offset = scale/50.0f;
+        gndClr = GREEN;
+        linClr = BLACK;
 
-        cout << "\tAbout to load tris ..." << endl;
+        // 1. Generate points
+        vector<Vector3> row;
+        for( ulong i = 0; i < M; i++ ){
+            row.clear();
+            for( ulong j = 0; j < N; j++ ){
+                row.push_back(  Vector3{ j*scl, i*scl, randf()*scl }  );
+            }
+            pts.push_back( row );
+        }
 
-        load_tri( // Left  Front Top
-            Vector3{  0.0f        ,  0.0f                 , 0.0f                + wingspan*sweptFrac/2.0f }, // 0, Front
-            Vector3{ -wingspan/2  ,  0.0f                 , -wingspan*sweptFrac + wingspan*sweptFrac/2.0f }, // 4, Left wingtip
-            Vector3{  0.0f        , +wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0f } //  1, Top peak
-        );
-        load_tri( // Left  Rear  Top
-            Vector3{  0.0f        , +wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0f }, // 1, Top peak
-            Vector3{ -wingspan/2  ,  0.0f                 , -wingspan*sweptFrac + wingspan*sweptFrac/2.0f }, // 4, Left wingtip
-            Vector3{  0.0f        ,  0.0f                 , -wingspan*fusFrac   + wingspan*sweptFrac/2.0f } //  3, Back
-        );
-        load_tri( // Right Front Top
-            Vector3{ +wingspan/2  ,  0.0f                 , -wingspan*sweptFrac + wingspan*sweptFrac/2.0f }, // 5, Right wingtip
-            Vector3{  0.0f        ,  0.0f                 , 0.0f                + wingspan*sweptFrac/2.0f }, // 0, Front
-            Vector3{  0.0f        , +wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0f }  // 1, Top peak
-        );
-        load_tri( // Right Rear  Top
-            Vector3{ +wingspan/2  ,  0.0f                 , -wingspan*sweptFrac + wingspan*sweptFrac/2.0f }, // 5, Right wingtip
-            Vector3{  0.0f        , +wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0f }, // 1, Top peak
-            Vector3{  0.0f        ,  0.0f                 , -wingspan*fusFrac   + wingspan*sweptFrac/2.0f } //  3, Back
-        );
-        load_tri( // Left  Front Bottom
-            Vector3{  0.0f        ,  0.0f                 , 0.0f                + wingspan*sweptFrac/2.0f }, // 0, Front
-            Vector3{  0.0f        , -wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0f }, // 2, Bottom peak
-            Vector3{ -wingspan/2  ,  0.0f                 , -wingspan*sweptFrac + wingspan*sweptFrac/2.0f }  // 4, Left wingtip
-        );
-        load_tri( // Left  Rear  Bottom
-            Vector3{  0.0f        , -wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0f }, // 2, Bottom peak
-            Vector3{  0.0f        ,  0.0f                 , -wingspan*fusFrac   + wingspan*sweptFrac/2.0f }, // 3, Back
-            Vector3{ -wingspan/2  ,  0.0f                 , -wingspan*sweptFrac + wingspan*sweptFrac/2.0f }  // 4, Left wingtip
-        );
-        load_tri( // Right Front Bottom
-            Vector3{  0.0f        ,  0.0f                 , 0.0f                + wingspan*sweptFrac/2.0f }, // 0, Front
-            Vector3{ +wingspan/2  ,  0.0f                 , -wingspan*sweptFrac + wingspan*sweptFrac/2.0f }, // 5, Right wingtip
-            Vector3{  0.0f        , -wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0f }  // 2, Bottom peak
-        );
-        load_tri( // Right Rear  Bottom
-            Vector3{  0.0f        , -wingspan*thickFrac/2 , -wingspan*fusFrac/2 + wingspan*sweptFrac/2.0f }, // 2, Bottom peak
-            Vector3{ +wingspan/2  ,  0.0f                 , -wingspan*sweptFrac + wingspan*sweptFrac/2.0f }, // 5, Right wingtip
-            Vector3{  0.0f        ,  0.0f                 , -wingspan*fusFrac   + wingspan*sweptFrac/2.0f }  // 3, Back
-        );
-
-        // cout << "\tCreate model ..." << endl;
-
-        // // TriModel( 8 );
-        // // cout << "\t`load_geo()` ..." << endl;
-        // // load_geo();
-        // cout << "\t`rotate_RPY()` ..." << endl;
-        // // rotate_RPY( 0.0, 3.1416/2.0, 0.0 );
+        // 2. Build triangles
+        for( ulong i = 0; i < M-1; i++ ){
+            for( ulong j = 0; j < N-1; j++ ){
+                Vector3 v1, v2, v3, v4;
+                // Load points
+                v1 = pts[i  ][j  ];
+                v2 = pts[i  ][j+1];
+                v3 = pts[i+1][j  ];
+                v4 = pts[i+1][j+1];
+                // Randomize cross right or cross left
+                if( randf() < 0.5f ){
+                    load_tri( v1, v4, v2 );
+                    load_tri( v1, v3, v2 );
+                }else{
+                    load_tri( v1, v3, v2 );
+                    load_tri( v2, v3, v4 );
+                }
+            }
+        }
     }
-
-    ///// Rendering //////////////////////////////
-    // WARNING: Requires window init to call!
 
     void draw(){
-        // Draw the model
-        DrawModel(model, Vector3{x, y, z}, 1.0, RED);  
-        // DrawModelWires( model, Vector3{x, y, z}, 1.0, BLACK );
-    }
-
-};
-
-
-////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
-int main(){
-
-    cout << "About to create glider ..." << endl;
-
-    // Ship
-    DeltaGlider glider( 10.0f );
-    cout << "About to set position ..." << endl;
-    glider.set_XYZ( 0.0, 0.0, 2.0 );
-
-    cout << "About to create camera ..." << endl;
-    
-    // Camera
-    Camera camera = Camera{
-        Vector3{ 12.0, 12.0, 12.0 }, // Position
-        Vector3{ 0.0, 0.0, 2.0 }, // Target
-        Vector3{  0.0, 0.0, 1.0 }, // Up
-        45.0, // -------------------- FOV_y
-        0 // ------------------------ Projection mode
-    };
-
-    cout << "About to start drawing ..." << endl;
-
-    InitWindow(800, 450, "Spinning Ship");
-    SetTargetFPS( 60 );
-    // rlDisableBackfaceCulling(); 
-    rlEnableSmoothLines();
-
-    glider.load_geo(); // THIS MUST HAPPEN AFTER WINDOW INIT!
-
-    while( !WindowShouldClose() ){
         
-        /// Begin Drawing ///
-        BeginDrawing();
-        BeginMode3D( camera );
-        ClearBackground( BLACK );
-
-        ///// DRAW LOOP //////////////////////////
-        glider.rotate_RPY( 0.0, 3.1416/180.0, 0.0 );
-        glider.draw();
-
-        /// End Drawing ///
-        EndMode3D();
-        EndDrawing();
     }
-
-    return 0;
-}
+};
