@@ -4,37 +4,28 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 * All units in meters `[m]`
 
 
-## Architecture 1: Dlang + RayLib (Dangerous!)
+## Architecture 1: C++ & RayLib (Dangerous!)
 * Purpose: Let yourself have some graphics, as a treat!  
 
 ```
-[Y] Grid Glider - Delta Glider
-    [Y] Glider with planelike motion - 2022-09-19: Really need to calm down on the graphics, you don't need them!
-    [Y] Glider flies over flat XY grid - 2022-09-22: Smooth flight and pleasing grid that fills the draw distance w/o slowdown
-    [Y] Camera follow glider - 2022-09-22: Camera stuck fast to glider!
-    [Y] Ship keyboard steering with camera follow - 2022-09-23: Very easy!
-    [Y] Test joystick input - 2022-12-04: If the gamepad does not work, it may not be on the list!, https://github.com/gabomdq/SDL_GameControllerDB/blob/master/gamecontrollerdb.txt
-    [Y] Player glider with joystick input, 2022-12-06: Easy!
-    [Y] Simple lighting and Flat shading, 2022-12-01: Ambient lighting is probably enough
-    [Y] Visually pleasing contrail ribbon, 2022-12-05: Timer was the tricky part.
-        [Y] Triangle strip, 2022-12-05: Timer was the tricky part.
-        [Y] Alpha fades to nothing at trailing end, 2022-12-05: Timer was the tricky part.
-        [N] Shine fades to nothing at trailing end, 2022-12-05: Unsure how to apply shader to a single triangle
-    [Y] Dragging camera (Starfox), 2022-12-06: Pleasing to look at!
-    [Y] Randomly populate grid with filled squares, 2022-12-06: Adds visual interest
-    [Y] Floating triangle debris, 2022-12-06: Easy!
-    [Y] Video -or- animated GIF output --to-> IG, 2022-12-2X: Shared 
 
-
-[ ] Terrain generation - Delta Glider
-    [ ] Perlin Noise grid hills
-    [ ] Synthwave grid
+[>] Terrain generation - Delta Glider
+    [>] Perlin Noise grid hills
+    [ ] Synthwave terrain
     [ ] Synthwave triangles
     [ ] Infinite grid
     [ ] Collision triangles, Spin
     [ ] Video -or- animated GIF output --to-> IG
 
- 
+[ ] Landscape generation - Delta Glider
+    [ ] Boulders and/or mountains
+    [ ] Trees as L-systems
+    [ ] Grass (as shader?)
+    [ ] Water (Simplest)
+        [ ] Whoosh effect?
+    [ ] Floating islands
+        [ ] Waterfalls?
+    [ ] Video -or- animated GIF output --to-> IG
 
 [ ] Engineering Center FROM SPACE - Generative art
     [ ] Generative angular castle (A la EC)
@@ -46,16 +37,6 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         { } EXPLOSIONS ?!?
     [ ] Loop
     [ ] Video -or- animated GIF output --to-> IG
-
- 
-
-[ ] Landscape generation - Delta Glider
-    [ ] Trees
-    [ ] Grass
-    [ ] Water (Simplest)
-    [ ] Floating islands
-    [ ] Video -or- animated GIF output --to-> IG
-
 
 [>] Braitenberg Vehicles
     [>] Test message passing system
@@ -227,5 +208,25 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     [ ] Independent Aim/Steer (w/ dual views!)
 
 ```
+## Completed
+```
+[Y] Grid Glider - Delta Glider
+    [Y] Glider with planelike motion - 2022-09-19: Really need to calm down on the graphics, you don't need them!
+    [Y] Glider flies over flat XY grid - 2022-09-22: Smooth flight and pleasing grid that fills the draw distance w/o slowdown
+    [Y] Camera follow glider - 2022-09-22: Camera stuck fast to glider!
+    [Y] Ship keyboard steering with camera follow - 2022-09-23: Very easy!
+    [Y] Test joystick input - 2022-12-04: If the gamepad does not work, it may not be on the list!, https://github.com/gabomdq/SDL_GameControllerDB/blob/master/gamecontrollerdb.txt
+    [Y] Player glider with joystick input, 2022-12-06: Easy!
+    [Y] Simple lighting and Flat shading, 2022-12-01: Ambient lighting is probably enough
+    [Y] Visually pleasing contrail ribbon, 2022-12-05: Timer was the tricky part.
+        [Y] Triangle strip, 2022-12-05: Timer was the tricky part.
+        [Y] Alpha fades to nothing at trailing end, 2022-12-05: Timer was the tricky part.
+        [N] Shine fades to nothing at trailing end, 2022-12-05: Unsure how to apply shader to a single triangle
+    [Y] Dragging camera (Starfox), 2022-12-06: Pleasing to look at!
+    [Y] Randomly populate grid with filled squares, 2022-12-06: Adds visual interest
+    [Y] Floating triangle debris, 2022-12-06: Easy!
+    [Y] Video -or- animated GIF output --to-> IG, 2022-12-2X: Shared 
+```
+
 # Resources
 
