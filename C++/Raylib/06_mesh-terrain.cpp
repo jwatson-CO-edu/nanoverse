@@ -286,6 +286,6 @@ class TerrainPlate : public TriModel { public:
     }
 
     void draw(){
-        
+        // FIXME, START HERE: DRAW FILL, SHIFT UP, DRAW LINE 
     }
 };
