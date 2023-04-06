@@ -14,12 +14,12 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         [Y] Unshaded with lines, 2023-04-05: Finally got random, non-vibrating triangles w/ correct orientation!
         [>] Toon shader
         [ ] Actual Perlin data
-    [ ] Synthwave terrain
-        [ ] Write "Synthwave" shader based on toon shader
-        [ ] Add bloom glow to boundary lines
     [ ] JS Ctrl Glider
         [ ] Joystick test
         [ ] Synthwave shading
+    [ ] Synthwave terrain
+        [ ] Write "Synthwave" shader based on toon shader
+        [ ] Add bloom glow to boundary lines
     [ ] Synthwave triangles
         [ ] Collision triangles, Spin
     [ ] Infinite grid
