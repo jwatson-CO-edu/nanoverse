@@ -327,7 +327,7 @@ int main(){
     normShader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(normShader, "matModel");
     
     // outline shader
-    Shader outline = LoadShader(NULL, "shaders/outline.fs");
+    Shader outline = LoadShader(0, "shaders/outline.fs");
     outline.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(outline, "matModel"); // WARNING: ADDED
 
     // lighting shader
