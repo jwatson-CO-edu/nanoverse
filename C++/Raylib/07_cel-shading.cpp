@@ -37,9 +37,10 @@ void rand_seed(){  srand( time(NULL) );  } // Seed RNG with unpredictable time-b
 
 void setModelShader( Model* m, Shader* s ){
     // Assign a shader to a material index within the model
-    for (int i = 0; i < m->materialCount; i++) {
+    // Author: Bedroom Coder, https://bedroomcoders.co.uk/cell-shader-revisited/
+    for( int i = 0; i < m->materialCount; i++ ){
         m->materials[i].shader = *s;
-    }    
+    }
 }
 
 
@@ -84,7 +85,6 @@ public:
         pushArr[1] = v2;
         pushArr[2] = v3;
         tris.push_back( pushArr );
-        // tDex++;
     }
 
     void per_tri_normals(){
@@ -93,11 +93,6 @@ public:
         Vector3 n;
         for( ulong i = 0; i < N_tri; i++ ){
             n = Vector3CrossProduct( Vector3Subtract(tris[i][0],tris[i][1]), Vector3Subtract(tris[i][2],tris[i][1]));
-            cout << "\t\t\t\tNormal @ " << k << " {" << 
-                n.x << ", " <<
-                n.y << ", " <<
-                n.z << 
-            "}" << endl;
             for( ubyte j = 0; j < 3; j++ ){
                 mesh.normals[k] = n.x;  k++;
                 mesh.normals[k] = n.y;  k++;
@@ -118,8 +113,6 @@ public:
                 mesh.indices[l]  = l; /*------*/  l++; // WARNING: UNOPTIMIZED FOR SHARED VERTICES
             }
         }
-        cout << "\t\t\tTriangles: " << N_tri << ", indices: " << l << ", floats: " << k << endl;
-        // per_tri_normals();
     }
 
     
@@ -335,6 +328,7 @@ int main(){
     
     // outline shader
     Shader outline = LoadShader(NULL, "shaders/outline.fs");
+    outline.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(outline, "matModel"); // WARNING: ADDED
 
     // lighting shader
     Shader shader = LoadShader("shaders/toon.vs", "shaders/toon.fs");
@@ -389,11 +383,10 @@ int main(){
                 terrain.draw();
             EndMode3D();
         
-            // FIXME, START HERE: LINE 159 OF "main.c"
+            // FIXME, START HERE: LINE 159 OF "main.c" (DO I NEED IT?)
         
-        // terrain.draw();
+        DrawFPS(10, 10);
 
-        /// End Drawing ///
         EndDrawing();
     }
 
