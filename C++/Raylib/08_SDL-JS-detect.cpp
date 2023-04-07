@@ -11,6 +11,11 @@ https://lazyfoo.net/tutorials/SDL/19_gamepads_and_joysticks/index.php
 using std::cout, std::endl;
 #include <SDL2/SDL.h> 
 
+///// Constants //////////////////////////////////
+
+const float JS_AXIS_MAX_VAL    = 32768.0f; // Max analog joystick value range in SDL2
+const int   JOYSTICK_DEAD_ZONE =  8000; // -- Analog joystick dead zone
+
 ///// Globals ////////////////////////////////////
 
 //Event handler
@@ -69,45 +74,71 @@ struct InputState{
 void poll_SDL2_inputs( InputState& state ){
     // Populate the `state` based on the SDL2 input queue
 
-    //Analog joystick dead zone
-    const int JOYSTICK_DEAD_ZONE = 8000;
-
-    //Normalized direction
-    int xDir = 0;
-    int yDir = 0;
-
-    //Handle events on queue
+    // Handle events in queue
     while( SDL_PollEvent( &e ) != 0 ){
         // if Motion on controller 0
         if( (e.type == SDL_JOYAXISMOTION) && (e.jaxis.which == 0) ){
-            
-            //X axis motion
-            if( e.jaxis.axis == 0 ){
-                //Left of dead zone
-                if( e.jaxis.value < -JOYSTICK_DEAD_ZONE ){
-                    xDir = -1;
-                }
-                //Right of dead zone
-                else if( e.jaxis.value > JOYSTICK_DEAD_ZONE ){
-                    xDir = 1;
-                }else{
-                    xDir = 0;
-                }
+
+            // https://wiki.libsdl.org/SDL2/SDL_GameControllerAxis
+            switch( e.jaxis.axis ){
+                case SDL_CONTROLLER_AXIS_LEFTX: 
+                    if( abs( e.jaxis.value ) > JOYSTICK_DEAD_ZONE ){ //Above of dead zone
+                        state.GAMEPAD_AXIS_LEFT_X = e.jaxis.value / JS_AXIS_MAX_VAL;
+                    }else{ //Below of dead zone
+                        state.GAMEPAD_AXIS_LEFT_X = 0.0f;
+                    }
+                    break;
+                case SDL_CONTROLLER_AXIS_LEFTY: 
+                    if( abs( e.jaxis.value ) > JOYSTICK_DEAD_ZONE ){ //Above of dead zone
+                        state.GAMEPAD_AXIS_LEFT_Y = e.jaxis.value / JS_AXIS_MAX_VAL;
+                    }else{ //Below of dead zone
+                        state.GAMEPAD_AXIS_LEFT_Y = 0.0f;
+                    }
+                    break;
+                case SDL_CONTROLLER_AXIS_RIGHTX: 
+                    if( abs( e.jaxis.value ) > JOYSTICK_DEAD_ZONE ){ //Above of dead zone
+                        state.GAMEPAD_AXIS_RIGHT_X = e.jaxis.value / JS_AXIS_MAX_VAL;
+                    }else{ //Below of dead zone
+                        state.GAMEPAD_AXIS_RIGHT_X = 0.0f;
+                    }
+                    break;
+                case SDL_CONTROLLER_AXIS_RIGHTY: 
+                    if( abs( e.jaxis.value ) > JOYSTICK_DEAD_ZONE ){ //Above of dead zone
+                        state.GAMEPAD_AXIS_RIGHT_Y = e.jaxis.value / JS_AXIS_MAX_VAL;
+                    }else{ //Below of dead zone
+                        state.GAMEPAD_AXIS_RIGHT_Y = 0.0f;
+                    }
+                    break;
+                default:
+                    break;
             }
-            //Y axis motion
-            else if( e.jaxis.axis == 1 ){
-                //Below of dead zone
-                if( e.jaxis.value < -JOYSTICK_DEAD_ZONE ){
-                    yDir = -1;
-                }
-                //Above of dead zone
-                else if( e.jaxis.value > JOYSTICK_DEAD_ZONE ){
-                    yDir =  1;
-                }else{
-                    yDir = 0;
-                }
+        // if button down on controller 0, Set button flag true
+        }else if( (e.type == SDL_CONTROLLERBUTTONDOWN) && (e.jaxis.which == 0) ){
+
+            // https://wiki.libsdl.org/SDL2/SDL_GameControllerButton
+            switch( e.button.button ){
+                
+                case SDL_CONTROLLER_BUTTON_DPAD_UP:
+
+                    break;
+                
+                case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+
+                    break;
+                
+                case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+
+                    break;
+                
+                case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+
+                    break;
             }
         }
+
+        
+        
+
     }
 
     
