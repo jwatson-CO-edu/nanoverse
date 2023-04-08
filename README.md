@@ -4,7 +4,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 * All units in meters `[m]`
 
 
-## Architecture 1: C++ & RayLib (Dangerous!)
+## Architecture 1: C++ & RayLib  (Dangerous!)
 * Purpose: Let yourself have some graphics, as a treat!  
 
 ```
@@ -43,6 +43,17 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         [ ] Erase when too far behind
     [ ] Video -or- animated GIF output --to-> IG
 
+[>] Piped Ribbons - Generative art
+    [Y] Randomly trace a 3D grid, with 90deg curved turn limit with radius that lands mid-segment
+    [Y] Ribbons as contrails, 2022-12-2X: Shared 
+        [Y] Deterministic turning rules that allow predictable loop, 2022-12-2X: Shared 
+        [Y] Multiple, random non-colliding ribbons, 2022-12-2X: Shared 
+    [>] Ribbons as shaded meshes
+        [ ] Test simple shaders && Learn about them
+        [ ] Add simple shader
+        [ ] Add luminocity to shader
+        [ ] Add decay from leading edge to shader
+    [ ] Video -or- animated GIF output --to-> IG
 
 [ ] Landscape generation - Delta Glider
     [ ] Search for grass shader
@@ -72,18 +83,6 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         { } Playable?  Food delivery?
     [ ] Video -or- animated GIF output --to-> IG
 
-[>] Piped Ribbons - Generative art
-    [Y] Randomly trace a 3D grid, with 90deg curved turn limit with radius that lands mid-segment
-    [Y] Ribbons as contrails, 2022-12-2X: Shared 
-        [Y] Deterministic turning rules that allow predictable loop, 2022-12-2X: Shared 
-        [Y] Multiple, random non-colliding ribbons, 2022-12-2X: Shared 
-    [>] Ribbons as shaded meshes
-        [ ] Test simple shaders && Learn about them
-        [ ] Add simple shader
-        [ ] Add luminocity to shader
-        [ ] Add decay from leading edge to shader
-    [ ] Video -or- animated GIF output --to-> IG
-
 [ ] Vaporwave Aesthetic Landscape
     [ ] First person walking over terrain
     [ ] Fragmented statues
@@ -94,7 +93,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 
 ```
 
-## Architecture 2: Frames for Fun
+## Architecture 2: Frames for Fun  (Highly Dangerous!)
 * Purpose: Digital sculpture platform with a dash of simulation
 * Be careful with your time
 ```
@@ -115,7 +114,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 
 ```
 
-## Architecture 3: Let's Code (Applied) Physics
+## Architecture 3: Let's Code (Applied) Physics  (Absurdly Dangerous!)
 * Purpose: Daydream itch
 ```
 [ ] Investigate compute shaders
@@ -130,15 +129,9 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     [ ] Wheel friction model
     [ ] Obstacle collision
     
-[ ] Find/Create Clifford lib in Dlang
+[ ] Find/Create Clifford lib in C++
 [ ] Clifford projectile
 [ ] Clifford planets
-[ ] Clifford electrodynamics
-[ ] Electrodynamics
-    [ ] Magnets
-        [ ] Motor field optimizer
-        [ ] Plasma confinement optimizer
-    [ ] Generative 
 
 ```
 
@@ -147,7 +140,12 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 * Purpose: Play with a 3D game engine (Godot)
 * Fast & Parallel
 ```
-
+[ ] Clifford electrodynamics
+[ ] Electrodynamics
+    [ ] Magnets
+        [ ] Motor field optimizer
+        [ ] Plasma confinement optimizer
+    [ ] Generative 
 
 [ ] Planetary Decorator (My Ideal PC Game: Exploration + Casual Architecture + Procedural Generation)
     [ ] Godot tutorials
