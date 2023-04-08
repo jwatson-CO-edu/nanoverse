@@ -3,6 +3,7 @@ Compile Command:
 g++ 08_SDL-JS-detect.cpp -lSDL2main -lSDL2
 
 https://lazyfoo.net/tutorials/SDL/19_gamepads_and_joysticks/index.php
+
 */
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
@@ -112,36 +113,73 @@ void poll_SDL2_inputs( InputState& state ){
                 default:
                     break;
             }
+
         // if button down on controller 0, Set button flag true
-        }else if( (e.type == SDL_CONTROLLERBUTTONDOWN) && (e.jaxis.which == 0) ){
+        }else if( e.type == SDL_CONTROLLERBUTTONDOWN ){
 
             // https://wiki.libsdl.org/SDL2/SDL_GameControllerButton
             switch( e.button.button ){
-                
                 case SDL_CONTROLLER_BUTTON_DPAD_UP:
-
+                    state.GAMEPAD_BUTTON_LEFT_FACE_UP = true;
                     break;
-                
                 case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
-
+                    state.GAMEPAD_BUTTON_LEFT_FACE_DOWN = true;
                     break;
-                
                 case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
-
+                    state.GAMEPAD_BUTTON_LEFT_FACE_LEFT = true;
                     break;
-                
                 case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+                    state.GAMEPAD_BUTTON_LEFT_FACE_RIGHT = true;
+                    break;
+                case SDL_CONTROLLER_BUTTON_A:
+                    state.GAMEPAD_BUTTON_RIGHT_FACE_DOWN = true;
+                    break;
+                case SDL_CONTROLLER_BUTTON_B:
+                    state.GAMEPAD_BUTTON_RIGHT_FACE_RIGHT = true;
+                    break;
+                case SDL_CONTROLLER_BUTTON_X:
+                    state.GAMEPAD_BUTTON_RIGHT_FACE_LEFT = true;
+                    break;
+                case SDL_CONTROLLER_BUTTON_Y:
+                    state.GAMEPAD_BUTTON_RIGHT_FACE_UP = true;
+                    break;
+                default:
+                    break;
+            }
 
+        }else if( e.type == SDL_CONTROLLERBUTTONUP ){
+
+            // https://wiki.libsdl.org/SDL2/SDL_GameControllerButton
+            switch( e.button.button ){
+                case SDL_CONTROLLER_BUTTON_DPAD_UP:
+                    state.GAMEPAD_BUTTON_LEFT_FACE_UP = false;
+                    break;
+                case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+                    state.GAMEPAD_BUTTON_LEFT_FACE_DOWN = false;
+                    break;
+                case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+                    state.GAMEPAD_BUTTON_LEFT_FACE_LEFT = false;
+                    break;
+                case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+                    state.GAMEPAD_BUTTON_LEFT_FACE_RIGHT = false;
+                    break;
+                case SDL_CONTROLLER_BUTTON_A:
+                    state.GAMEPAD_BUTTON_RIGHT_FACE_DOWN = false;
+                    break;
+                case SDL_CONTROLLER_BUTTON_B:
+                    state.GAMEPAD_BUTTON_RIGHT_FACE_RIGHT = false;
+                    break;
+                case SDL_CONTROLLER_BUTTON_X:
+                    state.GAMEPAD_BUTTON_RIGHT_FACE_LEFT = false;
+                    break;
+                case SDL_CONTROLLER_BUTTON_Y:
+                    state.GAMEPAD_BUTTON_RIGHT_FACE_UP = false;
+                    break;
+                default:
                     break;
             }
         }
-
-        
-        
-
     }
-
-    
 }
 
 
@@ -151,13 +189,13 @@ int main(){
 
     //Game Controller 1 handler
     SDL_Joystick* js0ptr = NULL;
+    InputState    joyState{};
 
     cout << "SDL Init: " << (SDL_Init( SDL_INIT_JOYSTICK ) == 0) << endl; // Req'd for joystick detection
     
     js0ptr = init_js0_SDL2();
 
-    // https://lazyfoo.net/tutorials/SDL/19_gamepads_and_joysticks/index.php
-     //Main loop flag
+    
     
 
     
