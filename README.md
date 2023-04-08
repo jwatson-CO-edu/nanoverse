@@ -10,19 +10,37 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 ```
 
 [>] Terrain generation - Delta Glider
-    [>] Perlin Noise grid hills
-        [Y] Unshaded with lines, 2023-04-05: Finally got random, non-vibrating triangles w/ correct orientation!
+
+    [>] Perlin Noise terrain grid tiles
+        [Y] Unshaded with lines, 2023-04-05: Finally got random, non-vibrating triangles w/ correct orientation! Stored in models as tiles instead of individual triangles.
+        [ ] Add XY position noise 
         [>] Toon shader
+            [ ] Flat shader example
+            [ ] Compile failing program with -g and use gdb to look at a backtrace  
+                https://bedroomcoders.co.uk/cell-shader-revisited/#comment-21658
         [ ] Actual Perlin data
-    [ ] JS Ctrl Glider
-        [ ] Joystick test
-        [ ] Synthwave shading
+            { } If too smooth, apply random noise to perlin
+            
+    [>] JS Ctrl Glider
+        [>] Joystick test @ SDL2
+            [>] Text output
+            [ ] Graphical output
+    
     [ ] Synthwave terrain
         [ ] Write "Synthwave" shader based on toon shader
         [ ] Add bloom glow to boundary lines
+    [ ] Synthwave glider
+        [ ] Synthwave shading on glider
+        { } Glowing contrail?
     [ ] Synthwave triangles
         [ ] Collision triangles, Spin
+        { } Iridescent/glare?
     [ ] Infinite grid
+        [ ] Tiles mesh without terrain discontinuities, even considering XY noise
+        [ ] Distance fog
+        [ ] Add frame rate monitor
+        [ ] Instantiate without noticeable "pop-in"
+        [ ] Erase when too far behind
     [ ] Video -or- animated GIF output --to-> IG
 
 
@@ -38,24 +56,21 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     [ ] Video -or- animated GIF output --to-> IG
 
 [ ] Engineering Center FROM SPACE - Generative art
-    [ ] Generative angular castle (A la EC)
-    [ ] Windows
+    [ ] Generative angular, intimidating castle (a la EC), L-system?
+        [ ] Windows
+        [ ] Blocks
+            [ ] Raised blocks
+        [ ] Bridges
+        [ ] Greebles
+            [ ] Dishes
+            [ ] Cell antennae
     [ ] Textures
     [ ] Rotating "turrets"
-    [ ] Friggin' laser beams
-    { } Fends off Delta Gliders?
-        { } EXPLOSIONS ?!?
-    [ ] Loop
+        [ ] Friggin' laser beams
+        { } Dynamic lighting for primary weapon?
+    { } Fends off Delta Gliders? - Warning: Do not imply damage to public buildings
+        { } Playable?  Food delivery?
     [ ] Video -or- animated GIF output --to-> IG
-
-[>] Braitenberg Vehicles
-    [>] Test message passing system
-    [ ] Implement components for the first vehicle
-    [ ] Implement the first vehicle
-        [ ] Test movement in text
-    [ ] Add graphical representation for the components so far
-    [ ] Graphical representation of an entire vehicle
-    [ ] Vehicle moves through the environment
 
 [>] Piped Ribbons - Generative art
     [Y] Randomly trace a 3D grid, with 90deg curved turn limit with radius that lands mid-segment
@@ -69,10 +84,13 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         [ ] Add decay from leading edge to shader
     [ ] Video -or- animated GIF output --to-> IG
 
- 
-
-[ ] Tetrahedra - Generative Art
-    [ ] ???
+[ ] Vaporwave Aesthetic Landscape
+    [ ] First person walking over terrain
+    [ ] Fragmented statues
+        { } Iridescent shader?
+    [ ] Fragmented architecture
+    [ ] Vintage computer window textures
+    [ ] Grainy/VHS filter shader
 
 ```
 
@@ -88,11 +106,30 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 [ ] VHS Shader
 [ ] Particle shader
 
+[ ] Destructible Entities
+    [ ] Bullet Stress Test, # of Physics Entities at 60 fps
+        [ ] Nvidia GPU
+        [ ] Intel  NUC
+        [ ] Decide on # of allowed physics entities
+    [ ] Pre-compute fractures
+
 ```
 
 ## Architecture 3: Let's Code (Applied) Physics
 * Purpose: Daydream itch
 ```
+[ ] Investigate compute shaders
+    [ ] Decide which is { faster to run, easier to write }
+        [ ] OpenCL
+        [ ] OpenGL
+        [ ] Raylib
+    
+[ ] Bullet 4x4
+    [ ] Terrain class
+    [ ] Wheel contact: Clip/Support
+    [ ] Wheel friction model
+    [ ] Obstacle collision
+    
 [ ] Find/Create Clifford lib in Dlang
 [ ] Clifford projectile
 [ ] Clifford planets
@@ -110,52 +147,87 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 * Purpose: Play with a 3D game engine (Godot)
 * Fast & Parallel
 ```
-[ ] A Peaceful Drive (My Ideal PC Game)
+
+
+[ ] Planetary Decorator (My Ideal PC Game: Exploration + Casual Architecture + Procedural Generation)
+    [ ] Godot tutorials
+        [ ] Godot C++ API Tuts
     [ ] Terrain and Landscape generation
-    [ ] Choose physics engine
+    [ ] Choose physics engine: Open Dynamics Engine, Bullet, Godot, etc.
     [ ] Glider with satisfying dynamics and controls
     [ ] Rover with satisfying dynamics and controls
     [ ] Glider <--> Rover transformation
     [ ] Save game w/ persistent landscape
     [ ] Marker system
-    [ ] Screenshots 
-    [ ] Steam integration
+        [ ] Fast Travel
+    [ ] Evaluate Entity Component System (Is this already supported in Godot?)
+        [ ] What is the use case of this?
+        [ ] Will the capabilities of objects really be that different?
+    [ ] Building system
+        [ ] Unit blocks
+        [ ] Unit walls
+        [ ] Parametized handles
+        [ ] Parametized cuts
+        [ ] Snap
+            [ ] pi/6 units to support right angles & hexagons
+            [ ] Distance unit snap
+            [ ] [Alt] key for grid-free placement
+    [ ] Terraforming System
+        [ ] Create hills
+        [ ] Dig
+        [ ] Cut mountains
+    [ ] Advanced memory management: Dynamic and Optimized Un/Loading
+        [ ] Investigate a loading thread
+        [ ] Investigate background loading
+        [ ] Subtree/chunk loading decisions like minecraft
+        [ ] Decide on a "chunk size"
+        [ ] Investigate loading thread w/ queue
+        [ ] Garbage collection thread: Can I delay destruction of a shared pointer with no references?
+        [ ] Investigate unloading thread w/ queue
+    [ ] Graph-based generation
+        [ ] What are the aspects that make it believeable?
+        [ ] Graph attention 
+        [ ] Graph generation
+        { } Evolve params thru user choice?
+        { } Markovian fallback?
+    [ ] Game Systems
+        [ ] Casual tech tree
+            [ ] Mining
+            [ ] Geomancy Orbital Ablation Laser
+        { } Autonomous helpers?
+            { } GUI: Agent creation manager
+            { } GUI: Agent priority manager and/or task queue
+            { } Learning Agents & Self-Play
+        { } Wildlife?
+        { } Virtual inhabitants?
+    [ ] Story
+        [ ] Player character 
+            [ ] Model
+                { } Selectable Zook/Ceranid/Mawglin?
+            [ ] Rating system for coverage and complexity
+        [ ] Terraformer/base mentor character
+            [ ] Intro/tutorial sequence
+            [ ] Reveal origin/history thru interaction + growing trust
+        [ ] Ancient monuments
+            [ ] Choice: Destroy, Collect, Integrate into cities
+        [ ] Progression thru planets?
+    [ ] Advanced shading
+        [ ] Investigate Godot shaders
+        [ ] Subdivide drawing mesh for more appealing shading: https://www.cs.ucr.edu/~craigs/courses/2016-fall-cs-130/lab-09.html
+        [ ] Evaluate lighted projectiles
+        [ ] Investigate shadow casting
+        [ ] Investigate ray tracing: Does Godot take advantage of ray tracing hardware?
+    [ ] Distribution concerns
+        [ ] What platforms will be supported? 
+            [ ] What is the Godot pipeline for multi-platform suppport?
+            [ ] Steam integration
         [ ] Savegames
         [ ] Screenshots
         [ ] World sharing
         [ ] Co-op play
-[ ] Advanced memory management: Dynamic and Optimized Un/Loading
-    [ ] Investigate a loading thread
-    [ ] Investigate background loading
-    [ ] Subtree/chunk loading decisions like minecraft
-    [ ] Decide on a "chunk size"
-    [ ] Investigate loading thread w/ queue
-    [ ] Garbage collection thread: Can I delay destruction of a shared pointer with no references?
-    [ ] Investigate unloading thread w/ queue
-[ ] Investigate compute shaders
-    [ ] OpenCL
-    [ ] OpenGL
-    [ ] Decide which is { faster to run, easier to write }
-[ ] Destructible Entities
-    [ ] Bullet Stress Test, # of Physics Entities at 60 fps
-        [ ] Nvidia GPU
-        [ ] Intel  NUC
-        [ ] Decide on # of allowed physics entities
-    [ ] Pre-compute fractures
-[ ] Investigate hierarchical collisition detections
-    [ ] Bullet should do this?
-    [ ] If not, then use RAPID (MS Thesis code)
-[ ] Learning Agents & Self-Play
-    [ ] Non-rendered simulation
-    [ ] Agent creation manager
-[ ] Advanced shading
-    [ ] Subdivide drawing mesh for more appealing shading: https://www.cs.ucr.edu/~craigs/courses/2016-fall-cs-130/lab-09.html
-    [ ] Special Topics
-        [ ] cube map arrays
-        [ ] Scrape class notes
-    [ ] Evaluate lighted projectiles
-    [ ] Investigate shadow casting
-    [ ] Investigate ray tracing: Does OpenGL take advantage of ray tracing hardware?
+
+
+    
 
 ```
 
@@ -176,46 +248,10 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 ### DO NOT ATTEMPT WITHOUT AN ESTABLISHED CAREER!
 * Purpose: Have Fun
 ```
-[ ] Evaluate Modular Refactor:
-    [ ] Consider Interfaces for each kind of activity: { Graphics, Control, Intelligence, More? }
-    [ ] Does it make sense to have an interface for each?
-    [ ] Does an interface imply a plugin interface?
-    [ ] If using plugins, Connect at interface in a way that reduces pointer math and communication overhead
-        For example, Using multiple interfaces handled with an inheritance list 
-        that facilitates information flow through pointers on both sides such that s/getters are never used?
-        https://www.arbinada.com/en/node/1466
-[ ] Evaluate Entity Component System (Is this already supported in Mach?)
-    [ ] Different components for { Drawing, Mesh, Physics }
-    [ ] Will the capabilities of objects really be that different?
-    [ ] Entity Base Class
-        [ ] Draw mesh
-        [ ] Draw model
-            [ ] Simple Model
-            [ ] Composite Model (Merge buffers for speed?(Inherit Model))
-        [ ] Pose & Motion (Simplicity: Both static and dynamic objects inherit this)
-[ ] Agent Class (Is this already supported in Mach?)
+[ ] RL Agent Class (Is this already supported in Godot?)
     [ ] State exchange format (Graphs? Children hashed?)
     [ ] Slot for brain
     [ ] Advanced Boids Demo
-[ ] Add Bullet Physics (Is this already supported in Mach?)
-    [ ] Install/import?
-    [ ] Bullet Model Properties
-        [ ] Collision mesh
-        [ ] Collision Model
-        [ ] Intrinsic/Extrinsic Properties
-    [ ] Subtree solvers
-[ ] Player Class Extension
-    [ ] Target selection test 
-        [ ] Investigate Bullet ray casting
-            [ ] If not, use graphics class implementation
-[ ] Bullet 4x4
-    [ ] Terrain class
-    [ ] Wheel contact: Clip/Support
-    [ ] Wheel friction model
-    [ ] Obstacle collision
-[ ] Tank
-    [ ] Decide First/Third PV
-    [ ] Independent Aim/Steer (w/ dual views!)
 
 ```
 ## Completed
