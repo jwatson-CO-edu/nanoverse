@@ -431,7 +431,7 @@ class FlightFollowThirdP_Camera : public Camera3D{ public:
     void begin(){  BeginMode3D( *this );  }
 	void end(){  EndMode3D();  }
 
-}
+};
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 int main(){
