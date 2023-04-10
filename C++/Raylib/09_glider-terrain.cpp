@@ -42,6 +42,36 @@ void rand_seed(){  srand( time(NULL) );  } // Seed RNG with unpredictable time-b
 
 
 
+////////// VECTOR MATH /////////////////////////////////////////////////////////////////////////////
+
+float vec3_mag( Vector3 vec ){  return sqrt( pow( vec.x, 2 ) + pow( vec.y, 2 ) + pow( vec.z, 2 ) );  }
+
+Vector3 vec3_divide( Vector3 vec, float div ){
+	return Vector3{
+		vec.x / div,
+		vec.y / div,
+		vec.z / div
+	};
+}
+
+Vector3 vec3_unit( Vector3 vec ){
+	float mag = vec3_mag( vec );
+	if( mag == 0.0 )  
+		return vec;
+	else 
+		return vec3_divide( vec, mag );
+}
+
+Vector3 vec3_mult( Vector3 vec, float factor ){
+	return Vector3{
+		vec.x * factor,
+		vec.y * factor,
+		vec.z * factor
+	};
+}
+
+
+
 ////////// TRIMESH /////////////////////////////////////////////////////////////////////////////////
 
 void init_mesh( Mesh& mesh, ulong Ntri ){
@@ -368,44 +398,38 @@ class DeltaGlider : public TriModel{ public:
 
 ////////// CAMERA //////////////////////////////////////////////////////////////////////////////////
 
-class FlightFollowThirdP_Camera : public Camera{ public:
+class FlightFollowThirdP_Camera : public Camera3D{ public:
 	// Aircraft drags the camera like in games
 
 	Vector3 trgtCenter; // Position of the target
 	float   offset_d; // - Desired camera offset in meters
+    Matrix  trgtXform; //- Orientation of the target
 
-    FlightFollowThirdP_Camera( float desiredOffset_m, Vector3 tCenter, Matrix tXform ) : Camera(
-        Vector3{ 1.0f, 1.0f, 1.0f }, // Location
-        Vector3{ 0.0f, 0.0f, 0.0f }, // Target
-        Vector3{ 0.0f, 0.0f, 1.0f }, // Up vector
-        45.0f, // ---------------------- FOV
-        0 // -------------------------- Projection mode
-    ){
+    FlightFollowThirdP_Camera( float desiredOffset_m, Vector3 tCenter, Matrix tXform ) : Camera3D(){
+        // Set follower params 
         trgtCenter = tCenter; 
 		offset_d   = desiredOffset_m;
+		trgtXform  = tXform; // -------- Orientation of the target
+        // Set inherited params
         position   = Vector3Add( tCenter, Vector3Transform( Vector3{0.0, 0.0, -offset_d}, tXform) );
-		target     = trgtCenter;
+        target     = trgtCenter;
+        up /*---*/ = Vector3{ 0.0, 0.0, 1.0 };
+        fovy /*-*/ = 45.0f;
+        projection = 0;
     }
 
-	
-
-	
-	// public void update_target_orientation( Matrix tXform ){  trgtXform = tXform;  }
-
-	public void advance_camera(){
+    void advance_camera(){
 		// Move the camera after all the target updates are in
-
 		Vector3 dragVec = vec3_mult( 
-			vec3_unit( Vector3Subtract( camera.position, trgtCenter ) ), 
+			vec3_unit( Vector3Subtract( position, trgtCenter ) ), 
 			offset_d 
 		);
-		
-		// camera.up       =  Vector3Transform( Vector3(0.0, 0.0, 1.0), trgtXform);
-		// camera.Update();
+		position = Vector3Add( trgtCenter, dragVec );
+		target   = trgtCenter;
 	}
 
-	public void begin(){  BeginMode3D(camera);  }
-	public void end(){  EndMode3D();  }
+    void begin(){  BeginMode3D( *this );  }
+	void end(){  EndMode3D();  }
 
 }
 
