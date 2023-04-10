@@ -366,11 +366,59 @@ class DeltaGlider : public TriModel{ public:
 
 };
 
+////////// CAMERA //////////////////////////////////////////////////////////////////////////////////
+
+class FlightFollowThirdP_Camera : public Camera{ public:
+	// Aircraft drags the camera like in games
+
+	Vector3 trgtCenter; // Position of the target
+	float   offset_d; // - Desired camera offset in meters
+
+    FlightFollowThirdP_Camera( float desiredOffset_m, Vector3 tCenter, Matrix tXform ) : Camera(
+        Vector3{ 1.0f, 1.0f, 1.0f }, // Location
+        Vector3{ 0.0f, 0.0f, 0.0f }, // Target
+        Vector3{ 0.0f, 0.0f, 1.0f }, // Up vector
+        45.0f, // ---------------------- FOV
+        0 // -------------------------- Projection mode
+    ){
+        trgtCenter = tCenter; 
+		offset_d   = desiredOffset_m;
+        position   = Vector3Add( tCenter, Vector3Transform( Vector3{0.0, 0.0, -offset_d}, tXform) );
+		target     = trgtCenter;
+    }
+
+	
+
+	
+	// public void update_target_orientation( Matrix tXform ){  trgtXform = tXform;  }
+
+	public void advance_camera(){
+		// Move the camera after all the target updates are in
+
+		Vector3 dragVec = vec3_mult( 
+			vec3_unit( Vector3Subtract( camera.position, trgtCenter ) ), 
+			offset_d 
+		);
+		
+		// camera.up       =  Vector3Transform( Vector3(0.0, 0.0, 1.0), trgtXform);
+		// camera.Update();
+	}
+
+	public void begin(){  BeginMode3D(camera);  }
+	public void end(){  EndMode3D();  }
+
+}
+
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 int main(){
 
     /// Scene Init: Pre-Window ///
     TerrainPlate terrain{ 10.0f, 25, 25 };
+    DeltaGlider  glider{ 10.0f };
+	float /*--*/ frameRotateRad = 3.1416/120.0;
+    float /*--*/ frameThrust    = 3.0/60.0;
+
+
 
     // Camera
     Camera camera = Camera{
@@ -387,7 +435,10 @@ int main(){
     rlEnableSmoothLines();
 
     /// Scene Init: Post-Window ///
-    terrain.load_geo(); // THIS MUST HAPPEN AFTER WINDOW INIT!
+    terrain.load_geo(); 
+    glider.load_geo();
+    glider.set_XYZ( 25*10/2.0f, 25*10/2.0f, 10.0f );
+    glider.rotate_RPY( 0.0, 3.1416/2.0, 0.0 );
 
 
     while( !WindowShouldClose() ){
@@ -397,8 +448,23 @@ int main(){
         BeginMode3D( camera );
         ClearBackground( BLACK );
 
+        // Keyboard input
+		if( IsKeyDown( KEY_LEFT  ) ){  glider.rotate_RPY( 0.0,  0.0,            frameRotateRad );  }
+		if( IsKeyDown( KEY_RIGHT ) ){  glider.rotate_RPY( 0.0,  0.0,           -frameRotateRad );  }
+		if( IsKeyDown( KEY_UP    ) ){  glider.rotate_RPY( 0.0,  frameRotateRad, 0.0            );  }
+		if( IsKeyDown( KEY_DOWN  ) ){  glider.rotate_RPY( 0.0, -frameRotateRad, 0.0            );  }
+
+		// gamepad input
+		if( IsGamepadAvailable(0) ){
+			glider.rotate_RPY( 0.0, 0.0, -frameRotateRad*GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) );
+			glider.rotate_RPY( 0.0, -frameRotateRad*GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y), 0.0 );
+		}
+
         ///// DRAW LOOP //////////////////////////
         terrain.draw();
+
+        glider.z_thrust( frameThrust );
+        glider.draw();
 
         /// End Drawing ///
         EndMode3D();
