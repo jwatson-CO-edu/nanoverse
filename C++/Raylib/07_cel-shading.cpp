@@ -1,6 +1,8 @@
 // gcc 05_TriMesh.cpp -lraylib
 // https://bedroomcoders.co.uk/cell-shader-revisited/
 
+// FIXME, START HERE: THE MODELS NEED **NORMALS** IN ORDER FOR THE CEL SHADER TO WORK!!!
+
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
 #include <stdlib.h>     /* srand, rand */
