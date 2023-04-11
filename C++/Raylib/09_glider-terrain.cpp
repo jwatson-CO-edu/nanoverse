@@ -113,14 +113,15 @@ class TriModel{ public:
     float  x; //- World X pos
 	float  y; //- World Y pos
 	float  z; //- World Z pos
-	Matrix R; //  World rotation
+	// Matrix R; //  World rotation
 	float  r; //- Local roll  angle
 	float  p; //- Local pitch angle
 	float  w; //- Local yaw   angle
 	Matrix mx; // Local pitch
 	Matrix my; // Local yaw
 	Matrix mz; // Local roll
-	Matrix T; //- World orientation
+	Matrix T; //- Orientation
+	Matrix dT; //- Change in orientation
 
     ///// Geometry Data Manip ////////////////////
 
@@ -192,8 +193,8 @@ class TriModel{ public:
 		r = 0.0; // Local roll  angle
 		p = 0.0; // Local pitch angle
 		w = 0.0; // Local yaw   angle
-        R = MatrixRotateXYZ( Vector3{ p, w, r } );
-        T = Matrix{ R };
+        dT = MatrixIdentity();
+        T  = MatrixIdentity();
     }
 
     TriModel( ulong Ntri ){
@@ -210,6 +211,11 @@ class TriModel{ public:
 
     ///// Pose Math //////////////////////////////
 
+    Vector3 get_XYZ(){
+		// Set the world XYZ position of the model
+        return Vector3{x,y,z};
+	}
+
     void set_XYZ( float x_, float y_, float z_ ){
 		// Set the world XYZ position of the model
 		x = x_;
@@ -217,27 +223,16 @@ class TriModel{ public:
 		z = z_;
 	}
 
-    void set_RPY( float r_, float p_, float y_ ){
-		// Set the world Roll, Pitch, Yaw of the model
-        r = r_; // --- Local roll  angle
-		p = p_; // --- Local pitch angle
-		w = y_; // --- Local yaw   angle
-		R = MatrixRotateXYZ( Vector3{ p_, y_, r_ } );
-        T = Matrix{ R }; 
-        model.transform = T;
-	}
-
     void rotate_RPY( float r_, float p_, float y_ ){
 		// Increment the world Roll, Pitch, Yaw of the model
 		r += r_;
 		p += p_;
 		w += y_;
-		mx = MatrixRotateX( p );
-		my = MatrixRotateY( w );
-		mz = MatrixRotateZ( r );
-		T  = MatrixMultiply( mx, my );
-		T  = MatrixMultiply( mz, T  );
-		T  = MatrixMultiply( T , R  );
+        mz = MatrixRotateZ( r_ ); // Roll  about local Z
+		mx = MatrixRotateX( p_ ); // Pitch about local X
+        my = MatrixRotateY( y_ ); // Yaw   about local Y
+        dT = MatrixMultiply( MatrixMultiply( my, mx ), mz );
+        T  = MatrixMultiply( dT, T );
         model.transform = T;
 	}
 
@@ -303,7 +298,7 @@ class TerrainPlate : public TriModel { public:
         M /**/ = Mrows;
         N /**/ = Ncols;
         scl    = scale;
-        offset = scale/50.0f;
+        offset = scale/200.0f;
         gndClr = GREEN;
         linClr = BLACK;
         posn1  = Vector3{ 0.0f, 0.0f, 0.0f   };
@@ -418,6 +413,8 @@ class FlightFollowThirdP_Camera : public Camera3D{ public:
         projection = 0;
     }
 
+    void update_target_position( Vector3 tCenter ){  trgtCenter = tCenter;  }
+
     void advance_camera(){
 		// Move the camera after all the target updates are in
 		Vector3 dragVec = vec3_mult( 
@@ -427,10 +424,6 @@ class FlightFollowThirdP_Camera : public Camera3D{ public:
 		position = Vector3Add( trgtCenter, dragVec );
 		target   = trgtCenter;
 	}
-
-    void begin(){  BeginMode3D( *this );  }
-	void end(){  EndMode3D();  }
-
 };
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
@@ -442,27 +435,23 @@ int main(){
 	float /*--*/ frameRotateRad = 3.1416/120.0;
     float /*--*/ frameThrust    = 3.0/60.0;
 
-
-
-    // Camera
-    Camera camera = Camera{
-        Vector3{ 90.0      , 90.0      , 90.0 }, // Position
-        Vector3{ 25*10/2.0f, 25*10/2.0f,  2.0 }, // Target
-        Vector3{ 0.0       , 0.0       ,  1.0 }, // Up
-        45.0, // ---------------------------------- FOV_y
-        0 // -------------------------------------- Projection mode
-    };
-
     /// Window Init ///
     InitWindow( 800, 450, "Terrain Gen + Glider" );
     SetTargetFPS( 60 );
     rlEnableSmoothLines();
+    rlDisableBackfaceCulling();
 
     /// Scene Init: Post-Window ///
     terrain.load_geo(); 
     glider.load_geo();
     glider.set_XYZ( 25*10/2.0f, 25*10/2.0f, 10.0f );
     glider.rotate_RPY( 0.0, 3.1416/2.0, 0.0 );
+
+    FlightFollowThirdP_Camera camera{
+        25.0,
+		glider.get_XYZ(),
+		glider.T
+    };
 
 
     while( !WindowShouldClose() ){
@@ -473,16 +462,21 @@ int main(){
         ClearBackground( BLACK );
 
         // Keyboard input
-		if( IsKeyDown( KEY_LEFT  ) ){  glider.rotate_RPY( 0.0,  0.0,            frameRotateRad );  }
-		if( IsKeyDown( KEY_RIGHT ) ){  glider.rotate_RPY( 0.0,  0.0,           -frameRotateRad );  }
-		if( IsKeyDown( KEY_UP    ) ){  glider.rotate_RPY( 0.0,  frameRotateRad, 0.0            );  }
-		if( IsKeyDown( KEY_DOWN  ) ){  glider.rotate_RPY( 0.0, -frameRotateRad, 0.0            );  }
+		if( IsKeyDown( KEY_Z     ) ){  glider.rotate_RPY(  0.0           ,  0.0,             frameRotateRad );  }
+		if( IsKeyDown( KEY_X     ) ){  glider.rotate_RPY(  0.0           ,  0.0,            -frameRotateRad );  }
+        if( IsKeyDown( KEY_LEFT  ) ){  glider.rotate_RPY( -frameRotateRad,  0.0           ,  0.0            );  }
+		if( IsKeyDown( KEY_RIGHT ) ){  glider.rotate_RPY(  frameRotateRad,  0.0           ,  0.0            );  }
+		if( IsKeyDown( KEY_UP    ) ){  glider.rotate_RPY(  0.0           ,  frameRotateRad,  0.0            );  }
+		if( IsKeyDown( KEY_DOWN  ) ){  glider.rotate_RPY(  0.0           , -frameRotateRad,  0.0            );  }
 
 		// gamepad input
 		if( IsGamepadAvailable(0) ){
 			glider.rotate_RPY( 0.0, 0.0, -frameRotateRad*GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) );
 			glider.rotate_RPY( 0.0, -frameRotateRad*GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y), 0.0 );
 		}
+
+        camera.update_target_position( glider.get_XYZ() );
+		camera.advance_camera();
 
         ///// DRAW LOOP //////////////////////////
         terrain.draw();
