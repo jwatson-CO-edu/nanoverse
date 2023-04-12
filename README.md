@@ -18,8 +18,8 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
             [ ] Flat shader example
             [ ] Compile failing program with -g and use gdb to look at a backtrace  
                 https://bedroomcoders.co.uk/cell-shader-revisited/#comment-21658
-        [ ] Actual Perlin data
-            { } If too smooth, apply random noise to perlin
+        [Y] Actual Perlin data, 2023-04-12: Tuned scaling and elevation
+            {N} If too smooth, apply random noise to perlin, 2023-04-12: Not needed, looks very natural
             
     [>] JS Ctrl Glider
         [>] Joystick test @ SDL2

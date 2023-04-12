@@ -342,6 +342,17 @@ class TerrainPlate : public TriModel { public:
     Vector3 /*-----------*/ posn1; //- Facet drawing origin
     Vector3 /*-----------*/ posn2; //- Line  drawing origin
 
+    float get_greatest_elevation(){
+        // Get the highest point in the terrain
+        float top = -1000.0f;
+        for( ulong i = 0; i < M; i++ ){
+            for( ulong j = 0; j < N; j++ ){
+                if( pts[i][j].z > top )  top = pts[i][j].z;
+            }
+        }
+        return top;
+    }
+
     void gen_heightmap_uniform_random(){
         vector<Vector3> row;
         for( ulong i = 0; i < M; i++ ){
@@ -541,7 +552,7 @@ int main(){
     /// Scene Init: Post-Window ///
     terrain.load_geo(); 
     glider.load_geo();
-    glider.set_XYZ( 25*10/2.0f, 25*10/2.0f, 5.0f );
+    glider.set_XYZ( 25*10/2.0f, 25*10/2.0f, terrain.get_greatest_elevation()+10.0f );
     glider.rotate_RPY( 0.0, 3.1416/2.0, 0.0 );
 
     FlightFollowThirdP_Camera camera{
