@@ -12,6 +12,8 @@ using std::array;
 using std::vector;  
 #include <iostream>
 using std::cout, std::endl, std::ostream;
+#include <algorithm> 
+using std::min;
 
 /// Raylib ///
 #include <raylib.h>
@@ -357,8 +359,40 @@ class TerrainPlate : public TriModel { public:
 
     void gen_heightmap_perlin( float pScale = 1.6f ){
         // Create a Perlin Image
-        Image perlinImage = GenImagePerlinNoise( 1000, 1000, 0, 0, pScale ); 
-        vvf   zValues     = // FIXME, START HERE: GET A RANDOM SUBIMAGE FROM THE GIANT PERLIN TEXTURE
+        // Calc corners
+        float factor =   15.0f;
+        int   hI     = 1000; // Height of the image
+        int   wI     = 1000; // Width  of the image
+        ulong rowUL  = randi( 0, hI - M );
+        ulong colUL  = randi( 0, wI - N );
+        ulong rowLR  = rowUL + M;
+        ulong colLR  = colUL + N;
+        // Select subimage
+        Image perlinImage = GenImagePerlinNoise( hI, wI, 0, 0, pScale ); 
+        vvf   zValues     = get_subimage_red_intensity( perlinImage, rowUL, colUL, rowLR, colLR );
+        // Generate heightmap
+        vector<Vector3> row;
+        float accum = 0;
+        float elem;
+        for( ulong i = 0; i < M; i++ ){
+            row.clear();
+            for( ulong j = 0; j < N; j++ ){
+                elem = zValues[i][j]*scl*factor;
+                accum += elem;
+                row.push_back(  Vector3{ 
+                    j*scl + randf( -scl*0.25, +scl*0.25 ), 
+                    i*scl + randf( -scl*0.25, +scl*0.25 ),
+                    elem
+                }  );
+            }
+            pts.push_back( row );
+        }
+        accum /= M*N;
+        for( ulong i = 0; i < M; i++ ){
+            for( ulong j = 0; j < N; j++ ){
+                pts[i][j].z -= accum;
+            }
+        }
     }
 
     TerrainPlate( float scale = 10.0f, ulong Mrows = 10, ulong Ncols = 10 ) : TriModel( (Mrows-1)*(Ncols-1)*2 ){
@@ -375,7 +409,7 @@ class TerrainPlate : public TriModel { public:
         posn2  = Vector3{ 0.0f, 0.0f, offset };
 
         // 1. Generate points
-        
+        gen_heightmap_perlin( 10.0f );
 
         // 2. Build triangles
         for( ulong i = 0; i < M-1; i++ ){
@@ -476,9 +510,11 @@ class FlightFollowThirdP_Camera : public Camera3D{ public:
 
     void advance_camera(){
 		// Move the camera after all the target updates are in
-		Vector3 dragVec = vec3_mult( 
-			vec3_unit( Vector3Subtract( position, trgtCenter ) ), 
-			offset_d 
+        Vector3 trgtDiff = Vector3Subtract( position, trgtCenter );
+        float   sepDist  = min( vec3_mag( trgtDiff ), offset_d );
+		Vector3 dragVec  = vec3_mult( 
+			vec3_unit( trgtDiff ), 
+			sepDist
 		);
 		position = Vector3Add( trgtCenter, dragVec );
 		target   = trgtCenter;
@@ -488,14 +524,16 @@ class FlightFollowThirdP_Camera : public Camera3D{ public:
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 int main(){
 
+    rand_seed();
+
     /// Scene Init: Pre-Window ///
     TerrainPlate terrain{ 10.0f, 25, 25 };
     DeltaGlider  glider{ 10.0f };
 	float /*--*/ frameRotateRad = 3.1416/120.0;
-    float /*--*/ frameThrust    = 3.0/60.0;
+    float /*--*/ frameThrust    = 6.0/60.0;
 
     /// Window Init ///
-    InitWindow( 800, 450, "Terrain Gen + Glider" );
+    InitWindow( 1200, 600, "Terrain Gen + Glider" );
     SetTargetFPS( 60 );
     rlEnableSmoothLines();
     rlDisableBackfaceCulling();
@@ -503,7 +541,7 @@ int main(){
     /// Scene Init: Post-Window ///
     terrain.load_geo(); 
     glider.load_geo();
-    glider.set_XYZ( 25*10/2.0f, 25*10/2.0f, 10.0f );
+    glider.set_XYZ( 25*10/2.0f, 25*10/2.0f, 5.0f );
     glider.rotate_RPY( 0.0, 3.1416/2.0, 0.0 );
 
     FlightFollowThirdP_Camera camera{
@@ -521,12 +559,12 @@ int main(){
         ClearBackground( BLACK );
 
         // Keyboard input
-		if( IsKeyDown( KEY_Z     ) ){  glider.rotate_RPY(  0.0           ,  0.0,             frameRotateRad );  }
-		if( IsKeyDown( KEY_X     ) ){  glider.rotate_RPY(  0.0           ,  0.0,            -frameRotateRad );  }
-        if( IsKeyDown( KEY_LEFT  ) ){  glider.rotate_RPY( -frameRotateRad,  0.0           ,  0.0            );  }
-		if( IsKeyDown( KEY_RIGHT ) ){  glider.rotate_RPY(  frameRotateRad,  0.0           ,  0.0            );  }
+        if( IsKeyDown( KEY_Z     ) ){  glider.rotate_RPY( -frameRotateRad,  0.0           ,  0.0            );  }
+		if( IsKeyDown( KEY_X     ) ){  glider.rotate_RPY(  frameRotateRad,  0.0           ,  0.0            );  }
 		if( IsKeyDown( KEY_UP    ) ){  glider.rotate_RPY(  0.0           ,  frameRotateRad,  0.0            );  }
 		if( IsKeyDown( KEY_DOWN  ) ){  glider.rotate_RPY(  0.0           , -frameRotateRad,  0.0            );  }
+        if( IsKeyDown( KEY_LEFT  ) ){  glider.rotate_RPY(  0.0           ,  0.0,             frameRotateRad );  }
+		if( IsKeyDown( KEY_RIGHT ) ){  glider.rotate_RPY(  0.0           ,  0.0,            -frameRotateRad );  }
 
 		// gamepad input
 		if( IsGamepadAvailable(0) ){
