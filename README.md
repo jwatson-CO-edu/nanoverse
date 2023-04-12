@@ -11,24 +11,24 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 
 [>] Terrain generation - Delta Glider
 
-    [>] Perlin Noise terrain grid tiles
+    [Y] Perlin Noise terrain grid tiles, 2023-04-12: Tuned scaling and elevation
         [Y] Unshaded with lines, 2023-04-05: Finally got random, non-vibrating triangles w/ correct orientation! Stored in models as tiles instead of individual triangles.
-        [ ] Add XY position noise 
-        [>] Toon shader
-            [ ] Flat shader example
-            [ ] Compile failing program with -g and use gdb to look at a backtrace  
-                https://bedroomcoders.co.uk/cell-shader-revisited/#comment-21658
+        [Y] Add XY position noise, 2023-04-10: Added
+        [Y] Toon shader, 2023-04-12: Works for C++ as well as for C
         [Y] Actual Perlin data, 2023-04-12: Tuned scaling and elevation
             {N} If too smooth, apply random noise to perlin, 2023-04-12: Not needed, looks very natural
             
     [>] JS Ctrl Glider
-        [>] Joystick test @ SDL2
+        [>] Joystick test 
             [>] Text output
             [ ] Graphical output
     
     [ ] Synthwave terrain
         [ ] Write "Synthwave" shader based on toon shader
+            [ ] Display normal shader output to see if you can use this data for the intended shader
         [ ] Add bloom glow to boundary lines
+            [ ] Find bloom shader(s) and implement one example
+        
     [ ] Synthwave glider
         [ ] Synthwave shading on glider
         { } Glowing contrail?
