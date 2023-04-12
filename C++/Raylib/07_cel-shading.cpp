@@ -670,44 +670,76 @@ int main(){
     // make a light (max 4 but we're only using 1)
     Light light = CreateLight(LIGHT_POINT, (Vector3){ 2,4,4 }, Vector3Zero(), WHITE, shader);
 
-    // camera orbit angle
-    float ca = 0;
+    // Light elevation
+    float zLight = terrain.get_greatest_elevation()+50.0f;
 
     RenderTexture2D target = LoadRenderTexture( res.x, res.y );
 
+    // you can move the light around if you want, just move inside the update loop
+    light.position.x = 0.0f;
+    light.position.y = 0.0f;
+    light.position.z = zLight;
 
     while( !WindowShouldClose() ){
 
-        // you can move the light around if you want
-        light.position.x = 12.0 * cosf(ca);
-        light.position.z = 12.0 * sinf(ca);
+        // Keyboard input
+        if( IsKeyDown( KEY_Z     ) ){  glider.rotate_RPY( -frameRotateRad,  0.0           ,  0.0            );  }
+		if( IsKeyDown( KEY_X     ) ){  glider.rotate_RPY(  frameRotateRad,  0.0           ,  0.0            );  }
+		if( IsKeyDown( KEY_UP    ) ){  glider.rotate_RPY(  0.0           ,  frameRotateRad,  0.0            );  }
+		if( IsKeyDown( KEY_DOWN  ) ){  glider.rotate_RPY(  0.0           , -frameRotateRad,  0.0            );  }
+        if( IsKeyDown( KEY_LEFT  ) ){  glider.rotate_RPY(  0.0           ,  0.0,             frameRotateRad );  }
+		if( IsKeyDown( KEY_RIGHT ) ){  glider.rotate_RPY(  0.0           ,  0.0,            -frameRotateRad );  }
+
+		// gamepad input
+		if( IsGamepadAvailable(0) ){
+			glider.rotate_RPY( 0.0, 0.0, -frameRotateRad*GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) );
+			glider.rotate_RPY( 0.0, -frameRotateRad*GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y), 0.0 );
+		}
+
+        glider.z_thrust( frameThrust );
+
+        camera.update_target_position( glider.get_XYZ() );
+		camera.advance_camera();
 
         // update the light shader with the camera view position
-        SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
-        SetShaderValue(normShader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
-        UpdateLightValues(shader, light);
-        UpdateLightValues(normShader, light);
+        SetShaderValue( shader    , shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3 );
+        SetShaderValue( normShader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3 );
+        UpdateLightValues( shader    , light );
+        UpdateLightValues( normShader, light );
         
         ///// DRAW LOOP //////////////////////////
         BeginDrawing();
         
             // render first to the normals texture for outlining to a texture
             BeginTextureMode( target ); 
-                ClearBackground((Color){255,255,255,255});
-                BeginMode3D(camera);
+                ClearBackground( (Color){255,255,255,255} );
+                BeginMode3D( camera );
                     setModelShader( &terrain.model, &normShader );
                     terrain.draw();
+                    glider.draw();
                 EndMode3D();
             EndTextureMode();
 
             // draw the scene but with banded light effect
-            ClearBackground((Color){32,64,255,255});
-            BeginMode3D(camera);   
-                setModelShader(&terrain.model, &shader);
+            ClearBackground( (Color){32,64,255,255} );
+            BeginMode3D( camera );   
+                setModelShader( &terrain.model, &shader );
                 terrain.draw();
+                glider.draw();
             EndMode3D();
+
+            // outline shader uses the normal texture to overlay outlines
+            BeginShaderMode(outline);
+                DrawTexturePro(
+                    target.texture,
+                    (Rectangle){ 0, 0, (float) target.texture.width, (float) -target.texture.height },
+                    (Rectangle){ 0, 0, (float) target.texture.width, (float)  target.texture.height },
+                    (Vector2){0,0}, 
+                    0, 
+                    WHITE
+                );
+            EndShaderMode();
         
-            // FIXME, START HERE: LINE 159 OF "main.c" (DO I NEED IT?)
         
         DrawFPS(10, 10);
 
