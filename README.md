@@ -17,53 +17,47 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         [Y] Toon shader, 2023-04-12: Works for C++ as well as for C
         [Y] Actual Perlin data, 2023-04-12: Tuned scaling and elevation
             {N} If too smooth, apply random noise to perlin, 2023-04-12: Not needed, looks very natural
-            
-    [>] JS Ctrl Glider
-        [>] Joystick test 
-            [>] Text output
-            [ ] Graphical output
     
-    [ ] Synthwave terrain
-        [ ] Write "Synthwave" shader based on toon shader
-            [ ] Display normal shader output to see if you can use this data for the intended shader
-        [ ] Add bloom glow to boundary lines
-            [ ] Find bloom shader(s) and implement one example
-        
-    [ ] Synthwave glider
-        [ ] Synthwave shading on glider
-        { } Glowing contrail?
+    [Y] Synthwave terrain, 2023-04-12: Bloom shader is sufficient
+        [N] Write "Synthwave" shader based on toon shader, 2023-04-12: Bloom shader is sufficient
+            [N] Display normal shader output to see if you can use this data for the intended shader, 2023-04-12: Bloom shader is sufficient
+        [Y] Add bloom glow to boundary lines, 2023-04-12: Bloom shader is sufficient
+            [Y] Find bloom shader(s) and implement one example, 2023-04-12: Available in Raylib example shaders, Only slight modification needed
+
+    [ ] JS + KB Ctrl Glider
+        [Y] Keyboard Ctrl, 2023-04-12: [Arrows] - Pitch & Yaw, [Z/X] - Roll
+        [ ] Joystick Ctrl 
+            [ ] RS: Ailerons - Pitch & Roll
+            [ ] LS: Rudder + Throttle - Yaw & Thrust
+
+    [>] Synthwave glider
+        [Y] Synthwave shading on glider, 2023-04-12: Bloom shader is sufficient
+        [>] Glowing contrail -or- Wingtip vortices
+
     [ ] Synthwave triangles
         [ ] Collision triangles, Spin
-        { } Iridescent/glare?
+        {N} Iridescent/glare?, 2023-04-12: Would distract from vector aesthetic
     [ ] Infinite grid
         [ ] Tiles mesh without terrain discontinuities, even considering XY noise
         [ ] Distance fog
         [ ] Add frame rate monitor
         [ ] Instantiate without noticeable "pop-in"
         [ ] Erase when too far behind
-    [ ] Video -or- animated GIF output --to-> IG
+    { } Curved CRT shader?
+    [ ] Video -or- animated GIF output --to-> IG 
+        [ ] Remove CRT curve for IG post
 
 [>] Piped Ribbons - Generative art
     [Y] Randomly trace a 3D grid, with 90deg curved turn limit with radius that lands mid-segment
     [Y] Ribbons as contrails, 2022-12-2X: Shared 
         [Y] Deterministic turning rules that allow predictable loop, 2022-12-2X: Shared 
         [Y] Multiple, random non-colliding ribbons, 2022-12-2X: Shared 
-    [>] Ribbons as shaded meshes
-        [ ] Test simple shaders && Learn about them
-        [ ] Add simple shader
-        [ ] Add luminocity to shader
-        [ ] Add decay from leading edge to shader
-    [ ] Video -or- animated GIF output --to-> IG
-
-[ ] Landscape generation - Delta Glider
-    [ ] Search for grass shader
-    [ ] Boulders and/or mountains
-    [ ] Trees as L-systems
-    [ ] Grass (as shader?)
-    [ ] Water (Simplest)
-        [ ] Whoosh effect?
-    [ ] Floating islands
-        [ ] Waterfalls?
+    [ ] Replace loop w/ simple path planning that avoids collisions and has a center-seeking tendency
+    [ ] Ribbons as dynamic, shaded meshes
+        [ ] Dynamic mesh
+        [ ] **Smooth** decay from leading edge
+        [ ] Add specular glare 
+        [ ] Bloom shader
     [ ] Video -or- animated GIF output --to-> IG
 
 [ ] Engineering Center FROM SPACE - Generative art
@@ -83,8 +77,27 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         { } Playable?  Food delivery?
     [ ] Video -or- animated GIF output --to-> IG
 
+
+[ ] Floating island landscape generation - BoxKart
+    [ ] BoxKart
+        [ ] Stick to ground
+        [ ] "Over the shoulder" 3P camera, similar to flight camera but above player
+        [ ] Accounts for bumpy terrain
+    [ ] Search for grass shader
+    [ ] Boulders and/or mountains
+    [ ] Trees as L-systems
+    [ ] Water (Simplest)
+        { } Splash effect?
+    [ ] Floating islands
+        { } Waterfalls?
+    { } Simple car dyn? Jumps? Falls + respawn?
+    [ ] Video -or- animated GIF output --to-> IG
+
+
+
 [ ] Vaporwave Aesthetic Landscape
-    [ ] First person walking over terrain
+    [ ] BoxKart rolling over terrain
+        [ ] Vaporwave avatar
     [ ] Fragmented statues
         { } Iridescent shader?
     [ ] Fragmented architecture
