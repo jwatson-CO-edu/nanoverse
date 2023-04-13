@@ -461,8 +461,8 @@ class TerrainPlate : public TriModel { public:
         N /**/ = Ncols;
         scl    = scale;
         offset = scale/200.0f;
-        gndClr = GREEN;
-        linClr = BLACK;
+        gndClr = BLACK; // GREEN;
+        linClr = MAGENTA; // WHITE; // BLACK;
         posn1  = Vector3{ 0.0f, 0.0f, 0.0f   };
         posn2  = Vector3{ 0.0f, 0.0f, offset };
 
@@ -503,7 +503,7 @@ class TerrainPlate : public TriModel { public:
     void draw(){
         // Draw facets, shift up, draw lines
         DrawModel(      model, posn1, 1.0, gndClr );  
-        // DrawModelWires( model, posn2, 1.0, linClr );
+        DrawModelWires( model, posn2, 1.0, linClr );
     }
 };
 
@@ -514,8 +514,8 @@ class TerrainPlate : public TriModel { public:
 class DeltaGlider : public TriModel{ public:
     // A fun little space plane
 
-    Color sldClr = SKYBLUE;
-    Color linClr = BLACK;
+    Color sldClr = BLACK; // SKYBLUE;
+    Color linClr = RAYWHITE; // RAYWHITE; // SKYBLUE; // LIGHTGRAY; // LIME; // WHITE; // BLACK;
 
     DeltaGlider( float wingspan = 10.0f ) : TriModel( 8 ){
         // 
@@ -581,7 +581,7 @@ class DeltaGlider : public TriModel{ public:
     void draw(){
         // Draw the model
         DrawModel(      model, Vector3{x, y, z}, 1.00, sldClr );  
-        // DrawModelWires( model, Vector3{x, y, z}, 1.02, linClr );
+        DrawModelWires( model, Vector3{x, y, z}, 1.02, linClr );
     }
 
 };
@@ -636,7 +636,7 @@ int main(){
     float /*--*/ frameThrust    = 6.0/60.0;
 
     /// Window Init ///
-    InitWindow( (int) res.x, (int) res.y, "Terrain Gen + Glider + Cel Shader" );
+    InitWindow( (int) res.x, (int) res.y, "Terrain Gen + Glider + Bloom Shader" );
     SetTargetFPS( 60 );
     rlEnableSmoothLines();
     rlDisableBackfaceCulling();
@@ -655,32 +655,13 @@ int main(){
 
     /// Shader Init: Pre-Window ///
 
-    // normal shader
-    Shader normShader = LoadShader("shaders/norm.vs", "shaders/norm.fs");
-    normShader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(normShader, "matModel");
-    
-    // outline shader
-    Shader outline = LoadShader(0, "shaders/outline.fs");
-    // outline.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(outline, "matModel"); // WARNING: ADDED
-
-    // lighting shader
-    Shader shader = LoadShader("shaders/toon.vs", "shaders/toon.fs");
-    shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
-
-    // make a light (max 4 but we're only using 1)
-    Light light = CreateLight(LIGHT_POINT, (Vector3){ 2,4,4 }, Vector3Zero(), WHITE, shader);
-
-    // Light elevation
-    float zLight = terrain.get_greatest_elevation()+50.0f;
-
+    // bloom shader
+    Shader bloom = LoadShader(0, "shaders/bloom.fs");
     RenderTexture2D target = LoadRenderTexture( res.x, res.y );
 
-    // you can move the light around if you want, just move inside the update loop
-    light.position.x = 0.0f;
-    light.position.y = 0.0f;
-    light.position.z = zLight;
-
     while( !WindowShouldClose() ){
+
+        /// UPDATE PHASE /////////////////////////
 
         // Keyboard input
         if( IsKeyDown( KEY_Z     ) ){  glider.rotate_RPY( -frameRotateRad,  0.0           ,  0.0            );  }
@@ -696,66 +677,47 @@ int main(){
 			glider.rotate_RPY( 0.0, -frameRotateRad*GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y), 0.0 );
 		}
 
-        glider.z_thrust( frameThrust );
-
         camera.update_target_position( glider.get_XYZ() );
 		camera.advance_camera();
+        glider.z_thrust( frameThrust );
 
-        // update the light shader with the camera view position
-        SetShaderValue( shader    , shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3 );
-        SetShaderValue( normShader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3 );
-        UpdateLightValues( shader    , light );
-        UpdateLightValues( normShader, light );
-        
-        ///// DRAW LOOP //////////////////////////
-        BeginDrawing();
-        
-            // render first to the normals texture for outlining to a texture
-            BeginTextureMode( target ); 
-                ClearBackground( (Color){255,255,255,255} );
-                BeginMode3D( camera );
-                    setModelShader( &terrain.model, &normShader );
-                    setModelShader( &glider.model, &normShader );
-                    terrain.draw();
-                    glider.draw();
-                EndMode3D();
-            EndTextureMode();
 
-            // draw the scene but with banded light effect
-            ClearBackground( (Color){32,64,255,255} );
-            BeginMode3D( camera );   
-                setModelShader( &terrain.model, &shader );
-                setModelShader( &glider.model, &shader );
+        ///// DRAW PHASE /////////////////////////
+        
+        BeginTextureMode( target );       // Enable drawing to texture
+            ClearBackground( BLACK );  // Clear texture background
+            BeginMode3D( camera );        // Begin 3d mode drawing
                 terrain.draw();
                 glider.draw();
-            EndMode3D();
+            EndMode3D();                // End 3d mode drawing, returns to orthographic 2d mode
+        EndTextureMode();               // End drawing to texture (now we have a texture available for next passes)
+        
+        BeginDrawing();
+            ClearBackground( BLACK );  // Clear screen background
 
-            // outline shader uses the normal texture to overlay outlines
-            BeginShaderMode(outline);
-                DrawTexturePro(
-                    target.texture,
-                    (Rectangle){ 0, 0, (float) target.texture.width, (float) -target.texture.height },
-                    (Rectangle){ 0, 0, (float) target.texture.width, (float)  target.texture.height },
-                    (Vector2){0,0}, 
-                    0, 
-                    WHITE
+            // Render generated texture using selected postprocessing shader
+            BeginShaderMode( bloom );
+                // NOTE: Render texture must be y-flipped due to default OpenGL coordinates (left-bottom)
+                DrawTextureRec(
+                    target.texture, 
+                    (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, 
+                    (Vector2){ 0, 0 }, 
+                    WHITE // BLACK // WHITE
                 );
             EndShaderMode();
-        
-        
-        DrawFPS(10, 10);
+            DrawFPS( 10, 10 );
 
         EndDrawing();
     }
 
-    UnloadShader(shader);
-    UnloadShader(outline);
-    UnloadShader(normShader);
-    UnloadModel(terrain.model);
-    UnloadModel(glider.model);
-    UnloadRenderTexture(target);
+    UnloadShader( bloom );
 
-    CloseWindow();        // Close window and OpenGL context
+    UnloadModel( terrain.model );
+    UnloadModel( glider.model  );
+    
+    UnloadRenderTexture( target );
+
+    CloseWindow(); // Close window and OpenGL context
 
     return 0;
 }
