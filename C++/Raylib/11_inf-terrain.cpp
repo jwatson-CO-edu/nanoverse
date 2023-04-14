@@ -496,17 +496,48 @@ class TerrainPlate : public TriModel { public:
     }
 
     TerrainPlate( const TerrainPlate& OtherPlate, NEIGHBORS placement ){
-        // Inherit params from neighbor
+        // 0. Inherit params from neighbor
         M /**/ = OtherPlate.M;
         N /**/ = OtherPlate.N;
         scl    = OtherPlate.scl;
         offset = OtherPlate.offset;
         gndClr = OtherPlate.gndClr;
         linClr = OtherPlate.linClr;
+        
+        float pScale = 10.0f;
+        ulong i, j;
 
         // Placement Offset
         switch( placement ){
-            // FIXME, START HERE: PLACEMENT OFFSETS, NEIGHBOR STITCHING
+
+            case X_POS:
+                posn1  = Vector3Add( OtherPlate.posn1, Vector3{  N*scl,  0.0f , 0.0f   } );
+                posn2  = Vector3Add( posn1           , Vector3{  0.0f ,  0.0f , offset } );
+                // 1. Generate points
+                gen_heightmap_perlin( pScale );
+                break;
+
+            case X_NEG:
+                posn1  = Vector3Add( OtherPlate.posn1, Vector3{ -N*scl,  0.0f , 0.0f   } );
+                posn2  = Vector3Add( posn1           , Vector3{  0.0f ,  0.0f , offset } );
+                // 1. Generate points
+                gen_heightmap_perlin( pScale );
+                break;
+
+            case Y_POS:
+                posn1  = Vector3Add( OtherPlate.posn1, Vector3{  0.0f ,  M*scl, 0.0f   } );
+                posn2  = Vector3Add( posn1           , Vector3{  0.0f ,  0.0f , offset } );
+                // 1. Generate points
+                gen_heightmap_perlin( pScale );
+                break;
+
+            case Y_NEG:
+                posn1  = Vector3Add( OtherPlate.posn1, Vector3{  0.0f , -M*scl, 0.0f   } );
+                posn2  = Vector3Add( posn1           , Vector3{  0.0f ,  0.0f , offset } );
+                // 1. Generate points
+                gen_heightmap_perlin( pScale );
+                break;
+
         }
     }
 
