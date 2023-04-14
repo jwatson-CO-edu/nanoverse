@@ -506,7 +506,7 @@ class TerrainPlate : public TriModel { public:
 
         // Placement Offset
         switch( placement ){
-            // FIXME, START HERE: PLACEMENT OFFSETS, NEIGHBOR STICHING
+            // FIXME, START HERE: PLACEMENT OFFSETS, NEIGHBOR STITCHING
         }
     }
 
