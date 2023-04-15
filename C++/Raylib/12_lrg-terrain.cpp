@@ -242,7 +242,7 @@ int main(){
     rand_seed();
 
     /// Scene Init: Pre-Window ///
-    TerrainPlate terrain{ 10.0f, 75, 75 };
+    TerrainPlate terrain{ 10.0f, 10, 10 };
     DeltaGlider  glider{ 10.0f };
 	float /*--*/ frameRotateRad = 3.1416/120.0;
     float /*--*/ frameThrust    = 12.0/60.0;
