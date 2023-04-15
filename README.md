@@ -24,6 +24,9 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         [Y] Add bloom glow to boundary lines, 2023-04-12: Bloom shader is sufficient
             [Y] Find bloom shader(s) and implement one example, 2023-04-12: Available in Raylib example shaders, Only slight modification needed
 
+    [ ] Issue: Massive slowdown and memory usage when there is too much terrain
+        * Related?: https://github.com/raysan5/raylib/issues/807
+
     [ ] JS + KB Ctrl Glider
         [Y] Keyboard Ctrl, 2023-04-12: [Arrows] - Pitch & Yaw, [Z/X] - Roll
         [ ] Joystick Ctrl 
