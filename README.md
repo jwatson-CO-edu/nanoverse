@@ -25,8 +25,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         * `[Y]` Joystick Ctrl, 2023-04-16: Very smooth
             - `[Y]` RS: Ailerons - Pitch & Roll, 2023-04-16: Very smooth
             - `[Y]` LS: Rudder + Throttle - Yaw & Thrust, 2023-04-16: Very smooth
-
-    - `[ ]` Issue: Massive slowdown and memory usage when there is too much terrain, 2023-04-16: Valgrind is MAGICAL
+    - `[Y]` Issue: Massive slowdown and memory usage when there is too much terrain, 2023-04-16: Valgrind is MAGICAL
         * Related?: https://github.com/raysan5/raylib/issues/807, 2023-04-16: Not related
         * `[Y]` Valgrind is MAGICAL, 2023-04-16: Nice!
             - `GenImagePerlinNoise` allocates image on the heap, it needs to be freed with `UnloadImage`
@@ -35,6 +34,8 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     - `[>]` Synthwave glider
         * `[Y]` Synthwave shading on glider, 2023-04-12: Bloom shader is sufficient
         * `[>]` Glowing contrail -or- Wingtip vortices
+            - `[>]` How to fade smoothly?
+                * Vertex colors?
 
     - `[ ]` Synthwave triangles
         * `[ ]` Collision triangles, Spin
