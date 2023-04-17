@@ -15,22 +15,22 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         * `[Y]` Toon shader, 2023-04-12: Works for C++ as well as for C
         * `[Y]` Actual Perlin data, 2023-04-12: Tuned scaling and elevation
             - `{N}` If too smooth, apply random noise to perlin, 2023-04-12: Not needed, looks very natural
-    
     - `[Y]` Synthwave terrain, 2023-04-12: Bloom shader is sufficient
         * `[N]` Write "Synthwave" shader based on toon shader, 2023-04-12: Bloom shader is sufficient
             - `[N]` Display normal shader output to see if you can use this data for the intended shader, 2023-04-12: Bloom shader is sufficient
         * `[Y]` Add bloom glow to boundary lines, 2023-04-12: Bloom shader is sufficient
             - `[Y]` Find bloom shader(s) and implement one example, 2023-04-12: Available in Raylib example shaders, Only slight modification needed
-
-    - `[ ]` Issue: Massive slowdown and memory usage when there is too much terrain
-        * Related?: https://github.com/raysan5/raylib/issues/807
-        * `[ ]` VALGRIND
-
-    - `[ ]` JS + KB Ctrl Glider
+    - `[Y]` JS + KB Ctrl Glider, 2023-04-16: Very smooth
         * `[Y]` Keyboard Ctrl, 2023-04-12: [Arrows] - Pitch & Yaw, [Z/X] - Roll
-        * `[ ]` Joystick Ctrl 
-            - `[ ]` RS: Ailerons - Pitch & Roll
-            - `[ ]` LS: Rudder + Throttle - Yaw & Thrust
+        * `[Y]` Joystick Ctrl, 2023-04-16: Very smooth
+            - `[Y]` RS: Ailerons - Pitch & Roll, 2023-04-16: Very smooth
+            - `[Y]` LS: Rudder + Throttle - Yaw & Thrust, 2023-04-16: Very smooth
+
+    - `[ ]` Issue: Massive slowdown and memory usage when there is too much terrain, 2023-04-16: Valgrind is MAGICAL
+        * Related?: https://github.com/raysan5/raylib/issues/807, 2023-04-16: Not related
+        * `[Y]` Valgrind is MAGICAL, 2023-04-16: Nice!
+            - `GenImagePerlinNoise` allocates image on the heap, it needs to be freed with `UnloadImage`
+            - Every time that `get_image_pixel_color_at` runs, it copies the ENTIRE IMAGE to a `Color*` which is NOT FREED before the function exits
 
     - `[>]` Synthwave glider
         * `[Y]` Synthwave shading on glider, 2023-04-12: Bloom shader is sufficient

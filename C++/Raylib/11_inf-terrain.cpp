@@ -7,7 +7,7 @@
 #include <iostream>
 using std::cout, std::endl, std::ostream;
 #include <algorithm> 
-using std::min;
+using std::min, std::max;
 
 /// Raylib ///
 #include <raylib.h>
@@ -16,8 +16,8 @@ using std::min;
 #define RLIGHTS_IMPLEMENTATION
 
 /// Local ///
-#include "utils.h"
-#include "rl_toybox.h"
+#include "utils.hpp"
+#include "rl_toybox.hpp"
 #include "rlights.h"
 
 
@@ -78,8 +78,9 @@ class TerrainPlate : public TriModel { public:
         ulong rowLR  = rowUL + M;
         ulong colLR  = colUL + N;
         // Select subimage
-        Image perlinImage = GenImagePerlinNoise( hI, wI, 0, 0, pScale ); 
-        vvf   zValues     = get_subimage_red_intensity( perlinImage, rowUL, colUL, rowLR, colLR );
+        Image  perlinImage = GenImagePerlinNoise( hI, wI, 0, 0, pScale ); 
+        Color* perlinClrs  = LoadImageColors( perlinImage );
+        vvf    zValues     = get_subimage_red_intensity( perlinClrs, perlinImage.width, rowUL, colUL, rowLR, colLR );
         // Generate heightmap
         vector<Vector3> row;
         float accum = 0;
@@ -103,6 +104,9 @@ class TerrainPlate : public TriModel { public:
                 pts[i][j].z -= accum;
             }
         }
+        UnloadImage( perlinImage );  
+        if( perlinClrs )  free( perlinClrs );
+        zValues.clear();
     }
 
     void build_triangles(){
@@ -294,9 +298,30 @@ int main(){
 
 		// gamepad input
 		if( IsGamepadAvailable(0) ){
-			glider.rotate_RPY( 0.0, 0.0, -frameRotateRad*GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) );
-			glider.rotate_RPY( 0.0, -frameRotateRad*GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y), 0.0 );
-		}
+            glider.rotate_RPY( 
+                 frameRotateRad*GetGamepadAxisMovement( 0, GAMEPAD_AXIS_RIGHT_X ),  
+                 0.0,  
+                 0.0            
+            );
+            glider.rotate_RPY( 
+                 0.0, 
+                -frameRotateRad*GetGamepadAxisMovement( 0, GAMEPAD_AXIS_RIGHT_Y ), 
+                 0.0 
+            );
+			glider.rotate_RPY( 
+                0.0, 
+                0.0, 
+                -frameRotateRad*GetGamepadAxisMovement( 0, GAMEPAD_AXIS_LEFT_X ) 
+            );
+            glider.z_thrust( 
+                frameThrust + max(
+                    0.0f,
+                    -frameThrust*GetGamepadAxisMovement( 0, GAMEPAD_AXIS_LEFT_Y ) 
+                )
+            );
+		}else{
+            glider.z_thrust( frameThrust );
+        }
 
         camera.update_target_position( glider.get_XYZ() );
 		camera.advance_camera();

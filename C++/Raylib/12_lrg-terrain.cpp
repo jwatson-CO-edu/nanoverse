@@ -7,7 +7,7 @@
 #include <iostream>
 using std::cout, std::endl, std::ostream;
 #include <algorithm> 
-using std::min;
+using std::min, std::max;
 
 /// Raylib ///
 #include <raylib.h>
@@ -16,8 +16,8 @@ using std::min;
 #define RLIGHTS_IMPLEMENTATION
 
 /// Local ///
-#include "utils.h"
-#include "rl_toybox.h"
+#include "utils.hpp"
+#include "rl_toybox.hpp"
 #include "rlights.h"
 
 
@@ -70,21 +70,23 @@ class TerrainPlate : public TriModel { public:
     void gen_heightmap_perlin( float pScale = 1.6f ){
         // Create a Perlin Image
         // Calc corners
-        float factor =   15.0f;
-        int   hI     = 1000; // Height of the image
-        int   wI     = 1000; // Width  of the image
+        float factor =   5.0f;
+        int   hI     = 3*M; // Height of the image
+        int   wI     = 3*N; // Width  of the image
         ulong rowUL  = randi( 0, hI - M );
         ulong colUL  = randi( 0, wI - N );
         ulong rowLR  = rowUL + M;
         ulong colLR  = colUL + N;
         // Select subimage
-        Image perlinImage = GenImagePerlinNoise( hI, wI, 0, 0, pScale ); 
-        vvf   zValues     = get_subimage_red_intensity( perlinImage, rowUL, colUL, rowLR, colLR );
+        Image  perlinImage = GenImagePerlinNoise( hI, wI, 0, 0, pScale ); 
+        Color* perlinClrs  = LoadImageColors( perlinImage );
+        vvf    zValues     = get_subimage_red_intensity( perlinClrs, perlinImage.width, rowUL, colUL, rowLR, colLR );
         // Generate heightmap
         vector<Vector3> row;
         float accum = 0;
         float elem;
         for( ulong i = 0; i < M; i++ ){
+            row.clear();
             for( ulong j = 0; j < N; j++ ){
                 elem = zValues[i][j]*scl*factor;
                 accum += elem;
@@ -95,7 +97,6 @@ class TerrainPlate : public TriModel { public:
                 }  );
             }
             pts.push_back( row );
-            row.clear();
         }
         accum /= M*N;
         for( ulong i = 0; i < M; i++ ){
@@ -103,6 +104,10 @@ class TerrainPlate : public TriModel { public:
                 pts[i][j].z -= accum;
             }
         }
+        if( perlinClrs )  free( perlinClrs );
+        UnloadImage( perlinImage );  
+
+        // zValues.clear();
     }
 
     void build_triangles(){
@@ -130,6 +135,8 @@ class TerrainPlate : public TriModel { public:
     TerrainPlate( float scale = 10.0f, ulong Mrows = 10, ulong Ncols = 10 ) : TriModel( (Mrows-1)*(Ncols-1)*2 ){
         // Generate points and load triangles
         
+        cout << "Basic `TerrainPlate` constructor!" << endl;
+
         // 0. Init
         M /**/ = Mrows;
         N /**/ = Ncols;
@@ -148,7 +155,10 @@ class TerrainPlate : public TriModel { public:
         build_triangles();
     }
 
-    TerrainPlate( const TerrainPlate& OtherPlate, NEIGHBORS placement ){
+    TerrainPlate( const TerrainPlate& OtherPlate, NEIGHBORS placement ) : TriModel( (OtherPlate.M-1)*(OtherPlate.N-1)*2 ){
+
+        cout << "Offset `TerrainPlate` constructor!" << endl;
+
         // 0. Inherit params from neighbor
         M /**/ = OtherPlate.M;
         N /**/ = OtherPlate.N;
@@ -157,44 +167,49 @@ class TerrainPlate : public TriModel { public:
         gndClr = OtherPlate.gndClr;
         linClr = OtherPlate.linClr;
         pScale = OtherPlate.pScale;
+
+        cout << gndClr << ", " << linClr << endl;
         
         // Placement Offset
         switch( placement ){
 
             case X_POS:
-                posn1  = Vector3Add( OtherPlate.posn1, Vector3{  N*scl,  0.0f , 0.0f   } );
-                posn2  = Vector3Add( posn1           , Vector3{  0.0f ,  0.0f , offset } );
+                posn1  = Vector3Add( OtherPlate.posn1, Vector3{  1.0f*(N-1)*scl,  0.0f , 0.0f   } );
+                // posn1  = Vector3Add( OtherPlate.posn1, Vector3{  N*scl/2.0f,  0.0f , 0.0f   } );
+                // posn2  = Vector3Add( posn1           , Vector3{  0.0f ,  0.0f , offset } );
                 // 1. Generate points
                 gen_heightmap_perlin( pScale );
                 // 2. Stitch
-                for( ulong i = 0; i < M; i++ ){  pts[i][0] = OtherPlate.pts[i][N-1];  }
+                for( ulong i = 0; i < M; i++ ){  pts[i][0] = Vector3{ OtherPlate.pts[i][N-1] };  }
                 break;
 
             case X_NEG:
-                posn1  = Vector3Add( OtherPlate.posn1, Vector3{ -N*scl,  0.0f , 0.0f   } );
-                posn2  = Vector3Add( posn1           , Vector3{  0.0f ,  0.0f , offset } );
+                posn1  = Vector3Add( OtherPlate.posn1, Vector3{  -1.0f*(N-1)*scl,  0.0f , 0.0f   } );
+                // posn2  = Vector3Add( posn1           , Vector3{  0.0f ,  0.0f , offset } );
                 // 1. Generate points
                 gen_heightmap_perlin( pScale );
                 // 2. Stitch
-                for( ulong i = 0; i < M; i++ ){  pts[i][N-1] = OtherPlate.pts[i][0];  }
+                for( ulong i = 0; i < M; i++ ){  pts[i][N-1] = Vector3{ OtherPlate.pts[i][0] };  }
                 break;
 
             case Y_POS:
-                posn1  = Vector3Add( OtherPlate.posn1, Vector3{  0.0f ,  M*scl, 0.0f   } );
-                posn2  = Vector3Add( posn1           , Vector3{  0.0f ,  0.0f , offset } );
+                posn1  = Vector3Add( OtherPlate.posn1, Vector3{  0.0f ,  1.0f*(M-1)*scl, 0.0f   } );
+                // posn2  = Vector3Add( posn1           , Vector3{  0.0f ,  0.0f , offset } );
                 // 1. Generate points
                 gen_heightmap_perlin( pScale );
                 // 2. Stitch
-                for( ulong j = 0; j < N; j++ ){  pts[0][j] = OtherPlate.pts[M-1][j];  }
+                for( ulong j = 0; j < N; j++ ){  pts[0][j] = Vector3{ OtherPlate.pts[M-1][j] };  }
+
+
                 break;
 
             case Y_NEG:
-                posn1  = Vector3Add( OtherPlate.posn1, Vector3{  0.0f , -M*scl, 0.0f   } );
+                posn1  = Vector3Add( OtherPlate.posn1, Vector3{  0.0f , -1.0f*(M-1)*scl, 0.0f   } );
                 posn2  = Vector3Add( posn1           , Vector3{  0.0f ,  0.0f , offset } );
                 // 1. Generate points
                 gen_heightmap_perlin( pScale );
                 // 2. Stitch
-                for( ulong j = 0; j < N; j++ ){  pts[M-1][j] = OtherPlate.pts[0][j];  }
+                for( ulong j = 0; j < N; j++ ){  pts[M-1][j] = Vector3{ OtherPlate.pts[0][j] };   }                
                 break;
         }
 
@@ -220,15 +235,20 @@ class TerrainPlate : public TriModel { public:
 
     void load_geo(){
         // Get the model ready for drawing
+        cout << "\t\t`build_mesh_unshared` ..." << endl;
         build_mesh_unshared();
+        cout << "\t\t`build_normals_flat_unshared` ..." << endl;
         build_normals_flat_unshared();
+        cout << "\t\t`load_mesh` ..." << endl;
         load_mesh();
     }
 
     void draw(){
         // Draw facets, shift up, draw lines
-        DrawModel(      model, posn1, 1.0, gndClr );  
-        DrawModelWires( model, posn2, 1.0, linClr );
+        // posn1  = Vector3{ 0.0f, 0.0f, 0.0f   };
+        // posn2  = Vector3{ 0.0f, 0.0f, offset };
+        DrawModel(      model, Vector3{ 0.0f, 0.0f, 0.0f   }, 1.0, gndClr );  
+        DrawModelWires( model, Vector3{ 0.0f, 0.0f, offset }, 1.0, linClr );
     }
 };
 
@@ -237,13 +257,30 @@ class TerrainPlate : public TriModel { public:
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
 int main(){
-    const Vector2 res = { 1200, 600 };
 
     rand_seed();
 
+    const Vector2 res = { 1200, 600 };
+    ulong Mrows = 50,
+    /*-*/ Nrows = 50;
+    float tCellScale = 10.0f,
+    /*-*/ wingspan   = 10.0f;
+
+    
+
     /// Scene Init: Pre-Window ///
-    TerrainPlate terrain{ 10.0f, 10, 10 };
-    DeltaGlider  glider{ 10.0f };
+    vector< TerrainPlate* > terrainTiles;
+    cout << "Create tile 1 ..." << endl;
+    terrainTiles.push_back( new TerrainPlate{ tCellScale, Mrows, Nrows } );
+    cout << "Create tile 2 ..." << endl;
+    terrainTiles.push_back( new TerrainPlate{ *terrainTiles[0], X_POS } );
+    terrainTiles.push_back( new TerrainPlate{ *terrainTiles[0], X_NEG } );
+    terrainTiles.push_back( new TerrainPlate{ *terrainTiles[0], Y_POS } );
+    terrainTiles.push_back( new TerrainPlate{ *terrainTiles[0], Y_NEG } );
+    // TerrainPlate terrain{ tCellScale, Mrows, Nrows };
+    cout << "Terrain built!" << endl;
+    
+    DeltaGlider  glider{ wingspan };
 	float /*--*/ frameRotateRad = 3.1416/120.0;
     float /*--*/ frameThrust    = 12.0/60.0;
 
@@ -254,14 +291,22 @@ int main(){
     rlDisableBackfaceCulling();
 
     /// Scene Init: Post-Window ///
-    terrain.load_geo();
+    // terrain.load_geo();
+    cout << "About to load geo ..." << endl;
     glider.load_geo();
+    cout << "\tGlider loaded!" << endl;
+    for( TerrainPlate* plate : terrainTiles ){
+        plate->load_geo();
+    }
+    cout << "\tTerrain loaded!" << endl;
+    cout << "Geo loaded!" << endl;
     glider.set_XYZ( 
-        25*10/2.0f, 
-        25*10/2.0f, 
-        terrain.get_greatest_elevation()+10.0f 
+        Nrows*tCellScale/2.0f, 
+        Nrows*tCellScale/2.0f, 
+        // terrain.get_greatest_elevation()+10.0f 
+        terrainTiles[0]->get_greatest_elevation()+10.0f
     );
-    glider.rotate_RPY( 0.0, 3.1416/2.0, 0.0 );
+    glider.rotate_RPY( 0.0, 3.1416/2.0, 3.1416 );
 
     FlightFollowThirdP_Camera camera{
         25.0,
@@ -273,6 +318,8 @@ int main(){
 
     // bloom shader
     Shader bloom = LoadShader(0, "shaders/bloom.fs");
+    bloom.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(bloom, "matModel");
+
     RenderTexture2D target = LoadRenderTexture( res.x, res.y );
 
     while( !WindowShouldClose() ){
@@ -289,9 +336,24 @@ int main(){
 
 		// gamepad input
 		if( IsGamepadAvailable(0) ){
-			glider.rotate_RPY( 0.0, 0.0, -frameRotateRad*GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) );
-			glider.rotate_RPY( 0.0, -frameRotateRad*GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y), 0.0 );
+            glider.rotate_RPY( 
+                 frameRotateRad*GetGamepadAxisMovement( 0, GAMEPAD_AXIS_RIGHT_X ),  
+                 0.0,  
+                 0.0            
+            );
+            glider.rotate_RPY( 
+                 0.0, 
+                -frameRotateRad*GetGamepadAxisMovement( 0, GAMEPAD_AXIS_RIGHT_Y ), 
+                 0.0 
+            );
+			glider.rotate_RPY( 
+                0.0, 
+                0.0, 
+                -frameRotateRad*GetGamepadAxisMovement( 0, GAMEPAD_AXIS_LEFT_X ) 
+            );
 		}
+
+        glider.z_thrust( frameThrust );
 
         camera.update_target_position( glider.get_XYZ() );
 		camera.advance_camera();
@@ -303,8 +365,8 @@ int main(){
         BeginTextureMode( target );       // Enable drawing to texture
             ClearBackground( BLACK );  // Clear texture background
             BeginMode3D( camera );        // Begin 3d mode drawing
-                // terrain.draw();
-                terrain.draw();  
+                for( TerrainPlate* plate : terrainTiles ){  plate->draw();  }
+                // terrain.draw();  
                 glider.draw();
             EndMode3D();                // End 3d mode drawing, returns to orthographic 2d mode
         EndTextureMode();               // End drawing to texture (now we have a texture available for next passes)
@@ -329,7 +391,8 @@ int main(){
 
     UnloadShader( bloom );
 
-    UnloadModel( terrain.model );
+    // UnloadModel( terrain.model );
+    for( TerrainPlate* plate : terrainTiles ){  UnloadModel( plate->model );  }
     UnloadModel( glider.model  );
     
     UnloadRenderTexture( target );

@@ -6,10 +6,14 @@
 ///// Includes ///////////////////////////////////
 
 /// Standard ///
+#include <iostream>
+using std::cout, std::endl, std::ostream;
 #include <vector>     
 using std::vector; 
-#include <array>     
-using std::array;   
+#include <array>
+using std::array;
+#include <algorithm>
+using std::min;
 
 /// Raylib ///
 #include <raylib.h>
@@ -36,9 +40,10 @@ void setModelShader( Model* m, Shader* s ){
 
 ////////// VECTOR MATH /////////////////////////////////////////////////////////////////////////////
 
-float vec3_mag( Vector3 vec ){  return sqrt( pow( vec.x, 2 ) + pow( vec.y, 2 ) + pow( vec.z, 2 ) );  }
+float vec3_mag( Vector3 vec ){  return sqrt( pow( vec.x, 2 ) + pow( vec.y, 2 ) + pow( vec.z, 2 ) );  } // Magnitude of `vec`
 
 Vector3 vec3_divide( Vector3 vec, float div ){
+    // Divide each element by a scalar
 	return Vector3{
 		vec.x / div,
 		vec.y / div,
@@ -47,6 +52,7 @@ Vector3 vec3_divide( Vector3 vec, float div ){
 }
 
 Vector3 vec3_unit( Vector3 vec ){
+    // Get the unit vector in the direction of `vec`
 	float mag = vec3_mag( vec );
 	if( mag == 0.0 )  
 		return vec;
@@ -55,6 +61,7 @@ Vector3 vec3_unit( Vector3 vec ){
 }
 
 Vector3 vec3_mult( Vector3 vec, float factor ){
+    // Multiply each element by a scalar
 	return Vector3{
 		vec.x * factor,
 		vec.y * factor,
@@ -66,26 +73,26 @@ Vector3 vec3_mult( Vector3 vec, float factor ){
 
 ////////// IMAGE & COLOR ///////////////////////////////////////////////////////////////////////////
 
-Color get_image_pixel_color_at( Image& img, ulong row, ulong col ){
+Color get_image_pixel_color_at( Color* img, ulong row, ulong col, ulong Ncols ){
     // Get the Color object representing the color values at `row` and `col`
     // https://www.reddit.com/r/raylib/comments/pol80c/comment/hcxhhhf
     // WARNING: This function does not check image bounds!
-    Color* colors = LoadImageColors( img );
-    return colors[ row * img.width + col ];
+    Color  rtnClr = img[ row * Ncols + col ];
+    return rtnClr;
 }
 
-float get_image_pixel_red_intensity( Image& img, ulong row, ulong col ){
+float get_image_pixel_red_intensity( Color* img, ulong row, ulong col, ulong Ncols ){
     // Get the red intensity at the given `row` and `col`
-    return 1.0f * get_image_pixel_color_at( img, row, col ).r / 255.0f;
+    return 1.0f * get_image_pixel_color_at( img, row, col, Ncols ).r / 255.0f;
 }
 
-vvf get_subimage_red_intensity( Image& img, ulong rowUL, ulong colUL, ulong rowLR, ulong colLR ){
+vvf get_subimage_red_intensity( Color* img, ulong Ncols, ulong rowUL, ulong colUL, ulong rowLR, ulong colLR ){
     vvf rtnImg;
     vf  rowRtn;
     for( ulong i = rowUL; i < rowLR; i++ ){
         rowRtn.clear();
         for( ulong j = colUL; j < colLR; j++ ){
-            rowRtn.push_back( get_image_pixel_red_intensity( img, i, j ) );
+            rowRtn.push_back( get_image_pixel_red_intensity( img, i, j, Ncols ) );
         }   
         rtnImg.push_back( rowRtn );
     }
@@ -118,7 +125,9 @@ void init_mesh( Mesh& mesh, ulong Ntri ){
     // Init geo memory
     mesh.triangleCount = Ntri;
     mesh.vertexCount   = Nvrt;
+    cout << "Allocating " << Nvrt*3*sizeof(float) << " bytes for vertices ..." << endl;
     mesh.vertices /**/ = (float *)MemAlloc(Nvrt*3*sizeof(float)); // 3 vertices, 3 coordinates each (x, y, z)
+    cout << "Allocating " << Nvrt*sizeof(ushort) << " bytes for indices ..." << endl;
     mesh.indices /*-*/ = (ushort *)MemAlloc(Nvrt*sizeof(ushort));
 }
 
@@ -137,7 +146,9 @@ void init_mesh( Mesh& mesh, ulong Npts, ulong Ntri ){
     // Init geo memory
     mesh.triangleCount = Ntri;
     mesh.vertexCount   = Nvrt;
+    cout << "Allocating " << Npts*3*sizeof(float) << " bytes for vertices ..." << endl;
     mesh.vertices /**/ = (float *)MemAlloc(Npts*3*sizeof(float)); // 3 vertices, 3 coordinates each (x, y, z)
+    cout << "Allocating " << Nvrt*sizeof(ushort) << " bytes for indices ..." << endl;
     mesh.indices /*-*/ = (ushort *)MemAlloc(Nvrt*sizeof(ushort));
 }
 
@@ -181,6 +192,7 @@ class TriModel{ public:
 
     void build_mesh_unshared(){
         // Load the triangle data into the mesh
+        cout << "There are " << tris.size() << " triangles!";
         ulong  k = 0;
         ushort l = 0;
         for( ulong i = 0; i < tris.size(); i++ ){
@@ -276,6 +288,13 @@ class TriModel{ public:
         // Shared Constructor
         init_mesh( mesh, Npts, Ntri );
         init_pose();
+    }
+
+    ~TriModel(){
+        // Free all allocated memory
+        if( mesh.vertices )  free( mesh.vertices );
+        if( mesh.indices  )  free( mesh.indices  );
+        if( mesh.normals  )  free( mesh.normals  );
     }
 
     ///// Pose Math //////////////////////////////

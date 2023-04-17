@@ -1,4 +1,10 @@
-// g++ 07_cel-shading.cpp -std=c++17 -lraylib
+// g++ 10_bloom.cpp -std=c++17 -lraylib
+
+// Memory Checking
+// * g++ 10_bloom.cpp -std=c++17 -g -O0 -lraylib
+// * valgrind --leak-check=yes ./a.out
+// * LEAK SUMMARY, definitely lost: 2,152,008,696 bytes in 568 blocks !!
+
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
@@ -13,7 +19,7 @@ using std::vector;
 #include <iostream>
 using std::cout, std::endl, std::ostream;
 #include <algorithm> 
-using std::min;
+using std::min, std::max;
 
 /// Raylib ///
 #include <raylib.h>
@@ -57,26 +63,26 @@ void rand_seed(){  srand( time(NULL) );  } // Seed RNG with unpredictable time-b
 
 ///// Image & Color Functions ////////////////////
 
-Color get_image_pixel_color_at( Image& img, ulong row, ulong col ){
+Color get_image_pixel_color_at( Color* img, ulong row, ulong col, ulong Ncols ){
     // Get the Color object representing the color values at `row` and `col`
     // https://www.reddit.com/r/raylib/comments/pol80c/comment/hcxhhhf
     // WARNING: This function does not check image bounds!
-    Color* colors = LoadImageColors( img );
-    return colors[ row * img.width + col ];
+    Color  rtnClr = img[ row * Ncols + col ];
+    return rtnClr;
 }
 
-float get_image_pixel_red_intensity( Image& img, ulong row, ulong col ){
+float get_image_pixel_red_intensity( Color* img, ulong row, ulong col, ulong Ncols ){
     // Get the red intensity at the given `row` and `col`
-    return 1.0f * get_image_pixel_color_at( img, row, col ).r / 255.0f;
+    return 1.0f * get_image_pixel_color_at( img, row, col, Ncols ).r / 255.0f;
 }
 
-vvf get_subimage_red_intensity( Image& img, ulong rowUL, ulong colUL, ulong rowLR, ulong colLR ){
+vvf get_subimage_red_intensity( Color* img, ulong Ncols, ulong rowUL, ulong colUL, ulong rowLR, ulong colLR ){
     vvf rtnImg;
     vf  rowRtn;
     for( ulong i = rowUL; i < rowLR; i++ ){
         rowRtn.clear();
         for( ulong j = colUL; j < colLR; j++ ){
-            rowRtn.push_back( get_image_pixel_red_intensity( img, i, j ) );
+            rowRtn.push_back( get_image_pixel_red_intensity( img, i, j, Ncols ) );
         }   
         rtnImg.push_back( rowRtn );
     }
@@ -147,13 +153,16 @@ void init_mesh( Mesh& mesh, ulong Ntri ){
     // Init geo memory
     mesh.triangleCount = Ntri;
     mesh.vertexCount   = Nvrt;
+    cout << "Allocating " << Nvrt*3*sizeof(float) << " bytes for vertices ..." << endl;
     mesh.vertices /**/ = (float *)MemAlloc(Nvrt*3*sizeof(float)); // 3 vertices, 3 coordinates each (x, y, z)
+    cout << "Allocating " << Nvrt*sizeof(ushort) << " bytes for indices ..." << endl;
     mesh.indices /*-*/ = (ushort *)MemAlloc(Nvrt*sizeof(ushort));
 }
 
 void init_mesh_normals( Mesh& mesh, ulong Ntri ){
     // Allocate memory in the mesh for normals with unshared points
     ulong Nvrt = Ntri * 3;
+    cout << "Allocating " << Nvrt*3*sizeof(float) << " bytes for normals ..." << endl;
     mesh.normals = (float *)MemAlloc(Nvrt*3*sizeof(float)); // 3 vertices, 3 coordinates each (x, y, z)
 }
 
@@ -166,7 +175,9 @@ void init_mesh( Mesh& mesh, ulong Npts, ulong Ntri ){
     // Init geo memory
     mesh.triangleCount = Ntri;
     mesh.vertexCount   = Nvrt;
+    cout << "Allocating " << Npts*3*sizeof(float) << " bytes for vertices ..." << endl;
     mesh.vertices /**/ = (float *)MemAlloc(Npts*3*sizeof(float)); // 3 vertices, 3 coordinates each (x, y, z)
+    cout << "Allocating " << Nvrt*sizeof(ushort) << " bytes for indices ..." << endl;
     mesh.indices /*-*/ = (ushort *)MemAlloc(Nvrt*sizeof(ushort));
 }
 
@@ -212,12 +223,14 @@ class TriModel{ public:
         // Load the triangle data into the mesh
         ulong  k = 0;
         ushort l = 0;
+        float*  vertices = mesh.vertices;
+        ushort* indices  = mesh.indices;
         for( ulong i = 0; i < tris.size(); i++ ){
             for( ubyte j = 0; j < 3; j++ ){
-                mesh.vertices[k] = tris[i][j].x;  k++;
-                mesh.vertices[k] = tris[i][j].y;  k++;
-                mesh.vertices[k] = tris[i][j].z;  k++;
-                mesh.indices[l]  = l; /*------*/  l++; // WARNING: UNOPTIMIZED FOR SHARED VERTICES
+                *vertices = tris[i][j].x;  vertices++;
+                *vertices = tris[i][j].y;  vertices++;
+                *vertices = tris[i][j].z;  vertices++;
+                *indices  = l; /*------*/  indices++; l++; // WARNING: UNOPTIMIZED FOR SHARED VERTICES
             }
         }
     }
@@ -305,6 +318,13 @@ class TriModel{ public:
         // Shared Constructor
         init_mesh( mesh, Npts, Ntri );
         init_pose();
+    }
+
+    ~TriModel(){
+        // Free all allocated memory
+        if( mesh.vertices )  free( mesh.vertices );
+        if( mesh.indices  )  free( mesh.indices  );
+        if( mesh.normals  )  free( mesh.normals  );
     }
 
     ///// Pose Math //////////////////////////////
@@ -419,15 +439,16 @@ class TerrainPlate : public TriModel { public:
         // Create a Perlin Image
         // Calc corners
         float factor =   15.0f;
-        int   hI     = 1000; // Height of the image
-        int   wI     = 1000; // Width  of the image
+        int   hI     = M*3; // Height of the image
+        int   wI     = N*3; // Width  of the image
         ulong rowUL  = randi( 0, hI - M );
         ulong colUL  = randi( 0, wI - N );
         ulong rowLR  = rowUL + M;
         ulong colLR  = colUL + N;
         // Select subimage
-        Image perlinImage = GenImagePerlinNoise( hI, wI, 0, 0, pScale ); 
-        vvf   zValues     = get_subimage_red_intensity( perlinImage, rowUL, colUL, rowLR, colLR );
+        Image  perlinImage = GenImagePerlinNoise( hI, wI, 0, 0, pScale ); 
+        Color* perlinClrs  = LoadImageColors( perlinImage );
+        vvf    zValues     = get_subimage_red_intensity( perlinClrs, perlinImage.width, rowUL, colUL, rowLR, colLR );
         // Generate heightmap
         vector<Vector3> row;
         float accum = 0;
@@ -451,6 +472,9 @@ class TerrainPlate : public TriModel { public:
                 pts[i][j].z -= accum;
             }
         }
+        UnloadImage( perlinImage );  
+        free( perlinClrs );
+        zValues.clear();
     }
 
     TerrainPlate( float scale = 10.0f, ulong Mrows = 10, ulong Ncols = 10 ) : TriModel( (Mrows-1)*(Ncols-1)*2 ){
@@ -673,13 +697,34 @@ int main(){
 
 		// gamepad input
 		if( IsGamepadAvailable(0) ){
-			glider.rotate_RPY( 0.0, 0.0, -frameRotateRad*GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X) );
-			glider.rotate_RPY( 0.0, -frameRotateRad*GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y), 0.0 );
-		}
+            glider.rotate_RPY( 
+                 frameRotateRad*GetGamepadAxisMovement( 0, GAMEPAD_AXIS_RIGHT_X ),  
+                 0.0,  
+                 0.0            
+            );
+            glider.rotate_RPY( 
+                 0.0, 
+                -frameRotateRad*GetGamepadAxisMovement( 0, GAMEPAD_AXIS_RIGHT_Y ), 
+                 0.0 
+            );
+			glider.rotate_RPY( 
+                0.0, 
+                0.0, 
+                -frameRotateRad*GetGamepadAxisMovement( 0, GAMEPAD_AXIS_LEFT_X ) 
+            );
+            glider.z_thrust( 
+                frameThrust + max(
+                    0.0f,
+                    -frameThrust*GetGamepadAxisMovement( 0, GAMEPAD_AXIS_LEFT_Y ) 
+                )
+            );
+		}else{
+            glider.z_thrust( frameThrust );
+        }
 
         camera.update_target_position( glider.get_XYZ() );
 		camera.advance_camera();
-        glider.z_thrust( frameThrust );
+        
 
 
         ///// DRAW PHASE /////////////////////////
@@ -718,6 +763,8 @@ int main(){
     UnloadRenderTexture( target );
 
     CloseWindow(); // Close window and OpenGL context
+
+    cout << sizeof( short ) << endl;
 
     return 0;
 }
