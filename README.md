@@ -29,23 +29,25 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         * Related?: https://github.com/raysan5/raylib/issues/807, 2023-04-16: Not related
         * `[Y]` Valgrind is MAGICAL, 2023-04-16: Nice!
             - `GenImagePerlinNoise` allocates image on the heap, it needs to be freed with `UnloadImage`
-            - Every time that `get_image_pixel_color_at` runs, it copies the ENTIRE IMAGE to a `Color*` which is NOT FREED before the function exits
+            - Every time that `get_image_pixel_color_at` runs, it copies the ENTIRE IMAGE to a `Color*` which is NOT FREED before the function exits  
+
+    - `[>]` Infinite grid
+        * `[Y]` Tiles mesh without terrain discontinuities, even considering XY noise, 2023-04-18: Stitched and blended
+        * `[Y]` Add frame rate monitor, 2023-04-17: Added
+        * `[>]` Distance fog
+        * `[ ]` Instantiate without noticeable "pop-in"
+        * `[ ]` Stop drawing when too far behind, but retain for drawing if player retraces their path  
 
     - `[>]` Synthwave glider
         * `[Y]` Synthwave shading on glider, 2023-04-12: Bloom shader is sufficient
         * `[>]` Glowing contrail -or- Wingtip vortices
             - `[>]` How to fade smoothly?
-                * Vertex colors?
+                * Vertex colors?  
 
     - `[ ]` Synthwave triangles
-        * `[ ]` Collision triangles, Spin
+        * `[ ]` Collision with triangles, Spin
         * `{N}` Iridescent/glare?, 2023-04-12: Would distract from vector aesthetic
-    - `[ ]` Infinite grid
-        * `[ ]` Tiles mesh without terrain discontinuities, even considering XY noise
-        * `[ ]` Distance fog
-        * `[ ]` Add frame rate monitor
-        * `[ ]` Instantiate without noticeable "pop-in"
-        * `[ ]` Erase when too far behind
+    
     - `{ }` Curved CRT shader?
     - `[ ]` Video -or- animated GIF output --to-> IG 
         - `[ ]` Remove CRT curve for IG post
