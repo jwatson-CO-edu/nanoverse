@@ -48,6 +48,7 @@ class TerrainPlate : public TriModel { public:
     Vector3 /*-----------*/ posn1; //- Facet drawing origin
     Vector3 /*-----------*/ posn2; //- Line  drawing origin
     float /*-------------*/ pScale; // Perlin scale param
+    bool /*--------------*/ doDraw; // Whether or not to draw it
 
     /// Constructors & Helpers ///
 
@@ -147,6 +148,7 @@ class TerrainPlate : public TriModel { public:
         posn1  = Vector3{ 0.0f, 0.0f, 0.0f   };
         posn2  = Vector3{ 0.0f, 0.0f, offset };
         pScale = 10.0f;
+        doDraw = true;
 
         // 1. Generate points
         gen_heightmap_perlin( pScale );
@@ -155,7 +157,9 @@ class TerrainPlate : public TriModel { public:
         build_triangles();
     }
 
-    TerrainPlate( const TerrainPlate& OtherPlate, NEIGHBORS placement ) : TriModel( (OtherPlate.M-1)*(OtherPlate.N-1)*2 ){
+    TerrainPlate( TerrainPlate& OtherPlate, NEIGHBORS placement ) : TriModel( (OtherPlate.M-1)*(OtherPlate.N-1)*2 ){
+
+        float z1, z2;
 
         cout << "Offset `TerrainPlate` constructor!" << endl;
 
@@ -167,6 +171,7 @@ class TerrainPlate : public TriModel { public:
         gndClr = OtherPlate.gndClr;
         linClr = OtherPlate.linClr;
         pScale = OtherPlate.pScale;
+        doDraw = true;
 
         cout << gndClr << ", " << linClr << endl;
         
@@ -181,6 +186,15 @@ class TerrainPlate : public TriModel { public:
                 gen_heightmap_perlin( pScale );
                 // 2. Stitch
                 for( ulong i = 0; i < M; i++ ){  pts[i][0] = Vector3{ OtherPlate.pts[i][N-1] };  }
+                // 3. Smooth
+                for( ulong i = 0; i < M; i++ ){  
+                    z1 = pts[i][2].z;
+                    z2 = pts[i][0].z;
+                    pts[i][1].z = randf_bn( z1, z2 );
+                    z1 = OtherPlate.pts[i][N-3].z;
+                    z2 = OtherPlate.pts[i][N-1].z;
+                    OtherPlate.pts[i][N-2].z = randf_bn( z1, z2 );
+                }
                 break;
 
             case X_NEG:
@@ -190,6 +204,15 @@ class TerrainPlate : public TriModel { public:
                 gen_heightmap_perlin( pScale );
                 // 2. Stitch
                 for( ulong i = 0; i < M; i++ ){  pts[i][N-1] = Vector3{ OtherPlate.pts[i][0] };  }
+                // 3. Smooth
+                for( ulong i = 0; i < M; i++ ){  
+                    z1 = pts[i][N-3].z;
+                    z2 = pts[i][N-1].z;
+                    pts[i][N-2].z = randf_bn( z1, z2 );
+                    z1 = OtherPlate.pts[i][2].z;
+                    z2 = OtherPlate.pts[i][0].z;
+                    OtherPlate.pts[i][1].z = randf_bn( z1, z2 );
+                }
                 break;
 
             case Y_POS:
@@ -199,8 +222,15 @@ class TerrainPlate : public TriModel { public:
                 gen_heightmap_perlin( pScale );
                 // 2. Stitch
                 for( ulong j = 0; j < N; j++ ){  pts[0][j] = Vector3{ OtherPlate.pts[M-1][j] };  }
-
-
+                // 3. Smooth
+                for( ulong j = 0; j < N; j++ ){  
+                    z1 = pts[2][j].z;
+                    z2 = pts[0][j].z;
+                    pts[1][j].z = randf_bn( z1, z2 );
+                    z1 = OtherPlate.pts[M-3][j].z;
+                    z2 = OtherPlate.pts[M-1][j].z;
+                    OtherPlate.pts[M-2][j].z = randf_bn( z1, z2 );
+                }
                 break;
 
             case Y_NEG:
@@ -209,7 +239,16 @@ class TerrainPlate : public TriModel { public:
                 // 1. Generate points
                 gen_heightmap_perlin( pScale );
                 // 2. Stitch
-                for( ulong j = 0; j < N; j++ ){  pts[M-1][j] = Vector3{ OtherPlate.pts[0][j] };   }                
+                for( ulong j = 0; j < N; j++ ){  pts[M-1][j] = Vector3{ OtherPlate.pts[0][j] };   }      
+                // 3. Smooth
+                for( ulong j = 0; j < N; j++ ){  
+                    z1 = pts[M-3][j].z;
+                    z2 = pts[M-1][j].z;
+                    pts[M-2][j].z = randf_bn( z1, z2 );
+                    z1 = OtherPlate.pts[2][j].z;
+                    z2 = OtherPlate.pts[0][j].z;
+                    OtherPlate.pts[1][j].z = randf_bn( z1, z2 );
+                }          
                 break;
         }
 

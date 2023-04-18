@@ -15,7 +15,19 @@ float randf(){
 float randf( float lo, float hi ){
     // Return a pseudo-random number between `lo` and `hi` (float)
     float span = hi - lo;
-    return lo + randf() * span;
+    return lo + span * randf();
+}
+
+float randf_bn( float lo, float hi ){
+    // Return a pseudo-random number between `lo` and `hi` (in any order)
+    float span;
+    if( hi > lo ){
+        span = hi - lo;
+        return lo + randf() * span;
+    }else{
+        span = lo - hi;
+        return hi + randf() * span;
+    }
 }
 
 int randi( int lo, int hi ){
@@ -25,5 +37,6 @@ int randi( int lo, int hi ){
 }
 
 void rand_seed(){  srand( time(NULL) );  } // Seed RNG with unpredictable time-based seed
+
 
 #endif /* UTILS_H */
