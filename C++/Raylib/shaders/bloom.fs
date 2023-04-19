@@ -1,4 +1,4 @@
-#version 100
+#version 140 // https://bugs.freedesktop.org/show_bug.cgi?id=70261
 
 precision mediump float;
 

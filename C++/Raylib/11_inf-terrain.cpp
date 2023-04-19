@@ -278,6 +278,10 @@ class TerrainPlate : public TriModel { public:
         return top;
     }
 
+    vector<NEIGHBORS> occupied_neighbors( const vector< TerrainPlate* >& tiles ){
+        // Return a vector of occupied neighbors
+    }
+
     void stitch_neighbors( const vector< TerrainPlate* >& tiles ){
         // Find an stitch to existing neighbors
         float radius = max( 1.0f*(M-1)*scl, 1.0f*(N-1)*scl ) * 1.25f;
@@ -349,10 +353,14 @@ int main(){
     cout << "Create tile 1 ..." << endl;
     terrainTiles.push_back( new TerrainPlate{ tCellScale, Mrows, Nrows } );
     cout << "Create tile 2 ..." << endl;
-    terrainTiles.push_back( new TerrainPlate{ *terrainTiles[0], X_POS } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
-    terrainTiles.push_back( new TerrainPlate{ *terrainTiles[0], X_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
-    terrainTiles.push_back( new TerrainPlate{ *terrainTiles[0], Y_POS } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
-    terrainTiles.push_back( new TerrainPlate{ *terrainTiles[0], Y_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
+    terrainTiles.push_back( new TerrainPlate{ *(terrainTiles.back()), X_POS } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
+    terrainTiles.push_back( new TerrainPlate{ *(terrainTiles.back()), Y_POS } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
+    terrainTiles.push_back( new TerrainPlate{ *(terrainTiles.back()), X_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
+    terrainTiles.push_back( new TerrainPlate{ *(terrainTiles.back()), X_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
+    terrainTiles.push_back( new TerrainPlate{ *(terrainTiles.back()), X_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
+    terrainTiles.push_back( new TerrainPlate{ *(terrainTiles.back()), Y_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
+    terrainTiles.push_back( new TerrainPlate{ *(terrainTiles.back()), X_POS } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
+
     // TerrainPlate terrain{ tCellScale, Mrows, Nrows };
     cout << "Terrain built!" << endl;
     

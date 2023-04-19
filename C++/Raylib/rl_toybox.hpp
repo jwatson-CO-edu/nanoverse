@@ -452,8 +452,8 @@ class FlightFollowThirdP_Camera : public Camera3D{ public:
 	float   offset_d; // - Desired camera offset in meters
     Matrix  trgtXform; //- Orientation of the target
 
-    static const float dDrawMin = RL_CULL_DISTANCE_NEAR;
-    static const float dDrawMax = RL_CULL_DISTANCE_FAR;
+    static constexpr float dDrawMin = RL_CULL_DISTANCE_NEAR;
+    static constexpr float dDrawMax = RL_CULL_DISTANCE_FAR;
 
     FlightFollowThirdP_Camera( float desiredOffset_m, Vector3 tCenter, Matrix tXform ) : Camera3D(){
         // Set follower params 
