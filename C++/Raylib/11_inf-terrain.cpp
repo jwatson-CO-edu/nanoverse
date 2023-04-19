@@ -33,6 +33,7 @@ enum NEIGHBORS{
     Y_POS,  Y_NEG,
 };
 
+
 class TerrainPlate : public TriModel { public:
     // Rectangular plate of randomized terrain
 
@@ -46,7 +47,7 @@ class TerrainPlate : public TriModel { public:
     Color /*-------------*/ linClr; // Triangle line color
     float /*-------------*/ offset; // Z bump for lines
     Vector3 /*-----------*/ posn1; //- Facet drawing origin
-    Vector3 /*-----------*/ posn2; //- Line  drawing origin
+    // Vector3 /*-----------*/ posn2; //- Line  drawing origin
     float /*-------------*/ pScale; // Perlin scale param
 
     /// Constructors & Helpers ///
@@ -145,19 +146,78 @@ class TerrainPlate : public TriModel { public:
         gndClr = BLACK; // GREEN;
         linClr = MAGENTA; // WHITE; // BLACK;
         posn1  = Vector3{ 0.0f, 0.0f, 0.0f   };
-        posn2  = Vector3{ 0.0f, 0.0f, offset };
+        // posn2  = Vector3{ 0.0f, 0.0f, offset };
         pScale = 10.0f;
 
         // 1. Generate points
         gen_heightmap_perlin( pScale );
 
         // 2. Turn the heightmap into a mesh
-        build_triangles();
+        // build_triangles();
     }
 
-    TerrainPlate( TerrainPlate& OtherPlate, NEIGHBORS placement ) : TriModel( (OtherPlate.M-1)*(OtherPlate.N-1)*2 ){
-
+    void stitch_X_POS_of( const TerrainPlate& OtherPlate ){
         float z1, z2;
+        // 2. Stitch
+        for( ulong i = 0; i < M; i++ ){  pts[i][0] = Vector3{ OtherPlate.pts[i][N-1] };  }
+        // 3. Smooth
+        for( ulong i = 0; i < M; i++ ){  
+            z1 = pts[i][2].z;
+            z2 = pts[i][0].z;
+            pts[i][1].z = randf_bn( z1, z2 );
+            // z1 = OtherPlate.pts[i][N-3].z;
+            // z2 = OtherPlate.pts[i][N-1].z;
+            // OtherPlate.pts[i][N-2].z = randf_bn( z1, z2 );
+        }
+    }
+
+    void stitch_X_NEG_of( const TerrainPlate& OtherPlate ){
+        float z1, z2;
+        // 2. Stitch
+        for( ulong i = 0; i < M; i++ ){  pts[i][N-1] = Vector3{ OtherPlate.pts[i][0] };  }
+        // 3. Smooth
+        for( ulong i = 0; i < M; i++ ){  
+            z1 = pts[i][N-3].z;
+            z2 = pts[i][N-1].z;
+            pts[i][N-2].z = randf_bn( z1, z2 );
+            // z1 = OtherPlate.pts[i][2].z;
+            // z2 = OtherPlate.pts[i][0].z;
+            // OtherPlate.pts[i][1].z = randf_bn( z1, z2 );
+        }
+    }
+
+    void stitch_Y_POS_of( const TerrainPlate& OtherPlate ){
+        float z1, z2;
+        // 2. Stitch
+        for( ulong j = 0; j < N; j++ ){  pts[0][j] = Vector3{ OtherPlate.pts[M-1][j] };  }
+        // 3. Smooth
+        for( ulong j = 0; j < N; j++ ){  
+            z1 = pts[2][j].z;
+            z2 = pts[0][j].z;
+            pts[1][j].z = randf_bn( z1, z2 );
+            // z1 = OtherPlate.pts[M-3][j].z;
+            // z2 = OtherPlate.pts[M-1][j].z;
+            // OtherPlate.pts[M-2][j].z = randf_bn( z1, z2 );
+        }
+    }
+
+    void stitch_Y_NEG_of( const TerrainPlate& OtherPlate ){
+        float z1, z2;
+        // 2. Stitch
+        for( ulong j = 0; j < N; j++ ){  pts[M-1][j] = Vector3{ OtherPlate.pts[0][j] };   }      
+        // 3. Smooth
+        for( ulong j = 0; j < N; j++ ){  
+            z1 = pts[M-3][j].z;
+            z2 = pts[M-1][j].z;
+            pts[M-2][j].z = randf_bn( z1, z2 );
+            // z1 = OtherPlate.pts[2][j].z;
+            // z2 = OtherPlate.pts[0][j].z;
+            // OtherPlate.pts[1][j].z = randf_bn( z1, z2 );
+        }          
+    }
+
+    TerrainPlate( const TerrainPlate& OtherPlate, NEIGHBORS placement ) : TriModel( (OtherPlate.M-1)*(OtherPlate.N-1)*2 ){
+        // Generate points and load triangles
 
         cout << "Offset `TerrainPlate` constructor!" << endl;
 
@@ -170,87 +230,39 @@ class TerrainPlate : public TriModel { public:
         linClr = OtherPlate.linClr;
         pScale = OtherPlate.pScale;
 
-        cout << gndClr << ", " << linClr << endl;
+        // cout << gndClr << ", " << linClr << endl;
         
         // Placement Offset
         switch( placement ){
 
             case X_POS:
                 posn1  = Vector3Add( OtherPlate.posn1, Vector3{  1.0f*(N-1)*scl,  0.0f , 0.0f   } );
-                // posn1  = Vector3Add( OtherPlate.posn1, Vector3{  N*scl/2.0f,  0.0f , 0.0f   } );
-                // posn2  = Vector3Add( posn1           , Vector3{  0.0f ,  0.0f , offset } );
                 // 1. Generate points
                 gen_heightmap_perlin( pScale );
-                // 2. Stitch
-                for( ulong i = 0; i < M; i++ ){  pts[i][0] = Vector3{ OtherPlate.pts[i][N-1] };  }
-                // 3. Smooth
-                for( ulong i = 0; i < M; i++ ){  
-                    z1 = pts[i][2].z;
-                    z2 = pts[i][0].z;
-                    pts[i][1].z = randf_bn( z1, z2 );
-                    z1 = OtherPlate.pts[i][N-3].z;
-                    z2 = OtherPlate.pts[i][N-1].z;
-                    OtherPlate.pts[i][N-2].z = randf_bn( z1, z2 );
-                }
+                // stitch_X_POS_of( OtherPlate );
                 break;
 
             case X_NEG:
                 posn1  = Vector3Add( OtherPlate.posn1, Vector3{  -1.0f*(N-1)*scl,  0.0f , 0.0f   } );
-                // posn2  = Vector3Add( posn1           , Vector3{  0.0f ,  0.0f , offset } );
                 // 1. Generate points
                 gen_heightmap_perlin( pScale );
-                // 2. Stitch
-                for( ulong i = 0; i < M; i++ ){  pts[i][N-1] = Vector3{ OtherPlate.pts[i][0] };  }
-                // 3. Smooth
-                for( ulong i = 0; i < M; i++ ){  
-                    z1 = pts[i][N-3].z;
-                    z2 = pts[i][N-1].z;
-                    pts[i][N-2].z = randf_bn( z1, z2 );
-                    z1 = OtherPlate.pts[i][2].z;
-                    z2 = OtherPlate.pts[i][0].z;
-                    OtherPlate.pts[i][1].z = randf_bn( z1, z2 );
-                }
+                // stitch_X_NEG_of( OtherPlate );
                 break;
 
             case Y_POS:
                 posn1  = Vector3Add( OtherPlate.posn1, Vector3{  0.0f ,  1.0f*(M-1)*scl, 0.0f   } );
-                // posn2  = Vector3Add( posn1           , Vector3{  0.0f ,  0.0f , offset } );
                 // 1. Generate points
                 gen_heightmap_perlin( pScale );
-                // 2. Stitch
-                for( ulong j = 0; j < N; j++ ){  pts[0][j] = Vector3{ OtherPlate.pts[M-1][j] };  }
-                // 3. Smooth
-                for( ulong j = 0; j < N; j++ ){  
-                    z1 = pts[2][j].z;
-                    z2 = pts[0][j].z;
-                    pts[1][j].z = randf_bn( z1, z2 );
-                    z1 = OtherPlate.pts[M-3][j].z;
-                    z2 = OtherPlate.pts[M-1][j].z;
-                    OtherPlate.pts[M-2][j].z = randf_bn( z1, z2 );
-                }
+                // stitch_Y_POS_of( OtherPlate );
                 break;
 
             case Y_NEG:
                 posn1  = Vector3Add( OtherPlate.posn1, Vector3{  0.0f , -1.0f*(M-1)*scl, 0.0f   } );
-                posn2  = Vector3Add( posn1           , Vector3{  0.0f ,  0.0f , offset } );
                 // 1. Generate points
                 gen_heightmap_perlin( pScale );
-                // 2. Stitch
-                for( ulong j = 0; j < N; j++ ){  pts[M-1][j] = Vector3{ OtherPlate.pts[0][j] };   }      
-                // 3. Smooth
-                for( ulong j = 0; j < N; j++ ){  
-                    z1 = pts[M-3][j].z;
-                    z2 = pts[M-1][j].z;
-                    pts[M-2][j].z = randf_bn( z1, z2 );
-                    z1 = OtherPlate.pts[2][j].z;
-                    z2 = OtherPlate.pts[0][j].z;
-                    OtherPlate.pts[1][j].z = randf_bn( z1, z2 );
-                }          
+                // stitch_Y_NEG_of( OtherPlate );
                 break;
         }
-
-        // 2. Turn the heightmap into a mesh
-        build_triangles();
     }
 
     /// Methods ///
@@ -266,11 +278,41 @@ class TerrainPlate : public TriModel { public:
         return top;
     }
 
+    void stitch_neighbors( const vector< TerrainPlate* >& tiles ){
+        // Find an stitch to existing neighbors
+        float radius = max( 1.0f*(M-1)*scl, 1.0f*(N-1)*scl ) * 1.25f;
+        float dist   = 10000.0f;
+        for( TerrainPlate* tile : tiles ){
+            dist = Vector3Distance( tile->posn1, posn1 );
+            if( (dist < radius) && (dist > 0.25f*radius) ){
+
+                // X_POS of
+                if((posn1.x - tile->posn1.x) > ( 0.5f * radius)){
+                    stitch_X_POS_of( *tile );
+
+                // X_NEG of
+                }else if((posn1.x - tile->posn1.x) < (-0.5f * radius)){
+                    stitch_X_NEG_of( *tile );
+                
+                // Y_POS of
+                }else if((posn1.y - tile->posn1.y) > ( 0.5f * radius)){
+                    stitch_Y_POS_of( *tile );
+                
+                // Y_NEG of
+                }else if((posn1.y - tile->posn1.y) < (-0.5f * radius)){
+                    stitch_Y_NEG_of( *tile );
+                }
+            }
+        }
+    }
+
     ///// Rendering //////////////////////////////
     // WARNING: Requires window init to call!
 
     void load_geo(){
         // Get the model ready for drawing
+        cout << "\t\t`build_triangles` ..." << endl;
+        build_triangles();
         cout << "\t\t`build_mesh_unshared` ..." << endl;
         build_mesh_unshared();
         cout << "\t\t`build_normals_flat_unshared` ..." << endl;
@@ -281,8 +323,6 @@ class TerrainPlate : public TriModel { public:
 
     void draw(){
         // Draw facets, shift up, draw lines
-        // posn1  = Vector3{ 0.0f, 0.0f, 0.0f   };
-        // posn2  = Vector3{ 0.0f, 0.0f, offset };
         DrawModel(      model, Vector3{ 0.0f, 0.0f, 0.0f   }, 1.0, gndClr );  
         DrawModelWires( model, Vector3{ 0.0f, 0.0f, offset }, 1.0, linClr );
     }
@@ -309,10 +349,10 @@ int main(){
     cout << "Create tile 1 ..." << endl;
     terrainTiles.push_back( new TerrainPlate{ tCellScale, Mrows, Nrows } );
     cout << "Create tile 2 ..." << endl;
-    terrainTiles.push_back( new TerrainPlate{ *terrainTiles[0], X_POS } );
-    terrainTiles.push_back( new TerrainPlate{ *terrainTiles[0], X_NEG } );
-    terrainTiles.push_back( new TerrainPlate{ *terrainTiles[0], Y_POS } );
-    terrainTiles.push_back( new TerrainPlate{ *terrainTiles[0], Y_NEG } );
+    terrainTiles.push_back( new TerrainPlate{ *terrainTiles[0], X_POS } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
+    terrainTiles.push_back( new TerrainPlate{ *terrainTiles[0], X_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
+    terrainTiles.push_back( new TerrainPlate{ *terrainTiles[0], Y_POS } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
+    terrainTiles.push_back( new TerrainPlate{ *terrainTiles[0], Y_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
     // TerrainPlate terrain{ tCellScale, Mrows, Nrows };
     cout << "Terrain built!" << endl;
     
@@ -428,7 +468,11 @@ int main(){
     UnloadShader( bloom );
 
     // UnloadModel( terrain.model );
-    for( TerrainPlate* plate : terrainTiles ){  UnloadModel( plate->model );  }
+    for( TerrainPlate* plate : terrainTiles ){  
+        UnloadModel( plate->model );  
+        delete plate;
+    }
+    
     UnloadModel( glider.model  );
     
     UnloadRenderTexture( target );
