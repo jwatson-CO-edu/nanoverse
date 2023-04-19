@@ -452,6 +452,9 @@ class FlightFollowThirdP_Camera : public Camera3D{ public:
 	float   offset_d; // - Desired camera offset in meters
     Matrix  trgtXform; //- Orientation of the target
 
+    static const float dDrawMin = RL_CULL_DISTANCE_NEAR;
+    static const float dDrawMax = RL_CULL_DISTANCE_FAR;
+
     FlightFollowThirdP_Camera( float desiredOffset_m, Vector3 tCenter, Matrix tXform ) : Camera3D(){
         // Set follower params 
         trgtCenter = tCenter; 
@@ -478,6 +481,24 @@ class FlightFollowThirdP_Camera : public Camera3D{ public:
 		position = Vector3Add( trgtCenter, dragVec );
 		target   = trgtCenter;
 	}
+
+    bool inside_FOV( const Vector3& pnt ){
+        // Return true if the ray from the camera to the `pnt` is within the FOV (conservative)
+        Vector3 vLook = Vector3Subtract( target, position );
+        Vector3 vRayP = Vector3Subtract( pnt   , position );
+        if( Vector3Angle( vLook, vRayP ) * RAD2DEG <= fovy )  
+            return true;
+        else
+            return false;
+    }
+
+    float signed_distance_to_frustrum( const Vector3& pnt ){
+        if( inside_FOV( pnt ) ){
+            return Vector3Distance( pnt, position ) - dDrawMax;
+        }else{
+            return nanf("");
+        }
+    }
 };
 
 #endif /* RL_TOYBOX_H */ 

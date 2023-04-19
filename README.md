@@ -8,7 +8,6 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 * Purpose: Let yourself have some graphics, as a treat!  
 
 * `[>]` Terrain generation - Delta Glider
-
     - `[Y]` Perlin Noise terrain grid tiles, 2023-04-12: Tuned scaling and elevation
         * `[Y]` Unshaded with lines, 2023-04-05: Finally got random, non-vibrating triangles w/ correct orientation! Stored in models as tiles instead of individual triangles.
         * `[Y]` Add XY position noise, 2023-04-10: Added
@@ -35,7 +34,11 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         * `[Y]` Tiles mesh without terrain discontinuities, even considering XY noise, 2023-04-18: Stitched and blended
         * `[Y]` Add frame rate monitor, 2023-04-17: Added
         * `[>]` Distance fog
+            - https://blog.mapbox.com/drawing-antialiased-lines-with-opengl-8766f34192dc
         * `[ ]` Instantiate without noticeable "pop-in"
+            - `[ ]` Get Raylib draw distance  
+            `#define RL_CULL_DISTANCE_NEAR      0.01 // Default projection matrix near cull distance`
+            `#define RL_CULL_DISTANCE_FAR  1000.0 // -- Default projection matrix far cull distance`
         * `[ ]` Stop drawing when too far behind, but retain for drawing if player retraces their path  
 
     - `[>]` Synthwave glider

@@ -390,13 +390,40 @@ int main(){
 		glider.T
     };
 
-    /// Shader Init: Pre-Window ///
+
+
+    ////////// Shader Init: Pre-Window /////////////////////////////////////////////////////////////
+
+    // load a shader and set up some uniforms
+    // Shader fog = LoadShader( "shaders/fogLight.vs", "shaders/fogLight.fs" );
+    // fog.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation( fog, "matModel" );
+    // fog.locs[SHADER_LOC_VECTOR_VIEW]  = GetShaderLocation( fog, "viewPos"  );
+
+    // int amb = GetShaderLocation( fog, "ambient" );
+    // float ambClr[4] = {0.2, 0.2, 0.2, 1.0};
+    // SetShaderValue( fog, amb, &ambClr, SHADER_UNIFORM_VEC4 );
+
+    // int fogC = GetShaderLocation( fog, "fogColor" );
+    // float fogClr[4] = {0.0, 0.0, 0.0, 1.0};
+    // SetShaderValue( fog, fogC, &fogClr, SHADER_UNIFORM_VEC4 );
+
+    // int   fogD /*-*/ = GetShaderLocation( fog, "FogDensity" );
+    // float fogDensity = 0.015f;
+    // SetShaderValue( fog, fogD, &fogDensity, SHADER_UNIFORM_FLOAT );
+
+    // Fog applies to all terrain tiles
+    // for( TerrainPlate* plate : terrainTiles ){  plate->model.materials[0].shader = fog;  }
 
     // bloom shader
-    Shader bloom = LoadShader(0, "shaders/bloom.fs");
+    Shader bloom = LoadShader( 0, "shaders/bloom.fs" );
     bloom.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(bloom, "matModel");
 
     RenderTexture2D target = LoadRenderTexture( res.x, res.y );
+
+
+
+    ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
+
 
     while( !WindowShouldClose() ){
 
@@ -407,8 +434,8 @@ int main(){
 		if( IsKeyDown( KEY_X     ) ){  glider.rotate_RPY(  frameRotateRad,  0.0           ,  0.0            );  }
 		if( IsKeyDown( KEY_UP    ) ){  glider.rotate_RPY(  0.0           ,  frameRotateRad,  0.0            );  }
 		if( IsKeyDown( KEY_DOWN  ) ){  glider.rotate_RPY(  0.0           , -frameRotateRad,  0.0            );  }
-        if( IsKeyDown( KEY_LEFT  ) ){  glider.rotate_RPY(  0.0           ,  0.0,             frameRotateRad );  }
-		if( IsKeyDown( KEY_RIGHT ) ){  glider.rotate_RPY(  0.0           ,  0.0,            -frameRotateRad );  }
+        if( IsKeyDown( KEY_LEFT  ) ){  glider.rotate_RPY(  0.0           ,  0.0           ,  frameRotateRad );  }
+		if( IsKeyDown( KEY_RIGHT ) ){  glider.rotate_RPY(  0.0           ,  0.0           , -frameRotateRad );  }
 
 		// gamepad input
 		if( IsGamepadAvailable(0) ){
@@ -433,6 +460,10 @@ int main(){
 
         camera.update_target_position( glider.get_XYZ() );
 		camera.advance_camera();
+
+        // update the light shader with the camera view position
+        // SetShaderValue( fog, fog.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3 );
+
         glider.z_thrust( frameThrust );
 
 
@@ -465,7 +496,13 @@ int main(){
         EndDrawing();
     }
 
+
+
+    ////////// CLEANUP /////////////////////////////////////////////////////////////////////////////
+
     UnloadShader( bloom );
+    // UnloadShader( fog   );
+    UnloadRenderTexture( target );
 
     // UnloadModel( terrain.model );
     for( TerrainPlate* plate : terrainTiles ){  
@@ -474,8 +511,6 @@ int main(){
     }
     
     UnloadModel( glider.model  );
-    
-    UnloadRenderTexture( target );
 
     CloseWindow(); // Close window and OpenGL context
 
