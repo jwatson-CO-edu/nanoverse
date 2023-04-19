@@ -278,9 +278,9 @@ class TerrainPlate : public TriModel { public:
         return top;
     }
 
-    vector<NEIGHBORS> occupied_neighbors( const vector< TerrainPlate* >& tiles ){
-        // Return a vector of occupied neighbors
-    }
+    // vector<NEIGHBORS> occupied_neighbors( const vector< TerrainPlate* >& tiles ){
+    //     // Return a vector of occupied neighbors
+    // }
 
     void stitch_neighbors( const vector< TerrainPlate* >& tiles ){
         // Find an stitch to existing neighbors
