@@ -8,6 +8,8 @@
 using std::cout, std::endl, std::ostream;
 #include <algorithm> 
 using std::min, std::max;
+#include <set>
+using std::set;
 
 /// Raylib ///
 #include <raylib.h>
@@ -32,8 +34,7 @@ enum NEIGHBORS{
     X_POS,  X_NEG,
     Y_POS,  Y_NEG,
 };
-
-
+NEIGHBORS NEIGHBORHOOD[4] = {  X_POS,  X_NEG,  Y_POS,  Y_NEG  };
 
 class TerrainTile : public TriModel { public:
     // Rectangular plate of randomized terrain
@@ -261,20 +262,19 @@ class TerrainTile : public TriModel { public:
                 break;
 
             case X_NEG:
-                posn1  = Vector3Add( OtherPlate.posn1, Vector3{  -1.0f*(N-1)*scl,  0.0f , 0.0f   } );
+                posn1 = Vector3Add( OtherPlate.posn1, Vector3{  -1.0f*(N-1)*scl,  0.0f , 0.0f   } );
                 // 1. Generate points
                 gen_heightmap_perlin( pScale );
-                // stitch_X_NEG_of( OtherPlate );
                 break;
 
             case Y_POS:
-                posn1  = Vector3Add( OtherPlate.posn1, Vector3{  0.0f ,  1.0f*(M-1)*scl, 0.0f   } );
+                posn1 = Vector3Add( OtherPlate.posn1, Vector3{  0.0f ,  1.0f*(M-1)*scl, 0.0f   } );
                 // 1. Generate points
                 gen_heightmap_perlin( pScale );
                 break;
 
             case Y_NEG:
-                posn1  = Vector3Add( OtherPlate.posn1, Vector3{  0.0f , -1.0f*(M-1)*scl, 0.0f   } );
+                posn1 = Vector3Add( OtherPlate.posn1, Vector3{  0.0f , -1.0f*(M-1)*scl, 0.0f   } );
                 // 1. Generate points
                 gen_heightmap_perlin( pScale );
                 break;
@@ -292,6 +292,16 @@ class TerrainTile : public TriModel { public:
             }
         }
         return top;
+    }
+
+    vector<Vector3> get_corners(){
+        // Get the positions of the corners of the tile
+        vector<Vector3> corners;
+        corners.push_back(  pts[0  ][0  ]  );
+        corners.push_back(  pts[M-1][0  ]  );
+        corners.push_back(  pts[M-1][N-1]  );
+        corners.push_back(  pts[0  ][N-1]  );
+        return corners;
     }
 
     void stitch_neighbors( const vector< TerrainTile* >& tiles ){
@@ -344,34 +354,68 @@ class TerrainTile : public TriModel { public:
     }
 };
 
-// FIXME, START HERE: RETURN A SET INSTEAD OF A LIST
-vector<NEIGHBORS> get_occupied_neighbors( const TerrainTile& queryTile, const vector<TerrainTile*> tiles ){
+set<NEIGHBORS> get_occupied_neighbors( const TerrainTile& queryTile, const vector<TerrainTile*> tiles ){
     // Return a list of directions from `tile` that are occupied by existing tiles
     // NOTE: This program should maintain the invariant that each tile has only one neighbor in each direction,
     //       but it won't break anything if the invariant is not maintained
-    float /*-------*/ radius = max( 1.0f*(queryTile.M-1)*queryTile.scl, 1.0f*(queryTile.N-1)*queryTile.scl ) * 1.25f;
-    vector<NEIGHBORS> rtnLst;
+    float /*----*/ radius = max( 1.0f*(queryTile.M-1)*queryTile.scl, 1.0f*(queryTile.N-1)*queryTile.scl ) * 1.25f;
+    set<NEIGHBORS> rtnSet;
     for( TerrainTile* tile : tiles ){
         // Compare X_POS
-        if((queryTile.x - tile->posn1.x) > ( 0.5f * radius))  rtnLst.push_back( X_POS );
+        if((queryTile.x - tile->posn1.x) > ( 0.5f * radius))  rtnSet.insert( X_POS );
         // Compare X_NEG
-        if((queryTile.x - tile->posn1.x) < (-0.5f * radius))  rtnLst.push_back( X_NEG );
+        if((queryTile.x - tile->posn1.x) < (-0.5f * radius))  rtnSet.insert( X_NEG );
         // Compare Y_POS
-        if((queryTile.y - tile->posn1.y) > ( 0.5f * radius))  rtnLst.push_back( Y_POS );
+        if((queryTile.y - tile->posn1.y) > ( 0.5f * radius))  rtnSet.insert( Y_POS );
         // Compare Y_NEG
-        if((queryTile.y - tile->posn1.y) < (-0.5f * radius))  rtnLst.push_back( Y_NEG );
+        if((queryTile.y - tile->posn1.y) < (-0.5f * radius))  rtnSet.insert( Y_NEG );
     }
-    return rtnLst;
+    return rtnSet;
 }
 
-vector<NEIGHBORS> p_expand_tile( FlightFollowThirdP_Camera& cam, TerrainTile& tile ){
-    // Return a list of neighbors of `tile` that needs instantiation in order to look infinite from `cam` view
-    vector<NEIGHBORS> addList;
+// NEIGHBORS NEIGHBORHOOD
+
+// bool error_vec3( const Vector3& vec ){
+//     // Return true if any of the elements of the vector are NaN
+//     return isnanf( vec.x ) || isnanf( vec.y ) || isnanf( vec.z );
+// }
+
+bool p_in_view( FlightFollowThirdP_Camera& cam, TerrainTile& tile ){
+    // Return true if `tile` needs its neighbors to be instantiated in order to look infinite from `cam` view
+    vector<Vector3>   corners;
+    bool /*--------*/ oncoming = false;
+    float dist, 
+          xMin =  10000.0f, 
+          xMax = -10000.0f, 
+          yMin =  10000.0f, 
+          yMax = -10000.0f;
     // 1. Get the neighbors of `tile` that *should* be expanded
+    // Is the tile in the frustrum cone?
+    corners  = tile.get_corners();
+    for( Vector3 corner : corners ){
+        if( corner.x < xMin )  xMin = corner.x;
+        if( corner.x > xMax )  xMax = corner.x;
+        if( corner.y < yMin )  yMin = corner.y;
+        if( corner.y > yMax )  yMax = corner.y;
+        if( cam.inside_FOV( corner ) ){
+            oncoming = true;
+            break;
+        }
+    }
+    if(  (cam.position.x >= xMin) && (cam.position.x <= xMax) && (cam.position.y >= yMin) && (cam.position.y <= yMax)  ){
+        return true;
+    }
+    if( oncoming ){
+        for( Vector3 corner : corners ){
+            dist = cam.signed_distance_to_frustrum( corner );
+            if( (!isnanf( dist )) && (dist < 0.0f) ){
+                return true;
+            }
+        }
+    }
     // 2. Get the neighbors of `tile` that have *already* been expanded
     // 3. Compute the difference between these two sets
     // N. Return the difference as a list of neighbors that needs instantiation
-    return addList;
 }
 
 
