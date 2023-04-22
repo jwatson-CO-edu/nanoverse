@@ -34,7 +34,8 @@ enum NEIGHBORS{
 };
 
 
-class TerrainPlate : public TriModel { public:
+
+class TerrainTile : public TriModel { public:
     // Rectangular plate of randomized terrain
 
     /// Member Data ///
@@ -133,10 +134,10 @@ class TerrainPlate : public TriModel { public:
         }
     }
 
-    TerrainPlate( float scale = 10.0f, ulong Mrows = 10, ulong Ncols = 10 ) : TriModel( (Mrows-1)*(Ncols-1)*2 ){
+    TerrainTile( float scale = 10.0f, ulong Mrows = 10, ulong Ncols = 10 ) : TriModel( (Mrows-1)*(Ncols-1)*2 ){
         // Generate points and load triangles
         
-        cout << "Basic `TerrainPlate` constructor!" << endl;
+        cout << "Basic `TerrainTile` constructor!" << endl;
 
         // 0. Init
         M /**/ = Mrows;
@@ -156,7 +157,7 @@ class TerrainPlate : public TriModel { public:
         // build_triangles();
     }
 
-    void stitch_X_POS_of( const TerrainPlate& OtherPlate ){
+    void stitch_X_POS_of( const TerrainTile& OtherPlate ){
         float z1, z2;
         // 2. Stitch
         for( ulong i = 0; i < M; i++ ){  pts[i][0] = Vector3{ OtherPlate.pts[i][N-1] };  }
@@ -171,7 +172,7 @@ class TerrainPlate : public TriModel { public:
         }
     }
 
-    void stitch_X_NEG_of( const TerrainPlate& OtherPlate ){
+    void stitch_X_NEG_of( const TerrainTile& OtherPlate ){
         float z1, z2;
         // 2. Stitch
         for( ulong i = 0; i < M; i++ ){  pts[i][N-1] = Vector3{ OtherPlate.pts[i][0] };  }
@@ -186,7 +187,7 @@ class TerrainPlate : public TriModel { public:
         }
     }
 
-    void stitch_Y_POS_of( const TerrainPlate& OtherPlate ){
+    void stitch_Y_POS_of( const TerrainTile& OtherPlate ){
         float z1, z2;
         // 2. Stitch
         for( ulong j = 0; j < N; j++ ){  pts[0][j] = Vector3{ OtherPlate.pts[M-1][j] };  }
@@ -201,7 +202,7 @@ class TerrainPlate : public TriModel { public:
         }
     }
 
-    void stitch_Y_NEG_of( const TerrainPlate& OtherPlate ){
+    void stitch_Y_NEG_of( const TerrainTile& OtherPlate ){
         float z1, z2;
         // 2. Stitch
         for( ulong j = 0; j < N; j++ ){  pts[M-1][j] = Vector3{ OtherPlate.pts[0][j] };   }      
@@ -216,10 +217,26 @@ class TerrainPlate : public TriModel { public:
         }          
     }
 
-    TerrainPlate( const TerrainPlate& OtherPlate, NEIGHBORS placement ) : TriModel( (OtherPlate.M-1)*(OtherPlate.N-1)*2 ){
+    Vector3 get_neighbor_center( const NEIGHBORS& direction ){
+        // Get a prospective center of a tile in this direction from this tile
+        switch( direction ){
+            case X_POS:
+                return Vector3Add( posn1, Vector3{   1.0f*(N-1)*scl,  0.0f          , 0.0f   } );
+            case X_NEG:
+                return Vector3Add( posn1, Vector3{  -1.0f*(N-1)*scl,  0.0f          , 0.0f   } );
+            case Y_POS:
+                return Vector3Add( posn1, Vector3{   0.0f          ,  1.0f*(M-1)*scl, 0.0f   } );
+            case Y_NEG:
+                return Vector3Add( posn1, Vector3{   0.0f          , -1.0f*(M-1)*scl, 0.0f   } );
+            default:
+                return Vector3{ nanf(""), nanf(""), nanf("") };
+        }
+    }
+
+    TerrainTile( const TerrainTile& OtherPlate, NEIGHBORS placement ) : TriModel( (OtherPlate.M-1)*(OtherPlate.N-1)*2 ){
         // Generate points and load triangles
 
-        cout << "Offset `TerrainPlate` constructor!" << endl;
+        cout << "Offset `TerrainTile` constructor!" << endl;
 
         // 0. Inherit params from neighbor
         M /**/ = OtherPlate.M;
@@ -231,15 +248,16 @@ class TerrainPlate : public TriModel { public:
         pScale = OtherPlate.pScale;
 
         // cout << gndClr << ", " << linClr << endl;
+        // Vector3 temp;
         
         // Placement Offset
         switch( placement ){
 
             case X_POS:
-                posn1  = Vector3Add( OtherPlate.posn1, Vector3{  1.0f*(N-1)*scl,  0.0f , 0.0f   } );
+                posn1 = Vector3Add( OtherPlate.posn1, Vector3{  1.0f*(N-1)*scl,  0.0f , 0.0f   } );
+                // temp = OtherPlate.get_neighbor_center( X_POS );
                 // 1. Generate points
                 gen_heightmap_perlin( pScale );
-                // stitch_X_POS_of( OtherPlate );
                 break;
 
             case X_NEG:
@@ -253,14 +271,12 @@ class TerrainPlate : public TriModel { public:
                 posn1  = Vector3Add( OtherPlate.posn1, Vector3{  0.0f ,  1.0f*(M-1)*scl, 0.0f   } );
                 // 1. Generate points
                 gen_heightmap_perlin( pScale );
-                // stitch_Y_POS_of( OtherPlate );
                 break;
 
             case Y_NEG:
                 posn1  = Vector3Add( OtherPlate.posn1, Vector3{  0.0f , -1.0f*(M-1)*scl, 0.0f   } );
                 // 1. Generate points
                 gen_heightmap_perlin( pScale );
-                // stitch_Y_NEG_of( OtherPlate );
                 break;
         }
     }
@@ -278,15 +294,11 @@ class TerrainPlate : public TriModel { public:
         return top;
     }
 
-    // vector<NEIGHBORS> occupied_neighbors( const vector< TerrainPlate* >& tiles ){
-    //     // Return a vector of occupied neighbors
-    // }
-
-    void stitch_neighbors( const vector< TerrainPlate* >& tiles ){
+    void stitch_neighbors( const vector< TerrainTile* >& tiles ){
         // Find an stitch to existing neighbors
         float radius = max( 1.0f*(M-1)*scl, 1.0f*(N-1)*scl ) * 1.25f;
         float dist   = 10000.0f;
-        for( TerrainPlate* tile : tiles ){
+        for( TerrainTile* tile : tiles ){
             dist = Vector3Distance( tile->posn1, posn1 );
             if( (dist < radius) && (dist > 0.25f*radius) ){
 
@@ -332,6 +344,33 @@ class TerrainPlate : public TriModel { public:
     }
 };
 
+// FIXME, START HERE: RETURN A SET INSTEAD OF A LIST
+vector<NEIGHBORS> get_occupied_neighbors( const TerrainTile& queryTile, const vector<TerrainTile*> tiles ){
+    // Return a list of directions from `tile` that are occupied by existing tiles
+    // NOTE: This program should maintain the invariant that each tile has only one neighbor in each direction,
+    //       but it won't break anything if the invariant is not maintained
+    float /*-------*/ radius = max( 1.0f*(queryTile.M-1)*queryTile.scl, 1.0f*(queryTile.N-1)*queryTile.scl ) * 1.25f;
+    vector<NEIGHBORS> rtnLst;
+    for( TerrainTile* tile : tiles ){
+        // Compare X_POS
+        if((queryTile.x - tile->posn1.x) > ( 0.5f * radius))  rtnLst.push_back( X_POS );
+        // Compare X_NEG
+        if((queryTile.x - tile->posn1.x) < (-0.5f * radius))  rtnLst.push_back( X_NEG );
+        // Compare Y_POS
+        if((queryTile.y - tile->posn1.y) > ( 0.5f * radius))  rtnLst.push_back( Y_POS );
+        // Compare Y_NEG
+        if((queryTile.y - tile->posn1.y) < (-0.5f * radius))  rtnLst.push_back( Y_NEG );
+    }
+    return rtnLst;
+}
+
+vector<NEIGHBORS> p_expand_tile( FlightFollowThirdP_Camera& cam, TerrainTile& tile ){
+    // Return a 
+    // 1. Get the neighbors of `tile` that *should* be expanded
+    // 2. Get the neighbors of `tile` that have *already* been expanded
+    // 3. Compute the difference between these two sets
+    // N. Return the difference as a list of neighbors that needs instantiation
+}
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
@@ -349,19 +388,19 @@ int main(){
     
 
     /// Scene Init: Pre-Window ///
-    vector< TerrainPlate* > terrainTiles;
+    vector< TerrainTile* > terrainTiles;
     cout << "Create tile 1 ..." << endl;
-    terrainTiles.push_back( new TerrainPlate{ tCellScale, Mrows, Nrows } );
+    terrainTiles.push_back( new TerrainTile{ tCellScale, Mrows, Nrows } );
     cout << "Create tile 2 ..." << endl;
-    terrainTiles.push_back( new TerrainPlate{ *(terrainTiles.back()), X_POS } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
-    terrainTiles.push_back( new TerrainPlate{ *(terrainTiles.back()), Y_POS } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
-    terrainTiles.push_back( new TerrainPlate{ *(terrainTiles.back()), X_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
-    terrainTiles.push_back( new TerrainPlate{ *(terrainTiles.back()), X_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
-    terrainTiles.push_back( new TerrainPlate{ *(terrainTiles.back()), X_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
-    terrainTiles.push_back( new TerrainPlate{ *(terrainTiles.back()), Y_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
-    terrainTiles.push_back( new TerrainPlate{ *(terrainTiles.back()), X_POS } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
+    terrainTiles.push_back( new TerrainTile{ *(terrainTiles.back()), X_POS } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
+    terrainTiles.push_back( new TerrainTile{ *(terrainTiles.back()), Y_POS } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
+    terrainTiles.push_back( new TerrainTile{ *(terrainTiles.back()), X_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
+    terrainTiles.push_back( new TerrainTile{ *(terrainTiles.back()), X_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
+    terrainTiles.push_back( new TerrainTile{ *(terrainTiles.back()), X_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
+    terrainTiles.push_back( new TerrainTile{ *(terrainTiles.back()), Y_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
+    terrainTiles.push_back( new TerrainTile{ *(terrainTiles.back()), X_POS } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
 
-    // TerrainPlate terrain{ tCellScale, Mrows, Nrows };
+    // TerrainTile terrain{ tCellScale, Mrows, Nrows };
     cout << "Terrain built!" << endl;
     
     DeltaGlider  glider{ wingspan };
@@ -379,7 +418,7 @@ int main(){
     cout << "About to load geo ..." << endl;
     glider.load_geo();
     cout << "\tGlider loaded!" << endl;
-    for( TerrainPlate* plate : terrainTiles ){
+    for( TerrainTile* plate : terrainTiles ){
         plate->load_geo();
     }
     cout << "\tTerrain loaded!" << endl;
@@ -420,7 +459,7 @@ int main(){
     // SetShaderValue( fog, fogD, &fogDensity, SHADER_UNIFORM_FLOAT );
 
     // Fog applies to all terrain tiles
-    // for( TerrainPlate* plate : terrainTiles ){  plate->model.materials[0].shader = fog;  }
+    // for( TerrainTile* plate : terrainTiles ){  plate->model.materials[0].shader = fog;  }
 
     // bloom shader
     Shader bloom = LoadShader( 0, "shaders/bloom.fs" );
@@ -480,7 +519,7 @@ int main(){
         BeginTextureMode( target );       // Enable drawing to texture
             ClearBackground( BLACK );  // Clear texture background
             BeginMode3D( camera );        // Begin 3d mode drawing
-                for( TerrainPlate* plate : terrainTiles ){  plate->draw();  }
+                for( TerrainTile* plate : terrainTiles ){  plate->draw();  }
                 // terrain.draw();  
                 glider.draw();
             EndMode3D();                // End 3d mode drawing, returns to orthographic 2d mode
@@ -513,7 +552,7 @@ int main(){
     UnloadRenderTexture( target );
 
     // UnloadModel( terrain.model );
-    for( TerrainPlate* plate : terrainTiles ){  
+    for( TerrainTile* plate : terrainTiles ){  
         UnloadModel( plate->model );  
         delete plate;
     }
