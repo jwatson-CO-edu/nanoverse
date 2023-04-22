@@ -33,13 +33,20 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     - `[>]` Infinite grid
         * `[Y]` Tiles mesh without terrain discontinuities, even considering XY noise, 2023-04-18: Stitched and blended
         * `[Y]` Add frame rate monitor, 2023-04-17: Added
-        * `[>]` Distance fog
+        * `[>]` Distance fog in the form of vanishing lines
             - https://blog.mapbox.com/drawing-antialiased-lines-with-opengl-8766f34192dc
-        * `[ ]` Instantiate without noticeable "pop-in"
-            - `[ ]` Get Raylib draw distance  
-            `#define RL_CULL_DISTANCE_NEAR      0.01 // Default projection matrix near cull distance`
-            `#define RL_CULL_DISTANCE_FAR  1000.0 // -- Default projection matrix far cull distance`
-        * `[ ]` Stop drawing when too far behind, but retain for drawing if player retraces their path  
+        * `[>]` Instantiate without noticeable "pop-in"
+            - `[Y]` Get Raylib draw distance, 2023-04-22: As below  
+            `#define RL_CULL_DISTANCE_NEAR      0.01 // Default projection matrix near cull distance`  
+            `#define RL_CULL_DISTANCE_FAR  1000.0 // -- Default projection matrix far cull distance`  
+            - `[>]` Every frame, compute whether to instantiate new neighbors
+                * `[>]` Maintain visible terrain up to cull distance
+                * `[ ]` Keep ahead of cull distance in the direction that the camera is headed
+            - `[ ]` Every frame, compute whether to show/hide existing tiles  
+            Stop drawing when too far behind, but retain for drawing if player retraces their path  
+                * `[ ]` Add and heed a visibility flag
+                * `[ ]` Hide tiles > cull distance    behind
+                * `[ ]` Hide tiles > 2X cull distance ahead
 
     - `[>]` Synthwave glider
         * `[Y]` Synthwave shading on glider, 2023-04-12: Bloom shader is sufficient
@@ -49,6 +56,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 
     - `[ ]` Synthwave triangles
         * `[ ]` Collision with triangles, Spin
+            - `{ }` Shootable?
         * `{N}` Iridescent/glare?, 2023-04-12: Would distract from vector aesthetic
     
     - `{ }` Curved CRT shader?

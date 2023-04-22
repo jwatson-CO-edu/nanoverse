@@ -365,11 +365,13 @@ vector<NEIGHBORS> get_occupied_neighbors( const TerrainTile& queryTile, const ve
 }
 
 vector<NEIGHBORS> p_expand_tile( FlightFollowThirdP_Camera& cam, TerrainTile& tile ){
-    // Return a 
+    // Return a list of neighbors of `tile` that needs instantiation in order to look infinite from `cam` view
+    vector<NEIGHBORS> addList;
     // 1. Get the neighbors of `tile` that *should* be expanded
     // 2. Get the neighbors of `tile` that have *already* been expanded
     // 3. Compute the difference between these two sets
     // N. Return the difference as a list of neighbors that needs instantiation
+    return addList;
 }
 
 
