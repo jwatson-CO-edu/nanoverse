@@ -294,7 +294,7 @@ class TerrainTile : public TriModel { public:
         return top;
     }
 
-    vector<Vector3> get_corners(){
+    vector<Vector3> get_corners() const{
         // Get the positions of the corners of the tile
         vector<Vector3> corners;
         corners.push_back(  pts[0  ][0  ]  );
@@ -354,33 +354,33 @@ class TerrainTile : public TriModel { public:
     }
 };
 
-set<NEIGHBORS> get_occupied_neighbors( const TerrainTile& queryTile, const vector<TerrainTile*>& tiles ){
-    // Return a list of directions from `tile` that are occupied by existing tiles
-    // NOTE: This program should maintain the invariant that each tile has only one neighbor in each direction,
-    //       but it won't break anything if the invariant is not maintained
-    float /*----*/ radius = max( 1.0f*(queryTile.M-1)*queryTile.scl, 1.0f*(queryTile.N-1)*queryTile.scl ) * 1.25f;
-    set<NEIGHBORS> rtnSet;
-    for( TerrainTile* tile : tiles ){
-        // Compare X_POS
-        if((queryTile.x - tile->posn1.x) > ( 0.5f * radius))  rtnSet.insert( X_POS );
-        // Compare X_NEG
-        if((queryTile.x - tile->posn1.x) < (-0.5f * radius))  rtnSet.insert( X_NEG );
-        // Compare Y_POS
-        if((queryTile.y - tile->posn1.y) > ( 0.5f * radius))  rtnSet.insert( Y_POS );
-        // Compare Y_NEG
-        if((queryTile.y - tile->posn1.y) < (-0.5f * radius))  rtnSet.insert( Y_NEG );
-    }
-    return rtnSet;
-}
+// set<NEIGHBORS> get_occupied_neighbors( const TerrainTile& queryTile, const vector<TerrainTile*>& tiles ){
+//     // Return a list of directions from `tile` that are occupied by existing tiles
+//     // NOTE: This program should maintain the invariant that each tile has only one neighbor in each direction,
+//     //       but it won't break anything if the invariant is not maintained
+//     float /*----*/ radius = max( 1.0f*(queryTile.M-1)*queryTile.scl, 1.0f*(queryTile.N-1)*queryTile.scl ) * 1.25f;
+//     set<NEIGHBORS> rtnSet;
+//     for( TerrainTile* tile : tiles ){
+//         // Compare X_POS
+//         if((queryTile.x - tile->posn1.x) > ( 0.5f * radius))  rtnSet.insert( X_POS );
+//         // Compare X_NEG
+//         if((queryTile.x - tile->posn1.x) < (-0.5f * radius))  rtnSet.insert( X_NEG );
+//         // Compare Y_POS
+//         if((queryTile.y - tile->posn1.y) > ( 0.5f * radius))  rtnSet.insert( Y_POS );
+//         // Compare Y_NEG
+//         if((queryTile.y - tile->posn1.y) < (-0.5f * radius))  rtnSet.insert( Y_NEG );
+//     }
+//     return rtnSet;
+// }
 
-// NEIGHBORS NEIGHBORHOOD
+// 
 
 // bool error_vec3( const Vector3& vec ){
 //     // Return true if any of the elements of the vector are NaN
 //     return isnanf( vec.x ) || isnanf( vec.y ) || isnanf( vec.z );
 // }
 
-bool p_in_view( FlightFollowThirdP_Camera& cam, TerrainTile& tile ){
+bool p_in_view( const FlightFollowThirdP_Camera& cam, const TerrainTile& tile ){
     // Return true if `tile` needs its neighbors to be instantiated in order to look infinite from `cam` view
     vector<Vector3> corners;
     bool /*------*/ oncoming = false;
@@ -414,14 +414,87 @@ bool p_in_view( FlightFollowThirdP_Camera& cam, TerrainTile& tile ){
         }
     }
     return false;
-    // 2. Get the neighbors of `tile` that have *already* been expanded
-    // 3. Compute the difference between these two sets
-    // N. Return the difference as a list of neighbors that needs instantiation
 }
 
-// void expand_visible_tiles( vector<TerrainTile*>& tiles ){
 
-// }
+
+void expand_visible_and_hide_trailing_tiles( FlightFollowThirdP_Camera& cam, vector<TerrainTile*>& tiles ){
+    // Add tiles ahead of visible tiles, Mark oncoming tiles visible, Mark far trailing tiles invisible
+
+    set<NEIGHBORS>  occupied;
+    vector<Vector3> corners;
+    bool /*------*/ queryVisible;
+    bool /*------*/ addTile;
+    float /*-----*/ dist;
+    float /*-----*/ dMin;
+    float /*-----*/ radius = max( 1.0f*(tiles[0]->M-1)*tiles[0]->scl, 1.0f*(tiles[0]->N-1)*tiles[0]->scl ) * 1.25f;
+    
+    for( TerrainTile* queryTile : tiles ){
+
+        queryVisible = p_in_view( cam, *queryTile );
+        addTile /**/ = false;
+        
+        if( queryVisible )  queryTile->visible = true;
+        occupied.clear();
+
+        for( TerrainTile* otherTile : tiles ){
+            
+            if( queryVisible && (queryTile != otherTile) ){
+                // Compare X_POS
+                if((queryTile->posn1.x - otherTile->posn1.x) > ( 0.5f * radius)){
+                    occupied.insert( X_POS );
+                    addTile = true;
+                }  
+                // Compare X_NEG
+                if((queryTile->posn1.x - otherTile->posn1.x) < (-0.5f * radius)){
+                    occupied.insert( X_NEG );
+                    addTile = true;
+                }  
+                // Compare Y_POS
+                if((queryTile->posn1.y - otherTile->posn1.y) > ( 0.5f * radius)){
+                    occupied.insert( Y_POS );
+                    addTile = true;
+                }  
+                // Compare Y_NEG
+                if((queryTile->posn1.y - otherTile->posn1.y) < (-0.5f * radius)){
+                    occupied.insert( Y_NEG );
+                    addTile = true;
+                }  
+            }
+        }
+
+        if( addTile ){
+            for( NEIGHBORS neighbor : NEIGHBORHOOD ){
+                if( !occupied.count( neighbor ) ){
+                    tiles.push_back( new TerrainTile{ *queryTile, neighbor } );
+                    tiles.back()->stitch_neighbors( tiles );
+                }
+            }
+        }
+
+        queryVisible = false;
+        corners /**/ = queryTile->get_corners();
+        for( Vector3 corner : corners ){
+            dist = cam.signed_distance_to_frustrum( corner );
+            if( !isnanf( dist ) && (dist < 2.0f*cam.dDrawMax) ){
+                queryTile->visible = true;
+                queryVisible /*-*/ = true;
+            }  
+        }
+
+        dMin = 10000.0f;
+        if( !queryVisible ){
+            for( Vector3 corner : corners ){
+                dist = Vector3Distance( cam.position, corner );
+                if( dist < dMin )  dMin = dist;
+            }
+            if( dMin > cam.dDrawMax )  
+                queryTile->visible = false;
+            else
+                queryTile->visible = true;
+        }
+    }
+}
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////

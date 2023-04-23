@@ -162,14 +162,14 @@ class TriModel{ public:
     vector<array<ushort,3>>  ndcs; //- Index data
 
     // Model //
-	Mesh  mesh; //- Raylib mesh geometry
-	Model model; // Raylib drawable model
+    bool  visible; // Whether or not to draw the model
+	Mesh  mesh; // -- Raylib mesh geometry
+	Model model; // - Raylib drawable model
 
     // Pose //
     float  x; //- World X pos
 	float  y; //- World Y pos
 	float  z; //- World Z pos
-	// Matrix R; //  World rotation
 	float  r; //- Local roll  angle
 	float  p; //- Local pitch angle
 	float  w; //- Local yaw   angle
@@ -482,7 +482,7 @@ class FlightFollowThirdP_Camera : public Camera3D{ public:
 		target   = trgtCenter;
 	}
 
-    bool inside_FOV( const Vector3& pnt ){
+    bool inside_FOV( const Vector3& pnt ) const{
         // Return true if the ray from the camera to the `pnt` is within the FOV (conservative)
         Vector3 vLook = Vector3Subtract( target, position );
         Vector3 vRayP = Vector3Subtract( pnt   , position );
@@ -492,7 +492,7 @@ class FlightFollowThirdP_Camera : public Camera3D{ public:
             return false;
     }
 
-    float signed_distance_to_frustrum( const Vector3& pnt ){
+    float signed_distance_to_frustrum( const Vector3& pnt ) const{
         if( inside_FOV( pnt ) ){
             return Vector3Distance( pnt, position ) - dDrawMax;
         }else{
