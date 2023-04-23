@@ -360,6 +360,10 @@ class TerrainTile : public TriModel { public:
     }
 };
 
+class TerrainCell{
+    
+};
+
 // set<NEIGHBORS> get_occupied_neighbors( const TerrainTile& queryTile, const vector<TerrainTile*>& tiles ){
 //     // Return a list of directions from `tile` that are occupied by existing tiles
 //     // NOTE: This program should maintain the invariant that each tile has only one neighbor in each direction,
