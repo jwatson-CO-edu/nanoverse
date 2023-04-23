@@ -278,13 +278,13 @@ class TriModel{ public:
         T  = MatrixIdentity();
     }
 
-    TriModel( ulong Ntri ){
+    TriModel( ulong Ntri ) : TriModel(){
         // Unshared Constructor
         init_mesh( mesh, Ntri );
         init_pose();
     }
 
-    TriModel( ulong Npts, ulong Ntri ){
+    TriModel( ulong Npts, ulong Ntri ) : TriModel(){
         // Shared Constructor
         init_mesh( mesh, Npts, Ntri );
         init_pose();

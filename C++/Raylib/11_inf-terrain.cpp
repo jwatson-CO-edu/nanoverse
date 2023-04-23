@@ -141,15 +141,15 @@ class TerrainTile : public TriModel { public:
         cout << "Basic `TerrainTile` constructor!" << endl;
 
         // 0. Init
-        M /**/ = Mrows;
-        N /**/ = Ncols;
-        scl    = scale;
-        offset = scale/200.0f;
-        gndClr = BLACK; // GREEN;
-        linClr = MAGENTA; // WHITE; // BLACK;
-        posn1  = Vector3{ 0.0f, 0.0f, 0.0f   };
-        // posn2  = Vector3{ 0.0f, 0.0f, offset };
-        pScale = 10.0f;
+        M /*-*/ = Mrows;
+        N /*-*/ = Ncols;
+        scl     = scale;
+        offset  = scale/200.0f;
+        gndClr  = BLACK; // GREEN;
+        linClr  = MAGENTA; // WHITE; // BLACK;
+        posn1   = Vector3{ 0.0f, 0.0f, 0.0f   };
+        pScale  = 10.0f;
+        visible = true;
 
         // 1. Generate points
         gen_heightmap_perlin( pScale );
@@ -240,13 +240,14 @@ class TerrainTile : public TriModel { public:
         cout << "Offset `TerrainTile` constructor!" << endl;
 
         // 0. Inherit params from neighbor
-        M /**/ = OtherPlate.M;
-        N /**/ = OtherPlate.N;
-        scl    = OtherPlate.scl;
-        offset = OtherPlate.offset;
-        gndClr = OtherPlate.gndClr;
-        linClr = OtherPlate.linClr;
-        pScale = OtherPlate.pScale;
+        M /*-*/ = OtherPlate.M;
+        N /*-*/ = OtherPlate.N;
+        scl     = OtherPlate.scl;
+        offset  = OtherPlate.offset;
+        gndClr  = OtherPlate.gndClr;
+        linClr  = OtherPlate.linClr;
+        pScale  = OtherPlate.pScale;
+        visible = true;
 
         // cout << gndClr << ", " << linClr << endl;
         // Vector3 temp;
@@ -297,10 +298,15 @@ class TerrainTile : public TriModel { public:
     vector<Vector3> get_corners() const{
         // Get the positions of the corners of the tile
         vector<Vector3> corners;
-        corners.push_back(  pts[0  ][0  ]  );
-        corners.push_back(  pts[M-1][0  ]  );
-        corners.push_back(  pts[M-1][N-1]  );
-        corners.push_back(  pts[0  ][N-1]  );
+        cout << "About to check size ..." << endl;
+        cout << "How many points?: " << pts.size() << endl;
+        if( pts.size() ){
+            cout << "There are corners to get ..." << endl;
+            corners.push_back(  pts[0  ][0  ]  );
+            corners.push_back(  pts[M-1][0  ]  );
+            corners.push_back(  pts[M-1][N-1]  );
+            corners.push_back(  pts[0  ][N-1]  );
+        }
         return corners;
     }
 
@@ -391,7 +397,11 @@ bool p_in_view( const FlightFollowThirdP_Camera& cam, const TerrainTile& tile ){
           yMax = -10000.0f;
     // 1. Get the neighbors of `tile` that *should* be expanded
     // Is the tile in the frustrum cone?
+    
+    cout << "About to get corners ..." << endl;
     corners  = tile.get_corners();
+
+    cout << "About test corners ..." << endl;
     for( Vector3 corner : corners ){
         if( corner.x < xMin )  xMin = corner.x;
         if( corner.x > xMax )  xMax = corner.x;
@@ -402,9 +412,11 @@ bool p_in_view( const FlightFollowThirdP_Camera& cam, const TerrainTile& tile ){
             break;
         }
     }
+    cout << "About test interior ..." << endl;
     if(  (cam.position.x >= xMin) && (cam.position.x <= xMax) && (cam.position.y >= yMin) && (cam.position.y <= yMax)  ){
         return true;
     }
+    cout << "About test corners in view ..." << endl;
     if( oncoming ){
         for( Vector3 corner : corners ){
             dist = cam.signed_distance_to_frustrum( corner );
@@ -429,7 +441,11 @@ void expand_visible_and_hide_trailing_tiles( FlightFollowThirdP_Camera& cam, vec
     float /*-----*/ dMin;
     float /*-----*/ radius = max( 1.0f*(tiles[0]->M-1)*tiles[0]->scl, 1.0f*(tiles[0]->N-1)*tiles[0]->scl ) * 1.25f;
     
+    cout << "About to query tiles ..." << endl;
+
     for( TerrainTile* queryTile : tiles ){
+
+        cout << "About to determine visibility ..." << endl;
 
         queryVisible = p_in_view( cam, *queryTile );
         addTile /**/ = false;
@@ -437,9 +453,14 @@ void expand_visible_and_hide_trailing_tiles( FlightFollowThirdP_Camera& cam, vec
         if( queryVisible )  queryTile->visible = true;
         occupied.clear();
 
+        cout << "About to compare tiles ..." << endl;
+
         for( TerrainTile* otherTile : tiles ){
             
             if( queryVisible && (queryTile != otherTile) ){
+
+                cout << "About to determine neighborship ..." << endl;
+
                 // Compare X_POS
                 if((queryTile->posn1.x - otherTile->posn1.x) > ( 0.5f * radius)){
                     occupied.insert( X_POS );
@@ -464,13 +485,19 @@ void expand_visible_and_hide_trailing_tiles( FlightFollowThirdP_Camera& cam, vec
         }
 
         if( addTile ){
+
+            cout << "About to add tiles ..." << endl;
+
             for( NEIGHBORS neighbor : NEIGHBORHOOD ){
                 if( !occupied.count( neighbor ) ){
                     tiles.push_back( new TerrainTile{ *queryTile, neighbor } );
                     tiles.back()->stitch_neighbors( tiles );
+                    tiles.back()->load_geo();
                 }
             }
         }
+
+        cout << "About to mark oncoming visible ..." << endl;
 
         queryVisible = false;
         corners /**/ = queryTile->get_corners();
@@ -481,6 +508,8 @@ void expand_visible_and_hide_trailing_tiles( FlightFollowThirdP_Camera& cam, vec
                 queryVisible /*-*/ = true;
             }  
         }
+
+        cout << "About to mark receding visible ..." << endl;
 
         dMin = 10000.0f;
         if( !queryVisible ){
@@ -494,6 +523,8 @@ void expand_visible_and_hide_trailing_tiles( FlightFollowThirdP_Camera& cam, vec
                 queryTile->visible = true;
         }
     }
+
+    cout << "DONE" << endl;
 }
 
 
@@ -636,6 +667,7 @@ int main(){
         // SetShaderValue( fog, fog.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3 );
 
         // glider.z_thrust( frameThrust );
+        // expand_visible_and_hide_trailing_tiles( camera, terrainTiles );
 
 
         ///// DRAW PHASE /////////////////////////
@@ -643,7 +675,9 @@ int main(){
         BeginTextureMode( target );       // Enable drawing to texture
             ClearBackground( BLACK );  // Clear texture background
             BeginMode3D( camera );        // Begin 3d mode drawing
-                for( TerrainTile* plate : terrainTiles ){  plate->draw();  }
+                for( TerrainTile* plate : terrainTiles ){  
+                    if( plate->visible )  plate->draw();  
+                }
                 // terrain.draw();  
                 glider.draw();
             EndMode3D();                // End 3d mode drawing, returns to orthographic 2d mode
