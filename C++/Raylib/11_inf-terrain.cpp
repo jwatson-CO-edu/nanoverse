@@ -354,7 +354,7 @@ class TerrainTile : public TriModel { public:
     }
 };
 
-set<NEIGHBORS> get_occupied_neighbors( const TerrainTile& queryTile, const vector<TerrainTile*> tiles ){
+set<NEIGHBORS> get_occupied_neighbors( const TerrainTile& queryTile, const vector<TerrainTile*>& tiles ){
     // Return a list of directions from `tile` that are occupied by existing tiles
     // NOTE: This program should maintain the invariant that each tile has only one neighbor in each direction,
     //       but it won't break anything if the invariant is not maintained
@@ -382,8 +382,8 @@ set<NEIGHBORS> get_occupied_neighbors( const TerrainTile& queryTile, const vecto
 
 bool p_in_view( FlightFollowThirdP_Camera& cam, TerrainTile& tile ){
     // Return true if `tile` needs its neighbors to be instantiated in order to look infinite from `cam` view
-    vector<Vector3>   corners;
-    bool /*--------*/ oncoming = false;
+    vector<Vector3> corners;
+    bool /*------*/ oncoming = false;
     float dist, 
           xMin =  10000.0f, 
           xMax = -10000.0f, 
@@ -413,10 +413,15 @@ bool p_in_view( FlightFollowThirdP_Camera& cam, TerrainTile& tile ){
             }
         }
     }
+    return false;
     // 2. Get the neighbors of `tile` that have *already* been expanded
     // 3. Compute the difference between these two sets
     // N. Return the difference as a list of neighbors that needs instantiation
 }
+
+// void expand_visible_tiles( vector<TerrainTile*>& tiles ){
+
+// }
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
@@ -557,7 +562,7 @@ int main(){
         // update the light shader with the camera view position
         // SetShaderValue( fog, fog.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3 );
 
-        glider.z_thrust( frameThrust );
+        // glider.z_thrust( frameThrust );
 
 
         ///// DRAW PHASE /////////////////////////
