@@ -40,9 +40,9 @@ void setModelShader( Model* m, Shader* s ){
 
 ////////// VECTOR MATH /////////////////////////////////////////////////////////////////////////////
 
-float vec3_mag( Vector3 vec ){  return sqrt( pow( vec.x, 2 ) + pow( vec.y, 2 ) + pow( vec.z, 2 ) );  } // Magnitude of `vec`
+float vec3_mag( const Vector3& vec ){  return sqrt( pow( vec.x, 2 ) + pow( vec.y, 2 ) + pow( vec.z, 2 ) );  } // Magnitude of `vec`
 
-Vector3 vec3_divide( Vector3 vec, float div ){
+Vector3 vec3_divide( const Vector3& vec, float div ){
     // Divide each element by a scalar
 	return Vector3{
 		vec.x / div,
@@ -51,7 +51,7 @@ Vector3 vec3_divide( Vector3 vec, float div ){
 	};
 }
 
-Vector3 vec3_unit( Vector3 vec ){
+Vector3 vec3_unit( const Vector3& vec ){
     // Get the unit vector in the direction of `vec`
 	float mag = vec3_mag( vec );
 	if( mag == 0.0 )  
@@ -60,7 +60,7 @@ Vector3 vec3_unit( Vector3 vec ){
 		return vec3_divide( vec, mag );
 }
 
-Vector3 vec3_mult( Vector3 vec, float factor ){
+Vector3 vec3_mult( const Vector3& vec, float factor ){
     // Multiply each element by a scalar
 	return Vector3{
 		vec.x * factor,
@@ -69,6 +69,10 @@ Vector3 vec3_mult( Vector3 vec, float factor ){
 	};
 }
 
+bool p_vec3_error( const Vector3& vec ){
+    // Return true if any of the elments of the Vector3 are NaN
+    return isnanf( vec.x ) || isnanf( vec.y ) || isnanf( vec.z );
+}
 
 
 ////////// IMAGE & COLOR ///////////////////////////////////////////////////////////////////////////

@@ -51,8 +51,8 @@ class TerrainTile : public TriModel { public:
     Color /*-------------*/ linClr; // Triangle line color
     float /*-------------*/ offset; // Z bump for lines
     Vector3 /*-----------*/ posn1; //- Facet drawing origin
-    // Vector3 /*-----------*/ posn2; //- Line  drawing origin
     float /*-------------*/ pScale; // Perlin scale param
+    bool /*--------------*/ loaded;
 
     /// Constructors & Helpers ///
 
@@ -152,6 +152,7 @@ class TerrainTile : public TriModel { public:
         posn1   = origin; 
         pScale  = 10.0f;
         visible = true;
+        loaded  = false;
 
         // 1. Generate points
         gen_heightmap_perlin( pScale );
@@ -254,6 +255,7 @@ class TerrainTile : public TriModel { public:
         build_normals_flat_unshared();
         cout << "\t\t`load_mesh` ..." << endl;
         load_mesh();
+        loaded = true;
     }
 
     void draw(){
@@ -313,7 +315,19 @@ class TerrainGrid{ public:
         };
     }
 
+    vector<Vector3> get_tile_corners( const array<int,2>& addr ){
+        // Get the positions of the corners of the tile at the `addr`
+        vector<Vector3> rtnLst;
+        Vector3 /*---*/ origin = get_tile_origin( addr );
+        rtnLst.push_back( origin );
+        rtnLst.push_back( Vector3Add(  origin, Vector3{ (1.0f*NcolsTile-1)*sclCell,  0.0f                     , 0.0f }  ) );
+        rtnLst.push_back( Vector3Add(  origin, Vector3{  0.0f                     , (1.0f*MrowsTile-1)*sclCell, 0.0f }  ) );
+        rtnLst.push_back( Vector3Add(  origin, Vector3{ (1.0f*NcolsTile-1)*sclCell, (1.0f*MrowsTile-1)*sclCell, 0.0f }  ) );
+        return rtnLst;
+    }
+
     void populate_neighbors_of( const array<int,2>& addr ){
+        // Create the Von Neumann neighborhood of `addr`
         TerrainTile* /*---*/ nuTile    = nullptr;
         vector<array<int,2>> neighbors = neighbors_of( addr ); // {X_POS, X_NEG, Y_POS, Y_NEG}
         vector<array<int,2>> nghbrNghbrs;
@@ -350,6 +364,65 @@ class TerrainGrid{ public:
         }
     }
 
+    array<int,2> p_visible_and_oncoming( const FlightFollowThirdP_Camera& cam, const array<int,2>& addr ){
+        // Return a two-part flag [ <Tile is close to the camera>, <Tile is in view or is in danger of coming into view> ]
+        array<int,2>    rtnFlags = {0,0};
+        vector<Vector3> corners = get_tile_corners( addr );
+        float /*-----*/ dist, 
+        /*-----------*/ xMin =  10000.0f, 
+        /*-----------*/ xMax = -10000.0f, 
+        /*-----------*/ yMin =  10000.0f, 
+        /*-----------*/ yMax = -10000.0f;
+        for( Vector3 corner : corners ){
+            // Determine Visible
+            if( Vector3Distance( cam.position, corner ) <= (1.5f*cam.dDrawMax) )  rtnFlags[0] = 1;
+            // Determine oncoming
+            dist = cam.signed_distance_to_frustrum( corner );
+            if( (!isnan( dist )) && (dist <= (1.5f*cam.dDrawMax)) )  rtnFlags[1] = 1;
+            if( corner.x < xMin )  xMin = corner.x;
+            if( corner.x > xMax )  xMax = corner.x;
+            if( corner.y < yMin )  yMin = corner.y;
+            if( corner.y > yMax )  yMax = corner.y;
+        }
+        if(  (cam.position.x >= xMin) && (cam.position.x <= xMax) && (cam.position.y >= yMin) && (cam.position.y <= yMax)  ){
+            rtnFlags[0] = 1;
+            rtnFlags[1] = 1;
+        }
+        return rtnFlags;
+    }
+
+    vector<array<int,2>> mark_visible_and_return_oncoming( const FlightFollowThirdP_Camera& cam ){
+        // Mark tiles in/visible, Return a list of oncoming tiles that might need expansion
+        array<int,2> /*---*/ currAddr;
+        TerrainTile* /*---*/ currTile = nullptr;
+        array<int,2> /*---*/ tileRslt;
+        vector<array<int,2>> rtnLst;
+
+        // For every tile
+        for( pair<array<int,2>,TerrainTile*> elem : tiles ){
+            currAddr = elem.first;
+            currTile = elem.second;
+            tileRslt = p_visible_and_oncoming( cam, currAddr );
+            if( tileRslt[0] ){  currTile->visible = true;  }else{  currTile->visible = false;  }
+            if( tileRslt[1] ){
+                rtnLst.push_back( currAddr );
+            }
+            if( (currTile->visible) && (!(currTile->loaded)) ){
+                currTile->load_geo();
+                // currTile->loaded = true;
+            }
+        }
+        return rtnLst;
+    }
+
+    void mark_visible_and_expand_border( const FlightFollowThirdP_Camera& cam ){
+        // Generate tiles as we approach them and maintain their visibility
+        vector<array<int,2>> borderTiles = mark_visible_and_return_oncoming( cam );
+        for( array<int,2> borderAddr : borderTiles ){
+            populate_neighbors_of( borderAddr );
+        }
+    }
+
     void load_geo(){
         // Load geometry for all existing tiles
         for( pair<array<int,2>,TerrainTile*> elem : tiles ){  elem.second->load_geo();  }
@@ -357,51 +430,13 @@ class TerrainGrid{ public:
 
     void draw(){
         // Load geometry for all existing tiles
-        for( pair<array<int,2>,TerrainTile*> elem : tiles ){  if( elem.second->visible )  elem.second->draw();  }
+        for( pair<array<int,2>,TerrainTile*> elem : tiles ){  
+            if( (elem.second->visible) && (elem.second->loaded) )  elem.second->draw();  
+        }
     }
 };
 
-bool p_in_view( const FlightFollowThirdP_Camera& cam, const TerrainTile& tile ){
-    // Return true if `tile` needs its neighbors to be instantiated in order to look infinite from `cam` view
-    vector<Vector3> corners;
-    bool /*------*/ oncoming = false;
-    float dist, 
-          xMin =  10000.0f, 
-          xMax = -10000.0f, 
-          yMin =  10000.0f, 
-          yMax = -10000.0f;
-    // 1. Get the neighbors of `tile` that *should* be expanded
-    // Is the tile in the frustrum cone?
-    
-    cout << "About to get corners ..." << endl;
-    corners  = tile.get_corners();
 
-    cout << "About test corners ..." << endl;
-    for( Vector3 corner : corners ){
-        if( corner.x < xMin )  xMin = corner.x;
-        if( corner.x > xMax )  xMax = corner.x;
-        if( corner.y < yMin )  yMin = corner.y;
-        if( corner.y > yMax )  yMax = corner.y;
-        if( cam.inside_FOV( corner ) ){
-            oncoming = true;
-            break;
-        }
-    }
-    cout << "About test interior ..." << endl;
-    if(  (cam.position.x >= xMin) && (cam.position.x <= xMax) && (cam.position.y >= yMin) && (cam.position.y <= yMax)  ){
-        return true;
-    }
-    cout << "About test corners in view ..." << endl;
-    if( oncoming ){
-        for( Vector3 corner : corners ){
-            dist = cam.signed_distance_to_frustrum( corner );
-            if( (!isnanf( dist )) && (dist < 0.0f) ){
-                return true;
-            }
-        }
-    }
-    return false;
-}
 
 
 
@@ -427,7 +462,7 @@ int main(){
     
     DeltaGlider  glider{ wingspan };
 	float /*--*/ frameRotateRad = 3.1416/120.0;
-    float /*--*/ frameThrust    = 12.0/60.0;
+    float /*--*/ frameThrust    = 36.0/60.0;
 
     /// Window Init ///
     InitWindow( (int) res.x, (int) res.y, "Terrain Gen + Glider + Bloom Shader" );
@@ -502,6 +537,7 @@ int main(){
         glider.z_thrust( frameThrust );
         camera.update_target_position( glider.get_XYZ() );
 		camera.advance_camera();
+        terrainTiles.mark_visible_and_expand_border( camera );
 
         ///// DRAW PHASE /////////////////////////
         
