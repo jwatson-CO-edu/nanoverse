@@ -292,9 +292,10 @@ class TriModel{ public:
 
     ~TriModel(){
         // Free all allocated memory
-        if( mesh.vertices )  free( mesh.vertices );
-        if( mesh.indices  )  free( mesh.indices  );
-        if( mesh.normals  )  free( mesh.normals  );
+        if( mesh.vertices )  delete mesh.vertices;
+        if( mesh.indices  )  delete mesh.indices;
+        if( mesh.normals  )  delete mesh.normals;
+        UnloadModel( model );  
     }
 
     ///// Pose Math //////////////////////////////

@@ -10,6 +10,8 @@ using std::cout, std::endl, std::ostream;
 using std::min, std::max;
 #include <set>
 using std::set;
+#include <map>
+using std::map, std::pair;
 
 /// Raylib ///
 #include <raylib.h>
@@ -135,7 +137,7 @@ class TerrainTile : public TriModel { public:
         }
     }
 
-    TerrainTile( float scale = 10.0f, ulong Mrows = 10, ulong Ncols = 10 ) : TriModel( (Mrows-1)*(Ncols-1)*2 ){
+    TerrainTile( float scale, ulong Mrows, ulong Ncols, Vector3 origin ) : TriModel( (Mrows-1)*(Ncols-1)*2 ){
         // Generate points and load triangles
         
         cout << "Basic `TerrainTile` constructor!" << endl;
@@ -145,17 +147,22 @@ class TerrainTile : public TriModel { public:
         N /*-*/ = Ncols;
         scl     = scale;
         offset  = scale/200.0f;
-        gndClr  = BLACK; // GREEN;
-        linClr  = MAGENTA; // WHITE; // BLACK;
-        posn1   = Vector3{ 0.0f, 0.0f, 0.0f   };
+        gndClr  = BLACK; 
+        linClr  = MAGENTA;
+        posn1   = origin; 
         pScale  = 10.0f;
         visible = true;
 
         // 1. Generate points
         gen_heightmap_perlin( pScale );
+    }
 
-        // 2. Turn the heightmap into a mesh
-        // build_triangles();
+    ~TerrainTile(){
+        // Free all allocated memory
+        if( mesh.vertices )  delete mesh.vertices;
+        if( mesh.indices  )  delete mesh.indices;
+        if( mesh.normals  )  delete mesh.normals;
+        UnloadModel( model );  
     }
 
     void stitch_X_POS_of( const TerrainTile& OtherPlate ){
@@ -167,9 +174,6 @@ class TerrainTile : public TriModel { public:
             z1 = pts[i][2].z;
             z2 = pts[i][0].z;
             pts[i][1].z = randf_bn( z1, z2 );
-            // z1 = OtherPlate.pts[i][N-3].z;
-            // z2 = OtherPlate.pts[i][N-1].z;
-            // OtherPlate.pts[i][N-2].z = randf_bn( z1, z2 );
         }
     }
 
@@ -182,9 +186,6 @@ class TerrainTile : public TriModel { public:
             z1 = pts[i][N-3].z;
             z2 = pts[i][N-1].z;
             pts[i][N-2].z = randf_bn( z1, z2 );
-            // z1 = OtherPlate.pts[i][2].z;
-            // z2 = OtherPlate.pts[i][0].z;
-            // OtherPlate.pts[i][1].z = randf_bn( z1, z2 );
         }
     }
 
@@ -197,9 +198,6 @@ class TerrainTile : public TriModel { public:
             z1 = pts[2][j].z;
             z2 = pts[0][j].z;
             pts[1][j].z = randf_bn( z1, z2 );
-            // z1 = OtherPlate.pts[M-3][j].z;
-            // z2 = OtherPlate.pts[M-1][j].z;
-            // OtherPlate.pts[M-2][j].z = randf_bn( z1, z2 );
         }
     }
 
@@ -212,74 +210,7 @@ class TerrainTile : public TriModel { public:
             z1 = pts[M-3][j].z;
             z2 = pts[M-1][j].z;
             pts[M-2][j].z = randf_bn( z1, z2 );
-            // z1 = OtherPlate.pts[2][j].z;
-            // z2 = OtherPlate.pts[0][j].z;
-            // OtherPlate.pts[1][j].z = randf_bn( z1, z2 );
         }          
-    }
-
-    Vector3 get_neighbor_center( const NEIGHBORS& direction ){
-        // Get a prospective center of a tile in this direction from this tile
-        switch( direction ){
-            case X_POS:
-                return Vector3Add( posn1, Vector3{   1.0f*(N-1)*scl,  0.0f          , 0.0f   } );
-            case X_NEG:
-                return Vector3Add( posn1, Vector3{  -1.0f*(N-1)*scl,  0.0f          , 0.0f   } );
-            case Y_POS:
-                return Vector3Add( posn1, Vector3{   0.0f          ,  1.0f*(M-1)*scl, 0.0f   } );
-            case Y_NEG:
-                return Vector3Add( posn1, Vector3{   0.0f          , -1.0f*(M-1)*scl, 0.0f   } );
-            default:
-                return Vector3{ nanf(""), nanf(""), nanf("") };
-        }
-    }
-
-    TerrainTile( const TerrainTile& OtherPlate, NEIGHBORS placement ) : TriModel( (OtherPlate.M-1)*(OtherPlate.N-1)*2 ){
-        // Generate points and load triangles
-
-        cout << "Offset `TerrainTile` constructor!" << endl;
-
-        // 0. Inherit params from neighbor
-        M /*-*/ = OtherPlate.M;
-        N /*-*/ = OtherPlate.N;
-        scl     = OtherPlate.scl;
-        offset  = OtherPlate.offset;
-        gndClr  = OtherPlate.gndClr;
-        linClr  = OtherPlate.linClr;
-        pScale  = OtherPlate.pScale;
-        visible = true;
-
-        // cout << gndClr << ", " << linClr << endl;
-        // Vector3 temp;
-        
-        // Placement Offset
-        switch( placement ){
-
-            case X_POS:
-                posn1 = Vector3Add( OtherPlate.posn1, Vector3{  1.0f*(N-1)*scl,  0.0f , 0.0f   } );
-                // temp = OtherPlate.get_neighbor_center( X_POS );
-                // 1. Generate points
-                gen_heightmap_perlin( pScale );
-                break;
-
-            case X_NEG:
-                posn1 = Vector3Add( OtherPlate.posn1, Vector3{  -1.0f*(N-1)*scl,  0.0f , 0.0f   } );
-                // 1. Generate points
-                gen_heightmap_perlin( pScale );
-                break;
-
-            case Y_POS:
-                posn1 = Vector3Add( OtherPlate.posn1, Vector3{  0.0f ,  1.0f*(M-1)*scl, 0.0f   } );
-                // 1. Generate points
-                gen_heightmap_perlin( pScale );
-                break;
-
-            case Y_NEG:
-                posn1 = Vector3Add( OtherPlate.posn1, Vector3{  0.0f , -1.0f*(M-1)*scl, 0.0f   } );
-                // 1. Generate points
-                gen_heightmap_perlin( pScale );
-                break;
-        }
     }
 
     /// Methods ///
@@ -310,34 +241,6 @@ class TerrainTile : public TriModel { public:
         return corners;
     }
 
-    void stitch_neighbors( const vector< TerrainTile* >& tiles ){
-        // Find an stitch to existing neighbors
-        float radius = max( 1.0f*(M-1)*scl, 1.0f*(N-1)*scl ) * 1.25f;
-        float dist   = 10000.0f;
-        for( TerrainTile* tile : tiles ){
-            dist = Vector3Distance( tile->posn1, posn1 );
-            if( (dist < radius) && (dist > 0.25f*radius) ){
-
-                // X_POS of
-                if((posn1.x - tile->posn1.x) > ( 0.5f * radius)){
-                    stitch_X_POS_of( *tile );
-
-                // X_NEG of
-                }else if((posn1.x - tile->posn1.x) < (-0.5f * radius)){
-                    stitch_X_NEG_of( *tile );
-                
-                // Y_POS of
-                }else if((posn1.y - tile->posn1.y) > ( 0.5f * radius)){
-                    stitch_Y_POS_of( *tile );
-                
-                // Y_NEG of
-                }else if((posn1.y - tile->posn1.y) < (-0.5f * radius)){
-                    stitch_Y_NEG_of( *tile );
-                }
-            }
-        }
-    }
-
     ///// Rendering //////////////////////////////
     // WARNING: Requires window init to call!
 
@@ -360,35 +263,103 @@ class TerrainTile : public TriModel { public:
     }
 };
 
-class TerrainCell{
-    
+class TerrainGrid{ public:
+    // Managing structure for multiple `TerrainTile`s
+
+    /// Members ///
+    map<array<int,2>,TerrainTile*> tiles;
+    float /*--------------------*/ sclCell;
+    ulong /*--------------------*/ MrowsTile;
+    ulong /*--------------------*/ NcolsTile;
+
+    /// Constructors & Destructors ///
+
+    TerrainGrid( float cellScale, ulong Mrows, ulong Nrows ){
+        // Create a new grid with the center tile populated
+        // Set params
+        sclCell   = cellScale;
+        MrowsTile = Mrows;
+        NcolsTile = Nrows;
+        // Populate center tile
+        tiles[ {0,0} ] = new TerrainTile{ sclCell, MrowsTile, NcolsTile, Vector3{ 0.0f, 0.0f, 0.0f } };
+    }
+
+    ~TerrainGrid(){
+        // Delete all tiles
+        for( pair<array<int,2>,TerrainTile*> elem : tiles ){  delete elem.second;  }
+        tiles.clear();
+    }
+
+    /// Methods ///
+
+    bool p_cell_occupied( const array<int,2>& addr ){  return (tiles.count( addr ) > 0);  } // Is the cell at `addr` occupied?
+
+    vector<array<int,2>> neighbors_of( const array<int,2>& addr ){
+        // Return the Von Neumann neighborhood of `addr`
+        vector<array<int,2>> rtnLst;
+        rtnLst.push_back( { addr[0]  , addr[1]+1 } ); // X_POS
+        rtnLst.push_back( { addr[0]  , addr[1]-1 } ); // X_NEG
+        rtnLst.push_back( { addr[0]+1, addr[1]   } ); // Y_POS
+        rtnLst.push_back( { addr[0]-1, addr[1]   } ); // Y_NEG
+        return rtnLst;
+    }
+
+    Vector3 get_tile_origin( const array<int,2>& addr ){
+        // Get the origin of the `addr` in 3D space
+        return Vector3{
+            1.0f*addr[0]*(1.0f*NcolsTile-1)*sclCell,
+            1.0f*addr[1]*(1.0f*MrowsTile-1)*sclCell,
+            0.0f 
+        };
+    }
+
+    void populate_neighbors_of( const array<int,2>& addr ){
+        TerrainTile* /*---*/ nuTile    = nullptr;
+        vector<array<int,2>> neighbors = neighbors_of( addr ); // {X_POS, X_NEG, Y_POS, Y_NEG}
+        vector<array<int,2>> nghbrNghbrs;
+        int /*------------*/ i;
+        
+        for( array<int,2> nghbrAddr : neighbors ){
+            if( !p_cell_occupied( nghbrAddr ) ){
+                nuTile = new TerrainTile{ sclCell, MrowsTile, NcolsTile, get_tile_origin( nghbrAddr ) };
+                tiles[ nghbrAddr ] = nuTile;
+                nghbrNghbrs = neighbors_of( nghbrAddr ); // {X_POS, X_NEG, Y_POS, Y_NEG}
+                i = 0;
+                for( array<int,2> nghbrNghbr : nghbrNghbrs ){
+                    if( p_cell_occupied( nghbrNghbr ) ){
+                        switch (i){
+                            case 0:
+                                nuTile->stitch_Y_NEG_of( *tiles[ nghbrNghbr ] );
+                                break;
+                            case 1:
+                                nuTile->stitch_Y_POS_of( *tiles[ nghbrNghbr ] );
+                                break;
+                            case 2:
+                                nuTile->stitch_X_NEG_of( *tiles[ nghbrNghbr ] );
+                                break;
+                            case 3:
+                                nuTile->stitch_X_POS_of( *tiles[ nghbrNghbr ] );
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    i++;
+                }
+            }
+        }
+    }
+
+    void load_geo(){
+        // Load geometry for all existing tiles
+        for( pair<array<int,2>,TerrainTile*> elem : tiles ){  elem.second->load_geo();  }
+    }
+
+    void draw(){
+        // Load geometry for all existing tiles
+        for( pair<array<int,2>,TerrainTile*> elem : tiles ){  if( elem.second->visible )  elem.second->draw();  }
+    }
 };
-
-// set<NEIGHBORS> get_occupied_neighbors( const TerrainTile& queryTile, const vector<TerrainTile*>& tiles ){
-//     // Return a list of directions from `tile` that are occupied by existing tiles
-//     // NOTE: This program should maintain the invariant that each tile has only one neighbor in each direction,
-//     //       but it won't break anything if the invariant is not maintained
-//     float /*----*/ radius = max( 1.0f*(queryTile.M-1)*queryTile.scl, 1.0f*(queryTile.N-1)*queryTile.scl ) * 1.25f;
-//     set<NEIGHBORS> rtnSet;
-//     for( TerrainTile* tile : tiles ){
-//         // Compare X_POS
-//         if((queryTile.x - tile->posn1.x) > ( 0.5f * radius))  rtnSet.insert( X_POS );
-//         // Compare X_NEG
-//         if((queryTile.x - tile->posn1.x) < (-0.5f * radius))  rtnSet.insert( X_NEG );
-//         // Compare Y_POS
-//         if((queryTile.y - tile->posn1.y) > ( 0.5f * radius))  rtnSet.insert( Y_POS );
-//         // Compare Y_NEG
-//         if((queryTile.y - tile->posn1.y) < (-0.5f * radius))  rtnSet.insert( Y_NEG );
-//     }
-//     return rtnSet;
-// }
-
-// 
-
-// bool error_vec3( const Vector3& vec ){
-//     // Return true if any of the elements of the vector are NaN
-//     return isnanf( vec.x ) || isnanf( vec.y ) || isnanf( vec.z );
-// }
 
 bool p_in_view( const FlightFollowThirdP_Camera& cam, const TerrainTile& tile ){
     // Return true if `tile` needs its neighbors to be instantiated in order to look infinite from `cam` view
@@ -434,104 +405,6 @@ bool p_in_view( const FlightFollowThirdP_Camera& cam, const TerrainTile& tile ){
 
 
 
-void expand_visible_and_hide_trailing_tiles( FlightFollowThirdP_Camera& cam, vector<TerrainTile*>& tiles ){
-    // Add tiles ahead of visible tiles, Mark oncoming tiles visible, Mark far trailing tiles invisible
-
-    set<NEIGHBORS>  occupied;
-    vector<Vector3> corners;
-    bool /*------*/ queryVisible;
-    bool /*------*/ addTile;
-    float /*-----*/ dist;
-    float /*-----*/ dMin;
-    float /*-----*/ radius = max( 1.0f*(tiles[0]->M-1)*tiles[0]->scl, 1.0f*(tiles[0]->N-1)*tiles[0]->scl ) * 1.25f;
-    
-    cout << "About to query tiles ..." << endl;
-
-    for( TerrainTile* queryTile : tiles ){
-
-        cout << "About to determine visibility ..." << endl;
-
-        queryVisible = p_in_view( cam, *queryTile );
-        addTile /**/ = false;
-        
-        if( queryVisible )  queryTile->visible = true;
-        occupied.clear();
-
-        cout << "About to compare tiles ..." << endl;
-
-        for( TerrainTile* otherTile : tiles ){
-            
-            if( queryVisible && (queryTile != otherTile) ){
-
-                cout << "About to determine neighborship ..." << endl;
-
-                // Compare X_POS
-                if((queryTile->posn1.x - otherTile->posn1.x) > ( 0.5f * radius)){
-                    occupied.insert( X_POS );
-                    addTile = true;
-                }  
-                // Compare X_NEG
-                if((queryTile->posn1.x - otherTile->posn1.x) < (-0.5f * radius)){
-                    occupied.insert( X_NEG );
-                    addTile = true;
-                }  
-                // Compare Y_POS
-                if((queryTile->posn1.y - otherTile->posn1.y) > ( 0.5f * radius)){
-                    occupied.insert( Y_POS );
-                    addTile = true;
-                }  
-                // Compare Y_NEG
-                if((queryTile->posn1.y - otherTile->posn1.y) < (-0.5f * radius)){
-                    occupied.insert( Y_NEG );
-                    addTile = true;
-                }  
-            }
-        }
-
-        if( addTile ){
-
-            cout << "About to add tiles ..." << endl;
-
-            for( NEIGHBORS neighbor : NEIGHBORHOOD ){
-                if( !occupied.count( neighbor ) ){
-                    tiles.push_back( new TerrainTile{ *queryTile, neighbor } );
-                    tiles.back()->stitch_neighbors( tiles );
-                    tiles.back()->load_geo();
-                }
-            }
-        }
-
-        cout << "About to mark oncoming visible ..." << endl;
-
-        queryVisible = false;
-        corners /**/ = queryTile->get_corners();
-        for( Vector3 corner : corners ){
-            dist = cam.signed_distance_to_frustrum( corner );
-            if( !isnanf( dist ) && (dist < 2.0f*cam.dDrawMax) ){
-                queryTile->visible = true;
-                queryVisible /*-*/ = true;
-            }  
-        }
-
-        cout << "About to mark receding visible ..." << endl;
-
-        dMin = 10000.0f;
-        if( !queryVisible ){
-            for( Vector3 corner : corners ){
-                dist = Vector3Distance( cam.position, corner );
-                if( dist < dMin )  dMin = dist;
-            }
-            if( dMin > cam.dDrawMax )  
-                queryTile->visible = false;
-            else
-                queryTile->visible = true;
-        }
-    }
-
-    cout << "DONE" << endl;
-}
-
-
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
 int main(){
@@ -544,20 +417,10 @@ int main(){
     float tCellScale = 10.0f,
     /*-*/ wingspan   = 10.0f;
 
-    
-
     /// Scene Init: Pre-Window ///
-    vector< TerrainTile* > terrainTiles;
-    cout << "Create tile 1 ..." << endl;
-    terrainTiles.push_back( new TerrainTile{ tCellScale, Mrows, Nrows } );
-    cout << "Create tile 2 ..." << endl;
-    terrainTiles.push_back( new TerrainTile{ *(terrainTiles.back()), X_POS } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
-    terrainTiles.push_back( new TerrainTile{ *(terrainTiles.back()), Y_POS } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
-    terrainTiles.push_back( new TerrainTile{ *(terrainTiles.back()), X_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
-    terrainTiles.push_back( new TerrainTile{ *(terrainTiles.back()), X_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
-    terrainTiles.push_back( new TerrainTile{ *(terrainTiles.back()), X_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
-    terrainTiles.push_back( new TerrainTile{ *(terrainTiles.back()), Y_NEG } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
-    terrainTiles.push_back( new TerrainTile{ *(terrainTiles.back()), X_POS } );  terrainTiles.back()->stitch_neighbors( terrainTiles );
+
+    TerrainGrid terrainTiles{ tCellScale, Mrows, Nrows};
+    terrainTiles.populate_neighbors_of( {0,0} );
 
     // TerrainTile terrain{ tCellScale, Mrows, Nrows };
     cout << "Terrain built!" << endl;
@@ -573,20 +436,16 @@ int main(){
     rlDisableBackfaceCulling();
 
     /// Scene Init: Post-Window ///
-    // terrain.load_geo();
     cout << "About to load geo ..." << endl;
     glider.load_geo();
     cout << "\tGlider loaded!" << endl;
-    for( TerrainTile* plate : terrainTiles ){
-        plate->load_geo();
-    }
+    terrainTiles.load_geo();
     cout << "\tTerrain loaded!" << endl;
     cout << "Geo loaded!" << endl;
     glider.set_XYZ( 
         Nrows*tCellScale/2.0f, 
         Nrows*tCellScale/2.0f, 
-        // terrain.get_greatest_elevation()+10.0f 
-        terrainTiles[0]->get_greatest_elevation()+10.0f
+        terrainTiles.tiles[{0,0}]->get_greatest_elevation()+10.0f
     );
     glider.rotate_RPY( 0.0, 3.1416/2.0, 3.1416 );
 
@@ -597,28 +456,7 @@ int main(){
     };
 
 
-
     ////////// Shader Init: Pre-Window /////////////////////////////////////////////////////////////
-
-    // load a shader and set up some uniforms
-    // Shader fog = LoadShader( "shaders/fogLight.vs", "shaders/fogLight.fs" );
-    // fog.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation( fog, "matModel" );
-    // fog.locs[SHADER_LOC_VECTOR_VIEW]  = GetShaderLocation( fog, "viewPos"  );
-
-    // int amb = GetShaderLocation( fog, "ambient" );
-    // float ambClr[4] = {0.2, 0.2, 0.2, 1.0};
-    // SetShaderValue( fog, amb, &ambClr, SHADER_UNIFORM_VEC4 );
-
-    // int fogC = GetShaderLocation( fog, "fogColor" );
-    // float fogClr[4] = {0.0, 0.0, 0.0, 1.0};
-    // SetShaderValue( fog, fogC, &fogClr, SHADER_UNIFORM_VEC4 );
-
-    // int   fogD /*-*/ = GetShaderLocation( fog, "FogDensity" );
-    // float fogDensity = 0.015f;
-    // SetShaderValue( fog, fogD, &fogDensity, SHADER_UNIFORM_FLOAT );
-
-    // Fog applies to all terrain tiles
-    // for( TerrainTile* plate : terrainTiles ){  plate->model.materials[0].shader = fog;  }
 
     // bloom shader
     Shader bloom = LoadShader( 0, "shaders/bloom.fs" );
@@ -629,7 +467,6 @@ int main(){
 
 
     ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
-
 
     while( !WindowShouldClose() ){
 
@@ -663,32 +500,21 @@ int main(){
 		}
 
         glider.z_thrust( frameThrust );
-
         camera.update_target_position( glider.get_XYZ() );
 		camera.advance_camera();
 
-        // update the light shader with the camera view position
-        // SetShaderValue( fog, fog.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3 );
-
-        // glider.z_thrust( frameThrust );
-        // expand_visible_and_hide_trailing_tiles( camera, terrainTiles );
-
-
         ///// DRAW PHASE /////////////////////////
         
-        BeginTextureMode( target );       // Enable drawing to texture
-            ClearBackground( BLACK );  // Clear texture background
-            BeginMode3D( camera );        // Begin 3d mode drawing
-                for( TerrainTile* plate : terrainTiles ){  
-                    if( plate->visible )  plate->draw();  
-                }
-                // terrain.draw();  
+        BeginTextureMode( target ); // - Enable drawing to texture
+            ClearBackground( BLACK ); // Clear texture background
+            BeginMode3D( camera ); // -- Begin 3d mode drawing
+                terrainTiles.draw();
                 glider.draw();
-            EndMode3D();                // End 3d mode drawing, returns to orthographic 2d mode
-        EndTextureMode();               // End drawing to texture (now we have a texture available for next passes)
+            EndMode3D(); //- End 3d mode drawing, returns to orthographic 2d mode
+        EndTextureMode(); // End drawing to texture (now we have a texture available for next passes)
         
         BeginDrawing();
-            ClearBackground( BLACK );  // Clear screen background
+            ClearBackground( BLACK ); // Clear screen background
 
             // Render generated texture using selected postprocessing shader
             BeginShaderMode( bloom );
@@ -697,11 +523,10 @@ int main(){
                     target.texture, 
                     (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, 
                     (Vector2){ 0, 0 }, 
-                    WHITE // BLACK // WHITE
+                    WHITE 
                 );
             EndShaderMode();
             DrawFPS( 10, 10 );
-
         EndDrawing();
     }
 
@@ -710,17 +535,8 @@ int main(){
     ////////// CLEANUP /////////////////////////////////////////////////////////////////////////////
 
     UnloadShader( bloom );
-    // UnloadShader( fog   );
-    UnloadRenderTexture( target );
-
-    // UnloadModel( terrain.model );
-    for( TerrainTile* plate : terrainTiles ){  
-        UnloadModel( plate->model );  
-        delete plate;
-    }
-    
+    UnloadRenderTexture( target );    
     UnloadModel( glider.model  );
-
     CloseWindow(); // Close window and OpenGL context
 
     return 0;
