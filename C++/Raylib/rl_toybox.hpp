@@ -589,7 +589,7 @@ class TerrainTile : public TriModel { public:
                 pts[i][j].z -= accum;
             }
         }
-        if( perlinClrs )  free( perlinClrs );
+        if( perlinClrs )  delete perlinClrs;
         UnloadImage( perlinImage );  
 
         // zValues.clear();
