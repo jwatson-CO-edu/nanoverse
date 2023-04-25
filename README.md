@@ -29,34 +29,35 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         * `[Y]` Valgrind is MAGICAL, 2023-04-16: Nice!
             - `GenImagePerlinNoise` allocates image on the heap, it needs to be freed with `UnloadImage`
             - Every time that `get_image_pixel_color_at` runs, it copies the ENTIRE IMAGE to a `Color*` which is NOT FREED before the function exits  
-
-    - `[>]` Infinite grid
+    - `[Y]` Infinite grid, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
         * `[Y]` Tiles mesh without terrain discontinuities, even considering XY noise, 2023-04-18: Stitched and blended
         * `[Y]` Add frame rate monitor, 2023-04-17: Added
-        * `[>]` Distance fog in the form of vanishing lines
-            - https://blog.mapbox.com/drawing-antialiased-lines-with-opengl-8766f34192dc
-        * `[>]` Instantiate without noticeable "pop-in"
+        * `[Y]` Instantiate without noticeable "pop-in", 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
             - `[Y]` Get Raylib draw distance, 2023-04-22: As below  
             `#define RL_CULL_DISTANCE_NEAR      0.01 // Default projection matrix near cull distance`  
             `#define RL_CULL_DISTANCE_FAR  1000.0 // -- Default projection matrix far cull distance`  
-            - `[>]` Every frame, compute whether to instantiate new neighbors
-                * `[>]` Maintain visible terrain up to cull distance
-                * `[ ]` Keep ahead of cull distance in the direction that the camera is headed
-            - `[ ]` Every frame, compute whether to show/hide existing tiles  
+            - `[Y]` Every frame, compute whether to instantiate new neighbors, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
+                * `[Y]` Maintain visible terrain up to cull distance, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
+                * `[Y]` Keep ahead of cull distance in the direction that the camera is headed, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
+            - `[Y]` Every frame, compute whether to show/hide existing tiles, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
             Stop drawing when too far behind, but retain for drawing if player retraces their path  
-                * `[ ]` Add and heed a visibility flag
-                * `[ ]` Hide tiles > cull distance    behind
-                * `[ ]` Hide tiles > 2X cull distance ahead
+                * `[Y]` Add and heed a visibility flag, 2023-04-24: Plus `loaded` flag
+                * `[Y]` Hide tiles > cull distance behind, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
+                * `[Y]` Hide tiles > 2X cull distance ahead, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
+
+    - `[>]` Distance fog in the form of vanishing lines
+        * https://blog.mapbox.com/drawing-antialiased-lines-with-opengl-8766f34192dc
 
     - `[>]` Synthwave glider
         * `[Y]` Synthwave shading on glider, 2023-04-12: Bloom shader is sufficient
         * `[>]` Glowing contrail -or- Wingtip vortices
             - `[>]` How to fade smoothly?
                 * Vertex colors?  
+            - `[ ]` Apply bloom
+
 
     - `[ ]` Synthwave triangles
-        * `[ ]` Collision with triangles, Spin
-            - `{ }` Shootable?
+        * `[ ]` Shootable triangles, Spin
         * `{N}` Iridescent/glare?, 2023-04-12: Would distract from vector aesthetic
     
     - `{ }` Curved CRT shader?

@@ -1,4 +1,4 @@
-// g++ 13_synthwave-dream.cpp -std=c++17 -lraylib
+// g++ 12_synthwave-dream.cpp -std=c++17 -lraylib
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
@@ -12,6 +12,8 @@ using std::min, std::max;
 using std::set;
 #include <map>
 using std::map, std::pair;
+#include <list>
+using std::list;
 
 /// Raylib ///
 #include <raylib.h>
@@ -29,6 +31,78 @@ using std::map, std::pair;
 typedef unsigned short /*--*/ ushort;
 
 
+
+
+////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
+
+
+class Plume : public TriModel{ public:
+	// Queue of triangles representing a plume that decays from back to front, leading to trailing
+
+    /// Members ///
+
+    list<array<Vector3,2>> coords; // - 3D coordinates that define the plume, back of list is the head
+	ushort /*-----------*/ N_seg; // -- Number of total segments the plume can contain
+	ushort /*-----------*/ Np1_crd; //- Number of pairs of coordinates the plume can contain
+	Color /*------------*/ color; // -- Color of the plume
+	float /*------------*/ bgnAlpha; // Alpha value at the head of the plume
+	float /*------------*/ endAlpha; // Alpha value at the tail of the plume
+
+    void build_triangles(){
+        // Turn the train of coord pairs into a mesh
+        list<array<Vector3,2>>::iterator it /*-*/ = coords.begin();
+        array<Vector3,2> /*-----------*/ lastPair = *it;
+        array<Vector3,2> /*-----------*/ currPair;
+        Vector3 /*--------------------*/ c1, c2, l3, l4;
+        it++;
+
+        tris.clear(); // Erase old triangles
+        
+        for( ulong i = 1; i < coords.size(); i++ ){
+            currPair = *it;
+            c1 = currPair[0];
+            c2 = currPair[1];
+            l3 = lastPair[0];
+            l4 = lastPair[1];
+            if( i%2 == 0 ){
+                load_tri( c1, c2, l3 );
+                load_tri( l3, c2, l4 );
+            }else{
+                load_tri( c1, c2, l4 );
+                load_tri( l3, c1, l4 );
+            }
+            lastPair = currPair;
+            it++;
+        }
+        mesh.triangleCount = tris.size();
+        mesh.vertexCount   = tris.size()*3;
+    }
+
+    short push_segment( const Vector3& pnt1, const Vector3& pnt2 ){
+        // Push leading to back, Pop trailing from front, Reload model
+		if( coords.size() >= Np1_crd )  coords.pop_front();
+        coords.push_back(  {pnt1, pnt2}  );
+        if( coords.size() >= 2 )
+            visible = true;
+        else
+            visible = false;
+		return coords.size();
+    }
+
+    Plume( ushort maxSegments, Color plumeColor, float leadingAlpha = 1.0, float trailingAlpha = 0.0 ) : TriModel( maxSegments*2 ){
+        // Allocate for max segments, Init as none
+        N_seg    = maxSegments; // - Number of total segments the plume can contain
+        Np1_crd  = maxSegments+1; // Number of pairs of coordinates the plume can contain
+        color    = plumeColor; // -- Color of the plume
+        bgnAlpha = leadingAlpha; //- Alpha value at the head of the plume
+        endAlpha = trailingAlpha; // Alpha value at the tail of the plume
+        visible  = false; // ------- No segments, No visibility
+        // No segments, No drawing
+        mesh.triangleCount = 0;
+        mesh.vertexCount   = 0;
+    }
+
+};
 
 
 
