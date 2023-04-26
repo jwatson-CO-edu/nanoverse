@@ -24,6 +24,7 @@ typedef unsigned char /*---*/ ubyte;
 typedef unsigned long /*---*/ ulong;
 typedef vector<float> /*---*/ vf;
 typedef vector<vector<float>> vvf;
+typedef vector<Vector3> /*-*/ vvec3;
 
 
 
@@ -169,7 +170,7 @@ class TriModel{ public:
     // Triangles //
     vector<array<Vector3,3>> tris; //- Triangle data
     vector<array<Color,3>>   tClr; //- Triangle color data
-    vector<Vector3> /*----*/ pnts; //- Point data
+    vvec3 /*--------------*/ pnts; //- Point data
     vector<array<ushort,3>>  ndcs; //- Index data
 
     // Model //
@@ -404,13 +405,17 @@ class DeltaGlider : public TriModel{ public:
 
     Color sldClr = BLACK; // SKYBLUE;
     Color linClr = RAYWHITE; // RAYWHITE; // SKYBLUE; // LIGHTGRAY; // LIME; // WHITE; // BLACK;
+    float wingSpan;
+    float fusFrac;
+    float sweptFrac;
+    float thickFrac;
 
     DeltaGlider( float wingspan = 10.0f ) : TriModel( 8 ){
         // 
-
-        float fusFrac   = 0.5;
-        float sweptFrac = 0.75;
-        float thickFrac = 0.25;
+        wingSpan  = wingspan;
+        fusFrac   = 0.5;
+        sweptFrac = 0.75;
+        thickFrac = 0.25;
 
         // Using unshared vertices for flat shading
 
@@ -455,6 +460,27 @@ class DeltaGlider : public TriModel{ public:
             Vector3{  0.0f        ,  0.0f                 , -wingspan*fusFrac   + wingspan*sweptFrac/2.0f }  // 3, Back
         );
     }
+
+
+    vvec3 get_skeleton_points_in_world_frame(){
+        // Get the center and the wingtips in the world frame
+        vvec3   rtnPts;
+        Vector3 center, rightTip, leftTip;
+        center   = get_XYZ();
+        rightTip = Vector3Add(
+            Vector3Transform( Vector3{ +wingSpan/2, 0.0f, -wingSpan*sweptFrac + wingSpan*sweptFrac/2.0f }, T ),
+            center
+        );
+        leftTip = Vector3Add(
+            Vector3Transform( Vector3{ -wingSpan/2, 0.0f, -wingSpan*sweptFrac + wingSpan*sweptFrac/2.0f }, T ),
+            center
+        );
+        rtnPts.push_back( center   );
+        rtnPts.push_back( rightTip );
+        rtnPts.push_back( leftTip  );
+        return rtnPts;
+    }
+
 
     ///// Rendering //////////////////////////////
     // WARNING: Requires window init to call!
@@ -566,7 +592,7 @@ class TerrainTile : public TriModel { public:
 
     void gen_heightmap_uniform_random(){
         // Generate a heightmap with uniform random sampling
-        vector<Vector3> row;
+        vvec3 row;
         for( ulong i = 0; i < M; i++ ){
             for( ulong j = 0; j < N; j++ ){
                 row.push_back(  Vector3{ 
@@ -595,7 +621,7 @@ class TerrainTile : public TriModel { public:
         Color* perlinClrs  = LoadImageColors( perlinImage );
         vvf    zValues     = get_subimage_red_intensity( perlinClrs, perlinImage.width, rowUL, colUL, rowLR, colLR );
         // Generate heightmap
-        vector<Vector3> row;
+        vvec3 row;
         float accum = 0;
         float elem;
         for( ulong i = 0; i < M; i++ ){
@@ -735,9 +761,9 @@ class TerrainTile : public TriModel { public:
         return top;
     }
 
-    vector<Vector3> get_corners() const{
+    vvec3 get_corners() const{
         // Get the positions of the corners of the tile
-        vector<Vector3> corners;
+        vvec3 corners;
         cout << "About to check size ..." << endl;
         cout << "How many points?: " << pts.size() << endl;
         if( pts.size() ){
@@ -827,10 +853,10 @@ class TerrainGrid{ public:
         };
     }
 
-    vector<Vector3> get_tile_corners( const array<int,2>& addr ){
+    vvec3 get_tile_corners( const array<int,2>& addr ){
         // Get the positions of the corners of the tile at the `addr`
-        vector<Vector3> rtnLst;
-        Vector3 /*---*/ origin = get_tile_origin( addr );
+        vvec3   rtnLst;
+        Vector3 origin = get_tile_origin( addr );
         rtnLst.push_back( origin );
         rtnLst.push_back( Vector3Add(  origin, Vector3{ (1.0f*NcolsTile-1)*sclCell,  0.0f                     , 0.0f }  ) );
         rtnLst.push_back( Vector3Add(  origin, Vector3{  0.0f                     , (1.0f*MrowsTile-1)*sclCell, 0.0f }  ) );
@@ -878,13 +904,13 @@ class TerrainGrid{ public:
 
     array<int,2> p_visible_and_oncoming( const FlightFollowThirdP_Camera& cam, const array<int,2>& addr ){
         // Return a two-part flag [ <Tile is close to the camera>, <Tile is in view or is in danger of coming into view> ]
-        array<int,2>    rtnFlags = {0,0};
-        vector<Vector3> corners = get_tile_corners( addr );
-        float /*-----*/ dist, 
-        /*-----------*/ xMin =  10000.0f, 
-        /*-----------*/ xMax = -10000.0f, 
-        /*-----------*/ yMin =  10000.0f, 
-        /*-----------*/ yMax = -10000.0f;
+        array<int,2> rtnFlags = {0,0};
+        vvec3 /*--*/ corners = get_tile_corners( addr );
+        float /*--*/ dist, 
+        /*--------*/ xMin =  10000.0f, 
+        /*--------*/ xMax = -10000.0f, 
+        /*--------*/ yMin =  10000.0f, 
+        /*--------*/ yMax = -10000.0f;
         for( Vector3 corner : corners ){
             // Determine Visible
             if( Vector3Distance( cam.position, corner ) <= (1.5f*cam.dDrawMax) )  rtnFlags[0] = 1;

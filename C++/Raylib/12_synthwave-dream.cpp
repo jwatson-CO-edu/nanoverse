@@ -141,14 +141,15 @@ class Plume : public TriModel{ public:
     }
 
     void reload_geo(){
-        // Get the model ready for drawing
+        // Reconfigurate geometry
         build_triangles_with_color();
         build_mesh_unshared();
         build_colors_unshared();
         build_normals_flat_unshared();
-        UnloadModel( model );
-        model = LoadModelFromMesh( mesh );
-        model.transform = T;
+        // Assume that the model is dynamic and that we don't have to reload everything?
+        // UnloadModel( model );
+        // model = LoadModelFromMesh( mesh );
+        // model.transform = T;
     }
 
 };
