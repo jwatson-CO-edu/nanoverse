@@ -141,6 +141,12 @@ void init_mesh_normals( Mesh& mesh, ulong Ntri ){
     mesh.normals = (float *)MemAlloc(Nvrt*3*sizeof(float)); // 3 vertices, 3 coordinates each (x, y, z)
 }
 
+void init_mesh_colors( Mesh& mesh, ulong Ntri ){
+    // Allocate memory in the mesh for normals with unshared points
+    ulong Nvrt = Ntri * 3;
+    mesh.colors = (ubyte *)MemAlloc(Nvrt*4*sizeof(ubyte)); // 3 vertices, 4 coordinates each (r,g,b,a)
+}
+
 ///// Shared Vertex Helpers ////////////////////
 
 void init_mesh( Mesh& mesh, ulong Npts, ulong Ntri ){
@@ -162,6 +168,7 @@ class TriModel{ public:
 
     // Triangles //
     vector<array<Vector3,3>> tris; //- Triangle data
+    vector<array<Color,3>>   tClr; //- Triangle color data
     vector<Vector3> /*----*/ pnts; //- Point data
     vector<array<ushort,3>>  ndcs; //- Index data
 
@@ -194,9 +201,17 @@ class TriModel{ public:
         tris.push_back( pushArr );
     }
 
+    void load_tri_colors( const Color& c1, const Color& c2, const Color& c3 ){
+        // Load one triangle, Right hand rule
+        array<Color,3> pushArr;
+        pushArr[0] = c1;
+        pushArr[1] = c2;
+        pushArr[2] = c3;
+        tClr.push_back( pushArr );
+    }
+
     void build_mesh_unshared(){
         // Load the triangle data into the mesh
-        cout << "There are " << tris.size() << " triangles!";
         ulong  k = 0;
         ushort l = 0;
         for( ulong i = 0; i < tris.size(); i++ ){
@@ -205,6 +220,19 @@ class TriModel{ public:
                 mesh.vertices[k] = tris[i][j].y;  k++;
                 mesh.vertices[k] = tris[i][j].z;  k++;
                 mesh.indices[l]  = l; /*------*/  l++; // WARNING: UNOPTIMIZED FOR SHARED VERTICES
+            }
+        }
+    }
+
+    void build_colors_unshared(){
+        // Load the triangle color data into the mesh
+        ulong  k = 0;
+        for( ulong i = 0; i < tris.size(); i++ ){
+            for( ubyte j = 0; j < 3; j++ ){
+                mesh.colors[k] = tClr[i][j].r;  k++;
+                mesh.colors[k] = tClr[i][j].g;  k++;
+                mesh.colors[k] = tClr[i][j].b;  k++;
+                mesh.colors[k] = tClr[i][j].a;  k++;
             }
         }
     }

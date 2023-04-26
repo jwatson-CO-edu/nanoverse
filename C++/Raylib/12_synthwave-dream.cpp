@@ -48,28 +48,40 @@ class Plume : public TriModel{ public:
 	float /*------------*/ bgnAlpha; // Alpha value at the head of the plume
 	float /*------------*/ endAlpha; // Alpha value at the tail of the plume
 
-    void build_triangles(){
+    /// Constructors & Destructors ///
+
+    void build_triangles_with_color(){
         // Turn the train of coord pairs into a mesh
         list<array<Vector3,2>>::iterator it /*-*/ = coords.begin();
         array<Vector3,2> /*-----------*/ lastPair = *it;
         array<Vector3,2> /*-----------*/ currPair;
         Vector3 /*--------------------*/ c1, c2, l3, l4;
+        Color /*----------------------*/ currClr;
+        Color /*----------------------*/ lastClr;
+        ulong /*----------------------*/ Npair = coords.size();
         it++;
 
         tris.clear(); // Erase old triangles
         
-        for( ulong i = 1; i < coords.size(); i++ ){
+        for( ulong i = 1; i < Npair; i++ ){
             currPair = *it;
             c1 = currPair[0];
             c2 = currPair[1];
             l3 = lastPair[0];
             l4 = lastPair[1];
+            currClr = lastClr = color;
+            currClr.a = (ubyte) ((1.0f*i)/(Npair-1)*255.0f);
+            lastClr.a = (ubyte) ((1.0f*(i-1))/(Npair-1)*255.0f);
             if( i%2 == 0 ){
                 load_tri( c1, c2, l3 );
+                load_tri_colors( currClr, currClr, lastClr );
                 load_tri( l3, c2, l4 );
+                load_tri_colors( lastClr, currClr, lastClr );
             }else{
                 load_tri( c1, c2, l4 );
+                load_tri_colors( currClr, currClr, lastClr );
                 load_tri( l3, c1, l4 );
+                load_tri_colors( lastClr, currClr, lastClr );
             }
             lastPair = currPair;
             it++;
@@ -100,6 +112,43 @@ class Plume : public TriModel{ public:
         // No segments, No drawing
         mesh.triangleCount = 0;
         mesh.vertexCount   = 0;
+    }
+
+    ~Plume(){
+        // Free all allocated memory
+        if( mesh.vertices )  delete mesh.vertices;
+        if( mesh.indices  )  delete mesh.indices;
+        if( mesh.normals  )  delete mesh.normals;
+        if( mesh.colors   )  delete mesh.colors;
+        UnloadModel( model );  
+    }
+
+    /// Methods ///
+
+
+    ///// Rendering //////////////////////////////
+    // WARNING: Requires window init to call!
+
+    void load_geo(){
+        // Get the model ready for drawing
+        build_triangles_with_color();
+        build_mesh_unshared();
+        build_colors_unshared();
+        build_normals_flat_unshared();
+        UploadMesh( &mesh, true );
+        model = LoadModelFromMesh( mesh );
+        model.transform = T;
+    }
+
+    void reload_geo(){
+        // Get the model ready for drawing
+        build_triangles_with_color();
+        build_mesh_unshared();
+        build_colors_unshared();
+        build_normals_flat_unshared();
+        UnloadModel( model );
+        model = LoadModelFromMesh( mesh );
+        model.transform = T;
     }
 
 };
