@@ -45,14 +45,22 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
                 * `[Y]` Hide tiles > cull distance behind, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
                 * `[Y]` Hide tiles > 2X cull distance ahead, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
 
+    - `[>]` Icos Experiments
+        * `[>]` Plain icosahedron
+        * `[ ]` Fading color from bottom to top with a vertex shader
+        * `[ ]` Dynamic points - Surface position noise?
+        * `[ ]` Dynamic colors?
+
     - `[>]` Distance fog in the form of vanishing lines
         * https://blog.mapbox.com/drawing-antialiased-lines-with-opengl-8766f34192dc
+
+
 
     - `[>]` Synthwave glider
         * `[Y]` Synthwave shading on glider, 2023-04-12: Bloom shader is sufficient
         * `[>]` Glowing contrail -or- Wingtip vortices
             - `[>]` How to fade smoothly?
-                * Vertex colors?  
+                * Vertex colors?, 2023-04-29: I don't think vertex colors are meant to be accessed, Try a vertex shader  
             - `[ ]` Apply bloom
 
 

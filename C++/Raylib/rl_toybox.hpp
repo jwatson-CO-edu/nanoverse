@@ -115,6 +115,16 @@ ostream& operator<<( ostream& os , const Color& clr ) {
     return os; // You must return a reference to the stream!
 }
 
+ostream& operator<<( ostream& os , const Vector3& vec ) { 
+    // ostream '<<' operator for Raylib Color
+    // NOTE: This function assumes that the ostream '<<' operator for T has already been defined
+    os << "{X: "  << ((float) vec.x);
+    os << ", Y: " << ((float) vec.y);
+    os << ", Z: " << ((float) vec.z);
+    os << "}";
+    return os; // You must return a reference to the stream!
+}
+
 
 
 
@@ -177,6 +187,8 @@ class TriModel{ public:
     bool  visible; // Whether or not to draw the model
 	Mesh  mesh; // -- Raylib mesh geometry
 	Model model; // - Raylib drawable model
+    ulong Ntris;
+    ulong Nvrts;
 
     // Pose //
     float  x; //- World X pos
@@ -225,9 +237,10 @@ class TriModel{ public:
         }
     }
 
-    void build_colors_unshared(){
+    void build_colors_unshared( bool initMemory = true ){
         // Load the triangle color data into the mesh
         ulong  k = 0;
+        if( initMemory )  init_mesh_colors( mesh, Ntris );
         for( ulong i = 0; i < tris.size(); i++ ){
             for( ubyte j = 0; j < 3; j++ ){
                 mesh.colors[k] = tClr[i][j].r;  k++;
@@ -238,12 +251,12 @@ class TriModel{ public:
         }
     }
 
-    void build_normals_flat_unshared(){
+    void build_normals_flat_unshared( bool initMemory = true ){
         // Create normals for flat shading (unshared vertices)
         ulong   k = 0;
         Vector3 v1, v2, v3, e1, e2, nrm;
         // Allocate memory for normals
-        init_mesh_normals( mesh, tris.size() );
+        if( initMemory )  init_mesh_normals( mesh, Ntris );
         // Compute a vector perpendiculat to each triangle and store its components
         for( ulong i = 0; i < tris.size(); i++ ){
             v1  = tris[i][0];
@@ -313,12 +326,16 @@ class TriModel{ public:
 
     TriModel( ulong Ntri ) : TriModel(){
         // Unshared Constructor
+        Ntris = Ntri;
+        Nvrts = Ntri*3;
         init_mesh( mesh, Ntri );
         init_pose();
     }
 
     TriModel( ulong Npts, ulong Ntri ) : TriModel(){
         // Shared Constructor
+        Ntris = Ntri;
+        Nvrts = Npts;
         init_mesh( mesh, Npts, Ntri );
         init_pose();
     }

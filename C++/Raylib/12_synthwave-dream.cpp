@@ -61,7 +61,9 @@ class Plume : public TriModel{ public:
         ulong /*----------------------*/ Npair = coords.size();
         it++;
 
-        tris.clear(); // Erase old triangles
+        // Erase old triangles
+        tris.clear();
+        tClr.clear();
         
         for( ulong i = 1; i < Npair; i++ ){
             currPair = *it;
@@ -69,9 +71,10 @@ class Plume : public TriModel{ public:
             c2 = currPair[1];
             l3 = lastPair[0];
             l4 = lastPair[1];
-            currClr = lastClr = color;
-            currClr.a = (ubyte) ((1.0f*i)/(Npair-1)*255.0f);
-            lastClr.a = (ubyte) ((1.0f*(i-1))/(Npair-1)*255.0f);
+            currClr = color;
+            lastClr = color;
+            currClr.a = 255; // (ubyte) ((1.0f*i)/(Npair-1)*255.0f);
+            lastClr.a = 255; // (ubyte) ((1.0f*(i-1))/(Npair-1)*255.0f);
             if( i%2 == 0 ){
                 load_tri( c1, c2, l3 );
                 load_tri_colors( currClr, currClr, lastClr );
@@ -131,25 +134,46 @@ class Plume : public TriModel{ public:
 
     void load_geo(){
         // Get the model ready for drawing
+        cout << "About to build triangles ..." << endl;
         build_triangles_with_color();
+        cout << "About to build mesh ..." << endl;
         build_mesh_unshared();
+        cout << "About to build colors ..." << endl;
         build_colors_unshared();
+        cout << "About to build normals ..." << endl;
         build_normals_flat_unshared();
+        cout << "About to upload mesh ..." << endl;
         UploadMesh( &mesh, true );
+        cout << "About to upload model ..." << endl;
         model = LoadModelFromMesh( mesh );
+        init_pose();
         model.transform = T;
+        cout << "`load_geo` done!" << endl;
     }
 
     void reload_geo(){
         // Reconfigurate geometry
+        cout << "About to build triangles ..." << endl;
         build_triangles_with_color();
+        cout << "About to build mesh ..." << endl;
         build_mesh_unshared();
-        build_colors_unshared();
-        build_normals_flat_unshared();
-        // Assume that the model is dynamic and that we don't have to reload everything?
+        cout << "About to build colors ..." << endl;
+        build_colors_unshared( false );
+        cout << "About to build normals ..." << endl;
+        build_normals_flat_unshared( false );
+        cout << "`reload_geo` done!" << endl;
+        
         // UnloadModel( model );
+        // UploadMesh( &mesh, true );
         // model = LoadModelFromMesh( mesh );
         // model.transform = T;
+    }
+
+    void draw(){
+        // if( (tris.size() >= 2) && visible ){
+        // if( visible ){
+            DrawModel( model, Vector3{ 0.0f, 0.0f, 0.0f }, 1.0, color ); 
+        // }
     }
 
 };
@@ -183,6 +207,9 @@ int main(){
     DeltaGlider  glider{ wingspan };
 	float /*--*/ frameRotateRad = 3.1416/120.0;
     float /*--*/ frameThrust    = 36.0/60.0;
+    vvec3 /*--*/ gliderPoints;
+
+    Plume leftVortex{ 20, WHITE };
 
     /// Window Init ///
     InitWindow( (int) res.x, (int) res.y, "Terrain Gen + Glider + Bloom Shader" );
@@ -196,6 +223,7 @@ int main(){
     cout << "\tGlider loaded!" << endl;
     terrainTiles.load_geo();
     cout << "\tTerrain loaded!" << endl;
+    leftVortex.load_geo();
     cout << "Geo loaded!" << endl;
     glider.set_XYZ( 
         Nrows*tCellScale/2.0f, 
@@ -210,7 +238,7 @@ int main(){
 		glider.T
     };
 
-
+    
     ////////// Shader Init: Pre-Window /////////////////////////////////////////////////////////////
 
     // bloom shader
@@ -259,6 +287,12 @@ int main(){
 		camera.advance_camera();
         terrainTiles.mark_visible_and_expand_border( camera );
 
+        gliderPoints = glider.get_skeleton_points_in_world_frame();
+        cout << gliderPoints[0] << gliderPoints[1] << leftVortex.tris.size() << endl;
+        leftVortex.push_segment( gliderPoints[0], gliderPoints[1] );
+        // leftVortex.reload_geo();
+        // leftVortex.load_geo();
+
         ///// DRAW PHASE /////////////////////////
         
         BeginTextureMode( target ); // - Enable drawing to texture
@@ -266,6 +300,7 @@ int main(){
             BeginMode3D( camera ); // -- Begin 3d mode drawing
                 terrainTiles.draw();
                 glider.draw();
+                leftVortex.draw();
             EndMode3D(); //- End 3d mode drawing, returns to orthographic 2d mode
         EndTextureMode(); // End drawing to texture (now we have a texture available for next passes)
         
