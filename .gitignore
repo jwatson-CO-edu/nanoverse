@@ -12,6 +12,8 @@ zig/mach/
 d/raylib/*/*.app
 d/raylib/*/*.so*
 
+C++/OpenGL/*/cpp_helpers 
+
 */*/a.out
 */*/*/a.out
 
