@@ -14,8 +14,10 @@ d/raylib/*/*.so*
 
 C++/OpenGL/*/cpp_helpers 
 
-*/*/a.out
-*/*/*/a.out
+*.out
+*/*.out
+*/*/*.out
+*/*/*/*.out
 
 # Prerequisites
 
