@@ -191,12 +191,8 @@ class TriModel{ public:
     ulong Nvrts;
 
     // Pose //
-    float  x; //- World X pos
-	float  y; //- World Y pos
-	float  z; //- World Z pos
-	float  r; //- Local roll  angle
-	float  p; //- Local pitch angle
-	float  w; //- Local yaw   angle
+    Vector3 XYZ; // World Position
+    Vector3 RPY; // Local Orientation
 	Matrix mx; // Local pitch
 	Matrix my; // Local yaw
 	Matrix mz; // Local roll
@@ -314,12 +310,8 @@ class TriModel{ public:
 
     void init_pose(){
         // Init pose
-		x = 0.0; // World X pos
-		y = 0.0; // World Y pos
-		z = 0.0; // World Z pos
-		r = 0.0; // Local roll  angle
-		p = 0.0; // Local pitch angle
-		w = 0.0; // Local yaw   angle
+        XYZ = Vector3{0,0,0};
+        RPY = Vector3{0,0,0};
         dT = MatrixIdentity();
         T  = MatrixIdentity();
     }
@@ -352,21 +344,19 @@ class TriModel{ public:
 
     Vector3 get_XYZ(){
 		// Set the world XYZ position of the model
-        return Vector3{x,y,z};
+        return XYZ;
 	}
 
-    void set_XYZ( float x_, float y_, float z_ ){
+    void set_XYZ( float x, float y, float z ){
 		// Set the world XYZ position of the model
-		x = x_;
-		y = y_;
-		z = z_;
+		XYZ = Vector3{ x, y, z };
 	}
 
     void rotate_RPY( float r_, float p_, float y_ ){
 		// Increment the world Roll, Pitch, Yaw of the model
-		r += r_;
-		p += p_;
-		w += y_;
+		RPY.x += r_;
+		RPY.y += p_;
+		RPY.z += y_;
         mz = MatrixRotateZ( r_ ); // Roll  about local Z
 		mx = MatrixRotateX( p_ ); // Pitch about local X
         my = MatrixRotateY( y_ ); // Yaw   about local Y
@@ -378,9 +368,7 @@ class TriModel{ public:
     void z_thrust( float d = 0.0 ){
 		// Advance a plane model in the forward direction (local Z)
 		Vector3 vec = Vector3Transform( Vector3{ 0.0, 0.0, d }, T );
-		x += vec.x;
-		y += vec.y;
-		z += vec.z;
+        XYZ = Vector3Add( XYZ, vec );
 	}
 
 
@@ -511,8 +499,8 @@ class DeltaGlider : public TriModel{ public:
 
     void draw(){
         // Draw the model
-        DrawModel(      model, Vector3{x, y, z}, 1.00, sldClr );  
-        DrawModelWires( model, Vector3{x, y, z}, 1.02, linClr );
+        DrawModel(      model, XYZ, 1.00, sldClr );  
+        DrawModelWires( model, XYZ, 1.02, linClr );
     }
 
 };

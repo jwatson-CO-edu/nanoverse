@@ -45,27 +45,36 @@ class Icosahedron_r : public TriModel{ public:
 	float   b; 
     vvec3   V;
 
+    // ~ Appearance ~
+    Color baseClr;
+    Color lineClr;
+
     Icosahedron_r( float rad , const Vector3& cntr ) : TriModel(20){
-        center = cntr;
+        // Compute the vertices and faces
+        XYZ    = cntr;
         radius = rad;
         a /**/ = ( radius / ratio ) * 0.5;
         b /**/ = ( radius / ratio ) / ( 2.0f * phi );
 
-        // Define the icosahedron's 12 vertices:
-        V.push_back( Vector3Add( center, Vector3{  0,  b, -a } ) );
-        V.push_back( Vector3Add( center, Vector3{  b,  a,  0 } ) );
-        V.push_back( Vector3Add( center, Vector3{ -b,  a,  0 } ) );
-        V.push_back( Vector3Add( center, Vector3{  0,  b,  a } ) );
-        V.push_back( Vector3Add( center, Vector3{  0, -b,  a } ) );
-        V.push_back( Vector3Add( center, Vector3{ -a,  0,  b } ) );
-        V.push_back( Vector3Add( center, Vector3{  0, -b, -a } ) );
-        V.push_back( Vector3Add( center, Vector3{  a,  0, -b } ) );
-        V.push_back( Vector3Add( center, Vector3{  a,  0,  b } ) );
-        V.push_back( Vector3Add( center, Vector3{ -a,  0, -b } ) );
-        V.push_back( Vector3Add( center, Vector3{  b, -a,  0 } ) );
-        V.push_back( Vector3Add( center, Vector3{ -b, -a,  0 } ) );
+        // ~ Appearance ~
+        baseClr = BLUE;
+        lineClr = GOLD;
 
-        // Define the icosahedron's 20 triangular faces:
+        // Define the icosahedron's 12 vertices:
+        V.push_back( Vector3{  0,  b, -a } );
+        V.push_back( Vector3{  b,  a,  0 } );
+        V.push_back( Vector3{ -b,  a,  0 } );
+        V.push_back( Vector3{  0,  b,  a } );
+        V.push_back( Vector3{  0, -b,  a } );
+        V.push_back( Vector3{ -a,  0,  b } );
+        V.push_back( Vector3{  0, -b, -a } );
+        V.push_back( Vector3{  a,  0, -b } );
+        V.push_back( Vector3{  a,  0,  b } );
+        V.push_back( Vector3{ -a,  0, -b } );
+        V.push_back( Vector3{  b, -a,  0 } );
+        V.push_back( Vector3{ -b, -a,  0 } );
+
+        // Define the icosahedron's 20 triangular faces: CCW-out
         load_tri( V[ 2], V[ 1], V[ 0] );
         load_tri( V[ 1], V[ 2], V[ 3] );
         load_tri( V[ 5], V[ 4], V[ 3] );
@@ -86,5 +95,21 @@ class Icosahedron_r : public TriModel{ public:
         load_tri( V[ 7], V[10], V[ 6] );
         load_tri( V[ 5], V[11], V[ 4] );
         load_tri( V[10], V[ 8], V[ 4] );
+    }
+
+    ///// Rendering //////////////////////////////
+    // WARNING: Requires window init to call!
+
+    void load_geo(){
+        // Get the model ready for drawing
+        build_mesh_unshared();
+        build_normals_flat_unshared();
+        load_mesh();
+    }
+
+    void draw(){
+        // Draw the model
+        DrawModel(      model, XYZ, 1.00, baseClr );  
+        DrawModelWires( model, XYZ, 1.02, lineClr );
     }
 };
