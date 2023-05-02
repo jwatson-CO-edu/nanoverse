@@ -1,4 +1,4 @@
-// g++ 12-0_icos-colors.cpp -std=c++17 -lraylib
+// g++ 12-1_icos-colors.cpp -std=c++17 -lraylib
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
@@ -132,6 +132,19 @@ int main(){
         45.0, // -------------------- FOV_y
         0 // ------------------------ Projection mode
     };
+
+    ////////// Shader Init: Pre-Window /////////////////////////////////////////////////////////////
+
+    // Fade shader
+    cout << "About to load shader ..." << endl;
+    Shader fade = LoadShader( "shaders/12-1_fade-test.vs", "shaders/12-1_fade-test.fs" );
+    cout << "Shader loaded!" << endl;
+    
+    // cout << "About to get shader location ..." << endl;
+    // fade.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation( fade, "matModel" );
+    
+
+    RenderTexture2D target = LoadRenderTexture( res.x, res.y );
 
 
     /// Window Init ///

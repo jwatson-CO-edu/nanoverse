@@ -48,6 +48,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     - `[>]` Icos Experiments
         * `[Y]` Plain icosahedron, 2023-05-01: Icos displayed
         * `[>]` Fading color from bottom to top with a vertex shader
+            - 2023-05-02: [Raylib has its own shader language that wraps GLSL](https://github.com/raysan5/raylib/blob/master/src/rlgl.h)
         * `[ ]` Dynamic points - Surface position noise?
         * `[ ]` Dynamic colors?
 
