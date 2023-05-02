@@ -113,3 +113,52 @@ class Icosahedron_r : public TriModel{ public:
         DrawModelWires( model, XYZ, 1.02, lineClr );
     }
 };
+
+
+
+////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
+
+int main(){
+
+    rand_seed();
+
+    const Vector2 res{ 1200, 600 };
+    Icosahedron_r icos{ 10.0f, Vector3{0,0,0} };
+    // Camera
+    Camera camera{
+        Vector3{ 30.0, 30.0, 30.0 }, // Position
+        Vector3{  0.0,  0.0,  0.0 }, // Target
+        Vector3{  0.0,  0.0,  1.0 }, // Up
+        45.0, // -------------------- FOV_y
+        0 // ------------------------ Projection mode
+    };
+
+
+    /// Window Init ///
+    InitWindow( (int) res.x, (int) res.y, "ICOSAHEDRON" );
+    SetTargetFPS( 60 );
+    rlEnableSmoothLines();
+    rlDisableBackfaceCulling();
+
+    icos.load_geo();
+
+    while( !WindowShouldClose() ){
+        
+        /// Begin Drawing ///
+        BeginDrawing();
+        BeginMode3D( camera );
+        ClearBackground( BLACK );
+
+        ///// DRAW LOOP //////////////////////////
+        icos.draw();
+
+        /// End Drawing ///
+        EndMode3D();
+        EndDrawing();
+    }
+
+    // UnloadModel( icos.model );
+    // UnloadMesh( icos.mesh );
+
+    return 0;
+}

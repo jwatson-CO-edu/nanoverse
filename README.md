@@ -46,8 +46,8 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
                 * `[Y]` Hide tiles > 2X cull distance ahead, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
 
     - `[>]` Icos Experiments
-        * `[>]` Plain icosahedron
-        * `[ ]` Fading color from bottom to top with a vertex shader
+        * `[Y]` Plain icosahedron, 2023-05-01: Icos displayed
+        * `[>]` Fading color from bottom to top with a vertex shader
         * `[ ]` Dynamic points - Surface position noise?
         * `[ ]` Dynamic colors?
 
