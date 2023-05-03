@@ -110,7 +110,7 @@ class Icosahedron_r : public TriModel{ public:
     void draw(){
         // Draw the model
         DrawModel(      model, XYZ, 1.00, baseClr );  
-        DrawModelWires( model, XYZ, 1.02, lineClr );
+        // DrawModelWires( model, XYZ, 1.02, lineClr );
     }
 };
 
@@ -133,25 +133,24 @@ int main(){
         0 // ------------------------ Projection mode
     };
 
-    ////////// Shader Init: Pre-Window /////////////////////////////////////////////////////////////
-
-    // Fade shader
-    cout << "About to load shader ..." << endl;
-    Shader fade = LoadShader( "shaders/12-1_fade-test.vs", "shaders/12-1_fade-test.fs" );
-    cout << "Shader loaded!" << endl;
-    
-    // cout << "About to get shader location ..." << endl;
-    // fade.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation( fade, "matModel" );
-    
-
-    RenderTexture2D target = LoadRenderTexture( res.x, res.y );
-
-
     /// Window Init ///
     InitWindow( (int) res.x, (int) res.y, "ICOSAHEDRON" );
     SetTargetFPS( 60 );
     rlEnableSmoothLines();
     rlDisableBackfaceCulling();
+
+     ////////// Shader Init: Pre-Window /////////////////////////////////////////////////////////////
+
+    // Fade shader
+    // cout << "About to load shader ..." << endl;
+    Shader fade = LoadShader( "shaders/12-1_fade-test.vs", "shaders/12-1_fade-test.fs" );
+    // cout << "Shader loaded!" << endl;
+    
+    // cout << "About to get shader location ..." << endl;
+    fade.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation( fade, "matModel" );
+    
+
+    // RenderTexture2D target = LoadRenderTexture( res.x, res.y );
 
     icos.load_geo();
 
@@ -163,6 +162,7 @@ int main(){
         ClearBackground( BLACK );
 
         ///// DRAW LOOP //////////////////////////
+        setModelShader( &icos.model, &fade );
         icos.draw();
 
         /// End Drawing ///
