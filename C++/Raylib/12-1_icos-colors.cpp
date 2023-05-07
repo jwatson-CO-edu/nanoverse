@@ -137,7 +137,7 @@ int main(){
     InitWindow( (int) res.x, (int) res.y, "ICOSAHEDRON" );
     SetTargetFPS( 60 );
     rlEnableSmoothLines();
-    rlDisableBackfaceCulling();
+    // rlDisableBackfaceCulling();
 
      ////////// Shader Init: Pre-Window /////////////////////////////////////////////////////////////
 
