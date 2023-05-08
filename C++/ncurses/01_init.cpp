@@ -1,3 +1,6 @@
+// https://tldp.org/HOWTO/NCURSES-Programming-HOWTO/init.html
+// g++ 01_init.cpp -std=gnu++17 -lncurses
+
 #include <ncurses.h>
 
 int main(){	
