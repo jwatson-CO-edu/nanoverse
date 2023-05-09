@@ -45,6 +45,10 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
                 * `[Y]` Hide tiles > cull distance behind, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
                 * `[Y]` Hide tiles > 2X cull distance ahead, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
 
+    - `[>]` Issue: I clearly do not know how shaders work!
+        * `[Y]` https://learnopengl.com/Getting-started/Shaders, 2023-05-09: Learned some things!
+        * `[ ]` Attempt "Hello Triangle" in Raylib
+
     - `[>]` Icos Experiments
         * `[Y]` Plain icosahedron, 2023-05-01: Icos displayed
         * `[>]` Fading color from bottom to top with a vertex shader
