@@ -1,6 +1,6 @@
 # Raylib Shaders
 
-## https://learnopengl.com/Getting-started/Shaders
+## [OpenGL Shaders](https://learnopengl.com/Getting-started/Shaders)
 * Shaders are nothing more than programs transforming inputs to outputs.
 * Shaders are also very isolated programs in that they're not allowed to communicate with each other; other than the desginated I/O
 * Each input variable is also known as a attribute. 
@@ -24,6 +24,10 @@
         * A way to pass data from our application on the CPU to the shaders on the GPU.
         * Uniforms are global
 
+
+&nbsp;
+
+## [Raylib Shader Tutorial](https://www.youtube.com/watch?v=8205iyicv5k)
 
 &nbsp;
 

@@ -404,8 +404,9 @@ class TriModel{ public:
     }
 
     void draw(){
-        cout << "Please implement `draw` for derived class!" << endl;
-    };
+        // Draw the model
+        DrawModel( model, XYZ, 1.00, RAYWHITE );  
+    }
 };
 
 

@@ -1,4 +1,4 @@
-// g++ 01-0_hello-triangle.cpp -lraylib
+// g++ 01-0_hello-triangle.cpp -std=gnu++17 -lraylib
 
 /// Raylib Imports ///
 #include "raylib.h"
@@ -15,6 +15,8 @@ int main(){
     SetTargetFPS( 60 );
 
     Shader hello = LoadShader( "shaders/hello.vs", "shaders/hello.fs" );
+    hello.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(hello, "matModel");
+
     TriModel tri{1};
     tri.load_tri(
         Vector3{  0.0, 30.0, 0.0 }, 
@@ -39,12 +41,8 @@ int main(){
         ClearBackground( BLACK );
         // BeginShaderMode( hello );
 
-            // DrawTriangle3D( 
-            //     Vector3{  0.0, 30.0, 0.0 }, 
-            //     Vector3{ 30.0,  0.0, 0.0 }, 
-            //     Vector3{ 30.0, 30.0, 0.0 },
-            //     BLUE
-            // );
+            setModelShader( &tri.model, &hello );
+            tri.draw();
 
         // EndShaderMode();
         EndMode3D();
