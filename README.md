@@ -48,7 +48,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     - `[>]` Issue: I clearly do not know how shaders work!
         * `[Y]` https://learnopengl.com/Getting-started/Shaders, 2023-05-09: Learned some things!
         * `[>]` Attempt "Hello Triangle" in Raylib
-            - 2023-05-11: OpenGL shader from https://learnopengl.com/Getting-started/Shaders does not seem to run.  Perhaps Raylib shaders are different enough from OpenGL that this would not work. Try [this](https://www.youtube.com/watch?v=8205iyicv5k) instead.
+            - 2023-05-11: OpenGL shader from https://learnopengl.com/Getting-started/Shaders does not seem to run.  Perhaps Raylib shaders are different enough from OpenGL that this would not work. Try [this](https://www.youtube.com/watch?v=8205iyicv5k) instead, 2023-05-13: There is no info at this source
 
     - `[>]` Icos Experiments
         * `[Y]` Plain icosahedron, 2023-05-01: Icos displayed

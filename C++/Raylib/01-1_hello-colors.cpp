@@ -14,7 +14,7 @@ int main(){
     InitWindow( 600, 600, "Hello, Triangle!" );
     SetTargetFPS( 60 );
 
-    Shader hello = LoadShader( "shaders/hello.vs", "shaders/hello.fs" );
+    Shader hello = LoadShader( "shaders/helloColor.vs", "shaders/helloColor.fs" );
     // hello.locs[SHADER_LOC_VERTEX_POSITION] = GetShaderLocation(hello, "vertexPosition");
     hello.locs[SHADER_LOC_MATRIX_MODEL]    = GetShaderLocation(hello, "matModel");
 
