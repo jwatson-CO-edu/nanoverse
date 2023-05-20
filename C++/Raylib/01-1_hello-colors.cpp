@@ -1,4 +1,4 @@
-// g++ 01-0_hello-triangle.cpp -std=gnu++17 -lraylib
+// g++ 01-1_hello-colors.cpp -std=gnu++17 -lraylib
 
 /// Raylib Imports ///
 #include "raylib.h"
@@ -19,10 +19,10 @@ int main(){
     // hello.locs[SHADER_LOC_MATRIX_MODEL]    = GetShaderLocation(hello, "matModel");
     
     // Vertex colors?
-    float* colors = new float[9];
-    colors[0] = 1.0f;  colors[1] = 0.0f;  colors[2] = 0.0f; // Red
-    colors[3] = 0.0f;  colors[4] = 1.0f;  colors[5] = 0.0f; // Green 
-    colors[6] = 0.0f;  colors[7] = 0.0f;  colors[8] = 1.0f; // Blue
+    float* colors = new float[12];
+    colors[0] = 1.0f;  colors[1] = 0.0f;  colors[ 2] = 0.0f;  colors[ 3] = 1.0f; // Red
+    colors[4] = 0.0f;  colors[5] = 1.0f;  colors[ 6] = 0.0f;  colors[ 7] = 1.0f; // Green 
+    colors[8] = 0.0f;  colors[9] = 0.0f;  colors[10] = 1.0f;  colors[11] = 1.0f; // Blue
 
     // Yes: https://github.com/ChrisDill/raylib-instancing/blob/master/src/instancing/particles_instanced.c
     // ???: https://www.reddit.com/r/raylib/comments/vs6qcx/rldrawvertexarrayelements_not_working_as_expected/
@@ -30,6 +30,15 @@ int main(){
     // Shader attribute locations
     int vtxColorAttrib = rlGetLocationAttrib( hello.id, "vertexColor" );
     rlEnableVertexAttribute( vtxColorAttrib );
+    rlSetVertexAttribute(
+        vtxColorAttrib, //- Attribute index
+        3, // ------------- Size, number of elements 
+        RL_FLOAT, // ------ Type
+        true, // ---------- Normalized?
+        sizeof(float)*4, // Stride
+        (void*) colors // - Pointer
+    );
+    rlSetVertexAttributeDivisor( vtxColorAttrib, 1 );
 
     TriModel tri{1};
     tri.load_tri(

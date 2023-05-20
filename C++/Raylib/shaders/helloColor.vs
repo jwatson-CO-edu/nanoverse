@@ -22,6 +22,7 @@ out vec3 fragNormal;
 out vec3 modNorm;
 
 void main(){
+   fragColor = vertexColor;
    fragPosition = vec3(matModel*vec4(vertexPosition, 1.0f));
    // Calculate final vertex position
    gl_Position = mvp*vec4(vertexPosition, 1.0);
