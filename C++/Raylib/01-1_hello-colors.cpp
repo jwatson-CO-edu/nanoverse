@@ -16,7 +16,20 @@ int main(){
 
     Shader hello = LoadShader( "shaders/helloColor.vs", "shaders/helloColor.fs" );
     // hello.locs[SHADER_LOC_VERTEX_POSITION] = GetShaderLocation(hello, "vertexPosition");
-    hello.locs[SHADER_LOC_MATRIX_MODEL]    = GetShaderLocation(hello, "matModel");
+    // hello.locs[SHADER_LOC_MATRIX_MODEL]    = GetShaderLocation(hello, "matModel");
+    
+    // Vertex colors?
+    float* colors = new float[9];
+    colors[0] = 1.0f;  colors[1] = 0.0f;  colors[2] = 0.0f; // Red
+    colors[3] = 0.0f;  colors[4] = 1.0f;  colors[5] = 0.0f; // Green 
+    colors[6] = 0.0f;  colors[7] = 0.0f;  colors[8] = 1.0f; // Blue
+
+    // Yes: https://github.com/ChrisDill/raylib-instancing/blob/master/src/instancing/particles_instanced.c
+    // ???: https://www.reddit.com/r/raylib/comments/vs6qcx/rldrawvertexarrayelements_not_working_as_expected/
+
+    // Shader attribute locations
+    int vtxColorAttrib = rlGetLocationAttrib( hello.id, "vertexColor" );
+    rlEnableVertexAttribute( vtxColorAttrib );
 
     TriModel tri{1};
     tri.load_tri(
@@ -35,6 +48,9 @@ int main(){
         45.0, // ---------------------- FOV_y
         0 // -------------------------- Projection mode
     };
+
+    
+
 
     while( !WindowShouldClose() ){
         BeginDrawing();
@@ -55,6 +71,7 @@ int main(){
     }
 
     CloseWindow();
+    delete colors;
 
     return 0;
 }
