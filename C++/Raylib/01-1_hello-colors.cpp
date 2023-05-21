@@ -19,10 +19,10 @@ int main(){
     // hello.locs[SHADER_LOC_MATRIX_MODEL]    = GetShaderLocation(hello, "matModel");
     
     // Vertex colors?
-    float* colors = new float[12];
-    colors[0] = 1.0f;  colors[1] = 0.0f;  colors[ 2] = 0.0f;  colors[ 3] = 1.0f; // Red
-    colors[4] = 0.0f;  colors[5] = 1.0f;  colors[ 6] = 0.0f;  colors[ 7] = 1.0f; // Green 
-    colors[8] = 0.0f;  colors[9] = 0.0f;  colors[10] = 1.0f;  colors[11] = 1.0f; // Blue
+    ubyte* colors = new ubyte[12];
+    colors[0] = 255;  colors[1] =   0;  colors[ 2] =   0;  colors[ 3] = 255; // Red
+    colors[4] =   0;  colors[5] = 255;  colors[ 6] =   0;  colors[ 7] = 255; // Green 
+    colors[8] =   0;  colors[9] =   0;  colors[10] = 255;  colors[11] = 255; // Blue
 
     // Yes: https://github.com/ChrisDill/raylib-instancing/blob/master/src/instancing/particles_instanced.c
     // ???: https://www.reddit.com/r/raylib/comments/vs6qcx/rldrawvertexarrayelements_not_working_as_expected/
@@ -33,9 +33,9 @@ int main(){
     rlSetVertexAttribute(
         vtxColorAttrib, //- Attribute index
         3, // ------------- Size, number of elements 
-        RL_FLOAT, // ------ Type
+        RL_UNSIGNED_BYTE, // ------ Type
         true, // ---------- Normalized?
-        sizeof(float)*4, // Stride
+        sizeof(ubyte)*4, // Stride
         (void*) colors // - Pointer
     );
     rlSetVertexAttributeDivisor( vtxColorAttrib, 1 );
