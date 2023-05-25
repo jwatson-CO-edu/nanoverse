@@ -1,0 +1,221 @@
+  // if the shader is invalid the default shader will be used
+        if (shader.id != 0)
+            BeginShaderMode(shader);
+
+        // set the active rlgl texture
+        rlSetTexture(texture.id);
+
+        // draw a quad with a texture using raw RLGL
+        rlBegin(RL_QUADS);
+
+        // just set the color and normal once for all verts
+        rlColor4f(1, 1, 1, 1);
+        rlNormal3f(0, 1, 0);
+
+        float size = 2;
+
+        // first point
+        rlTexCoord2f(0, 0);
+        rlVertex3f(-size, 0, 0);
+
+        // second point
+        rlColor4f(1, 1, 1, 0.0f);
+        rlTexCoord2f(0, 1);
+        rlVertex3f(-size, size, 0); 
+
+        // third point
+        rlTexCoord2f(1, 1);
+        rlVertex3f(size, size, 0);
+
+        // fourth point
+        rlColor4f(1, 1, 1, 1);
+        rlTexCoord2f(1, 0);
+        rlVertex3f(size, 0, 0);
+        rlEnd();
+
+        if (shader.id != 0)
+            EndShaderMode();
+ 
+you can also do it with a mesh buffer too
+
+jwatson-CO-edu — 05/21/2023 9:44 AM
+Oh okay, I got thrown off by this comment, which now that I look is quite old: https://twitter.com/raysan5/status/923484927655542784
+I will absolutely compile and examine your example!
+
+Ray (@raysan5)
+@Muzzoid Actually thats internal to raylib, why do you need it for? Check how its used in shapes drawing: https://t.co/HKvvG2oXPJ
+Twitter•10/26/2017 3:42 AM
+
+JeffM — 05/21/2023 9:45 AM
+yeah just set them
+I don't know if there is an example, but you can just set them in rgl or a mesh
+the default shaders did not support them for a while
+they do now
+just note that when drawing transparent stuff, it will only blend with stuff that's allready in the pixel buffer behind it
+so you may need to sort some stuff to draw back to front
+
+jwatson-CO-edu — 05/21/2023 9:50 AM
+Okay, I'm glad you posted this because I would have associated rlTexCoord2f  with textures in my mind.
+
+JeffM — 05/21/2023 9:51 AM
+they are textures
+rlColor4f(1, 1, 1, 0.0f);
+that's what sets the alpha
+everything in raylib is textured
+rlTexCoord2f(1, 0); is setting the UV mapping
+if you are just doing pure color then don't set the UV
+alpha is part of the vertex color
+
+jwatson-CO-edu — 05/21/2023 9:52 AM
+Yeah, I literally want a single color for the entire mesh with a decreasing alpha across the length of it
+
+JeffM — 05/21/2023 9:52 AM
+then don't set the UV
+leave it at the default
+or load a pure white texture and just tint it with color
+there always has to be a texture
+
+jwatson-CO-edu — 05/21/2023 9:53 AM
+Do I have to do it vertex by vertex, can I set all the colors at once with an array?
+
+JeffM — 05/21/2023 9:53 AM
+you set it vertex by vertex and it sets them in the buffer array that raylib is maintaining
+do these values change every frame?
+
+jwatson-CO-edu — 05/21/2023 9:56 AM
+Yes because It's trailing a little plane.  In my first draft I drew individual triangles a pair at a time with alpha decreasing in steps.
+I felt strongly that I was doing it the slowest way, that's when I started looking into making this dynamic plume a model.
+
+JeffM — 05/21/2023 9:57 AM
+yes, then you'll set them with each vertex
+you could do your own VBO
+but what rlBegin is doing is using the internal VBO that raylib allready has for it's batch system
+it's putting them INTO a buffer
+then drawing them all as one draw call
+so your own VBO will litteraly do the same thing
+it wont' be any faster
+
+jwatson-CO-edu — 05/21/2023 9:58 AM
+So if my vertex locations and colors are changing every frame, then which do your recommend?
+
+JeffM — 05/21/2023 9:58 AM
+it's the same
+use rlBegin
+it's less work to use the raylib batch buffer
+and will be faster because it will batch similar things together
+jwatson-CO-edu — 05/21/2023 9:59 AM
+Ohhhhhhh, okay.  Yes I suppose that's part of the purpose of Raylib, to make this easier, ha ha
+
+JeffM — 05/21/2023 9:59 AM
+yes
+the rlColor call is not pushing each color to the GPU
+it's just setting values in an existing set of buffers
+when the batch is full or changes materials/shaders the entire thing is pushed to the GPU as one batch draw call
+very fast
+
+jwatson-CO-edu — 05/21/2023 10:01 AM
+Nice, I like it.  I'll look into rlBegin as I have not used it yet.
+JeffM — 05/21/2023 10:01 AM
+but yeah, just make a series of quads and set the vertex colors on them as you define the geometry
+it'll blend
+
+jwatson-CO-edu — 05/21/2023 10:02 AM
+So if I create a queue of drawing operations to be batched with rlBegin, then that takes the place of a Model?
+JeffM — 05/21/2023 10:03 AM
+it can
+rlBegin is best for content that has to be computed every frame
+a model is just a bucket full of meshes
+a mesh is a set of buffers cached on the GPU
+
+jwatson-CO-edu — 05/21/2023 10:03 AM
+Can I use rlBegin jobs to modify a model?
+JeffM — 05/21/2023 10:03 AM
+it's best for static, or rarely updating geometry
+no
+models use different buffers
+UpdateMeshBuffer
+that updates a dynamic mesh buffer on the GPU
+it's used for animation
+look at the animation example
+
+jwatson-CO-edu — 05/21/2023 10:04 AM
+Okay, so my plane is static, I just transform it around, but for the plume with dynamic geometry I should use rlBegin
+
+JeffM — 05/21/2023 10:05 AM
+for a simple plume effect I'd use rlBegin
+or a vertex shader
+you could do it with a mesh and UpdateMeshBuffer too
+but if it's just some simple quads, I'm not sure if there is much performance difference.
+
+jwatson-CO-edu — 05/21/2023 10:06 AM
+I encountered models first so that became the basic unit of exchange for me, for vehicles and terrain.  This is good to know.
+This explains why I has having so much trouble finding out how to do this via shader because I was not taking the easy route ha ha
+
+JeffM — 05/21/2023 10:06 AM
+I'd probalby write a custom vertex shader that did all the shading math
+and took a 'thrust' argument 
+well a vertex shader would do it
+you'd modify the alpha values based on some input
+
+jwatson-CO-edu — 05/21/2023 10:07 AM
+The plume can twist so I would use triangles, but this like about 60 triangles max
+
+JeffM — 05/21/2023 10:07 AM
+like a uniform
+ok
+any of the 3 methods would work
+
+jwatson-CO-edu — 05/21/2023 10:08 AM
+Yeah I had trouble pushing the array of colors to the shader as I linked at the top
+
+JeffM — 05/21/2023 10:08 AM
+yeah, arrays are VBOs
+and a collor array allready exists
+you don't need to send a new one
+that's what vertex colors are
+an array of colors
+if I was doing a shader, I'd use the vertex color buffer to store the colors, and then a single uniform to animate them in the shader
+you don't need to replicate a system for colors that is allready there
+mesh allready has a color buffer
+it's the same shader loc that is set with rlColor4 
+
+jwatson-CO-edu — 05/21/2023 10:11 AM
+I tried writing to that array in the past, but the color I passed to DrawModel always overrode that.
+
+JeffM — 05/21/2023 10:12 AM
+you can't just 'write to that array' for an existing model
+you have to set ALL the arrays yourself before you upload the mesh
+you can't mix GenMesh.... with custom meshes
+all the GenMeshes are uploaded static
+look at the Mesh Generation example and the function it has call GenMeshCustom
+
+jwatson-CO-edu — 05/21/2023 10:13 AM
+Yeah I'm having a fundamental misunderstanding here. Do I have to upload the mesh every frame if I make changes?
+
+JeffM — 05/21/2023 10:13 AM
+that is where you can set custom colors, when you define your own triangles.
+no
+yes
+you have to update the buffers when it changes
+the GPU is not reading from that array in the mesh structure
+a COPY is on the GPU
+the copy in the mesh structure is just there for you, and like collisions, and to do animations
+every change must be uploaded to the GPU
+this is why if it was me, I'd do the animation in the shader 🙂
+then you only upload once
+
+jwatson-CO-edu — 05/21/2023 10:14 AM
+UpdateMeshBuffer?
+
+JeffM — 05/21/2023 10:14 AM
+and the shader modifies the geometry before
+yes
+look at the animation example
+it updates buffers
+
+jwatson-CO-edu — 05/21/2023 10:18 AM
+Shader was the route I was taking but I'm only very slowly understanding how all the pieces go together.  I'm really happy you mentioned rlBegin because it's the shortest path to what I want.
+Right now I don't have enough onscreen to seek the absolute most efficient.  Just a plane and terrain that generates as I go.  Very easily stays within 60FPS.  I'm happy to take the middle road.
+
+JeffM — 05/21/2023 10:21 AM
+Yeah, rlbegin will give you what you need very fast
