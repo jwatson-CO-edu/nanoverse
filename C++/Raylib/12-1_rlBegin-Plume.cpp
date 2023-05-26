@@ -1,4 +1,4 @@
-// g++ 12-1_icos-colors.cpp -std=c++17 -lraylib
+// g++ 12-1_rlBegin-Plume.cpp -std=c++17 -lraylib
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
@@ -59,46 +59,66 @@ class Plume{ public:
 
     void draw(){
         // Render plume as a batch job
-        uint    Nsize = coords.size();
-        Vector3 c1, c2, c3, c4;
-        float   R  = color.r/255.0f;
-        float   G  = color.g/255.0f;
-        float   B  = color.b/255.0f;
+        uint    Nsize = coords.size()-1;        
+        float   R     = color.r/255.0f;
+        float   G     = color.g/255.0f;
+        float   B     = color.b/255.0f;
         float   Aspan = headAlpha - tailAlpha;
+        Vector3 c1, c2, c3, c4;
         float   A_i;
         float   A_ip1;
         
         // Begin triangle batch job
         rlBegin( RL_TRIANGLES );
 
-        for( uint i = 0; i < (Nsize-1); i++){
+        for( uint i = 0; i < Nsize; i++){
             c1    = coords[i  ][0];
             c2    = coords[i  ][1];
             c3    = coords[i+1][0];
             c4    = coords[i+1][1];
-            A_i   = tailAlpha + Aspan*(Npairs-(i+1))/(1.0f*Npairs);
-            A_ip1 = tailAlpha + Aspan*(Npairs-(i+2))/(1.0f*Npairs);
+            A_i   = tailAlpha + Aspan*(Nsize-(i  ))/(1.0f*Nsize);
+            A_ip1 = tailAlpha + Aspan*(Nsize-(i+1))/(1.0f*Nsize);
 
-            /// Triangle 1: c2, c1, c3 ///
-            // t1.p1 //
-            rlColor4f(R, G, B, A_i);
-            rlVertex3f(c2.x, c2.y, c2.z);
-            // t1.p2 //
-            rlVertex3f(c1.x, c1.y, c1.z);
-            // t1.p3 //
-            rlColor4f(R, G, B, A_ip1);
-            rlVertex3f(c3.x, c3.y, c3.z);
+            if( i%2==0 ){
+                /// Triangle 1: c2, c1, c3 ///
+                // t1.p1 //
+                rlColor4f(R, G, B, A_i);
+                rlVertex3f(c2.x, c2.y, c2.z);
+                // t1.p2 //
+                rlVertex3f(c1.x, c1.y, c1.z);
+                // t1.p3 //
+                rlColor4f(R, G, B, A_ip1);
+                rlVertex3f(c3.x, c3.y, c3.z);
 
-            /// Triangle 2: c3, c4, c2 ///
-            // t2.p1 //
-            rlVertex3f(c3.x, c3.y, c3.z);
-            // t2.p2 //
-            rlVertex3f(c4.x, c4.y, c4.z);
-            // t2.p3 //
-            rlColor4f(R, G, B, A_i);
-            rlVertex3f(c2.x, c2.y, c2.z);
+                /// Triangle 2: c3, c4, c2 ///
+                // t2.p1 //
+                rlVertex3f(c3.x, c3.y, c3.z);
+                // t2.p2 //
+                rlVertex3f(c4.x, c4.y, c4.z);
+                // t2.p3 //
+                rlColor4f(R, G, B, A_i);
+                rlVertex3f(c2.x, c2.y, c2.z);
+            }else{
+                /// Triangle 1: c1, c3, c4 ///
+                // t1.p1 //
+                rlColor4f(R, G, B, A_i);
+                rlVertex3f(c1.x, c1.y, c1.z);
+                // t1.p2 //
+                rlColor4f(R, G, B, A_ip1);
+                rlVertex3f(c3.x, c3.y, c3.z);
+                // t1.p3 //
+                rlVertex3f(c4.x, c4.y, c4.z);
+
+                /// Triangle 2: c4, c2, c1 ///
+                // t2.p1 //
+                rlVertex3f(c4.x, c4.y, c4.z);
+                // t2.p2 //
+                rlColor4f(R, G, B, A_i);
+                rlVertex3f(c2.x, c2.y, c2.z);
+                // t2.p3 //
+                rlVertex3f(c1.x, c1.y, c1.z);
+            }
         }
-
         // End triangle batch job
         rlEnd();
     }
@@ -112,37 +132,28 @@ int main(){
 
     rand_seed();
 
-    const Vector2 res{ 1200, 600 };
-    // Icosahedron_r icos{ 10.0f, Vector3{0,0,0} };
-    // Camera
-    Camera camera{
-        Vector3{ 30.0, 30.0, 30.0 }, // Position
-        Vector3{  0.0,  0.0,  0.0 }, // Target
-        Vector3{  0.0,  0.0,  1.0 }, // Up
-        45.0, // -------------------- FOV_y
-        0 // ------------------------ Projection mode
-    };
-
     /// Window Init ///
-    InitWindow( (int) res.x, (int) res.y, "ICOSAHEDRON" );
+    InitWindow( 600, 600, "Plume!" );
     SetTargetFPS( 60 );
     rlEnableSmoothLines();
-    // rlDisableBackfaceCulling();
+    rlDisableBackfaceCulling();
 
-     ////////// Shader Init: Pre-Window /////////////////////////////////////////////////////////////
+    // Camera
+    Camera camera = Camera{
+        Vector3{ 15.0, 15.0, 50.0 }, // Position
+        Vector3{ 15.0, 15.0,  0.0 }, // Target
+        Vector3{  0.0,  1.0,  0.0 }, // Up
+        45.0, // ---------------------- FOV_y
+        0 // -------------------------- Projection mode
+    };
 
-    // Fade shader
-    // cout << "About to load shader ..." << endl;
-    Shader fade = LoadShader( "shaders/12-1_fade-test.vs", "shaders/12-1_fade-test.fs" );
-    // cout << "Shader loaded!" << endl;
-    
-    // cout << "About to get shader location ..." << endl;
-    fade.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation( fade, "matModel" );
-    
-
-    // RenderTexture2D target = LoadRenderTexture( res.x, res.y );
-
-    // icos.load_geo();
+    Plume plume{ 6, BLUE, 1.0f, 0.0f };
+    plume.push_coord_pair( Vector3{  0.0f, 0.0f, 0.0f }, Vector3{  0.0f, 30.0f, 0.0f } );
+    plume.push_coord_pair( Vector3{  6.0f, 0.0f, 0.0f }, Vector3{  6.0f, 30.0f, 0.0f } );
+    plume.push_coord_pair( Vector3{ 12.0f, 0.0f, 0.0f }, Vector3{ 12.0f, 30.0f, 0.0f } );
+    plume.push_coord_pair( Vector3{ 18.0f, 0.0f, 0.0f }, Vector3{ 18.0f, 30.0f, 0.0f } );
+    plume.push_coord_pair( Vector3{ 24.0f, 0.0f, 0.0f }, Vector3{ 24.0f, 30.0f, 0.0f } );
+    plume.push_coord_pair( Vector3{ 30.0f, 0.0f, 0.0f }, Vector3{ 30.0f, 30.0f, 0.0f } );
 
     while( !WindowShouldClose() ){
         
@@ -152,8 +163,7 @@ int main(){
         ClearBackground( BLACK );
 
         ///// DRAW LOOP //////////////////////////
-        // setModelShader( &icos.model, &fade );
-        // icos.draw();
+        plume.draw();
 
         /// End Drawing ///
         EndMode3D();
