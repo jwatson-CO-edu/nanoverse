@@ -140,11 +140,10 @@ class Icosahedron_r : public TriModel{ public:
 	float ratio = sqrt( 10.0f + ( 2.0f * sqrt5 ) ) / ( 4.0f * phi ); // ratio of edge length to radius
 	
 	// ~ Variables ~
-	Vector3 center;
-	float   radius;
-	float   a; 
-	float   b; 
-    vvec3   V;
+	float radius;
+	float a; 
+	float b; 
+    vvec3 V;
 
     // ~ Appearance ~
     Color baseClr;
@@ -165,7 +164,7 @@ class Icosahedron_r : public TriModel{ public:
 
         // ~ Appearance ~
         baseClr = BLACK;
-        lineClr = GOLD;
+        lineClr = WHITE;
 
         // ~ Animation ~
         anim = active;
@@ -222,15 +221,15 @@ class Icosahedron_r : public TriModel{ public:
     void load_geo(){
         // Get the model ready for drawing
         build_mesh_unshared();
-        build_normals_flat_unshared();
+        // build_normals_flat_unshared();
         load_mesh();
     }
 
     void draw(){
         // Draw the model
-        if( anim ){  update();  }
-        DrawModel(      model, XYZ, 1.00, baseClr );  
-        DrawModelWires( model, XYZ, 1.02, lineClr );
+        // if( anim ){  update();  }
+        // DrawModel(      model, XYZ, 1.00, baseClr );  
+        // DrawModelWires( model, XYZ, 1.02, lineClr );
     }
 };
 
@@ -261,7 +260,7 @@ class TerrainTile : public TriModel { public:
     Vector3 /*-----------*/ posn1; //- Facet drawing origin
     float /*-------------*/ pScale; // Perlin scale param
     bool /*--------------*/ loaded;
-    vector<TriModel*> /*-*/ props; // Models contained in this tile
+    vector<Icosahedron_r*>  props; // Models contained in this tile
     bool /*--------------*/ icosGen; // Whether or not to generate icosahedra
 
     /// Constructors & Helpers ///
@@ -498,6 +497,9 @@ class TerrainTile : public TriModel { public:
         build_normals_flat_unshared();
         // cout << "\t\t`load_mesh` ..." << endl;
         load_mesh();
+        if( icosGen ){  for( TriModel* prop : props ){  
+            prop->load_geo();
+        }  }
         loaded = true;
     }
 
@@ -748,7 +750,7 @@ int main(){
 
     // bloom shader
     Shader bloom = LoadShader( 0, "shaders/bloom.fs" );
-    bloom.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(bloom, "matModel");
+    // bloom.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(bloom, "matModel");
 
     RenderTexture2D target = LoadRenderTexture( res.x, res.y );
 
@@ -808,7 +810,7 @@ int main(){
                 terrainTiles.draw();
                 glider.draw();
                 plume.draw();
-                // leftVortex.draw();
+                // terrainTiles.draw();
             EndMode3D(); //- End 3d mode drawing, returns to orthographic 2d mode
         EndTextureMode(); // End drawing to texture (now we have a texture available for next passes)
         
@@ -822,7 +824,7 @@ int main(){
                     target.texture, 
                     (Rectangle){ 0, 0, (float)target.texture.width, (float)-target.texture.height }, 
                     (Vector2){ 0, 0 }, 
-                    WHITE 
+                    BLACK // WHITE 
                 );
             EndShaderMode();
             DrawFPS( 10, 10 );

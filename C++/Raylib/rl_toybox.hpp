@@ -384,10 +384,10 @@ class TriModel{ public:
 
     void load_mesh(){
 		// Send triangle mesh geometry to RayLib, needed for drawing
-        cout << "\t\t\t`UploadMesh()` ..." << endl;
+        // cout << "\t\t\t`UploadMesh()` ..." << endl;
 		UploadMesh( &mesh, true );
 		// UploadMesh( &mesh, false );
-        cout << "\t\t\t`LoadModelFromMesh()` ..." << endl;
+        // cout << "\t\t\t`LoadModelFromMesh()` ..." << endl;
     	model = LoadModelFromMesh( mesh );
         model.transform = T;
 	}
