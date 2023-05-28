@@ -18,13 +18,13 @@ using std::list;
 /// Raylib ///
 #include <raylib.h>
 #include <raymath.h>
-#include <rlgl.h>
-#define RLIGHTS_IMPLEMENTATION
+// #include <rlgl.h>
+// #define RLIGHTS_IMPLEMENTATION
 
 /// Local ///
 #include "utils.hpp"
 #include "rl_toybox.hpp"
-#include "rlights.h"
+// #include "rlights.h"
 
 
 ///// Type Aliases ///////////////////////////////
@@ -103,7 +103,7 @@ class Icosahedron_r : public TriModel{ public:
     void load_geo(){
         // Get the model ready for drawing
         build_mesh_unshared();
-        build_normals_flat_unshared();
+        // build_normals_flat_unshared();
         load_mesh();
     }
 

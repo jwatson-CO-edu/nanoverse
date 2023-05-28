@@ -21,12 +21,12 @@ using std::deque;
 #include <raylib.h>
 #include <raymath.h>
 #include <rlgl.h>
-#define RLIGHTS_IMPLEMENTATION
+// #define RLIGHTS_IMPLEMENTATION
 
 /// Local ///
 #include "utils.hpp"
 #include "rl_toybox.hpp"
-#include "rlights.h"
+// #include "rlights.h"
 
 
 ///// Type Aliases ///////////////////////////////
@@ -227,7 +227,7 @@ class Icosahedron_r : public TriModel{ public:
 
     void draw(){
         // Draw the model
-        // if( anim ){  update();  }
+        if( anim ){  update();  }
         // DrawModel(      model, XYZ, 1.00, baseClr );  
         // DrawModelWires( model, XYZ, 1.02, lineClr );
     }
@@ -494,7 +494,7 @@ class TerrainTile : public TriModel { public:
         // cout << "\t\t`build_mesh_unshared` ..." << endl;
         build_mesh_unshared();
         // cout << "\t\t`build_normals_flat_unshared` ..." << endl;
-        build_normals_flat_unshared();
+        // build_normals_flat_unshared();
         // cout << "\t\t`load_mesh` ..." << endl;
         load_mesh();
         if( icosGen ){  for( TriModel* prop : props ){  
@@ -540,7 +540,6 @@ class TerrainGrid{ public:
         // Delete all tiles
         for( pair<array<int,2>,TerrainTile*> elem : tiles ){  delete elem.second;  }
         tiles.clear();
-        // FIXME: ACTUALLY DELETE THE TILES
     }
 
     /// Methods ///
