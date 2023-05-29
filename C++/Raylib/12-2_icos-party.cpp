@@ -75,7 +75,7 @@ class Icosahedron_r : public TriModel{ public:
         // ~ Animation ~
         anim = active;
         float loRate = -0.01f;
-        float hiRate = -0.01f;
+        float hiRate =  0.01f;
         rolVel = randf( loRate, hiRate );
         ptcVel = randf( loRate, hiRate );
         yawVel = randf( loRate, hiRate );
@@ -147,11 +147,11 @@ class TestClass{ public:
     }
 
     void load_geo(){
-        // FIXME: LOAD ALL GEO
+        for( shared_ptr<Icosahedron_r> icos : icosPtrs ){  icos->load_geo();  }  
     }
 
     void draw(){
-        // FIXME: DRAW ALL ELEMENTS
+        for( shared_ptr<Icosahedron_r> icos : icosPtrs ){  icos->draw();  }  
     }
 };
 
@@ -162,13 +162,14 @@ int main(){
 
     rand_seed();
 
-    Icosahedron_r /*-------*/ stackIcos{ 10.0f, Vector3{ 5.0f, 5.0f, 0.0f } };
-    Icosahedron_r* /*------*/ rawIcos = new Icosahedron_r{ 10.0f, Vector3{ 5.0f, 25.0f, 0.0f } };
-    shared_ptr<Icosahedron_r> smartIcos = shared_ptr<Icosahedron_r>( new Icosahedron_r{ 10.0f, Vector3{ 25.0f, 25.0f, 0.0f } } );
-    // FIXME: MAP OF `TestClass` pointers
+    Icosahedron_r /*-------------*/ stackIcos{ 10.0f, Vector3{ 5.0f, 5.0f, 0.0f } };
+    Icosahedron_r* /*------------*/ rawIcos = new Icosahedron_r{ 10.0f, Vector3{ 5.0f, 25.0f, 0.0f } };
+    shared_ptr<Icosahedron_r> /*-*/ smartIcos = shared_ptr<Icosahedron_r>( new Icosahedron_r{ 10.0f, Vector3{ 25.0f, 25.0f, 0.0f } } );
+    map<uint,shared_ptr<TestClass>> testMap;
+    testMap[0] = shared_ptr<TestClass>( new TestClass{ 10.0f, Vector3{ 25.0f, 5.0f, 0.0f } } );
 
     /// Window Init ///
-    InitWindow( 600, 600, "Plume!" );
+    InitWindow( 600, 600, "Icosahedron Party!" );
     SetTargetFPS( 60 );
     rlEnableSmoothLines();
     rlDisableBackfaceCulling();
@@ -177,6 +178,7 @@ int main(){
     stackIcos.load_geo();
     rawIcos->load_geo();
     smartIcos->load_geo();
+    for( pair<uint,shared_ptr<TestClass>> elem : testMap ){  elem.second->load_geo();  }
 
     // Camera
     Camera camera = Camera{
@@ -201,6 +203,7 @@ int main(){
         stackIcos.draw();
         rawIcos->draw();
         smartIcos->draw();
+        for( pair<uint,shared_ptr<TestClass>> elem : testMap ){  elem.second->draw();  }
 
         /// End Drawing ///
         EndMode3D();
