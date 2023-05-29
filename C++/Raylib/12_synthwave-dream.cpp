@@ -164,12 +164,12 @@ class Icosahedron_r : public TriModel{ public:
 
         // ~ Appearance ~
         baseClr = BLACK;
-        lineClr = WHITE;
+        lineClr = GOLD;
 
         // ~ Animation ~
         anim = active;
-        float loRate = -1.0f;
-        float hiRate = -1.0f;
+        float loRate = -0.01f;
+        float hiRate =  0.01f;
         rolVel = randf( loRate, hiRate );
         ptcVel = randf( loRate, hiRate );
         yawVel = randf( loRate, hiRate );
@@ -228,8 +228,8 @@ class Icosahedron_r : public TriModel{ public:
     void draw(){
         // Draw the model
         if( anim ){  update();  }
-        // DrawModel(      model, XYZ, 1.00, baseClr );  
-        // DrawModelWires( model, XYZ, 1.02, lineClr );
+        DrawModel(      model, XYZ, 1.00, baseClr );  
+        DrawModelWires( model, XYZ, 1.02, lineClr );
     }
 };
 
@@ -401,11 +401,11 @@ class TerrainTile : public TriModel { public:
 
     ~TerrainTile(){
         // Free all allocated memory
-        if( mesh.vertices )  delete mesh.vertices;
-        if( mesh.indices  )  delete mesh.indices;
-        if( mesh.normals  )  delete mesh.normals;
+        // if( mesh.vertices )  delete mesh.vertices;
+        // if( mesh.indices  )  delete mesh.indices;
+        // if( mesh.normals  )  delete mesh.normals;
         UnloadModel( model );  
-        if( icosGen ){  for( TriModel* prop : props ){  delete prop;  }  }
+        if( icosGen ){  for( Icosahedron_r* prop : props ){  delete prop;  }  }
     }
 
     void stitch_X_POS_of( const TerrainTile& OtherPlate ){
@@ -497,7 +497,7 @@ class TerrainTile : public TriModel { public:
         // build_normals_flat_unshared();
         // cout << "\t\t`load_mesh` ..." << endl;
         load_mesh();
-        if( icosGen ){  for( TriModel* prop : props ){  
+        if( icosGen ){  for( Icosahedron_r* prop : props ){  
             prop->load_geo();
         }  }
         loaded = true;
@@ -507,7 +507,7 @@ class TerrainTile : public TriModel { public:
         // Draw facets, shift up, draw lines
         DrawModel(      model, Vector3{ 0.0f, 0.0f, 0.0f   }, 1.0, gndClr );  
         DrawModelWires( model, Vector3{ 0.0f, 0.0f, offset }, 1.0, linClr );
-        if( icosGen ){  for( TriModel* prop : props ){  prop->draw();  }  }
+        if( icosGen ){  for( Icosahedron_r* prop : props ){  prop->draw();  }  }
     }
 };
 
