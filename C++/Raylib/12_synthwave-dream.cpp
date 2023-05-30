@@ -16,6 +16,8 @@ using std::map, std::pair;
 using std::list;
 #include <deque>
 using std::deque;
+#include <memory>
+using std::shared_ptr;
 
 /// Raylib ///
 #include <raylib.h>
@@ -251,17 +253,20 @@ class TerrainTile : public TriModel { public:
     /// Member Data ///
 
     vector<vector<Vector3>> pts; // -- Grid points in 3D space
-    float /*-------------*/ scl; // -- Scale of each cell
-    ulong /*-------------*/ M; // ---- Number of rows
-    ulong /*-------------*/ N; // ---- Number of cells per row
-    Color /*-------------*/ gndClr; // Triangle fill color
-    Color /*-------------*/ linClr; // Triangle line color
-    float /*-------------*/ offset; // Z bump for lines
-    Vector3 /*-----------*/ posn1; //- Facet drawing origin
-    float /*-------------*/ pScale; // Perlin scale param
-    bool /*--------------*/ loaded;
-    vector<Icosahedron_r*>  props; // Models contained in this tile
-    bool /*--------------*/ icosGen; // Whether or not to generate icosahedra
+    float   scl; // -- Scale of each cell
+    ulong   M; // ---- Number of rows
+    ulong   N; // ---- Number of cells per row
+    Color   gndClr; // Triangle fill color
+    Color   linClr; // Triangle line color
+    float   offset; // Z bump for lines
+    Vector3 posn1; //- Facet drawing origin
+    float   pScale; // Perlin scale param
+    bool    loaded; // Flag: Is this tile ready to draw?
+
+    /// Child Objects ///
+
+    bool /*-------------------------*/ icosGen; // Whether or not to generate icosahedra
+    vector<shared_ptr<Icosahedron_r>>  props; // - Models contained in this tile
 
     /// Constructors & Helpers ///
 
@@ -391,10 +396,10 @@ class TerrainTile : public TriModel { public:
             loZ /= 4.0f;
             hiZ = loZ + 200.0f;
             for( uint i = 0; i < Ncreate; i++ ){
-                props.push_back( new Icosahedron_r{
+                props.push_back( shared_ptr<Icosahedron_r>( new Icosahedron_r{
                     randf( loRad, hiRad ),
                     Vector3{ randf( loX, hiX ), randf( loY, hiY ), randf( loZ, hiZ ) }
-                } );
+                } ) );
             }
         }
     }
@@ -405,7 +410,8 @@ class TerrainTile : public TriModel { public:
         // if( mesh.indices  )  delete mesh.indices;
         // if( mesh.normals  )  delete mesh.normals;
         UnloadModel( model );  
-        if( icosGen ){  for( Icosahedron_r* prop : props ){  delete prop;  }  }
+        // if( icosGen ){  for( shared_ptr<Icosahedron_r> prop : props ){  delete prop;  }  }
+        props.clear();
     }
 
     void stitch_X_POS_of( const TerrainTile& OtherPlate ){
@@ -497,7 +503,7 @@ class TerrainTile : public TriModel { public:
         // build_normals_flat_unshared();
         // cout << "\t\t`load_mesh` ..." << endl;
         load_mesh();
-        if( icosGen ){  for( Icosahedron_r* prop : props ){  
+        if( icosGen ){  for( shared_ptr<Icosahedron_r> prop : props ){  
             prop->load_geo();
         }  }
         loaded = true;
@@ -507,7 +513,7 @@ class TerrainTile : public TriModel { public:
         // Draw facets, shift up, draw lines
         DrawModel(      model, Vector3{ 0.0f, 0.0f, 0.0f   }, 1.0, gndClr );  
         DrawModelWires( model, Vector3{ 0.0f, 0.0f, offset }, 1.0, linClr );
-        if( icosGen ){  for( Icosahedron_r* prop : props ){  prop->draw();  }  }
+        if( icosGen ){  for( shared_ptr<Icosahedron_r> prop : props ){  prop->draw();  }  }
     }
 };
 
@@ -519,10 +525,12 @@ class TerrainGrid{ public:
     // Managing structure for multiple `TerrainTile`s
 
     /// Members ///
-    map<array<int,2>,TerrainTile*> tiles;
-    float /*--------------------*/ sclCell;
-    ulong /*--------------------*/ MrowsTile;
-    ulong /*--------------------*/ NcolsTile;
+    float sclCell;
+    ulong MrowsTile;
+    ulong NcolsTile;
+
+    /// Child Objects ///
+    map<array<int,2>,shared_ptr<TerrainTile>> tiles;
 
     /// Constructors & Destructors ///
 
@@ -533,12 +541,14 @@ class TerrainGrid{ public:
         MrowsTile = Mrows;
         NcolsTile = Nrows;
         // Populate center tile
-        tiles[ {0,0} ] = new TerrainTile{ sclCell, MrowsTile, NcolsTile, Vector3{ 0.0f, 0.0f, 0.0f } };
+        tiles[ {0,0} ] = shared_ptr<TerrainTile>(  
+            new TerrainTile{ sclCell, MrowsTile, NcolsTile, Vector3{ 0.0f, 0.0f, 0.0f } }  
+        );
     }
 
     ~TerrainGrid(){
         // Delete all tiles
-        for( pair<array<int,2>,TerrainTile*> elem : tiles ){  delete elem.second;  }
+        // for( pair<array<int,2>,shared_ptr<TerrainTile>> elem : tiles ){  delete elem.second;  }
         tiles.clear();
     }
 
@@ -578,14 +588,16 @@ class TerrainGrid{ public:
 
     void populate_neighbors_of( const array<int,2>& addr ){
         // Create the Von Neumann neighborhood of `addr`
-        TerrainTile* /*---*/ nuTile    = nullptr;
-        vector<array<int,2>> neighbors = neighbors_of( addr ); // {X_POS, X_NEG, Y_POS, Y_NEG}
-        vector<array<int,2>> nghbrNghbrs;
-        int /*------------*/ i;
+        shared_ptr<TerrainTile> nuTile    = nullptr;
+        vector<array<int,2>>    neighbors = neighbors_of( addr ); // {X_POS, X_NEG, Y_POS, Y_NEG}
+        vector<array<int,2>>    nghbrNghbrs;
+        int /*---------------*/ i;
         
         for( array<int,2> nghbrAddr : neighbors ){
             if( !p_cell_occupied( nghbrAddr ) ){
-                nuTile = new TerrainTile{ sclCell, MrowsTile, NcolsTile, get_tile_origin( nghbrAddr ) };
+                nuTile = shared_ptr<TerrainTile>( 
+                    new TerrainTile{ sclCell, MrowsTile, NcolsTile, get_tile_origin( nghbrAddr ) }
+                );
                 tiles[ nghbrAddr ] = nuTile;
                 nghbrNghbrs = neighbors_of( nghbrAddr ); // {X_POS, X_NEG, Y_POS, Y_NEG}
                 i = 0;
@@ -643,13 +655,13 @@ class TerrainGrid{ public:
 
     vector<array<int,2>> mark_visible_and_return_oncoming( const FlightFollowThirdP_Camera& cam ){
         // Mark tiles in/visible, Return a list of oncoming tiles that might need expansion
-        array<int,2> /*---*/ currAddr;
-        TerrainTile* /*---*/ currTile = nullptr;
-        array<int,2> /*---*/ tileRslt;
-        vector<array<int,2>> rtnLst;
+        array<int,2> /*------*/ currAddr;
+        shared_ptr<TerrainTile> currTile = nullptr;
+        array<int,2> /*------*/ tileRslt;
+        vector<array<int,2>>    rtnLst;
 
         // For every tile
-        for( pair<array<int,2>,TerrainTile*> elem : tiles ){
+        for( pair<array<int,2>,shared_ptr<TerrainTile>> elem : tiles ){
             currAddr = elem.first;
             currTile = elem.second;
             tileRslt = p_visible_and_oncoming( cam, currAddr );
@@ -675,12 +687,12 @@ class TerrainGrid{ public:
 
     void load_geo(){
         // Load geometry for all existing tiles
-        for( pair<array<int,2>,TerrainTile*> elem : tiles ){  elem.second->load_geo();  }
+        for( pair<array<int,2>,shared_ptr<TerrainTile>> elem : tiles ){  elem.second->load_geo();  }
     }
 
     void draw(){
         // Load geometry for all existing tiles
-        for( pair<array<int,2>,TerrainTile*> elem : tiles ){  
+        for( pair<array<int,2>,shared_ptr<TerrainTile>> elem : tiles ){  
             if( (elem.second->visible) && (elem.second->loaded) )  elem.second->draw();  
         }
     }
