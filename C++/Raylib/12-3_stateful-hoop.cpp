@@ -61,8 +61,116 @@ class HoopTarget{ public:
     void draw(){
         // Render hoop as a batch job
 
-        // FIXME, START HERE: DRAW THE HOOP IN EITHER INIT OR SCORED STATE
+        Vector3 radRay = Vector3Normalize( Vector3CrossProduct( 
+            normal, 
+            Vector3Normalize(  Vector3{ randf(-1.0, 1.0), randf(-1.0, 1.0), randf(-1.0, 1.0) }  )    
+        ) );
+        Vector3 bgnRay = radRay;
+        float   incr   = 2.0f * PI / (1.0f * Nseg);
+        float   margin = 0.02 * radOuter;
+        Vector3 p1, p2, p3, p4;
+        p1 = Vector3Add( center, Vector3Scale( radRay, radInner ) );
+        p2 = Vector3Add( center, Vector3Scale( radRay, radOuter ) );
 
+        // Begin triangle batch job
+        rlBegin( RL_TRIANGLES );
+
+        if( scored ) rlColor4f( clrSolidWin.r/255.0f , clrSolidWin.g/255.0f , clrSolidWin.b/255.0f , clrSolidWin.a/255.0f  );
+        else /*---*/ rlColor4f( clrSolidInit.r/255.0f, clrSolidInit.g/255.0f, clrSolidInit.b/255.0f, clrSolidInit.a/255.0f );
+
+        for( uint i = 0; i < Nseg; i++ ){
+
+            radRay = Vector3RotateByAxisAngle( radRay, normal, incr );
+            p3     = Vector3Add( center, Vector3Scale( radRay, radInner ) );
+            p4     = Vector3Add( center, Vector3Scale( radRay, radOuter ) );
+
+            /// Triangle 1: p2, p1, p3 ///
+            rlVertex3f( p2.x, p2.y, p2.z );
+            rlVertex3f( p1.x, p1.y, p1.z );
+            rlVertex3f( p3.x, p3.y, p3.z );
+
+            /// Triangle 2: c3, c4, c2 ///
+            rlVertex3f( p3.x, p3.y, p3.z );
+            rlVertex3f( p4.x, p4.y, p4.z );
+            rlVertex3f( p2.x, p2.y, p2.z );
+
+            p1 = p3;
+            p2 = p4;
+        }
+
+        // End triangle batch job
+        rlEnd();
+        
+        // Begin border batch job
+        radRay = bgnRay;
+        p1 = Vector3Add( center, Vector3Scale( radRay, radInner-margin ) );
+        p2 = Vector3Add( center, Vector3Scale( radRay, radOuter+margin ) );
+        
+        rlBegin( RL_LINES );
+
+        rlColor4f( clrBorder.r/255.0f, clrBorder.g/255.0f, clrBorder.b/255.0f, clrBorder.a/255.0f );
+
+        for( uint i = 0; i < Nseg; i++ ){
+
+            radRay = Vector3RotateByAxisAngle( radRay, normal, incr );
+            p3     = Vector3Add( center, Vector3Scale( radRay, radInner-margin ) );
+            p4     = Vector3Add( center, Vector3Scale( radRay, radOuter+margin ) );
+
+            /// Segment 1: p1-to-p3 ///
+            rlVertex3f( p1.x, p1.y, p1.z );
+            rlVertex3f( p3.x, p3.y, p3.z );
+
+            /// Segment 2: p2-to-p4 ///
+            rlVertex3f( p2.x, p2.y, p2.z );
+            rlVertex3f( p4.x, p4.y, p4.z );
+
+            p1 = p3;
+            p2 = p4;
+        }
+
+        // End border batch job
+        rlEnd();
+    }
+};
+
+
+////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
+
+int main(){
+
+    rand_seed();
+
+    /// Window Init ///
+    InitWindow( 600, 600, "Hoop!" );
+    SetTargetFPS( 60 );
+    rlEnableSmoothLines();
+    rlDisableBackfaceCulling();
+
+    // Camera
+    Camera camera = Camera{
+        Vector3{ 15.0, 15.0, 50.0 }, // Position
+        Vector3{ 15.0, 15.0,  0.0 }, // Target
+        Vector3{  0.0,  1.0,  0.0 }, // Up
+        45.0, // ---------------------- FOV_y
+        0 // -------------------------- Projection mode
+    };
+
+    HoopTarget hoop{ Vector3{15.0, 15.0, 0.0}, Vector3{0.0, 0.0, 1.0}, 20.0f, 30.0f };
+
+    while( !WindowShouldClose() ){
+        
+        /// Begin Drawing ///
+        BeginDrawing();
+        BeginMode3D( camera );
+        ClearBackground( BLACK );
+
+        ///// DRAW LOOP //////////////////////////
+        hoop.draw();
+
+        /// End Drawing ///
+        EndMode3D();
+        EndDrawing();
     }
 
-};
+    return 0;
+}
