@@ -80,7 +80,10 @@ class HoopTarget{ public:
             GmQ   = Vector3Subtract( G, Q );
             dotQR = Vector3DotProduct( GmQ, RmQ );
             // If dot prod negative, then center is entirely "behind" segment, otherwise test within segment
-            if( dotQR > 0.0f ){  win = (Vector3Length( GmQ ) < QRlen);  }
+            // `G` must lie within the circle
+            if( dotQR > 0.0f ){  
+                win = (Vector3Length( GmQ ) < QRlen) && (Vector3Distance(G,center) <= radOuter);  
+            }
         }
         // If we won, then latch in the `scored` state, Let the client code unlatch if needed
         if( win )  scored = true;
@@ -173,12 +176,21 @@ class HoopTester{ public:
     Vector3 /*----------*/ minC;
     Vector3 /*----------*/ maxC;
     shared_ptr<HoopTarget> hoop;
+    bool /*-------------*/ drwg;
+    array<Vector3,2> /*-*/ tSeg;
+    ulong /*------------*/ fSeq;
+    ulong /*------------*/ fTrn;
+    Color /*------------*/ lClr;
 
     HoopTester( const Vector3& minCorner, const Vector3& maxCorner, HoopTarget* target ){
         // Set the test bounds the the hoop to be tested
         minC = minCorner;
         maxC = maxCorner;
         hoop = shared_ptr<HoopTarget>( target );
+        drwg = false;
+        fSeq = 0;
+        fTrn = 30;
+        lClr = RAYWHITE;
     }
 
     Vector3 sample_point(){
@@ -195,7 +207,28 @@ class HoopTester{ public:
         return array<Vector3,2>{ sample_point(), sample_point() };
     }
     
-    // FIXME, START HERE: ALTERNATE TESTING STATE AND IDLE STATE
+    void update(){
+        // State transitions on multiples of `fTrn` number of frames
+        if( (fSeq % fTrn) == 0 ){
+            // Toggle test off, Unlatch hoop
+            if( drwg ){
+                hoop->scored = false;
+                drwg = false;
+            // Toggle test on, Query hoop
+            }else{
+                tSeg = sample_segment();
+                hoop->test_segment( tSeg[0], tSeg[1] );
+                drwg = true;
+            }
+        }
+        fSeq++;
+    }
+
+    void draw(){
+        // If we are in the testing state, draw the query segment.  Otherwise do nothing
+        update();
+        if( drwg ){  DrawLine3D( tSeg[0], tSeg[1], lClr);  }
+    }
 };
 
 
@@ -213,7 +246,7 @@ int main(){
 
     // Camera
     Camera camera = Camera{
-        Vector3{ 15.0, 30.0, 50.0 }, // Position
+        Vector3{ 50.0, 30.0, 50.0 }, // Position
         Vector3{ 15.0, 15.0,  0.0 }, // Target
         Vector3{  0.0,  1.0,  0.0 }, // Up
         45.0, // ---------------------- FOV_y
@@ -221,6 +254,7 @@ int main(){
     };
 
     HoopTarget hoop{ Vector3{15.0, 15.0, 0.0}, Vector3{0.0, 0.0, 1.0}, 20.0f, 30.0f };
+    HoopTester tstr{ Vector3{-10.0, -10.0, -10.0}, Vector3{40.0, 40.0, 40.0}, &hoop };
 
     while( !WindowShouldClose() ){
         
@@ -231,6 +265,7 @@ int main(){
 
         ///// DRAW LOOP //////////////////////////
         hoop.draw();
+        tstr.draw();
 
         /// End Drawing ///
         EndMode3D();
