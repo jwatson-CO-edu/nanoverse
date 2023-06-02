@@ -236,6 +236,144 @@ class Icosahedron_r : public TriModel{ public:
 };
 
 
+class HoopTarget{ public:
+    // A hoop for the player to fly through, Reminiscent of an Identity Disk from Tron
+
+    /// Members ///
+    Vector3 center;
+    Vector3 normal;
+    float   radInner;
+    float   radOuter;
+    Color   clrSolidInit;
+    Color   clrSolidWin;
+    Color   clrBorder;
+    uint    Nseg;
+    bool    scored;
+
+    HoopTarget( Vector3 origin, Vector3 faceDirection, float ID, float OD ){
+        center /*-*/ = origin;
+        normal /**/  = Vector3Normalize( faceDirection ); // Enforce normal vector
+        radInner     = ID/2.0f;
+        radOuter     = OD/2.0f;
+        clrSolidInit = SKYBLUE;
+        clrSolidWin  = SKYBLUE;
+        clrBorder    = RAYWHITE;
+        Nseg /*---*/ = 40;
+        scored /*-*/ = false;
+        // Make the hoop semi-transparent until it is scored
+        clrSolidInit.a = 125;
+    }
+
+    void test_segment( const Vector3& Q, const Vector3& R ){
+        // Test if a line segment QR passes thru the hoop, If so then set `scored` to true
+        // Author: saxbophone, https://math.stackexchange.com/a/4657621
+        bool    win   = false;
+        Vector3 RmQ   = Vector3Subtract( R, Q );
+        float   QRlen = Vector3Length( RmQ );
+        float   num   = Vector3DotProduct( RmQ, Vector3Subtract( Q, center ) );
+        float   den   = Vector3DotProduct( RmQ, RmQ );
+        float   tHt, dotQR;
+        Vector3 G, GmQ;
+        // Test for nonzero segment length
+        if( den > 0.0f ){
+            tHt = num / den;
+            // G is closest to the hoop center on QR, BUT may NOT be between Q and R!
+            G     = Vector3Subtract( Q, Vector3Scale( RmQ, tHt ) );
+            GmQ   = Vector3Subtract( G, Q );
+            dotQR = Vector3DotProduct( GmQ, RmQ );
+            // If dot prod negative, then center is entirely "behind" segment, otherwise test within segment
+            // `G` must lie within the circle
+            if( dotQR > 0.0f ){  
+                win = (Vector3Length( GmQ ) < QRlen) && (Vector3Distance(G,center) <= radOuter);  
+            }
+        }
+        // If we won, then latch in the `scored` state, Let the client code unlatch if needed
+        if( win )  scored = true;
+    }
+
+    void draw(){
+        // Render hoop as a batch job
+
+        Vector3 radRay = Vector3Normalize( Vector3CrossProduct( 
+            normal, 
+            Vector3Normalize(  Vector3{ randf(-1.0, 1.0), randf(-1.0, 1.0), randf(-1.0, 1.0) }  )    
+        ) );
+        Vector3 bgnRay = radRay;
+        float   incr   = 2.0f * PI / (1.0f * Nseg);
+        float   margin = 0.02 * radOuter;
+        Vector3 p1, p2, p3, p4, p5, p6;
+        p1 = Vector3Add( center, Vector3Scale( radRay, radInner ) );
+        p2 = Vector3Add( center, Vector3Scale( radRay, radOuter ) );
+
+        // Begin triangle batch job
+        rlBegin( RL_TRIANGLES );
+
+        if( scored ) rlColor4f( clrSolidWin.r/255.0f , clrSolidWin.g/255.0f , clrSolidWin.b/255.0f , clrSolidWin.a/255.0f  );
+        else /*---*/ rlColor4f( clrSolidInit.r/255.0f, clrSolidInit.g/255.0f, clrSolidInit.b/255.0f, clrSolidInit.a/255.0f );
+
+        for( uint i = 0; i < Nseg; i++ ){
+
+            radRay = Vector3RotateByAxisAngle( radRay, normal, incr );
+            p3     = Vector3Add( center, Vector3Scale( radRay, radInner ) );
+            p4     = Vector3Add( center, Vector3Scale( radRay, radOuter ) );
+
+            /// Triangle 1: p2, p1, p3 ///
+            rlVertex3f( p2.x, p2.y, p2.z );
+            rlVertex3f( p1.x, p1.y, p1.z );
+            rlVertex3f( p3.x, p3.y, p3.z );
+
+            /// Triangle 2: c3, c4, c2 ///
+            rlVertex3f( p3.x, p3.y, p3.z );
+            rlVertex3f( p4.x, p4.y, p4.z );
+            rlVertex3f( p2.x, p2.y, p2.z );
+
+            p1 = p3;
+            p2 = p4;
+        }
+
+        // End triangle batch job
+        rlEnd();
+        
+        // Begin border batch job
+        radRay = bgnRay;
+        p1 = Vector3Add( center, Vector3Scale( radRay, radInner-margin ) );
+        p2 = Vector3Add( center, Vector3Scale( radRay, radOuter+margin ) );
+        p5 = Vector3Add( center, Vector3Scale( radRay, radOuter+2.0*margin ) );
+        
+        rlBegin( RL_LINES );
+
+        rlColor4f( clrBorder.r/255.0f, clrBorder.g/255.0f, clrBorder.b/255.0f, clrBorder.a/255.0f );
+
+        for( uint i = 0; i < Nseg; i++ ){
+
+            radRay = Vector3RotateByAxisAngle( radRay, normal, incr );
+            p3     = Vector3Add( center, Vector3Scale( radRay, radInner-margin ) );
+            p4     = Vector3Add( center, Vector3Scale( radRay, radOuter+margin ) );
+            p6     = Vector3Add( center, Vector3Scale( radRay, radOuter+2.0*margin ) );
+
+            /// Segment 1: p1-to-p3 ///
+            rlVertex3f( p1.x, p1.y, p1.z );
+            rlVertex3f( p3.x, p3.y, p3.z );
+
+            /// Segment 2: p2-to-p4 ///
+            rlVertex3f( p2.x, p2.y, p2.z );
+            rlVertex3f( p4.x, p4.y, p4.z );
+
+            /// Segment 3: p5-to-p6 ///
+            rlVertex3f( p5.x, p5.y, p5.z );
+            rlVertex3f( p6.x, p6.y, p6.z );
+
+            p1 = p3;
+            p2 = p4;
+            p5 = p6;
+        }
+
+        // End border batch job
+        rlEnd();
+    }
+};
+
+
 ////////// TERRAIN /////////////////////////////////////////////////////////////////////////////////
 
 enum NEIGHBORS{
@@ -265,8 +403,11 @@ class TerrainTile : public TriModel { public:
 
     /// Child Objects ///
 
-    bool /*-------------------------*/ icosGen; // Whether or not to generate icosahedra
-    vector<shared_ptr<Icosahedron_r>>  props; // - Models contained in this tile
+    bool /*------------------------*/ icosGen; // - Whether or not to generate icosahedra
+    vector<shared_ptr<Icosahedron_r>> props; // --- Icosahedra contained in this tile
+    bool /*------------------------*/ hoopGen; // - Whether or not to generate hoops
+    vector<shared_ptr<HoopTarget>>    hoops; // --- Hoops contained in this tile
+    bool /*------------------------*/ scoreTest; // Whether to check hoop scoring for the player
 
     /// Constructors & Helpers ///
 
@@ -352,7 +493,7 @@ class TerrainTile : public TriModel { public:
     }
 
     TerrainTile( float scale, ulong Mrows, ulong Ncols, Vector3 origin,
-                 bool populateIcos = true ) : TriModel( (Mrows-1)*(Ncols-1)*2 ){
+                 bool populateProps = true ) : TriModel( (Mrows-1)*(Ncols-1)*2 ){
         // Generate points and load triangles
         
         // cout << "Basic `TerrainTile` constructor!" << endl;
@@ -368,7 +509,8 @@ class TerrainTile : public TriModel { public:
         pScale  = 10.0f;
         visible = true;
         loaded  = false;
-        icosGen = populateIcos;
+        icosGen = populateProps;
+        hoopGen = populateProps;
 
         // 1. Generate points
         gen_heightmap_perlin( pScale );
@@ -402,16 +544,16 @@ class TerrainTile : public TriModel { public:
                 } ) );
             }
         }
+
+        // FIXME, START HERE: POPULATE HOOPS FOR THIS TILE
+
     }
 
     ~TerrainTile(){
         // Free all allocated memory
-        // if( mesh.vertices )  delete mesh.vertices;
-        // if( mesh.indices  )  delete mesh.indices;
-        // if( mesh.normals  )  delete mesh.normals;
         UnloadModel( model );  
-        // if( icosGen ){  for( shared_ptr<Icosahedron_r> prop : props ){  delete prop;  }  }
         props.clear();
+        hoops.clear();
     }
 
     void stitch_X_POS_of( const TerrainTile& OtherPlate ){
@@ -488,6 +630,26 @@ class TerrainTile : public TriModel { public:
             corners.push_back(  pts[0  ][N-1]  );
         }
         return corners;
+    }
+
+    bool p_point_within_XY_bounds( const Vector3& query ){
+        // Return true if the point is within the tile when both are projected to the XY plane
+        vvec3 corners = get_corners();
+        float loX =  1e6;
+        float hiX = -1e6;
+        float loY =  1e6;
+        float hiY = -1e6;
+        for( Vector3 corner: corners ){  
+            if( corner.x < loX )  loX = corner.x;
+            if( corner.x > hiX )  hiX = corner.x;
+            if( corner.y < loY )  loY = corner.y;
+            if( corner.y > hiY )  hiY = corner.y;
+        }
+        return ((loX <= query.x) && (query.x <= hiX) && (loY <= query.y) && (query.y <= hiY));
+    }
+
+    void check_player_relevant( const Vector3& query ){
+
     }
 
     ///// Rendering //////////////////////////////

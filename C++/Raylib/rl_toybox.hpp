@@ -341,9 +341,6 @@ class TriModel{ public:
 
     ~TriModel(){
         // Free all allocated memory
-        // if( mesh.vertices )  delete mesh.vertices;
-        // if( mesh.indices  )  delete mesh.indices;
-        // if( mesh.normals  )  delete mesh.normals;
         UnloadModel( model );  
     }
 
