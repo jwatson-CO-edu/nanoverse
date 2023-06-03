@@ -12,7 +12,7 @@ uniform vec4 colDiffuse;
 
 // NOTE: Add here your custom variables
 
-const vec2 size = vec2(1200, 600);   // render size
+const vec2 size = vec2(600, 600);   // render size
 const float samples = 4.25; // 4.25; // 4.5; // 7.5; // 10.0; // 5.0; // pixels per axis; higher = bigger glow, worse performance
 const float quality = 3.5; //2.5;  // lower = smaller glow, better quality
 

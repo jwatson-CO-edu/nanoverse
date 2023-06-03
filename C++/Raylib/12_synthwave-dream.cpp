@@ -541,7 +541,7 @@ class TerrainTile : public TriModel { public:
                 if( corner.y > hiY )  hiY = corner.y;
             }
             loZ /= 4.0f;
-            hiZ = loZ + 200.0f;
+            hiZ = loZ + 100.0f;
             for( uint i = 0; i < Ncreate; i++ ){
                 props.push_back( shared_ptr<Icosahedron_r>( new Icosahedron_r{
                     randf( loRad, hiRad ),
@@ -658,7 +658,7 @@ class TerrainTile : public TriModel { public:
     }
 
     void update_hoops( const array<Vector3,2>& path ){
-        // FIXME, START HERE: SCORE HOOPS
+        // Test all hoops above this tile
         for( shared_ptr<HoopTarget> hoop : hoops ){
             hoop->test_segment( path[0], path[1] );
         }
@@ -894,7 +894,7 @@ int main(){
 
     rand_seed();
 
-    const Vector2 res = { 1200, 600 };
+    const Vector2 res = { 800, 800 };
     ulong Mrows = 50,
     /*-*/ Nrows = 50;
     float tCellScale = 10.0f,
@@ -949,11 +949,13 @@ int main(){
 
     // bloom shader
     Shader bloom = LoadShader( 0, "shaders/bloom.fs" );
+    // Shader fade  = LoadShader( "shaders/lineFade.vs", 0 );
     // bloom.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(bloom, "matModel");
 
-    RenderTexture2D target = LoadRenderTexture( res.x, res.y );
+    RenderTexture2D target   = LoadRenderTexture( res.x, res.y );
+    // RenderTexture2D distMask = LoadRenderTexture( res.x, res.y );
 
-
+    // rlSetLineWidth( 0.125 );
 
     ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
 
@@ -1000,9 +1002,11 @@ int main(){
         camera.update_target_position( glider.get_XYZ() );
 		camera.advance_camera();
         terrainTiles.mark_visible_and_expand_border( camera );
+        terrainTiles.update_hoops( glider.get_straightline_path() );
 
         ///// DRAW PHASE /////////////////////////
         
+        // BeginShaderMode( fade );
         BeginTextureMode( target ); // - Enable drawing to texture
             ClearBackground( BLACK ); // Clear texture background
             BeginMode3D( camera ); // -- Begin 3d mode drawing
@@ -1012,6 +1016,7 @@ int main(){
                 // terrainTiles.draw();
             EndMode3D(); //- End 3d mode drawing, returns to orthographic 2d mode
         EndTextureMode(); // End drawing to texture (now we have a texture available for next passes)
+        // EndShaderMode();s
         
         BeginDrawing();
             ClearBackground( BLACK ); // Clear screen background
@@ -1026,7 +1031,7 @@ int main(){
                     BLACK // WHITE 
                 );
             EndShaderMode();
-            DrawFPS( 10, 10 );
+            // DrawFPS( 10, 10 );
         EndDrawing();
     }
 

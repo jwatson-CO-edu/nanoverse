@@ -433,7 +433,7 @@ class DeltaGlider : public TriModel{ public:
         fusFrac   = 0.5;
         sweptFrac = 0.75;
         thickFrac = 0.25;
-        lenMax    = 15;
+        lenMax    = 30;
 
         // Using unshared vertices for flat shading
 
@@ -477,6 +477,9 @@ class DeltaGlider : public TriModel{ public:
             Vector3{ +wingspan/2  ,  0.0f                 , -wingspan*sweptFrac + wingspan*sweptFrac/2.0f }, // 5, Right wingtip
             Vector3{  0.0f        ,  0.0f                 , -wingspan*fusFrac   + wingspan*sweptFrac/2.0f }  // 3, Back
         );
+
+        path.push_front(  get_XYZ()  );
+        path.push_front(  get_XYZ()  );
     }
 
 
@@ -523,6 +526,7 @@ class DeltaGlider : public TriModel{ public:
 
     void draw(){
         // Draw the model
+        update();
         DrawModel(      model, XYZ, 1.00, sldClr );  
         DrawModelWires( model, XYZ, 1.02, linClr );
     }

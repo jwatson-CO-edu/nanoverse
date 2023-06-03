@@ -7,74 +7,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 ## Architecture 1: C++ & RayLib  (Dangerous!)
 * Purpose: Let yourself have some graphics, as a treat!  
 
-* `[>]` Terrain generation - Delta Glider
-    - `[Y]` Perlin Noise terrain grid tiles, 2023-04-12: Tuned scaling and elevation
-        * `[Y]` Unshaded with lines, 2023-04-05: Finally got random, non-vibrating triangles w/ correct orientation! Stored in models as tiles instead of individual triangles.
-        * `[Y]` Add XY position noise, 2023-04-10: Added
-        * `[Y]` Toon shader, 2023-04-12: Works for C++ as well as for C
-        * `[Y]` Actual Perlin data, 2023-04-12: Tuned scaling and elevation
-            - `{N}` If too smooth, apply random noise to perlin, 2023-04-12: Not needed, looks very natural
-    - `[Y]` Synthwave terrain, 2023-04-12: Bloom shader is sufficient
-        * `[N]` Write "Synthwave" shader based on toon shader, 2023-04-12: Bloom shader is sufficient
-            - `[N]` Display normal shader output to see if you can use this data for the intended shader, 2023-04-12: Bloom shader is sufficient
-        * `[Y]` Add bloom glow to boundary lines, 2023-04-12: Bloom shader is sufficient
-            - `[Y]` Find bloom shader(s) and implement one example, 2023-04-12: Available in Raylib example shaders, Only slight modification needed
-    - `[Y]` JS + KB Ctrl Glider, 2023-04-16: Very smooth
-        * `[Y]` Keyboard Ctrl, 2023-04-12: [Arrows] - Pitch & Yaw, [Z/X] - Roll
-        * `[Y]` Joystick Ctrl, 2023-04-16: Very smooth
-            - `[Y]` RS: Ailerons - Pitch & Roll, 2023-04-16: Very smooth
-            - `[Y]` LS: Rudder + Throttle - Yaw & Thrust, 2023-04-16: Very smooth
-    - `[Y]` Issue: Massive slowdown and memory usage when there is too much terrain, 2023-04-16: Valgrind is MAGICAL
-        * Related?: https://github.com/raysan5/raylib/issues/807, 2023-04-16: Not related
-        * `[Y]` Valgrind is MAGICAL, 2023-04-16: Nice!
-            - `GenImagePerlinNoise` allocates image on the heap, it needs to be freed with `UnloadImage`
-            - Every time that `get_image_pixel_color_at` runs, it copies the ENTIRE IMAGE to a `Color*` which is NOT FREED before the function exits  
-    - `[Y]` Infinite grid, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
-        * `[Y]` Tiles mesh without terrain discontinuities, even considering XY noise, 2023-04-18: Stitched and blended
-        * `[Y]` Add frame rate monitor, 2023-04-17: Added
-        * `[Y]` Instantiate without noticeable "pop-in", 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
-            - `[Y]` Get Raylib draw distance, 2023-04-22: As below  
-            `#define RL_CULL_DISTANCE_NEAR      0.01 // Default projection matrix near cull distance`  
-            `#define RL_CULL_DISTANCE_FAR  1000.0 // -- Default projection matrix far cull distance`  
-            - `[Y]` Every frame, compute whether to instantiate new neighbors, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
-                * `[Y]` Maintain visible terrain up to cull distance, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
-                * `[Y]` Keep ahead of cull distance in the direction that the camera is headed, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
-            - `[Y]` Every frame, compute whether to show/hide existing tiles, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
-            Stop drawing when too far behind, but retain for drawing if player retraces their path  
-                * `[Y]` Add and heed a visibility flag, 2023-04-24: Plus `loaded` flag
-                * `[Y]` Hide tiles > cull distance behind, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
-                * `[Y]` Hide tiles > 2X cull distance ahead, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
 
-    - `[>]` Issue: I clearly do not know how shaders work!
-        * `[Y]` https://learnopengl.com/Getting-started/Shaders, 2023-05-09: Learned some things!
-        * `[>]` Attempt "Hello Triangle" in Raylib
-            - 2023-05-11: OpenGL shader from https://learnopengl.com/Getting-started/Shaders does not seem to run.  Perhaps Raylib shaders are different enough from OpenGL that this would not work. Try [this](https://www.youtube.com/watch?v=8205iyicv5k) instead, 2023-05-13: There is no info at this source
-
-    - `[>]` Icos Experiments
-        * `[Y]` Plain icosahedron, 2023-05-01: Icos displayed
-        * `[>]` Fading color from bottom to top with a vertex shader
-            - 2023-05-02: [Raylib has its own shader language that wraps GLSL](https://github.com/raysan5/raylib/blob/master/src/rlgl.h)
-        * `[ ]` Dynamic points - Surface position noise?
-        * `[ ]` Dynamic colors?
-
-    - `[>]` Distance fog in the form of vanishing lines
-        * https://blog.mapbox.com/drawing-antialiased-lines-with-opengl-8766f34192dc
-
-    - `[>]` Synthwave glider
-        * `[Y]` Synthwave shading on glider, 2023-04-12: Bloom shader is sufficient
-        * `[>]` Glowing contrail -or- Wingtip vortices
-            - `[>]` How to fade smoothly?
-                * Vertex colors?, 2023-04-29: I don't think vertex colors are meant to be accessed, Try a vertex shader  
-            - `[ ]` Apply bloom
-
-
-    - `[ ]` Synthwave triangles
-        * `[ ]` Shootable triangles, Spin
-        * `{N}` Iridescent/glare?, 2023-04-12: Would distract from vector aesthetic
-    
-    - `{ }` Curved CRT shader?
-    - `[ ]` Video -or- animated GIF output --to-> IG 
-        - `[ ]` Remove CRT curve for IG post
 
 * `[>]` Piped Ribbons - Generative art
     - `[Y]` Randomly trace a 3D grid, with 90deg curved turn limit with radius that lands mid-segment
@@ -294,6 +227,68 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 
 
 ## Completed
+* `[>]` Terrain generation - Delta Glider
+    - `[Y]` Perlin Noise terrain grid tiles, 2023-04-12: Tuned scaling and elevation
+        * `[Y]` Unshaded with lines, 2023-04-05: Finally got random, non-vibrating triangles w/ correct orientation! Stored in models as tiles instead of individual triangles.
+        * `[Y]` Add XY position noise, 2023-04-10: Added
+        * `[Y]` Toon shader, 2023-04-12: Works for C++ as well as for C
+        * `[Y]` Actual Perlin data, 2023-04-12: Tuned scaling and elevation
+            - `{N}` If too smooth, apply random noise to perlin, 2023-04-12: Not needed, looks very natural
+    - `[Y]` Synthwave terrain, 2023-04-12: Bloom shader is sufficient
+        * `[N]` Write "Synthwave" shader based on toon shader, 2023-04-12: Bloom shader is sufficient
+            - `[N]` Display normal shader output to see if you can use this data for the intended shader, 2023-04-12: Bloom shader is sufficient
+        * `[Y]` Add bloom glow to boundary lines, 2023-04-12: Bloom shader is sufficient
+            - `[Y]` Find bloom shader(s) and implement one example, 2023-04-12: Available in Raylib example shaders, Only slight modification needed
+    - `[Y]` JS + KB Ctrl Glider, 2023-04-16: Very smooth
+        * `[Y]` Keyboard Ctrl, 2023-04-12: [Arrows] - Pitch & Yaw, [Z/X] - Roll
+        * `[Y]` Joystick Ctrl, 2023-04-16: Very smooth
+            - `[Y]` RS: Ailerons - Pitch & Roll, 2023-04-16: Very smooth
+            - `[Y]` LS: Rudder + Throttle - Yaw & Thrust, 2023-04-16: Very smooth
+    - `[Y]` Issue: Massive slowdown and memory usage when there is too much terrain, 2023-04-16: Valgrind is MAGICAL
+        * Related?: https://github.com/raysan5/raylib/issues/807, 2023-04-16: Not related
+        * `[Y]` Valgrind is MAGICAL, 2023-04-16: Nice!
+            - `GenImagePerlinNoise` allocates image on the heap, it needs to be freed with `UnloadImage`
+            - Every time that `get_image_pixel_color_at` runs, it copies the ENTIRE IMAGE to a `Color*` which is NOT FREED before the function exits  
+    - `[Y]` Infinite grid, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
+        * `[Y]` Tiles mesh without terrain discontinuities, even considering XY noise, 2023-04-18: Stitched and blended
+        * `[Y]` Add frame rate monitor, 2023-04-17: Added
+        * `[Y]` Instantiate without noticeable "pop-in", 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
+            - `[Y]` Get Raylib draw distance, 2023-04-22: As below  
+            `#define RL_CULL_DISTANCE_NEAR      0.01 // Default projection matrix near cull distance`  
+            `#define RL_CULL_DISTANCE_FAR  1000.0 // -- Default projection matrix far cull distance`  
+            - `[Y]` Every frame, compute whether to instantiate new neighbors, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
+                * `[Y]` Maintain visible terrain up to cull distance, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
+                * `[Y]` Keep ahead of cull distance in the direction that the camera is headed, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
+            - `[Y]` Every frame, compute whether to show/hide existing tiles, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
+            Stop drawing when too far behind, but retain for drawing if player retraces their path  
+                * `[Y]` Add and heed a visibility flag, 2023-04-24: Plus `loaded` flag
+                * `[Y]` Hide tiles > cull distance behind, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
+                * `[Y]` Hide tiles > 2X cull distance ahead, 2023-04-24: Inf terrain without RAM hit, slowdown, or pop-in!
+    - `[Y]` Issue: I clearly do not know how shaders work!, 2023-06-03: Vertex colors instead of shaders
+        * `[Y]` https://learnopengl.com/Getting-started/Shaders, 2023-05-09: Learned some things!
+        * `[Y]` Attempt "Hello Triangle" in Raylib, 2023-06-03: Vertex colors instead of shaders
+            - 2023-05-11: OpenGL shader from https://learnopengl.com/Getting-started/Shaders does not seem to run.  Perhaps Raylib shaders are different enough from OpenGL that this would not work. Try [this](https://www.youtube.com/watch?v=8205iyicv5k) instead, 2023-05-13: There is no info at this source
+    - `[Y]` Icos Experiments, 2023-06-03: Further experiments not needed
+        * `[Y]` Plain icosahedron, 2023-05-01: Icos displayed
+        * `[>]` Fading color from bottom to top with a vertex shader
+            - 2023-05-02: [Raylib has its own shader language that wraps GLSL](https://github.com/raysan5/raylib/blob/master/src/rlgl.h)
+        * `[N]` Dynamic points - Surface position noise?, 2023-06-03: Further experiments not needed
+        * `[N]` Dynamic colors?, 2023-06-03: Further experiments not needed
+    - `[N]` Distance fog in the form of vanishing lines, 2023-06-03: Cannot be applied to `GL_LINES`
+        * https://blog.mapbox.com/drawing-antialiased-lines-with-opengl-8766f34192dc
+    - `[y]` Synthwave glider, 2023-06-03: Render plume as a batch job
+        * `[Y]` Synthwave shading on glider, 2023-04-12: Bloom shader is sufficient
+        * `[Y]` Glowing contrail -or- Wingtip vortices
+            - `[Y]` How to fade smoothly?, 2023-06-03: Vertex colors are meant to be accessed
+                * Vertex colors?, 2023-04-29: I don't think vertex colors are meant to be accessed, Try a vertex shader  
+                * Vertex colors?, 2023-06-03: Vertex colors are meant to be accessed
+            - `[Y]` Apply bloom, 2023-06-03: Render plume as a batch job
+    - `[N]` Synthwave triangles
+        * `[N]` Shootable triangles, Spin
+        * `{N}` Iridescent/glare?, 2023-04-12: Would distract from vector aesthetic
+    - `{N}` Curved CRT shader?, 2023-06-03: Render plume as a batch job
+    - `[Y]` Video -or- animated GIF output --to-> IG, 2023-06-03: Render plume as a batch job 
+        - `[N]` Remove CRT curve for IG post, 2023-06-03: Render plume as a batch job
 ```
 [Y] Grid Glider - Delta Glider
     [Y] Glider with planelike motion - 2022-09-19: Really need to calm down on the graphics, you don't need them!
