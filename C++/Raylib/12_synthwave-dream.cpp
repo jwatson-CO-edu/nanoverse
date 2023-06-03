@@ -657,12 +657,11 @@ class TerrainTile : public TriModel { public:
         return ((loX <= query.x) && (query.x <= hiX) && (loY <= query.y) && (query.y <= hiY));
     }
 
-    void check_player_relevant( const Vector3& query ){
-        // Determine whether or not to run PvE checks
-        if( p_point_within_XY_bounds( query ) )
-            runPlyrChks = true;
-        else
-            runPlyrChks = false;
+    void update_hoops( const array<Vector3,2>& path ){
+        // FIXME, START HERE: SCORE HOOPS
+        for( shared_ptr<HoopTarget> hoop : hoops ){
+            hoop->test_segment( path[0], path[1] );
+        }
     }
 
     ///// Rendering //////////////////////////////
@@ -866,6 +865,17 @@ class TerrainGrid{ public:
     void load_geo(){
         // Load geometry for all existing tiles
         for( pair<array<int,2>,shared_ptr<TerrainTile>> elem : tiles ){  elem.second->load_geo();  }
+    }
+
+    void update_hoops( const array<Vector3,2>& path ){
+        for( pair<array<int,2>,shared_ptr<TerrainTile>> elem : tiles ){  
+            if( elem.second->p_point_within_XY_bounds( path[0] ) ){
+                elem.second->runPlyrChks = true;
+                elem.second->update_hoops( path );
+            }else{
+                elem.second->runPlyrChks = false;
+            }
+        }
     }
 
     void draw(){
