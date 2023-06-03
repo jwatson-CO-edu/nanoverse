@@ -400,14 +400,19 @@ class TerrainTile : public TriModel { public:
     Vector3 posn1; //- Facet drawing origin
     float   pScale; // Perlin scale param
     bool    loaded; // Flag: Is this tile ready to draw?
+    float   loX;
+    float   hiX;
+    float   loY;
+    float   hiY;
 
     /// Child Objects ///
 
-    bool /*------------------------*/ icosGen; // - Whether or not to generate icosahedra
-    vector<shared_ptr<Icosahedron_r>> props; // --- Icosahedra contained in this tile
-    bool /*------------------------*/ hoopGen; // - Whether or not to generate hoops
-    vector<shared_ptr<HoopTarget>>    hoops; // --- Hoops contained in this tile
-    bool /*------------------------*/ scoreTest; // Whether to check hoop scoring for the player
+    bool /*------------------------*/ icosGen; // --- Whether or not to generate icosahedra
+    vector<shared_ptr<Icosahedron_r>> props; // ----- Icosahedra contained in this tile
+    bool /*------------------------*/ hoopGen; // --- Whether or not to generate hoops
+    vector<shared_ptr<HoopTarget>>    hoops; // ----- Hoops contained in this tile
+    bool /*------------------------*/ scoreTest; // - Whether to check hoop scoring for the player
+    bool /*------------------------*/ runPlyrChks; // Whether or not to run PvE checks
 
     /// Constructors & Helpers ///
 
@@ -511,23 +516,23 @@ class TerrainTile : public TriModel { public:
         loaded  = false;
         icosGen = populateProps;
         hoopGen = populateProps;
+        loX     =  1e6;
+        hiX     = -1e6;
+        loY     =  1e6;
+        hiY     = -1e6;
 
         // 1. Generate points
         gen_heightmap_perlin( pScale );
 
         // 2. Generate icos
+        float loZ     =  0.0;
+        float hiZ     =  0.0;
+        vvec3 corners = get_corners();
         if( icosGen ){
-            vvec3 corners = get_corners();
-            uint  icosMax =  5;
-            uint  Ncreate = randi( 0, 5 );
+            uint  icosMax =  6;
+            uint  Ncreate = randi( 0, icosMax );
             float loRad   =  5.0f;
             float hiRad   = 50.0f;
-            float loX =  1e6;
-            float hiX = -1e6;
-            float loY =  1e6;
-            float hiY = -1e6;
-            float loZ =  0.0;
-            float hiZ =  0.0;
             for( Vector3 corner: corners ){  
                 loZ += corner.z;  
                 if( corner.x < loX )  loX = corner.x;
@@ -545,13 +550,28 @@ class TerrainTile : public TriModel { public:
             }
         }
 
-        // FIXME, START HERE: POPULATE HOOPS FOR THIS TILE
+        if( hoopGen ){
+            uint  hoopMax =  4;
+            uint  Ncreate = randi( 0, hoopMax );
+            float loRad   = 10.0f;
+            float hiRad   = 30.0f;
+            float diffRad = -5.0f;
+            float rad;
+            for( uint i = 0; i < Ncreate; i++ ){
+                rad = randf( loRad, hiRad );
+                hoops.push_back( shared_ptr<HoopTarget>( new HoopTarget(
+                    Vector3{ randf( loX, hiX ), randf( loY, hiY ), randf( loZ, hiZ ) },
+                    Vector3Normalize( Vector3{randf( -1.0f, 1.0f ), randf( -1.0f, 1.0f ), 0.0f} ),
+                    rad+diffRad, rad
+                ) ) );
+            }
+        }
 
     }
 
     ~TerrainTile(){
         // Free all allocated memory
-        UnloadModel( model );  
+        // UnloadModel( model );  
         props.clear();
         hoops.clear();
     }
@@ -634,22 +654,15 @@ class TerrainTile : public TriModel { public:
 
     bool p_point_within_XY_bounds( const Vector3& query ){
         // Return true if the point is within the tile when both are projected to the XY plane
-        vvec3 corners = get_corners();
-        float loX =  1e6;
-        float hiX = -1e6;
-        float loY =  1e6;
-        float hiY = -1e6;
-        for( Vector3 corner: corners ){  
-            if( corner.x < loX )  loX = corner.x;
-            if( corner.x > hiX )  hiX = corner.x;
-            if( corner.y < loY )  loY = corner.y;
-            if( corner.y > hiY )  hiY = corner.y;
-        }
         return ((loX <= query.x) && (query.x <= hiX) && (loY <= query.y) && (query.y <= hiY));
     }
 
     void check_player_relevant( const Vector3& query ){
-
+        // Determine whether or not to run PvE checks
+        if( p_point_within_XY_bounds( query ) )
+            runPlyrChks = true;
+        else
+            runPlyrChks = false;
     }
 
     ///// Rendering //////////////////////////////
@@ -676,12 +689,15 @@ class TerrainTile : public TriModel { public:
         DrawModel(      model, Vector3{ 0.0f, 0.0f, 0.0f   }, 1.0, gndClr );  
         DrawModelWires( model, Vector3{ 0.0f, 0.0f, offset }, 1.0, linClr );
         if( icosGen ){  for( shared_ptr<Icosahedron_r> prop : props ){  prop->draw();  }  }
+        if( hoopGen ){  for( shared_ptr<HoopTarget>    hoop : hoops ){  hoop->draw();  }  }
     }
 };
 
 
 
 ////////// TerrainGrid ////////////////////////////////////////////////////
+
+// FIXME, START HERE: QUERY ALL THE HOOPS IN THE ACTIVE TILE FOR SCORING
 
 class TerrainGrid{ public:
     // Managing structure for multiple `TerrainTile`s
@@ -888,7 +904,7 @@ int main(){
     vvec3 /*--*/ gliderPoints;
     Vector3 /**/ vec1, vec2;
 
-    Plume plume{ 30, ORANGE, 1.0f, 0.0f };
+    Plume plume{ 60, ORANGE, 1.0f, 0.0f };
     vvec3 skltn;
 
     /// Window Init ///
@@ -913,7 +929,7 @@ int main(){
     glider.rotate_RPY( 0.0, 3.1416/2.0, 3.1416 );
 
     FlightFollowThirdP_Camera camera{
-        25.0,
+        35.0,
 		glider.get_XYZ(),
 		glider.T
     };
@@ -1008,9 +1024,9 @@ int main(){
 
     ////////// CLEANUP /////////////////////////////////////////////////////////////////////////////
 
-    UnloadShader( bloom );
-    UnloadRenderTexture( target );    
-    UnloadModel( glider.model  );
+    // UnloadShader( bloom );
+    // UnloadRenderTexture( target );    
+    // UnloadModel( glider.model  );
     CloseWindow(); // Close window and OpenGL context
 
     return 0;

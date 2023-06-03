@@ -16,6 +16,8 @@ using std::array;
 using std::map, std::pair; 
 #include <algorithm>
 using std::min;
+#include <deque>
+using std::deque;
 
 /// Raylib ///
 #include <raylib.h>
@@ -413,6 +415,7 @@ class TriModel{ public:
 class DeltaGlider : public TriModel{ public:
     // A fun little space plane
 
+    /// Members ///
     Color sldClr = BLACK; // SKYBLUE;
     Color linClr = RAYWHITE; // RAYWHITE; // SKYBLUE; // LIGHTGRAY; // LIME; // WHITE; // BLACK;
     float wingSpan;
@@ -420,12 +423,17 @@ class DeltaGlider : public TriModel{ public:
     float sweptFrac;
     float thickFrac;
 
+    /// Hoop Tracking ///
+    deque<Vector3> path;
+    uint /*-----*/ lenMax;
+
     DeltaGlider( float wingspan = 10.0f ) : TriModel( 8 ){
         // 
         wingSpan  = wingspan;
         fusFrac   = 0.5;
         sweptFrac = 0.75;
         thickFrac = 0.25;
+        lenMax    = 15;
 
         // Using unshared vertices for flat shading
 
@@ -489,6 +497,17 @@ class DeltaGlider : public TriModel{ public:
         rtnPts.push_back( rightTip );
         rtnPts.push_back( leftTip  );
         return rtnPts;
+    }
+
+    void update(){
+        // Update the path summary
+        path.push_front(  get_XYZ()  );
+        if( path.size() > lenMax ){  path.pop_back();  }
+    }
+
+    array<Vector3,2> get_straightline_path(){
+        // Return a line segment retracing the last `lenMax` frame of travel
+        return array<Vector3,2>{ path.front(), path.back() };
     }
 
 
