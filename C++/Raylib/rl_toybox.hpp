@@ -427,8 +427,10 @@ class DeltaGlider : public TriModel{ public:
     deque<Vector3> path;
     uint /*-----*/ lenMax;
 
+    /// Constructor ///
+
     DeltaGlider( float wingspan = 10.0f ) : TriModel( 8 ){
-        // 
+        // Build the geometry of the glider
         wingSpan  = wingspan;
         fusFrac   = 0.5;
         sweptFrac = 0.75;
@@ -478,6 +480,7 @@ class DeltaGlider : public TriModel{ public:
             Vector3{  0.0f        ,  0.0f                 , -wingspan*fusFrac   + wingspan*sweptFrac/2.0f }  // 3, Back
         );
 
+        // Init path
         path.push_front(  get_XYZ()  );
         path.push_front(  get_XYZ()  );
     }
