@@ -7,14 +7,15 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 ## Architecture 1: C++ & RayLib  (Dangerous!)
 * Purpose: Let yourself have some graphics, as a treat!  
 
+* `[>]` Boids
+    - `[Y]` Boids consider nearby visible neighbors, 2023-06-10: Wrote pose aggregator
+    - `[>]` Add free will
+    - `[ ]` Add strong obstacle avoidance
 
+&nbsp;  
 
-* `[>]` Piped Ribbons - Generative art
-    - `[Y]` Randomly trace a 3D grid, with 90deg curved turn limit with radius that lands mid-segment
-    - `[Y]` Ribbons as contrails, 2022-12-2X: Shared 
-        * `[Y]` Deterministic turning rules that allow predictable loop, 2022-12-2X: Shared 
-        * `[Y]` Multiple, random non-colliding ribbons, 2022-12-2X: Shared 
-    - `[ ]` Replace loop w/ simple path planning that avoids collisions and has a center-seeking tendency
+* `[>]` Shiny Boid Ribbons - Generative art
+    - `[ ]` Boid Ribbon class
     - `[ ]` Ribbons as dynamic, shaded meshes
         * `[ ]` Dynamic mesh
         * `[ ]` **Smooth** decay from leading edge
@@ -22,23 +23,32 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         * `[ ]` Bloom shader
     - `[ ]` Video -or- animated GIF output --to-> IG
 
+&nbsp;  
+
 * `[ ]` Engineering Center FROM SPACE - Generative art
     - `[ ]` Generative angular, intimidating castle (a la EC), L-system?
+        * `[ ]` Large Blocks
+        * `[ ]` Angular Towers
         * `[ ]` Windows
-        * `[ ]` Blocks
-            - `[ ]` Raised blocks
+            - `[ ]` Concrete awnings
         * `[ ]` Bridges
         * `[ ]` Greebles
             - `[ ]` Dishes
             - `[ ]` Cell antennae
     - `[ ]` Textures
-    - `[ ]` Rotating "turrets"
+        * `[ ]` Glider
+        * `[ ]` EC
+    - `[ ]` Rotating "turrets" - Warning: Do not imply damage to public buildings
         * `[ ]` Friggin' laser beams
-        * `{ }` Dynamic lighting for primary weapon?
-    - `{ }` Fends off Delta Gliders? - Warning: Do not imply damage to public buildings
+        * `[ ]` Primary Weapon
+            - `{ }` Dynamic lighting for primary weapon?
+        * `[ ]` AA Batteries
+            - `{ }` Flak?
+            - `{ }` Missiles?
         * `{ }` Playable?  Food delivery?
     - `[ ]` Video -or- animated GIF output --to-> IG
 
+&nbsp;  
 
 * `[ ]` Floating island landscape generation - BoxKart
     - `[ ]` BoxKart
@@ -55,6 +65,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     - `{ }` Simple car dyn? Jumps? Falls + respawn?
     - `[ ]` Video -or- animated GIF output --to-> IG
 
+&nbsp;  
 
 * `[ ]` Vaporwave Aesthetic Landscape
     - `[ ]` BoxKart rolling over terrain
@@ -65,7 +76,8 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     - `[ ]` Vintage computer window textures
     - `[ ]` Grainy/VHS filter shader
 
-
+&nbsp;  
+&nbsp;  
 
 ## Architecture 2: Frames for Fun  (Highly Dangerous!)
 * Purpose: Digital sculpture platform with a dash of simulation
@@ -74,7 +86,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 * `[ ]` N-body simulation, orbiting spheres
 * `[ ]` L-system tree
 * `[ ]` Mesh with animated shader
-* `[ ]` Load ship models into space scene
+* `[ ]` L-system generative spacecraft
 * `[ ]` Glitch shader
 * `[ ]` VHS Shader
 * `[ ]` Particle shader
@@ -86,9 +98,8 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         * `[ ]` Decide on # of allowed physics entities
     - `[ ]` Pre-compute fractures
 
-
-
 ## Architecture 3: Let's Code (Applied) Physics  (Absurdly Dangerous!)
+### DO NOT ATTEMPT WITHOUT AN ESTABLISHED CAREER!
 * Purpose: Daydream itch
 
 * `[ ]` Investigate compute shaders
@@ -106,20 +117,21 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 * `[ ]` Find/Create Clifford lib in C++
 * `[ ]` Clifford projectile
 * `[ ]` Clifford planets
-
-
-
-## Architecture 4: Advanced Simulation
-### DO NOT ATTEMPT WITHOUT AN ESTABLISHED CAREER!
-* Purpose: Play with a 3D game engine (Godot)
-* Fast & Parallel
-
 * `[ ]` Clifford electrodynamics
 * `[ ]` Electrodynamics
     - `[ ]` Magnets
         * `[ ]` Motor field optimizer
         * `[ ]` Plasma confinement optimizer
     - `[ ]` Generative 
+
+## Architecture N: Shall?  we?  play?  a?  game?
+### DO NOT ATTEMPT WITHOUT AN ESTABLISHED CAREER!
+* Purpose: Have Fun
+
+* `[ ]` RL Agent Class (Is this already supported in Godot?)
+    - `[ ]` State exchange format (Graphs? Children hashed?)
+    - `[ ]` Slot for brain
+    - `[ ]` Advanced Boids Demo
 
 * `[ ]` Planetary Decorator (My Ideal PC Game: Exploration + Casual Architecture + Procedural Generation)
     - `[ ]` Godot tutorials
@@ -197,36 +209,12 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         * `[ ]` Screenshots
         * `[ ]` World sharing
         * `[ ]` Co-op play
-
-
-    
-
-
-
-## Architecture 5: A Sim for All Seasons
-### DO NOT ATTEMPT WITHOUT AN ESTABLISHED CAREER!
-* Purpose: Share what you made
-
-* `[ ]` FINCH Integration
-* `[ ]` Network play
-    - `[ ]` Multiple players
-    - `[ ]` Hosted world
-    - `[ ]` Agent exchange
+    - `[ ]` Network play
+        * `[ ]` Multiple players
+        * `[ ]` Hosted world
 * `[ ]` Live Coding IDE
 
-
-
-## Architecture N: Shall?  we?  play?  a?  game?
-### DO NOT ATTEMPT WITHOUT AN ESTABLISHED CAREER!
-* Purpose: Have Fun
-
-* `[ ]` RL Agent Class (Is this already supported in Godot?)
-    - `[ ]` State exchange format (Graphs? Children hashed?)
-    - `[ ]` Slot for brain
-    - `[ ]` Advanced Boids Demo
-
-
-## Completed
+## Completed Projects
 * `[>]` Terrain generation - Delta Glider
     - `[Y]` Perlin Noise terrain grid tiles, 2023-04-12: Tuned scaling and elevation
         * `[Y]` Unshaded with lines, 2023-04-05: Finally got random, non-vibrating triangles w/ correct orientation! Stored in models as tiles instead of individual triangles.
@@ -289,6 +277,9 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     - `{N}` Curved CRT shader?, 2023-06-03: Render plume as a batch job
     - `[Y]` Video -or- animated GIF output --to-> IG, 2023-06-03: Render plume as a batch job 
         - `[N]` Remove CRT curve for IG post, 2023-06-03: Render plume as a batch job
+
+&nbsp;  
+
 ```
 [Y] Grid Glider - Delta Glider
     [Y] Glider with planelike motion - 2022-09-19: Really need to calm down on the graphics, you don't need them!
