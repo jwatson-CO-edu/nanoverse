@@ -4,6 +4,10 @@
 
 ///// Imports ////////////////////////////////////
 
+/// Standard ///
+#include <algorithm>
+using std::clamp;
+
 /// Local ///
 #include "utils.hpp"
 #include "rl_toybox.hpp"
@@ -23,6 +27,25 @@ struct Basis{
     Vector3 Xb;
     Vector3 Yb;
     Vector3 Zb;
+
+    void orthonormalize(){
+        // Make sure this is an orthonormal basis
+        Yb = Vector3Normalize( Yb );
+        Zb = Vector3Normalize( Zb );
+        Xb = Vector3Normalize( Vector3CrossProduct( Yb, Zb ) );
+        Yb = Vector3Normalize( Vector3CrossProduct( Zb, Xb ) );
+    };
+
+    void blend_with_factor( const Basis& other, float factor ){
+        // Exponential filter between this basis and another
+        // 1. Clamp factor
+        factor = clamp( factor, 0.0f, 1.0f );
+        // 2. Blend bases
+        Yb = Vector3Add(  Vector3Scale( Yb, 1.0-factor ), Vector3Scale( other.Yb, factor )  );
+        Zb = Vector3Add(  Vector3Scale( Zb, 1.0-factor ), Vector3Scale( other.Zb, factor )  );
+        // 3. Correct basis
+        orthonormalize();
+    }
 };
 
 
@@ -30,10 +53,17 @@ class Boid : public TriModel{ public:
     // A flocking entity like a bird
 
     /// Members ///
-    float length;
-    float width;
-    Color sldClr; 
-    float dNear;
+    float   length; // - Length of the boid
+    float   width; // -- Width of the boid
+    Color   sldClr; // - Boid color
+    float   dNear; // -- Radius of hemisphere for flocking consideration
+    Vector3 home; // --- Don't get too far from this point
+
+    /// Way-Finding ///
+    Basis flocking; // Flocking instinct
+    Basis homeSeek; // Home seeking instinct
+    Basis freeWill; // Drunken walk
+    Basis headingB; // Where the boid is actually pointed
 
     /// Constructor ///
 
@@ -95,6 +125,45 @@ class Boid : public TriModel{ public:
             rtnMsg.Yb = Vector3{0.0f, 0.0f, 0.0f};
             rtnMsg.Zb = Vector3{0.0f, 0.0f, 0.0f};
         }
+        return rtnMsg;
+    }
+
+    Basis consider_home( uint N_samples ){
+        // Take `N_samples` and choose the one that points closest to `home`
+        Basis   rtnMsg;
+        Vector3 v_i, vMin;
+        double  a_i;
+        double  aMin = 1e6;
+        Vector3 hVec = Vector3Subtract( home, XYZ );
+        
+        for( uint i = 0; i < N_samples; i++ ){  
+            v_i = Vector3{
+                randf( -1.0,  1.0 ),
+                randf( -1.0,  1.0 ),
+                randf( -1.0,  1.0 )
+            };
+            a_i = Vector3Angle( hVec, v_i );
+            if( a_i < aMin ){  vMin = v_i;  }
+        }
+
+        rtnMsg.Zb = Vector3Normalize( vMin );
+        rtnMsg.Xb = Vector3Normalize( Vector3CrossProduct( Vector3Transform( Vector3{0.0, 1.0, 0.0}, T ) , rtnMsg.Zb ) );
+        rtnMsg.Yb = Vector3Normalize( Vector3CrossProduct( rtnMsg.Zb, rtnMsg.Xb ) );
+
+        return rtnMsg;
+    }
+
+    Basis consider_free_will( uint N_samples ){
+        // Take `N_samples` and choose the one that points closest to `home`
+        Basis   rtnMsg;
+        Vector3 vWil = Vector3{
+            randf( -1.0,  1.0 ),
+            randf( -1.0,  1.0 ),
+            randf( -1.0,  1.0 )
+        };
+        rtnMsg.Zb = Vector3Normalize( vWil );
+        rtnMsg.Xb = Vector3Normalize( Vector3CrossProduct( Vector3Transform( Vector3{0.0, 1.0, 0.0}, T ) , rtnMsg.Zb ) );
+        rtnMsg.Yb = Vector3Normalize( Vector3CrossProduct( rtnMsg.Zb, rtnMsg.Xb ) );
         return rtnMsg;
     }
 
