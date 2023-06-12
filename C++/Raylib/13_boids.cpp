@@ -12,8 +12,9 @@ using std::clamp;
 #include "utils.hpp"
 #include "rl_toybox.hpp"
 
-////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
 
+
+////////// HELPER STRUCTS //////////////////////////////////////////////////////////////////////////
 
 struct PoseMsg{
     // A message to express the position and orientation of the neighbor
@@ -23,13 +24,19 @@ struct PoseMsg{
 
 
 struct Basis{
-    // Return message for the average bearing
-    Vector3 Xb;
-    Vector3 Yb;
-    Vector3 Zb;
+    // Return message for the average bearing, Z-basis has primacy
+    // NOTE: None of the operations with other bases assume any operand is orthonormalized
+
+    /// Members ///
+    Vector3 Xb; // X-basis
+    Vector3 Yb; // Y-basis
+    Vector3 Zb; // Z-basis
+
+    /// Methods ///
 
     void orthonormalize(){
-        // Make sure this is an orthonormal basis
+        // Make sure this is an orthonormal basis, Z-basis has primacy
+        // No need to normalize `Xb`, see below
         Yb = Vector3Normalize( Yb );
         Zb = Vector3Normalize( Zb );
         Xb = Vector3Normalize( Vector3CrossProduct( Yb, Zb ) );
@@ -37,16 +44,38 @@ struct Basis{
     };
 
     void blend_with_factor( const Basis& other, float factor ){
-        // Exponential filter between this basis and another
+        // Exponential filter between this basis and another Orthonormalize separately
         // 1. Clamp factor
         factor = clamp( factor, 0.0f, 1.0f );
         // 2. Blend bases
+        // No need to compute `Xb`, see `orthonormalize`
         Yb = Vector3Add(  Vector3Scale( Yb, 1.0-factor ), Vector3Scale( other.Yb, factor )  );
         Zb = Vector3Add(  Vector3Scale( Zb, 1.0-factor ), Vector3Scale( other.Zb, factor )  );
         // 3. Correct basis
         orthonormalize();
     }
+
+    Basis operator+( const Basis& other ){
+        // Addition operator for bases, Just the vector sum of each basis, Orthonormalize separately
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3Add( Xb, other.Xb );
+        rtnBasis.Yb = Vector3Add( Yb, other.Yb );
+        rtnBasis.Zb = Vector3Add( Zb, other.Zb );
+        return rtnBasis;
+    }
+
+    Basis get_scaled_by( float factor ){
+        // Return a copy of the `Basis` with each individual basis scaled by a factor
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3Scale( Xb, factor );
+        rtnBasis.Yb = Vector3Scale( Yb, factor );
+        rtnBasis.Zb = Vector3Scale( Zb, factor );
+        return rtnBasis;
+    }
 };
+
+
+////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
 
 
 class Boid : public TriModel{ public:
