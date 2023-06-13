@@ -16,13 +16,6 @@ using std::clamp;
 
 ////////// HELPER STRUCTS //////////////////////////////////////////////////////////////////////////
 
-struct PoseMsg{
-    // A message to express the position and orientation of the neighbor
-    Vector3 XYZ; // World Position
-	Matrix  T; //- Orientation
-};
-
-
 struct Basis{
     // Return message for the average bearing, Z-basis has primacy
     // NOTE: None of the operations with other bases assume any operand is orthonormalized
@@ -31,6 +24,7 @@ struct Basis{
     Vector3 Xb; // X-basis
     Vector3 Yb; // Y-basis
     Vector3 Zb; // Z-basis
+    Vector3 Pt; // Origin point
 
     /// Methods ///
 
@@ -51,6 +45,7 @@ struct Basis{
         // No need to compute `Xb`, see `orthonormalize`
         Yb = Vector3Add(  Vector3Scale( Yb, 1.0-factor ), Vector3Scale( other.Yb, factor )  );
         Zb = Vector3Add(  Vector3Scale( Zb, 1.0-factor ), Vector3Scale( other.Zb, factor )  );
+        Pt = Vector3Add(  Vector3Scale( Pt, 1.0-factor ), Vector3Scale( other.Pt, factor )  );
         // 3. Correct basis
         orthonormalize();
     }
@@ -61,6 +56,7 @@ struct Basis{
         rtnBasis.Xb = Vector3Add( Xb, other.Xb );
         rtnBasis.Yb = Vector3Add( Yb, other.Yb );
         rtnBasis.Zb = Vector3Add( Zb, other.Zb );
+        rtnBasis.Pt = Vector3Add( Pt, other.Pt );
         return rtnBasis;
     }
 
@@ -70,6 +66,7 @@ struct Basis{
         rtnBasis.Xb = Vector3Scale( Xb, factor );
         rtnBasis.Yb = Vector3Scale( Yb, factor );
         rtnBasis.Zb = Vector3Scale( Zb, factor );
+        rtnBasis.Pt = Vector3Scale( Pt, factor );
         return rtnBasis;
     }
 };
@@ -120,35 +117,37 @@ class Boid : public TriModel{ public:
         );
     }
 
-    Basis consider_neighbors( const vector<PoseMsg>& nghbrPoses ){
+    Basis consider_neighbors( const vector<Basis>& nghbrPoses ){
         // Adjust bearing according to the closest neighbors in front of the boid
-        Vector3 Xmean, Xnghbr;
-        Vector3 Ymean, Ynghbr;
+        Vector3 Xmean;
+        Vector3 Ymean;
+        Vector3 Zmean;
         Vector3 Zfly , diffVec;
         Basis   rtnMsg;
         uint    relevant;
         float   dist, dotFront;
         Xmean = Vector3{0.0f, 0.0f, 0.0f};
         Ymean = Vector3{0.0f, 0.0f, 0.0f};
-        for( PoseMsg msg : nghbrPoses ){
-            diffVec  = Vector3Subtract( msg.XYZ, XYZ );
+        Zmean = Vector3{0.0f, 0.0f, 0.0f};
+        for( Basis msg : nghbrPoses ){
+            diffVec  = Vector3Subtract( msg.Pt, XYZ );
             dist     = Vector3Length( diffVec );
-            Zfly     = Vector3Transform( Vector3{0.0f, 0.0f, 1.0f}, T );
-            dotFront = Vector3DotProduct( Zfly, diffVec );
-            if( (dist <= dNear) || (dotFront >= 0.0f) ){
-                Xnghbr = Vector3Transform( Vector3{1.0f, 0.0f, 0.0f}, msg.T );
-                Ynghbr = Vector3Transform( Vector3{0.0f, 1.0f, 0.0f}, msg.T );
-                Xmean  = Vector3Add( Xmean, Xnghbr );
-                Ymean  = Vector3Add( Ymean, Ynghbr );
-                relevant++;
+            if( dist > 0.0 ){
+                Zfly     = Vector3Transform( Vector3{0.0f, 0.0f, 1.0f}, T );
+                dotFront = Vector3DotProduct( Zfly, diffVec );
+                if( (dist <= dNear) || (dotFront >= 0.0f) ){
+                    Xmean  = Vector3Add( Xmean, msg.Xb );
+                    Ymean  = Vector3Add( Ymean, msg.Yb );
+                    Zmean  = Vector3Add( Zmean, msg.Zb );
+                    relevant++;
+                }
             }
         }
         if( relevant ){
-            Xmean = Vector3Normalize( Xmean );
-            Ymean = Vector3Normalize( Ymean );
-            rtnMsg.Zb = Vector3Normalize( Vector3CrossProduct( Xmean    , Ymean     ) );
-            rtnMsg.Xb = Vector3Normalize( Vector3CrossProduct( Ymean    , rtnMsg.Zb ) );
-            rtnMsg.Yb = Vector3Normalize( Vector3CrossProduct( rtnMsg.Zb, rtnMsg.Xb ) );
+            rtnMsg.Xb = Xmean;
+            rtnMsg.Yb = Ymean;
+            rtnMsg.Zb = Zmean;
+            rtnMsg.orthonormalize();
         }else{
             rtnMsg.Xb = Vector3{0.0f, 0.0f, 0.0f};
             rtnMsg.Yb = Vector3{0.0f, 0.0f, 0.0f};
@@ -207,3 +206,10 @@ class Boid : public TriModel{ public:
     }
 
 };
+
+////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
+
+int main(){
+    Matrix T;
+    
+}
