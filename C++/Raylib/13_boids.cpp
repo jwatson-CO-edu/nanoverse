@@ -17,7 +17,7 @@ using std::clamp;
 ////////// HELPER STRUCTS //////////////////////////////////////////////////////////////////////////
 
 struct Basis{
-    // Return message for the average bearing, Z-basis has primacy
+    // Pose exchange format for `Boid`s, Z-basis has primacy
     // NOTE: None of the operations with other bases assume any operand is orthonormalized
 
     /// Members ///
@@ -37,7 +37,7 @@ struct Basis{
         Yb = Vector3Normalize( Vector3CrossProduct( Zb, Xb ) );
     };
 
-    void blend_with_factor( const Basis& other, float factor ){
+    void blend_orientations_with_factor( const Basis& other, float factor ){
         // Exponential filter between this basis and another Orthonormalize separately
         // 1. Clamp factor
         factor = clamp( factor, 0.0f, 1.0f );
@@ -45,7 +45,7 @@ struct Basis{
         // No need to compute `Xb`, see `orthonormalize`
         Yb = Vector3Add(  Vector3Scale( Yb, 1.0-factor ), Vector3Scale( other.Yb, factor )  );
         Zb = Vector3Add(  Vector3Scale( Zb, 1.0-factor ), Vector3Scale( other.Zb, factor )  );
-        Pt = Vector3Add(  Vector3Scale( Pt, 1.0-factor ), Vector3Scale( other.Pt, factor )  );
+        // Pt = Vector3Add(  Vector3Scale( Pt, 1.0-factor ), Vector3Scale( other.Pt, factor )  );
         // 3. Correct basis
         orthonormalize();
     }
@@ -60,16 +60,26 @@ struct Basis{
         return rtnBasis;
     }
 
-    Basis get_scaled_by( float factor ){
+    Basis get_scaled_orientation( float factor ){
         // Return a copy of the `Basis` with each individual basis scaled by a factor
         Basis rtnBasis;
         rtnBasis.Xb = Vector3Scale( Xb, factor );
         rtnBasis.Yb = Vector3Scale( Yb, factor );
         rtnBasis.Zb = Vector3Scale( Zb, factor );
-        rtnBasis.Pt = Vector3Scale( Pt, factor );
+        // rtnBasis.Pt = Vector3Scale( Pt, factor );
         return rtnBasis;
     }
 };
+
+Basis basis_from_transform_and_point( const Matrix& xform, const Vector3& point ){
+    // Get a `Basis` from a `xform` matrix and a `point`
+    Basis rtnBasis;
+    rtnBasis.Xb = Vector3Transform( Vector3{1.0, 0.0, 0.0}, xform );
+    rtnBasis.Yb = Vector3Transform( Vector3{0.0, 1.0, 0.0}, xform );
+    rtnBasis.Zb = Vector3Transform( Vector3{0.0, 0.0, 1.0}, xform );
+    rtnBasis.Pt = point;
+    return rtnBasis;
+}
 
 
 ////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
@@ -194,6 +204,9 @@ class Boid : public TriModel{ public:
         rtnMsg.Yb = Vector3Normalize( Vector3CrossProduct( rtnMsg.Zb, rtnMsg.Xb ) );
         return rtnMsg;
     }
+
+    // Get the boid pose in the exchange format
+    Basis get_pose(){  return basis_from_transform_and_point( T, XYZ );  }
 
     ///// Rendering //////////////////////////////
     // WARNING: Requires window init to call!
