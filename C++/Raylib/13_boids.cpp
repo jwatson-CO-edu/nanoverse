@@ -19,12 +19,36 @@ using std::clamp;
 struct Basis{
     // Pose exchange format for `Boid`s, Z-basis has primacy
     // NOTE: None of the operations with other bases assume any operand is orthonormalized
+    // NOTE: Position is largely absent from Basis-Basis operations
 
     /// Members ///
     Vector3 Xb; // X-basis
     Vector3 Yb; // Y-basis
     Vector3 Zb; // Z-basis
-    Vector3 Pt; // Origin point
+    Vector3 Pt; // Position
+
+    /// Static Methods ///
+
+    static Basis origin_Basis(){
+        // Get the origin `Basis`
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3{ 1.0f, 0.0f, 0.0f };
+        rtnBasis.Yb = Vector3{ 0.0f, 1.0f, 0.0f };
+        rtnBasis.Zb = Vector3{ 0.0f, 0.0f, 1.0f };
+        rtnBasis.Pt = Vector3{ 0.0f, 0.0f, 0.0f };
+        return rtnBasis;
+    }
+
+    static Basis random_Basis(){
+        // Sample from a +/-1.0f cube for all vectors, then `orthonormalize`
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3{ randf( -1.0,  1.0 ), randf( -1.0,  1.0 ), randf( -1.0,  1.0 ) };
+        rtnBasis.Yb = Vector3{ randf( -1.0,  1.0 ), randf( -1.0,  1.0 ), randf( -1.0,  1.0 ) };
+        rtnBasis.Zb = Vector3{ randf( -1.0,  1.0 ), randf( -1.0,  1.0 ), randf( -1.0,  1.0 ) };
+        rtnBasis.Pt = Vector3{ randf( -1.0,  1.0 ), randf( -1.0,  1.0 ), randf( -1.0,  1.0 ) };
+        rtnBasis.orthonormalize();
+        return rtnBasis;
+    }
 
     /// Methods ///
 
@@ -70,6 +94,7 @@ struct Basis{
         return rtnBasis;
     }
 };
+typedef shared_ptr<Basis> basPtr; // 2023-06-17: For now assume that Bases are lightweight enough to pass by value
 
 Basis basis_from_transform_and_point( const Matrix& xform, const Vector3& point ){
     // Get a `Basis` from a `xform` matrix and a `point`
@@ -114,6 +139,10 @@ class Boid : public TriModel{ public:
             (ubyte) randi( 0, 255 ),
             255
         };
+        flocking = Basis::origin_Basis(); // Flocking instinct
+        homeSeek = Basis::origin_Basis(); // Home seeking instinct
+        freeWill = Basis::origin_Basis(); // Drunken walk
+        headingB = Basis::random_Basis(); // Where the boid is actually pointed
 
         load_tri( // Horizontal Plane
             Vector3{  width/2, 0.0f, 0.0f   }, 
@@ -127,8 +156,15 @@ class Boid : public TriModel{ public:
         );
     }
 
+    Basis get_Basis(){
+        // Get pose info for this boid
+        return basis_from_transform_and_point( T, XYZ );
+    }
+
+    /// Navigation ///
+
     Basis consider_neighbors( const vector<Basis>& nghbrPoses ){
-        // Adjust bearing according to the closest neighbors in front of the boid
+        // Flocking instinct: Adjust bearing according to the closest neighbors in front of the boid
         Vector3 Xmean;
         Vector3 Ymean;
         Vector3 Zmean;
@@ -167,7 +203,7 @@ class Boid : public TriModel{ public:
     }
 
     Basis consider_home( uint N_samples ){
-        // Take `N_samples` and choose the one that points closest to `home`
+        // Home seeking instinct: Take `N_samples` and choose the one that points closest to `home`
         Basis   rtnMsg;
         Vector3 v_i, vMin;
         double  a_i;
@@ -192,7 +228,7 @@ class Boid : public TriModel{ public:
     }
 
     Basis consider_free_will( uint N_samples ){
-        // Take `N_samples` and choose the one that points closest to `home`
+        // Drunken walk: Choose a random direction in which to nudge free will
         Basis   rtnMsg;
         Vector3 vWil = Vector3{
             randf( -1.0,  1.0 ),
@@ -205,8 +241,19 @@ class Boid : public TriModel{ public:
         return rtnMsg;
     }
 
-    // Get the boid pose in the exchange format
-    Basis get_pose(){  return basis_from_transform_and_point( T, XYZ );  }
+    double update_instincts_and_heading( const vector<boidPtr>& flock ){
+        // Main navigation function
+        vector<Basis> flockPoses;
+        // 0. Fetch all flock poses
+        for( boidPtr boid : flock ){  flockPoses.push_back( boid->get_Basis() );  }
+        // FIXME, START HERE: NAVIGATION!
+        // 1. Update flocking instinct
+        // 2. Update home seeking instinct
+        // 3. Update drunken walk
+        // 4. Update where the boid is actually pointed
+        // 5. Blend intincts
+        // 6. Limit turn and set heading
+    }
 
     ///// Rendering //////////////////////////////
     // WARNING: Requires window init to call!
@@ -219,6 +266,10 @@ class Boid : public TriModel{ public:
     }
 
 };
+typedef shared_ptr<Boid> boidPtr;
+
+
+
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 

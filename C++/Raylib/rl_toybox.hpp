@@ -18,6 +18,8 @@ using std::map, std::pair;
 using std::min;
 #include <deque>
 using std::deque;
+#include <memory>
+using std::shared_ptr;
 
 /// Raylib ///
 #include <raylib.h>
