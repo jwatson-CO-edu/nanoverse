@@ -1,16 +1,4 @@
 // g++ 13_boids.cpp -std=c++17 -lraylib
-/*
-########## DEV PLAN ##########
-[Y] Draw static w/ random orientation, 2023-06-24: Appears correct, transform matrix is column-major!
-[ ] Stationary gradual flock-only update
-[ ] Stationary gradual home-only  update
-[ ] Stationary gradual free-only  update
-[ ] Stationary gradual full _____ update
-[ ]  1 Boid fly demo
-[ ]  5 Boid fly demo
-[ ] 50 Boid fly demo
-*/
-
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
@@ -81,7 +69,6 @@ struct Basis{
         // No need to compute `Xb`, see `orthonormalize`
         Yb = Vector3Add(  Vector3Scale( Yb, 1.0-factor ), Vector3Scale( other.Yb, factor )  );
         Zb = Vector3Add(  Vector3Scale( Zb, 1.0-factor ), Vector3Scale( other.Zb, factor )  );
-        // Pt = Vector3Add(  Vector3Scale( Pt, 1.0-factor ), Vector3Scale( other.Pt, factor )  );
         // 3. Correct basis
         orthonormalize();
     }
@@ -105,6 +92,16 @@ struct Basis{
         // rtnBasis.Pt = Vector3Scale( Pt, factor );
         return rtnBasis;
     }
+
+    Basis copy(){
+        // Return a copy of the basis.
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3( Xb );
+        rtnBasis.Yb = Vector3( Yb );
+        rtnBasis.Zb = Vector3( Zb );
+        rtnBasis.Pt = Vector3( Pt );
+        return rtnBasis;
+    }
 };
 typedef shared_ptr<Basis> basPtr; // 2023-06-17: For now assume that Bases are lightweight enough to pass by value
 
@@ -126,18 +123,21 @@ class Boid : public TriModel{ public:
     // A flocking entity like a bird
 
     /// Members ///
-    float   length; // - Length of the boid
-    float   width; // -- Width of the boid
-    Color   sldClr; // - Boid color
-    float   dNear; // -- Radius of hemisphere for flocking consideration
-    Vector3 home; // --- Don't get too far from this point
-    uint    ID;
-
+    float length; // - Length of the boid
+    float width; // -- Width of the boid
+    Color sldClr; // - Boid color
+    uint  ID; // ----- Identifier
+    
     /// Way-Finding ///
-    Basis flocking; // Flocking instinct
-    Basis homeSeek; // Home seeking instinct
-    Basis freeWill; // Drunken walk
-    Basis headingB; // Where the boid is actually pointed
+    float   ur; // ----- Update rate
+    float   dNear; // -- Radius of hemisphere for flocking consideration
+    uint    Nnear; // -- How many neighbors are there?
+    float   scale; // -- Habitat scale
+    Vector3 home; // --- Don't get too far from this point
+    Basis   flocking; // Flocking instinct
+    Basis   homeSeek; // Home seeking instinct
+    Basis   freeWill; // Drunken walk
+    Basis   headingB; // Where the boid is actually pointed
 
     /// Constructor ///
 
@@ -146,16 +146,19 @@ class Boid : public TriModel{ public:
         length = len;
         width  = wdt;
         dNear  = length * 5.0f;
+        scale  = 150.0f;
+        ur     =   0.10;
+        home   = Vector3{0,0,0};
         sldClr = Color{
             (ubyte) randi( 0, 255 ),
             (ubyte) randi( 0, 255 ),
             (ubyte) randi( 0, 255 ),
             255
         };
-        flocking = Basis::origin_Basis(); // Flocking instinct
-        homeSeek = Basis::origin_Basis(); // Home seeking instinct
-        freeWill = Basis::origin_Basis(); // Drunken walk
         headingB = Basis::random_Basis(); // Where the boid is actually pointed
+        flocking = headingB.copy(); // ----- Flocking instinct
+        homeSeek = headingB.copy(); // ----- Home seeking instinct
+        freeWill = headingB.copy(); // ----- Drunken walk
 
         load_tri( // Horizontal Plane
             Vector3{  width/2, 0.0f, 0.0f   }, 
@@ -186,7 +189,7 @@ class Boid : public TriModel{ public:
         Vector3 Zmean;
         Vector3 Zfly , diffVec;
         Basis   rtnMsg;
-        uint    relevant;
+        uint    relevant = 0;
         float   dist, dotFront;
         Xmean = Vector3{0.0f, 0.0f, 0.0f};
         Ymean = Vector3{0.0f, 0.0f, 0.0f};
@@ -205,7 +208,8 @@ class Boid : public TriModel{ public:
                 }
             }
         }
-        cout << "Boid " << ID << ": There are " << relevant << " relevant neighbors!" << endl;
+        // cout << "Boid " << ID << ": There are " << relevant << " relevant neighbors!" << endl;
+        Nnear = relevant;
         if( relevant ){
             rtnMsg.Xb = Xmean;
             rtnMsg.Yb = Ymean;
@@ -234,32 +238,17 @@ class Boid : public TriModel{ public:
         model.transform = T;
     }
 
-    Basis consider_home( uint N_samples ){
+    Basis consider_home(){
         // Home seeking instinct: Take `N_samples` and choose the one that points closest to `home`
         Basis   rtnMsg;
-        Vector3 v_i, vMin;
-        double  a_i;
-        double  aMin = 1e6;
         Vector3 hVec = Vector3Subtract( home, XYZ );
-        
-        for( uint i = 0; i < N_samples; i++ ){  
-            v_i = Vector3{
-                randf( -1.0,  1.0 ),
-                randf( -1.0,  1.0 ),
-                randf( -1.0,  1.0 )
-            };
-            a_i = Vector3Angle( hVec, v_i );
-            if( a_i < aMin ){  vMin = v_i;  }
-        }
-
-        rtnMsg.Zb = Vector3Normalize( vMin );
+        rtnMsg.Zb = Vector3Normalize( hVec );
         rtnMsg.Xb = Vector3Normalize( Vector3CrossProduct( Vector3Transform( Vector3{0.0, 1.0, 0.0}, T ) , rtnMsg.Zb ) );
         rtnMsg.Yb = Vector3Normalize( Vector3CrossProduct( rtnMsg.Zb, rtnMsg.Xb ) );
-
         return rtnMsg;
     }
 
-    Basis consider_free_will( uint N_samples ){
+    Basis consider_free_will(){
         // Drunken walk: Choose a random direction in which to nudge free will
         Basis   rtnMsg;
         Vector3 vWil = Vector3{
@@ -277,11 +266,29 @@ class Boid : public TriModel{ public:
         // Main navigation function
         // 1. Update flocking instinct
         Basis flockDrive = consider_neighbors( flockPoses );
+        flocking.blend_orientations_with_factor( flockDrive, ur );
         // 2. Update home seeking instinct
+        float dist /*-*/ = Vector3Distance( home, XYZ );
+        Basis centrDrive = consider_home();
+        homeSeek.blend_orientations_with_factor( centrDrive, ur );
         // 3. Update drunken walk
-        // 4. Update where the boid is actually pointed
-        // 5. Blend intincts
-        // 6. Limit turn and set heading
+        if( randf() < 0.25 ){
+            Basis freewDrive = consider_free_will();
+            freeWill.blend_orientations_with_factor( freewDrive, ur );
+        }
+        // 4. Blend intincts
+        Basis total = flocking.get_scaled_orientation( 0.45f * Nnear ) + 
+                      homeSeek.get_scaled_orientation( dist/scale*5.0f ) + 
+                      freeWill.get_scaled_orientation( 10.0 );
+        // 5. Limit turn and set heading
+        // headingB.blend_orientations_with_factor( flocking, ur );
+
+        double updateTurn = Vector3Angle( total.Zb, headingB.Zb );
+        double turnMax    = PI/32;
+        double factor     = updateTurn/turnMax;
+
+        headingB.blend_orientations_with_factor( total, ur/factor );
+        load_heading();
         return 0.0;
     }
 
@@ -297,7 +304,6 @@ class Boid : public TriModel{ public:
 
     void draw(){
         // Draw the model
-        load_heading();
         DrawModel( model, XYZ, 1.00, sldClr );  
     }
 
@@ -313,16 +319,16 @@ int main(){
     rand_seed();
 
     /// Window Init ///
-    InitWindow( 600, 600, "Boids!" );
+    InitWindow( 900, 900, "Boids!" );
     SetTargetFPS( 60 );
     rlEnableSmoothLines();
     rlDisableBackfaceCulling();
 
     /// Init Objects ///
     vector<boidPtr> flock;
-    for( uint i = 0; i < 10; i++ ){
-        boidPtr nuBirb = boidPtr( new Boid{ 10.0f, 7.0f } );
-        nuBirb->XYZ = Vector3{ randf( -50.0f, 50.0f ), randf( -50.0f, 50.0f ), randf( -50.0f, 50.0f ) };
+    for( uint i = 0; i < 75; i++ ){
+        boidPtr nuBirb = boidPtr( new Boid{ 10.0f*1.25f, 7.0f*1.25f } );
+        nuBirb->XYZ = Vector3{ randf( -75.0f, 75.0f ), randf( -75.0f, 75.0f ), randf( -75.0f, 75.0f ) };
         nuBirb->load_geo();
         flock.push_back( nuBirb );
     }
@@ -330,7 +336,7 @@ int main(){
 
     // Camera
     Camera camera = Camera{
-        Vector3{ 100.0, 100.0, 100.0 }, // Position
+        Vector3{ 200.0, 200.0, 200.0 }, // Position
         Vector3{   0.0,   0.0,   0.0 }, // Target
         Vector3{   0.0,   0.0,   1.0 }, // Up
         45.0, // ---------------------- FOV_y
@@ -351,11 +357,17 @@ int main(){
         for( boidPtr birb : flock ){  flockPoses.push_back( birb->get_Basis() );  }
         for( boidPtr birb : flock ){  
             birb->update_instincts_and_heading( flockPoses );
+            birb->z_thrust( 0.50f );
             birb->draw();  
         }
 
+        
+
         /// End Drawing ///
         EndMode3D();
+
+        DrawFPS( 30, 30 );
+
         EndDrawing();
     }
 

@@ -50,6 +50,7 @@ void setModelShader( Model* m, Shader* s ){
 }
 
 
+
 ////////// VECTOR MATH /////////////////////////////////////////////////////////////////////////////
 
 float vec3_mag( const Vector3& vec ){  return sqrt( pow( vec.x, 2 ) + pow( vec.y, 2 ) + pow( vec.z, 2 ) );  } // Magnitude of `vec`
@@ -85,6 +86,7 @@ bool p_vec3_error( const Vector3& vec ){
     // Return true if any of the elments of the Vector3 are NaN
     return isnanf( vec.x ) || isnanf( vec.y ) || isnanf( vec.z );
 }
+
 
 
 ////////// IMAGE & COLOR ///////////////////////////////////////////////////////////////////////////
@@ -138,8 +140,6 @@ ostream& operator<<( ostream& os , const Vector3& vec ) {
 
 
 
-
-
 ////////// TRIMESH /////////////////////////////////////////////////////////////////////////////////
 
 ///// Unshared Vertex Helpers ////////////////////
@@ -162,12 +162,6 @@ void init_mesh_normals( Mesh& mesh, ulong Ntri ){
     ulong Nvrt = Ntri * 3;
     mesh.normals = (float *)MemAlloc(Nvrt*3*sizeof(float)); // 3 vertices, 3 coordinates each (x, y, z)
 }
-
-// void init_mesh_colors( Mesh& mesh, ulong Ntri ){
-//     // Allocate memory in the mesh for normals with unshared points
-//     ulong Nvrt = Ntri * 3;
-//     mesh.colors = (ubyte *)MemAlloc(Nvrt*4*sizeof(ubyte)); // 3 vertices, 4 coordinates each (r,g,b,a)
-// }
 
 ///// Shared Vertex Helpers ////////////////////
 
@@ -221,15 +215,6 @@ class TriModel{ public:
         tris.push_back( pushArr );
     }
 
-    // void load_tri_colors( const Color& c1, const Color& c2, const Color& c3 ){
-    //     // Load one triangle, Right hand rule
-    //     array<Color,3> pushArr;
-    //     pushArr[0] = c1;
-    //     pushArr[1] = c2;
-    //     pushArr[2] = c3;
-    //     tClr.push_back( pushArr );
-    // }
-
     void build_mesh_unshared(){
         // Load the triangle data into the mesh
         ulong  k = 0;
@@ -243,20 +228,6 @@ class TriModel{ public:
             }
         }
     }
-
-    // void build_colors_unshared( bool initMemory = true ){
-    //     // Load the triangle color data into the mesh
-    //     ulong  k = 0;
-    //     if( initMemory )  init_mesh_colors( mesh, Ntris );
-    //     for( ulong i = 0; i < tris.size(); i++ ){
-    //         for( ubyte j = 0; j < 3; j++ ){
-    //             mesh.colors[k] = tClr[i][j].r;  k++;
-    //             mesh.colors[k] = tClr[i][j].g;  k++;
-    //             mesh.colors[k] = tClr[i][j].b;  k++;
-    //             mesh.colors[k] = tClr[i][j].a;  k++;
-    //         }
-    //     }
-    // }
 
     void build_normals_flat_unshared( bool initMemory = true ){
         // Create normals for flat shading (unshared vertices)

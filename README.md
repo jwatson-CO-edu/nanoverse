@@ -7,18 +7,6 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 ## Architecture 1: C++ & RayLib  (Dangerous!)
 * Purpose: Let yourself have some graphics, as a treat!  
 
-* `[>]` Boids
-    - `[Y]` Boids consider nearby visible neighbors, 2023-06-10: Wrote pose aggregator
-    - `[>]` Instincts driven by gradually-updating transformation matrices
-        * `[>]` Gradual flocking
-        * `[ ]` Gradual home-seeking
-        * `[ ]` Gradual free-will
-    - `[ ]` Add strong obstacle avoidance
-        * `[ ]` Investigate Raylib obstacle avoidance
-    - `[ ]` Video -or- animated GIF output --to-> IG
-        
-&nbsp;  
-
 * `[ ]` Shiny Boid Ribbons - Generative art
     - `[ ]` Boid Ribbon class
     - `[ ]` Ribbons as dynamic, shaded meshes
@@ -220,6 +208,16 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 * `[ ]` Live Coding IDE
 
 ## Completed Projects
+
+* `[>]` Boids, 2023-06-24: Satisfying flocking and wandering
+    - `[Y]` Boids consider nearby visible neighbors, 2023-06-10: Wrote pose aggregator
+    - `[Y]` Instincts driven by gradually-updating transformation matrices, 2023-06-24: Satisfying flocking and wandering
+    - `[N]` Add strong obstacle avoidance, 2023-06-24: Too much work for reward
+        * `[N]` Investigate Raylib obstacle avoidance, 2023-06-24: Too much work for reward
+    - `[Y]` Video -or- animated GIF output --to-> IG, 2023-06-24: Satisfying flocking and wandering
+        
+&nbsp;  
+
 * `[>]` Terrain generation - Delta Glider
     - `[Y]` Perlin Noise terrain grid tiles, 2023-04-12: Tuned scaling and elevation
         * `[Y]` Unshaded with lines, 2023-04-05: Finally got random, non-vibrating triangles w/ correct orientation! Stored in models as tiles instead of individual triangles.
