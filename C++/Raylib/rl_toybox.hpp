@@ -15,7 +15,7 @@ using std::array;
 #include <map>     
 using std::map, std::pair; 
 #include <algorithm>
-using std::min;
+using std::clamp, std::min;
 #include <deque>
 using std::deque;
 #include <memory>
@@ -85,6 +85,107 @@ Vector3 vec3_mult( const Vector3& vec, float factor ){
 bool p_vec3_error( const Vector3& vec ){
     // Return true if any of the elments of the Vector3 are NaN
     return isnanf( vec.x ) || isnanf( vec.y ) || isnanf( vec.z );
+}
+
+////////// VECTOR MATH STRUCTS /////////////////////////////////////////////////////////////////////
+
+struct Basis{
+    // Pose exchange format for `Boid`s, Z-basis has primacy
+    // NOTE: None of the operations with other bases assume any operand is orthonormalized
+    // NOTE: Position is largely absent from Basis-Basis operations
+
+    /// Members ///
+    Vector3 Xb; // X-basis
+    Vector3 Yb; // Y-basis
+    Vector3 Zb; // Z-basis
+    Vector3 Pt; // Position
+
+    /// Static Methods ///
+
+    static Basis origin_Basis(){
+        // Get the origin `Basis`
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3{ 1.0f, 0.0f, 0.0f };
+        rtnBasis.Yb = Vector3{ 0.0f, 1.0f, 0.0f };
+        rtnBasis.Zb = Vector3{ 0.0f, 0.0f, 1.0f };
+        rtnBasis.Pt = Vector3{ 0.0f, 0.0f, 0.0f };
+        return rtnBasis;
+    }
+
+    static Basis random_Basis(){
+        // Sample from a +/-1.0f cube for all vectors, then `orthonormalize`
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3{ randf( -1.0,  1.0 ), randf( -1.0,  1.0 ), randf( -1.0,  1.0 ) };
+        rtnBasis.Yb = Vector3{ randf( -1.0,  1.0 ), randf( -1.0,  1.0 ), randf( -1.0,  1.0 ) };
+        rtnBasis.Zb = Vector3{ randf( -1.0,  1.0 ), randf( -1.0,  1.0 ), randf( -1.0,  1.0 ) };
+        rtnBasis.Pt = Vector3{ randf( -1.0,  1.0 ), randf( -1.0,  1.0 ), randf( -1.0,  1.0 ) };
+        rtnBasis.orthonormalize();
+        return rtnBasis;
+    }
+
+    /// Methods ///
+
+    void orthonormalize(){
+        // Make sure this is an orthonormal basis, Z-basis has primacy
+        // No need to normalize `Xb`, see below
+        Yb = Vector3Normalize( Yb );
+        Zb = Vector3Normalize( Zb );
+        Xb = Vector3Normalize( Vector3CrossProduct( Yb, Zb ) );
+        Yb = Vector3Normalize( Vector3CrossProduct( Zb, Xb ) );
+    };
+
+    void blend_orientations_with_factor( const Basis& other, float factor ){
+        // Exponential filter between this basis and another Orthonormalize separately
+        // 1. Clamp factor
+        factor = clamp( factor, 0.0f, 1.0f );
+        // 2. Blend bases
+        // No need to compute `Xb`, see `orthonormalize`
+        Yb = Vector3Add(  Vector3Scale( Yb, 1.0-factor ), Vector3Scale( other.Yb, factor )  );
+        Zb = Vector3Add(  Vector3Scale( Zb, 1.0-factor ), Vector3Scale( other.Zb, factor )  );
+        // 3. Correct basis
+        orthonormalize();
+    }
+
+    Basis operator+( const Basis& other ){
+        // Addition operator for bases, Just the vector sum of each basis, Orthonormalize separately
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3Add( Xb, other.Xb );
+        rtnBasis.Yb = Vector3Add( Yb, other.Yb );
+        rtnBasis.Zb = Vector3Add( Zb, other.Zb );
+        rtnBasis.Pt = Vector3Add( Pt, other.Pt );
+        return rtnBasis;
+    }
+
+    Basis get_scaled_orientation( float factor ){
+        // Return a copy of the `Basis` with each individual basis scaled by a factor
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3Scale( Xb, factor );
+        rtnBasis.Yb = Vector3Scale( Yb, factor );
+        rtnBasis.Zb = Vector3Scale( Zb, factor );
+        // rtnBasis.Pt = Vector3Scale( Pt, factor );
+        return rtnBasis;
+    }
+
+    Basis copy(){
+        // Return a copy of the basis.
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3( Xb );
+        rtnBasis.Yb = Vector3( Yb );
+        rtnBasis.Zb = Vector3( Zb );
+        rtnBasis.Pt = Vector3( Pt );
+        return rtnBasis;
+    }
+};
+typedef shared_ptr<Basis> basPtr; // 2023-06-17: For now assume that Bases are lightweight enough to pass by value
+
+Basis basis_from_transform_and_point( const Matrix& xform, const Vector3& point ){
+    // Get a `Basis` from a `xform` matrix and a `point`
+    Basis rtnBasis;
+    rtnBasis.Xb = Vector3Transform( Vector3{1.0, 0.0, 0.0}, xform );
+    rtnBasis.Yb = Vector3Transform( Vector3{0.0, 1.0, 0.0}, xform );
+    rtnBasis.Zb = Vector3Transform( Vector3{0.0, 0.0, 1.0}, xform );
+    rtnBasis.Pt = point;
+    return rtnBasis;
 }
 
 

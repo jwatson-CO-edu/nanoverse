@@ -7,8 +7,9 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 ## Architecture 1: C++ & RayLib  (Dangerous!)
 * Purpose: Let yourself have some graphics, as a treat!  
 
-* `[ ]` Shiny Boid Ribbons - Generative art
-    - `[ ]` Boid Ribbon class
+* `[>]` Shiny Boid Ribbons - Generative art
+    - `[>]` Boid Ribbon class
+    - `[ ]` Spherical obstactle avoidance
     - `[ ]` Ribbons as dynamic, shaded meshes
         * `[ ]` Dynamic mesh
         * `[ ]` **Smooth** decay from leading edge

@@ -16,15 +16,15 @@ using std::clamp;
 ////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
 uint Nboids = 0;
 
-class Boid : public TriModel{ public:
-    // A flocking entity like a bird
+class BoidRibbon{ public:
 
     /// Members ///
-    float length; // - Length of the boid
-    float width; // -- Width of the boid
     Color sldClr; // - Boid color
     uint  ID; // ----- Identifier
     
+    /// Pose ///
+    Basis   headingB; // Where the boid is actually pointed
+
     /// Way-Finding ///
     float   ur; // ----- Update rate
     float   dNear; // -- Radius of hemisphere for flocking consideration
@@ -34,19 +34,27 @@ class Boid : public TriModel{ public:
     Basis   flocking; // Flocking instinct
     Basis   homeSeek; // Home seeking instinct
     Basis   freeWill; // Drunken walk
-    Basis   headingB; // Where the boid is actually pointed
+
+    /// Rendering ///
+    uint /*--------------*/ Npairs; // -- Number of coordinate pairs allowed
+    float /*-------------*/ headAlpha; // Beginning opacity
+    float /*-------------*/ tailAlpha; // Ending    opacity
+    deque<array<Vector3,2>> coords; // -- Ribbon data, listed from head to tail
+    double /*------------*/ width; // --- Width of the ribbon 
 
     /// Constructor ///
 
-    Boid( float len, float wdt ) : TriModel( 2 ){
+    BoidRibbon( uint N, float Ah, float At ){
         // Build the geometry of the boid
-        length = len;
-        width  = wdt;
-        dNear  = length * 5.0f;
-        scale  = 150.0f;
-        ur     =   0.10;
-        home   = Vector3{0,0,0};
-        sldClr = Color{
+        Npairs    = N;
+        headAlpha = Ah;
+        tailAlpha = At;
+        width     =   6.0f;
+        dNear     =  25.0f;
+        scale     = 150.0f;
+        ur /*--*/ =   0.10;
+        home /**/ = Vector3{0,0,0};
+        sldClr    = Color{
             (ubyte) randi( 0, 255 ),
             (ubyte) randi( 0, 255 ),
             (ubyte) randi( 0, 255 ),
@@ -57,24 +65,21 @@ class Boid : public TriModel{ public:
         homeSeek = headingB.copy(); // ----- Home seeking instinct
         freeWill = headingB.copy(); // ----- Drunken walk
 
-        load_tri( // Horizontal Plane
-            Vector3{  width/2, 0.0f, 0.0f   }, 
-            Vector3{ -width/2, 0.0f, 0.0f   }, 
-            Vector3{  0.0f   , 0.0f, length }
-        );
-        load_tri( // Vertical Plane
-            Vector3{  0.0f,  width/2, 0.0f   }, 
-            Vector3{  0.0f, -width/2, 0.0f   }, 
-            Vector3{  0.0f, 0.0f    , length }
-        );
-
         Nboids++;
         ID = Nboids;
     }
 
+    /// Methods ///
+
     Basis get_Basis(){
         // Get pose info for this boid
-        return basis_from_transform_and_point( T, XYZ );
+        return headingB.copy();
+    }
+
+    void push_coord_pair( const Vector3& c1, const Vector3& c2 ){
+        // Add coordinates to the head of the plume
+        if( coords.size() >= Npairs )  coords.pop_back(); // If queue is full, drop the tail element
+        coords.push_front(  array<Vector3,2>{ c1, c2 }  );
     }
 
     /// Navigation ///
@@ -92,10 +97,10 @@ class Boid : public TriModel{ public:
         Ymean = Vector3{0.0f, 0.0f, 0.0f};
         Zmean = Vector3{0.0f, 0.0f, 0.0f};
         for( Basis msg : nghbrPoses ){
-            diffVec  = Vector3Subtract( msg.Pt, XYZ );
+            diffVec  = Vector3Subtract( msg.Pt, headingB.Pt );
             dist     = Vector3Length( diffVec );
             if( dist > 0.0 ){
-                Zfly     = Vector3Transform( Vector3{0.0f, 0.0f, 1.0f}, T );
+                Zfly     = headingB.Zb;
                 dotFront = Vector3DotProduct( Zfly, diffVec );
                 if( (dist <= dNear) || (dotFront >= 0.0f) ){
                     Xmean  = Vector3Add( Xmean, msg.Xb );
@@ -120,28 +125,13 @@ class Boid : public TriModel{ public:
         return rtnMsg;
     }
 
-    void load_heading(){
-        // Transfer the heading basis to the orientation matrix
-        // 2023-06-24: Assume that `T` is column major
-        T.m0  = headingB.Xb.x;
-        T.m1  = headingB.Xb.y;
-        T.m2  = headingB.Xb.z;
-        T.m4  = headingB.Yb.x;
-        T.m5  = headingB.Yb.y;
-        T.m6  = headingB.Yb.z;
-        T.m8  = headingB.Zb.x;
-        T.m9  = headingB.Zb.y;
-        T.m10 = headingB.Zb.z;
-        model.transform = T;
-    }
-
     Basis consider_home(){
         // Home seeking instinct: Take `N_samples` and choose the one that points closest to `home`
         Basis   rtnMsg;
-        Vector3 hVec = Vector3Subtract( home, XYZ );
+        Vector3 hVec = Vector3Subtract( home, headingB.Pt );
         rtnMsg.Zb = Vector3Normalize( hVec );
-        rtnMsg.Xb = Vector3Normalize( Vector3CrossProduct( Vector3Transform( Vector3{0.0, 1.0, 0.0}, T ) , rtnMsg.Zb ) );
-        rtnMsg.Yb = Vector3Normalize( Vector3CrossProduct( rtnMsg.Zb, rtnMsg.Xb ) );
+        rtnMsg.Xb = Vector3Normalize( Vector3CrossProduct( headingB.Yb, rtnMsg.Zb ) );
+        rtnMsg.Yb = Vector3Normalize( Vector3CrossProduct( rtnMsg.Zb  , rtnMsg.Xb ) );
         return rtnMsg;
     }
 
@@ -154,8 +144,8 @@ class Boid : public TriModel{ public:
             randf( -1.0,  1.0 )
         };
         rtnMsg.Zb = Vector3Normalize( vWil );
-        rtnMsg.Xb = Vector3Normalize( Vector3CrossProduct( Vector3Transform( Vector3{0.0, 1.0, 0.0}, T ) , rtnMsg.Zb ) );
-        rtnMsg.Yb = Vector3Normalize( Vector3CrossProduct( rtnMsg.Zb, rtnMsg.Xb ) );
+        rtnMsg.Xb = Vector3Normalize( Vector3CrossProduct( headingB.Yb, rtnMsg.Zb ) );
+        rtnMsg.Yb = Vector3Normalize( Vector3CrossProduct( rtnMsg.Zb  , rtnMsg.Xb ) );
         return rtnMsg;
     }
 
@@ -165,7 +155,7 @@ class Boid : public TriModel{ public:
         Basis flockDrive = consider_neighbors( flockPoses );
         flocking.blend_orientations_with_factor( flockDrive, ur );
         // 2. Update home seeking instinct
-        float dist /*-*/ = Vector3Distance( home, XYZ );
+        float dist /*-*/ = Vector3Distance( home, headingB.Pt );
         Basis centrDrive = consider_home();
         homeSeek.blend_orientations_with_factor( centrDrive, ur );
         // 3. Update drunken walk
@@ -185,27 +175,90 @@ class Boid : public TriModel{ public:
         double factor     = updateTurn/turnMax;
 
         headingB.blend_orientations_with_factor( total, ur/factor );
-        load_heading();
         return 0.0;
+    }
+
+    void update_position( float zThrust ){
+        // Move forward and push a segment to the ribbon
+        // 1. Z Thrust
+        headingB.Pt = Vector3Add( headingB.Pt, Vector3Scale( headingB.Zb, zThrust ) );
+        push_coord_pair(
+            Vector3Add( headingB.Pt, Vector3Scale( headingB.Xb,  width/2.0f ) ),
+            Vector3Add( headingB.Pt, Vector3Scale( headingB.Xb, -width/2.0f ) )
+        );
     }
 
     ///// Rendering //////////////////////////////
     // WARNING: Requires window init to call!
 
-    void load_geo(){
-        // Get the model ready for drawing
-        build_mesh_unshared();
-        build_normals_flat_unshared();
-        load_mesh();
-    }
-
     void draw(){
-        // Draw the model
-        DrawModel( model, XYZ, 1.00, sldClr );  
+        // Render plume as a batch job
+        uint    Nsize = coords.size()-1;        
+        float   R     = sldClr.r/255.0f;
+        float   G     = sldClr.g/255.0f;
+        float   B     = sldClr.b/255.0f;
+        float   Aspan = headAlpha - tailAlpha;
+        Vector3 c1, c2, c3, c4;
+        float   A_i;
+        float   A_ip1;
+        
+        // Begin triangle batch job
+        rlBegin( RL_TRIANGLES );
+
+        for( uint i = 0; i < Nsize; i++){
+            c1    = coords[i  ][0];
+            c2    = coords[i  ][1];
+            c3    = coords[i+1][0];
+            c4    = coords[i+1][1];
+            A_i   = tailAlpha + Aspan*(Nsize-(i  ))/(1.0f*Nsize);
+            A_ip1 = tailAlpha + Aspan*(Nsize-(i+1))/(1.0f*Nsize);
+
+            if( i%2==0 ){
+                /// Triangle 1: c2, c1, c3 ///
+                // t1.p1 //
+                rlColor4f(R, G, B, A_i);
+                rlVertex3f(c2.x, c2.y, c2.z);
+                // t1.p2 //
+                rlVertex3f(c1.x, c1.y, c1.z);
+                // t1.p3 //
+                rlColor4f(R, G, B, A_ip1);
+                rlVertex3f(c3.x, c3.y, c3.z);
+
+                /// Triangle 2: c3, c4, c2 ///
+                // t2.p1 //
+                rlVertex3f(c3.x, c3.y, c3.z);
+                // t2.p2 //
+                rlVertex3f(c4.x, c4.y, c4.z);
+                // t2.p3 //
+                rlColor4f(R, G, B, A_i);
+                rlVertex3f(c2.x, c2.y, c2.z);
+            }else{
+                /// Triangle 1: c1, c3, c4 ///
+                // t1.p1 //
+                rlColor4f(R, G, B, A_i);
+                rlVertex3f(c1.x, c1.y, c1.z);
+                // t1.p2 //
+                rlColor4f(R, G, B, A_ip1);
+                rlVertex3f(c3.x, c3.y, c3.z);
+                // t1.p3 //
+                rlVertex3f(c4.x, c4.y, c4.z);
+
+                /// Triangle 2: c4, c2, c1 ///
+                // t2.p1 //
+                rlVertex3f(c4.x, c4.y, c4.z);
+                // t2.p2 //
+                rlColor4f(R, G, B, A_i);
+                rlVertex3f(c2.x, c2.y, c2.z);
+                // t2.p3 //
+                rlVertex3f(c1.x, c1.y, c1.z);
+            }
+        }
+        // End triangle batch job
+        rlEnd();
     }
 
 };
-typedef shared_ptr<Boid> boidPtr;
+typedef shared_ptr<BoidRibbon> rbbnPtr;
 
 
 
@@ -222,11 +275,10 @@ int main(){
     rlDisableBackfaceCulling();
 
     /// Init Objects ///
-    vector<boidPtr> flock;
-    for( uint i = 0; i < 75; i++ ){
-        boidPtr nuBirb = boidPtr( new Boid{ 10.0f*1.25f, 7.0f*1.25f } );
-        nuBirb->XYZ = Vector3{ randf( -75.0f, 75.0f ), randf( -75.0f, 75.0f ), randf( -75.0f, 75.0f ) };
-        nuBirb->load_geo();
+    vector<rbbnPtr> flock;
+    for( uint i = 0; i < 300; i++ ){
+        rbbnPtr nuBirb = rbbnPtr( new BoidRibbon{ 200, 1.0f, 0.0f } );
+        nuBirb->headingB.Pt = Vector3{ randf( -75.0f, 75.0f ), randf( -75.0f, 75.0f ), randf( -75.0f, 75.0f ) };
         flock.push_back( nuBirb );
     }
     vector<Basis> flockPoses;
@@ -251,10 +303,10 @@ int main(){
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
         flockPoses.clear();
-        for( boidPtr birb : flock ){  flockPoses.push_back( birb->get_Basis() );  }
-        for( boidPtr birb : flock ){  
+        for( rbbnPtr birb : flock ){  flockPoses.push_back( birb->get_Basis() );  }
+        for( rbbnPtr birb : flock ){  
             birb->update_instincts_and_heading( flockPoses );
-            birb->z_thrust( 0.50f );
+            birb->update_position( 0.50f );
             birb->draw();  
         }
 
