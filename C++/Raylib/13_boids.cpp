@@ -1,4 +1,16 @@
 // g++ 13_boids.cpp -std=c++17 -lraylib
+/*
+########## DEV PLAN ##########
+[Y] Draw static w/ random orientation, 2023-06-24: Appears correct, transform matrix is column-major!
+[ ] Stationary gradual flock-only update
+[ ] Stationary gradual home-only  update
+[ ] Stationary gradual free-only  update
+[ ] Stationary gradual full _____ update
+[ ]  1 Boid fly demo
+[ ]  5 Boid fly demo
+[ ] 50 Boid fly demo
+*/
+
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
@@ -108,7 +120,7 @@ Basis basis_from_transform_and_point( const Matrix& xform, const Vector3& point 
 
 
 ////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
-
+uint Nboids = 0;
 
 class Boid : public TriModel{ public:
     // A flocking entity like a bird
@@ -119,6 +131,7 @@ class Boid : public TriModel{ public:
     Color   sldClr; // - Boid color
     float   dNear; // -- Radius of hemisphere for flocking consideration
     Vector3 home; // --- Don't get too far from this point
+    uint    ID;
 
     /// Way-Finding ///
     Basis flocking; // Flocking instinct
@@ -154,6 +167,9 @@ class Boid : public TriModel{ public:
             Vector3{  0.0f, -width/2, 0.0f   }, 
             Vector3{  0.0f, 0.0f    , length }
         );
+
+        Nboids++;
+        ID = Nboids;
     }
 
     Basis get_Basis(){
@@ -189,6 +205,7 @@ class Boid : public TriModel{ public:
                 }
             }
         }
+        cout << "Boid " << ID << ": There are " << relevant << " relevant neighbors!" << endl;
         if( relevant ){
             rtnMsg.Xb = Xmean;
             rtnMsg.Yb = Ymean;
@@ -200,6 +217,21 @@ class Boid : public TriModel{ public:
             rtnMsg.Zb = Vector3{0.0f, 0.0f, 0.0f};
         }
         return rtnMsg;
+    }
+
+    void load_heading(){
+        // Transfer the heading basis to the orientation matrix
+        // 2023-06-24: Assume that `T` is column major
+        T.m0  = headingB.Xb.x;
+        T.m1  = headingB.Xb.y;
+        T.m2  = headingB.Xb.z;
+        T.m4  = headingB.Yb.x;
+        T.m5  = headingB.Yb.y;
+        T.m6  = headingB.Yb.z;
+        T.m8  = headingB.Zb.x;
+        T.m9  = headingB.Zb.y;
+        T.m10 = headingB.Zb.z;
+        model.transform = T;
     }
 
     Basis consider_home( uint N_samples ){
@@ -241,18 +273,16 @@ class Boid : public TriModel{ public:
         return rtnMsg;
     }
 
-    double update_instincts_and_heading( const vector<boidPtr>& flock ){
+    double update_instincts_and_heading( const vector<Basis>& flockPoses ){
         // Main navigation function
-        vector<Basis> flockPoses;
-        // 0. Fetch all flock poses
-        for( boidPtr boid : flock ){  flockPoses.push_back( boid->get_Basis() );  }
-        // FIXME, START HERE: NAVIGATION!
         // 1. Update flocking instinct
+        Basis flockDrive = consider_neighbors( flockPoses );
         // 2. Update home seeking instinct
         // 3. Update drunken walk
         // 4. Update where the boid is actually pointed
         // 5. Blend intincts
         // 6. Limit turn and set heading
+        return 0.0;
     }
 
     ///// Rendering //////////////////////////////
@@ -265,6 +295,12 @@ class Boid : public TriModel{ public:
         load_mesh();
     }
 
+    void draw(){
+        // Draw the model
+        load_heading();
+        DrawModel( model, XYZ, 1.00, sldClr );  
+    }
+
 };
 typedef shared_ptr<Boid> boidPtr;
 
@@ -274,6 +310,56 @@ typedef shared_ptr<Boid> boidPtr;
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
 int main(){
-    Matrix T;
-    
+    rand_seed();
+
+    /// Window Init ///
+    InitWindow( 600, 600, "Boids!" );
+    SetTargetFPS( 60 );
+    rlEnableSmoothLines();
+    rlDisableBackfaceCulling();
+
+    /// Init Objects ///
+    vector<boidPtr> flock;
+    for( uint i = 0; i < 10; i++ ){
+        boidPtr nuBirb = boidPtr( new Boid{ 10.0f, 7.0f } );
+        nuBirb->XYZ = Vector3{ randf( -50.0f, 50.0f ), randf( -50.0f, 50.0f ), randf( -50.0f, 50.0f ) };
+        nuBirb->load_geo();
+        flock.push_back( nuBirb );
+    }
+    vector<Basis> flockPoses;
+
+    // Camera
+    Camera camera = Camera{
+        Vector3{ 100.0, 100.0, 100.0 }, // Position
+        Vector3{   0.0,   0.0,   0.0 }, // Target
+        Vector3{   0.0,   0.0,   1.0 }, // Up
+        45.0, // ---------------------- FOV_y
+        0 // -------------------------- Projection mode
+    };
+
+    ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
+
+    while( !WindowShouldClose() ){
+
+        /// Begin Drawing ///
+        BeginDrawing();
+        BeginMode3D( camera );
+        ClearBackground( BLACK );
+
+        ///// DRAW LOOP ///////////////////////////////////////////////////
+        flockPoses.clear();
+        for( boidPtr birb : flock ){  flockPoses.push_back( birb->get_Basis() );  }
+        for( boidPtr birb : flock ){  
+            birb->update_instincts_and_heading( flockPoses );
+            birb->draw();  
+        }
+
+        /// End Drawing ///
+        EndMode3D();
+        EndDrawing();
+    }
+
+    ////////// CLEANUP /////////////////////////////////////////////////////////////////////////////
+    flock.clear();
+    return 0;
 }

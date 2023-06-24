@@ -9,12 +9,17 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 
 * `[>]` Boids
     - `[Y]` Boids consider nearby visible neighbors, 2023-06-10: Wrote pose aggregator
-    - `[>]` Add free will
+    - `[>]` Instincts driven by gradually-updating transformation matrices
+        * `[>]` Gradual flocking
+        * `[ ]` Gradual home-seeking
+        * `[ ]` Gradual free-will
     - `[ ]` Add strong obstacle avoidance
-
+        * `[ ]` Investigate Raylib obstacle avoidance
+    - `[ ]` Video -or- animated GIF output --to-> IG
+        
 &nbsp;  
 
-* `[>]` Shiny Boid Ribbons - Generative art
+* `[ ]` Shiny Boid Ribbons - Generative art
     - `[ ]` Boid Ribbon class
     - `[ ]` Ribbons as dynamic, shaded meshes
         * `[ ]` Dynamic mesh
