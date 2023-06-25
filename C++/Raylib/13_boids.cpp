@@ -1,4 +1,4 @@
-// g++ 13_boids.cpp -std=c++17 -lraylib
+// g++ 13_boids.cpp -std=c++17 -O3 -lraylib
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
@@ -11,6 +11,7 @@ using std::clamp;
 /// Local ///
 #include "utils.hpp"
 #include "rl_toybox.hpp"
+
 
 
 ////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
@@ -105,7 +106,6 @@ class Boid : public TriModel{ public:
                 }
             }
         }
-        // cout << "Boid " << ID << ": There are " << relevant << " relevant neighbors!" << endl;
         Nnear = relevant;
         if( relevant ){
             rtnMsg.Xb = Xmean;
@@ -178,12 +178,9 @@ class Boid : public TriModel{ public:
                       homeSeek.get_scaled_orientation( dist/scale*5.0f ) + 
                       freeWill.get_scaled_orientation( 10.0 );
         // 5. Limit turn and set heading
-        // headingB.blend_orientations_with_factor( flocking, ur );
-
         double updateTurn = Vector3Angle( total.Zb, headingB.Zb );
         double turnMax    = PI/32;
         double factor     = updateTurn/turnMax;
-
         headingB.blend_orientations_with_factor( total, ur/factor );
         load_heading();
         return 0.0;
@@ -209,21 +206,20 @@ typedef shared_ptr<Boid> boidPtr;
 
 
 
-
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
 int main(){
     rand_seed();
 
     /// Window Init ///
-    InitWindow( 900, 900, "Boids!" );
+    InitWindow( 700, 700, "Boids!" );
     SetTargetFPS( 60 );
     rlEnableSmoothLines();
     rlDisableBackfaceCulling();
 
     /// Init Objects ///
     vector<boidPtr> flock;
-    for( uint i = 0; i < 75; i++ ){
+    for( uint i = 0; i < 100; i++ ){
         boidPtr nuBirb = boidPtr( new Boid{ 10.0f*1.25f, 7.0f*1.25f } );
         nuBirb->XYZ = Vector3{ randf( -75.0f, 75.0f ), randf( -75.0f, 75.0f ), randf( -75.0f, 75.0f ) };
         nuBirb->load_geo();
@@ -258,12 +254,10 @@ int main(){
             birb->draw();  
         }
 
-        
-
         /// End Drawing ///
         EndMode3D();
 
-        DrawFPS( 30, 30 );
+        // DrawFPS( 30, 30 );
 
         EndDrawing();
     }

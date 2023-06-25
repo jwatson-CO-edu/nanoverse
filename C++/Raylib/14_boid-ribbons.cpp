@@ -13,17 +13,18 @@ using std::clamp;
 #include "rl_toybox.hpp"
 
 
+
 ////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
 uint Nboids = 0;
 
 class BoidRibbon{ public:
 
     /// Members ///
-    Color sldClr; // - Boid color
-    uint  ID; // ----- Identifier
+    Color sldClr; // Boid color
+    uint  ID; // --- Identifier
     
     /// Pose ///
-    Basis   headingB; // Where the boid is actually pointed
+    Basis headingB; // Where the boid is actually pointed
 
     /// Way-Finding ///
     float   ur; // ----- Update rate
@@ -110,7 +111,6 @@ class BoidRibbon{ public:
                 }
             }
         }
-        // cout << "Boid " << ID << ": There are " << relevant << " relevant neighbors!" << endl;
         Nnear = relevant;
         if( relevant ){
             rtnMsg.Xb = Xmean;
@@ -168,8 +168,6 @@ class BoidRibbon{ public:
                       homeSeek.get_scaled_orientation( dist/scale*5.0f ) + 
                       freeWill.get_scaled_orientation( 10.0 );
         // 5. Limit turn and set heading
-        // headingB.blend_orientations_with_factor( flocking, ur );
-
         double updateTurn = Vector3Angle( total.Zb, headingB.Zb );
         double turnMax    = PI/32;
         double factor     = updateTurn/turnMax;
@@ -259,7 +257,6 @@ class BoidRibbon{ public:
 
 };
 typedef shared_ptr<BoidRibbon> rbbnPtr;
-
 
 
 
