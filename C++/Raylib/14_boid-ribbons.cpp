@@ -294,7 +294,7 @@ int main(){
     rand_seed();
 
     /// Window Init ///
-    InitWindow( 900, 900, "Boids!" );
+    InitWindow( 900, 900, "Boid-like Ribbons!" );
     SetTargetFPS( 60 );
     rlEnableSmoothLines();
     rlDisableBackfaceCulling();
