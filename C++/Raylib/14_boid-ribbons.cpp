@@ -8,9 +8,15 @@
 #include <algorithm>
 using std::clamp;
 
+/// Raylib ///
+#include "raylib.h"
+#include "raymath.h"
+
 /// Local ///
 #include "utils.hpp"
 #include "rl_toybox.hpp"
+#define RLIGHTS_IMPLEMENTATION
+#include "rlights.h"
 
 
 
@@ -196,7 +202,7 @@ class BoidRibbon{ public:
         float   G     = sldClr.g/255.0f;
         float   B     = sldClr.b/255.0f;
         float   Aspan = headAlpha - tailAlpha;
-        Vector3 c1, c2, c3, c4;
+        Vector3 c1, c2, c3, c4, n1, n2;
         float   A_i;
         float   A_ip1;
         
@@ -211,8 +217,15 @@ class BoidRibbon{ public:
             A_i   = tailAlpha + Aspan*(Nsize-(i  ))/(1.0f*Nsize);
             A_ip1 = tailAlpha + Aspan*(Nsize-(i+1))/(1.0f*Nsize);
 
+            // DRAW NORMALS?: https://gist.github.com/ChrisDill/09de7c818bc8618e07d8d41174704fee
+
             if( i%2==0 ){
                 /// Triangle 1: c2, c1, c3 ///
+                n1 = Vector3Normalize( Vector3CrossProduct(
+                    Vector3Subtract( c3, c1 ),
+                    Vector3Subtract( c2, c1 )
+                ) );
+                rlNormal3f( n1.x, n1.y, n1.z );
                 // t1.p1 //
                 rlColor4f(R, G, B, A_i);
                 rlVertex3f(c2.x, c2.y, c2.z);
@@ -223,6 +236,11 @@ class BoidRibbon{ public:
                 rlVertex3f(c3.x, c3.y, c3.z);
 
                 /// Triangle 2: c3, c4, c2 ///
+                n2 = Vector3Normalize( Vector3CrossProduct(
+                    Vector3Subtract( c2, c4 ),
+                    Vector3Subtract( c3, c4 )
+                ) );
+                rlNormal3f( n2.x, n2.y, n2.z );
                 // t2.p1 //
                 rlVertex3f(c3.x, c3.y, c3.z);
                 // t2.p2 //
@@ -232,6 +250,11 @@ class BoidRibbon{ public:
                 rlVertex3f(c2.x, c2.y, c2.z);
             }else{
                 /// Triangle 1: c1, c3, c4 ///
+                n1 = Vector3Normalize( Vector3CrossProduct(
+                    Vector3Subtract( c4, c3 ),
+                    Vector3Subtract( c1, c3 )
+                ) );
+                rlNormal3f( n1.x, n1.y, n1.z );
                 // t1.p1 //
                 rlColor4f(R, G, B, A_i);
                 rlVertex3f(c1.x, c1.y, c1.z);
@@ -242,6 +265,11 @@ class BoidRibbon{ public:
                 rlVertex3f(c4.x, c4.y, c4.z);
 
                 /// Triangle 2: c4, c2, c1 ///
+                n2 = Vector3Normalize( Vector3CrossProduct(
+                    Vector3Subtract( c1, c2 ),
+                    Vector3Subtract( c4, c2 )
+                ) );
+                rlNormal3f( n2.x, n2.y, n2.z );
                 // t2.p1 //
                 rlVertex3f(c4.x, c4.y, c4.z);
                 // t2.p2 //
@@ -289,6 +317,23 @@ int main(){
         0 // -------------------------- Projection mode
     };
 
+    // Load basic lighting shader
+    Shader shader = LoadShader( "shaders/lighting.vs", "shaders/lighting.fs" );
+    shader.locs[ SHADER_LOC_VECTOR_VIEW ] = GetShaderLocation( shader, "viewPos" );
+
+    // Ambient light level (some basic lighting)
+    int ambientLoc = GetShaderLocation( shader, "ambient" );
+    float ambColor[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
+    SetShaderValue( shader, ambientLoc, ambColor, SHADER_UNIFORM_VEC4 );
+
+    // Create lights
+    Light lights[ 1 ] = { 0 };
+    lights[0] = CreateLight( LIGHT_POINT, (Vector3){50, 50, 50}, Vector3Zero(), RAYWHITE, shader );
+
+    // Update the shader with the camera view vector (points towards { 0.0f, 0.0f, 0.0f })
+    float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
+    SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos, SHADER_UNIFORM_VEC3);
+
     ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
 
     while( !WindowShouldClose() ){
@@ -297,6 +342,11 @@ int main(){
         BeginDrawing();
         BeginMode3D( camera );
         ClearBackground( BLACK );
+
+        UpdateLightValues( shader, lights[0] );
+
+        // Activate our custom shader to be applied on next shapes/textures drawings
+        BeginShaderMode( shader );
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
         flockPoses.clear();
@@ -307,7 +357,8 @@ int main(){
             birb->draw();  
         }
 
-        
+        // Activate our default shader for next drawings
+        EndShaderMode();
 
         /// End Drawing ///
         EndMode3D();
