@@ -21,6 +21,24 @@ using std::clamp;
 
 
 ////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
+
+struct Sphere{
+    // Container struct for an obstacle to avoid
+    
+    /// Members ///
+    Vector3 center;
+    double  radius;
+
+    /// Methods ///
+
+    void draw(){
+        DrawSphere( center, radius, GRAY ); 
+    }
+
+    Sphere copy() const {  return Sphere{ center, radius };  }
+};
+
+
 uint Nboids = 0;
 
 class BoidRibbon{ public:
@@ -41,6 +59,8 @@ class BoidRibbon{ public:
     Basis   flocking; // Flocking instinct
     Basis   homeSeek; // Home seeking instinct
     Basis   freeWill; // Drunken walk
+    Basis   avoidSph; // Sphere avoidance instinct
+    Sphere  fearSphr; // The sphere to fear
 
     /// Rendering ///
     uint /*--------------*/ Npairs; // -- Number of coordinate pairs allowed
@@ -56,9 +76,9 @@ class BoidRibbon{ public:
         Npairs    = N;
         headAlpha = Ah;
         tailAlpha = At;
-        width     =   6.0f;
-        dNear     =  25.0f;
-        scale     = 150.0f;
+        width     =   6.0/10.0;
+        dNear     =  12.5/10.0;
+        scale     = 150.0/10.0;
         ur /*--*/ =   0.10;
         home /**/ = Vector3{0,0,0};
         sldClr    = Color{
@@ -71,6 +91,7 @@ class BoidRibbon{ public:
         flocking = headingB.copy(); // ----- Flocking instinct
         homeSeek = headingB.copy(); // ----- Home seeking instinct
         freeWill = headingB.copy(); // ----- Drunken walk
+        avoidSph = headingB.copy(); // ----- Sphere avoidance instinct
 
         Nboids++;
         ID = Nboids;
@@ -103,7 +124,7 @@ class BoidRibbon{ public:
         Xmean = Vector3{0.0f, 0.0f, 0.0f};
         Ymean = Vector3{0.0f, 0.0f, 0.0f};
         Zmean = Vector3{0.0f, 0.0f, 0.0f};
-        for( Basis msg : nghbrPoses ){
+        for( const Basis& msg : nghbrPoses ){
             diffVec  = Vector3Subtract( msg.Pt, headingB.Pt );
             dist     = Vector3Length( diffVec );
             if( dist > 0.0 ){
@@ -155,7 +176,41 @@ class BoidRibbon{ public:
         return rtnMsg;
     }
 
-    double update_instincts_and_heading( const vector<Basis>& flockPoses ){
+    Basis consider_spheres( const vector<Sphere>& sphereList ){
+        // Sphere avoidance instinct
+        float nearDist = 1e9;
+        float sphrDist = 0.0;
+        uint  i /*--*/ = 0;
+        // 1. Find the closest sphere
+        for( const Sphere& sphere : sphereList ){
+            sphrDist = Vector3Distance( sphere.center, headingB.Pt );
+            if( sphrDist < nearDist ){
+                nearDist = sphrDist;
+                fearSphr = sphere.copy();
+            }
+            i++;
+        }
+        // 2. Generate an avoiding heading
+        Vector3 toSphr = Vector3Subtract( fearSphr.center, headingB.Pt );
+        if( nearDist < fearSphr.radius ){
+            Basis rtnBasis;
+            rtnBasis.Zb = Vector3Scale( toSphr, -1.0f );
+            rtnBasis.Yb = Vector3CrossProduct( rtnBasis.Zb, headingB.Xb );
+            rtnBasis.orthonormalize();
+            return rtnBasis;
+        }else if( Vector3DotProduct( headingB.Zb, toSphr ) > 0.0 ){
+            Basis rtnBasis;
+            rtnBasis.Yb = Vector3Scale( toSphr, -1.0 );
+            rtnBasis.Xb = Vector3CrossProduct( rtnBasis.Yb, headingB.Zb );
+            rtnBasis.Zb = Vector3CrossProduct( rtnBasis.Xb, rtnBasis.Yb );
+            rtnBasis.orthonormalize();
+            return rtnBasis;
+        }else{
+            return headingB.copy();
+        }
+    }
+
+    double update_instincts_and_heading( const vector<Basis>& flockPoses, const vector<Sphere>& spheres ){
         // Main navigation function
         // 1. Update flocking instinct
         Basis flockDrive = consider_neighbors( flockPoses );
@@ -169,10 +224,15 @@ class BoidRibbon{ public:
             Basis freewDrive = consider_free_will();
             freeWill.blend_orientations_with_factor( freewDrive, ur );
         }
+        // 4. Update sphere avoidance instinct
+        Basis fearDrive = consider_spheres( spheres );
+        avoidSph.blend_orientations_with_factor( fearDrive, ur );
+        float fearDist = Vector3Distance( fearSphr.center, headingB.Pt );
         // 4. Blend intincts
         Basis total = flocking.get_scaled_orientation( 0.45f * Nnear ) + 
                       homeSeek.get_scaled_orientation( dist/scale*5.0f ) + 
-                      freeWill.get_scaled_orientation( 10.0 );
+                      freeWill.get_scaled_orientation( 10.0 ) + 
+                      avoidSph.get_scaled_orientation( fearSphr.radius / fearDist * 15 );
         // 5. Limit turn and set heading
         double updateTurn = Vector3Angle( total.Zb, headingB.Zb );
         double turnMax    = PI/32;
@@ -206,8 +266,11 @@ class BoidRibbon{ public:
         float   A_i;
         float   A_ip1;
         
+        // // Begin triangle batch job
+        // rlBegin( RL_TRIANGLES );
+
         // Begin triangle batch job
-        rlBegin( RL_TRIANGLES );
+        rlBegin( RL_QUADS );
 
         for( uint i = 0; i < Nsize; i++){
             c1    = coords[i  ][0];
@@ -219,67 +282,39 @@ class BoidRibbon{ public:
 
             // DRAW NORMALS?: https://gist.github.com/ChrisDill/09de7c818bc8618e07d8d41174704fee
 
-            if( i%2==0 ){
-                /// Triangle 1: c2, c1, c3 ///
-                n1 = Vector3Normalize( Vector3CrossProduct(
-                    Vector3Subtract( c3, c1 ),
-                    Vector3Subtract( c2, c1 )
-                ) );
-                rlNormal3f( n1.x, n1.y, n1.z );
-                // t1.p1 //
-                rlColor4f(R, G, B, A_i);
-                rlVertex3f(c2.x, c2.y, c2.z);
-                // t1.p2 //
-                rlVertex3f(c1.x, c1.y, c1.z);
-                // t1.p3 //
-                rlColor4f(R, G, B, A_ip1);
-                rlVertex3f(c3.x, c3.y, c3.z);
+            /// Quad 1: c2, c1, c3, c4 ///
+            n1 = Vector3Normalize( Vector3CrossProduct(
+                Vector3Subtract( c3, c1 ),
+                Vector3Subtract( c2, c1 )
+            ) );
+            rlNormal3f( n1.x, n1.y, n1.z );
+            // t1.p1 //
+            rlColor4f(R, G, B, A_i);
+            rlVertex3f(c2.x, c2.y, c2.z);
+            // t1.p2 //
+            rlVertex3f(c1.x, c1.y, c1.z);
+            // t1.p3 //
+            rlColor4f(R, G, B, A_ip1);
+            rlVertex3f(c3.x, c3.y, c3.z);
+            // t2.p2 //
+            rlVertex3f(c4.x, c4.y, c4.z);
 
-                /// Triangle 2: c3, c4, c2 ///
-                n2 = Vector3Normalize( Vector3CrossProduct(
-                    Vector3Subtract( c2, c4 ),
-                    Vector3Subtract( c3, c4 )
-                ) );
-                rlNormal3f( n2.x, n2.y, n2.z );
-                // t2.p1 //
-                rlVertex3f(c3.x, c3.y, c3.z);
-                // t2.p2 //
-                rlVertex3f(c4.x, c4.y, c4.z);
-                // t2.p3 //
-                rlColor4f(R, G, B, A_i);
-                rlVertex3f(c2.x, c2.y, c2.z);
-            }else{
-                /// Triangle 1: c1, c3, c4 ///
-                n1 = Vector3Normalize( Vector3CrossProduct(
-                    Vector3Subtract( c4, c3 ),
-                    Vector3Subtract( c1, c3 )
-                ) );
-                rlNormal3f( n1.x, n1.y, n1.z );
-                // t1.p1 //
-                rlColor4f(R, G, B, A_i);
-                rlVertex3f(c1.x, c1.y, c1.z);
-                // t1.p2 //
-                rlColor4f(R, G, B, A_ip1);
-                rlVertex3f(c3.x, c3.y, c3.z);
-                // t1.p3 //
-                rlVertex3f(c4.x, c4.y, c4.z);
-
-                /// Triangle 2: c4, c2, c1 ///
-                n2 = Vector3Normalize( Vector3CrossProduct(
-                    Vector3Subtract( c1, c2 ),
-                    Vector3Subtract( c4, c2 )
-                ) );
-                rlNormal3f( n2.x, n2.y, n2.z );
-                // t2.p1 //
-                rlVertex3f(c4.x, c4.y, c4.z);
-                // t2.p2 //
-                rlColor4f(R, G, B, A_i);
-                rlVertex3f(c2.x, c2.y, c2.z);
-                // t2.p3 //
-                rlVertex3f(c1.x, c1.y, c1.z);
-            }
+            /// Quad 2: c1, c2, c4, c3 ///
+            rlNormal3f( -n1.x, -n1.y, -n1.z );
+            // t1.p1 //
+            rlColor4f(R, G, B, A_i);
+            rlVertex3f(c1.x, c1.y, c1.z);
+            rlVertex3f(c2.x, c2.y, c2.z);
+            // t1.p2 //
+            
+            // t1.p3 //
+            rlColor4f(R, G, B, A_ip1);
+            rlVertex3f(c4.x, c4.y, c4.z);
+            rlVertex3f(c3.x, c3.y, c3.z);
+            // t2.p2 //
+            
         }
-        // End triangle batch job
+        // End quad batch job
         rlEnd();
     }
 
@@ -296,21 +331,39 @@ int main(){
     /// Window Init ///
     InitWindow( 900, 900, "Boid-like Ribbons!" );
     SetTargetFPS( 60 );
-    rlEnableSmoothLines();
-    rlDisableBackfaceCulling();
+    // rlEnableSmoothLines();
+    // rlDisableBackfaceCulling();
+
+    float halfBoxLen = 100.0/10.0;
 
     /// Init Objects ///
     vector<rbbnPtr> flock;
-    for( uint i = 0; i < 300; i++ ){
-        rbbnPtr nuBirb = rbbnPtr( new BoidRibbon{ 200, 1.0f, 0.0f } );
-        nuBirb->headingB.Pt = Vector3{ randf( -75.0f, 75.0f ), randf( -75.0f, 75.0f ), randf( -75.0f, 75.0f ) };
+    for( uint i = 0; i < 100; i++ ){
+        rbbnPtr nuBirb = rbbnPtr( new BoidRibbon{ 200, 1.0f, 0.25f } );
+        nuBirb->headingB.Pt = Vector3{ 
+            randf( -halfBoxLen, halfBoxLen ), 
+            randf( -halfBoxLen, halfBoxLen ), 
+            randf( -halfBoxLen, halfBoxLen ) 
+        };
         flock.push_back( nuBirb );
     }
-    vector<Basis> flockPoses;
+    vector<Basis>  flockPoses;
+    vector<Sphere> sphereList;
+    for( uint i = 0; i < 16; i++ ){
+         sphereList.push_back( Sphere{ 
+            Vector3{
+                randf( -halfBoxLen*1.25, halfBoxLen*1.25 ), 
+                randf( -halfBoxLen*1.25, halfBoxLen*1.25 ), 
+                randf( -halfBoxLen*1.25, halfBoxLen*1.25 ) 
+            }, 
+            randf( 10/10.0, 40/10.0 )
+        } );
+    }
+   
 
     // Camera
     Camera camera = Camera{
-        Vector3{ 200.0, 200.0, 200.0 }, // Position
+        Vector3{ 200.0/10.0, 200.0/10.0, 200.0/10.0 }, // Position
         Vector3{   0.0,   0.0,   0.0 }, // Target
         Vector3{   0.0,   0.0,   1.0 }, // Up
         45.0, // ---------------------- FOV_y
@@ -318,21 +371,28 @@ int main(){
     };
 
     // Load basic lighting shader
-    Shader shader = LoadShader( "shaders/lighting.vs", "shaders/lighting.fs" );
-    shader.locs[ SHADER_LOC_VECTOR_VIEW ] = GetShaderLocation( shader, "viewPos" );
+    // Shader shader = LoadShader( "shaders/lighting.vs", "shaders/lighting.fs" );
+    Shader shader = LoadShader( "shaders/fogLight.vs", "shaders/fogLight.fs" );
+    shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
+    shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
 
-    // Ambient light level (some basic lighting)
-    int ambientLoc = GetShaderLocation( shader, "ambient" );
-    float ambColor[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
-    SetShaderValue( shader, ambientLoc, ambColor, SHADER_UNIFORM_VEC4 );
+    // Ambient light level
+    int ambientLoc = GetShaderLocation(shader, "ambient");
+    float ambientCol[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
+    SetShaderValue(shader, ambientLoc, ambientCol, SHADER_UNIFORM_VEC4);
 
-    // Create lights
-    Light lights[ 1 ] = { 0 };
-    lights[0] = CreateLight( LIGHT_POINT, (Vector3){50, 50, 50}, Vector3Zero(), RAYWHITE, shader );
+    int fColorLoc = GetShaderLocation(shader, "fogColor");
+    float fogColor[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
+    SetShaderValue(shader, ambientLoc, fogColor, SHADER_UNIFORM_VEC4);
 
-    // Update the shader with the camera view vector (points towards { 0.0f, 0.0f, 0.0f })
-    float cameraPos[3] = { camera.position.x, camera.position.y, camera.position.z };
-    SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], cameraPos, SHADER_UNIFORM_VEC3);
+    float fogDensity = 0.015f;
+    int fogDensityLoc = GetShaderLocation(shader, "fogDensity");
+    SetShaderValue(shader, fogDensityLoc, &fogDensity, SHADER_UNIFORM_FLOAT);
+
+    // Using just 1 point lights
+    CreateLight(LIGHT_POINT, (Vector3){ 100/10.0, 100/10.0, 100/10.0 }, Vector3Zero(), WHITE, shader);
+
+    
 
     ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
 
@@ -343,22 +403,31 @@ int main(){
         BeginMode3D( camera );
         ClearBackground( BLACK );
 
-        UpdateLightValues( shader, lights[0] );
-
         // Activate our custom shader to be applied on next shapes/textures drawings
-        BeginShaderMode( shader );
+        // BeginShaderMode( shader );
+
+        // UpdateLightValues( shader, lights[0] );
+
+        
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
+        
+        for( Sphere& sphere : sphereList ){
+            sphere.draw();
+        }
+
         flockPoses.clear();
         for( rbbnPtr birb : flock ){  flockPoses.push_back( birb->get_Basis() );  }
         for( rbbnPtr birb : flock ){  
-            birb->update_instincts_and_heading( flockPoses );
-            birb->update_position( 0.50f );
+            birb->update_instincts_and_heading( flockPoses, sphereList );
+            birb->update_position( 0.50/10.0 );
             birb->draw();  
         }
 
+        
+
         // Activate our default shader for next drawings
-        EndShaderMode();
+        // EndShaderMode();
 
         /// End Drawing ///
         EndMode3D();

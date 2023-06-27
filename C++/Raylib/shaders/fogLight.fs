@@ -67,14 +67,14 @@ void main()
 
             float specCo = 0.0;
             if(NdotL > 0.0)
-                specCo = pow(max(0.0, dot(viewD, reflect(-(light), normal))), 16);//16 =shine
+                specCo = pow(max(0.0, dot(viewD, reflect(-(light), normal))), 32);//16 =shine
             specular += specCo;
 
         }
     }
 
-    finalColor =  (texelColor * ((colDiffuse+vec4(specular,1)) * vec4(lightDot, 1.0)));
-    finalColor += texelColor * (ambient/10.0);
+    finalColor =  (fragColor * ((colDiffuse+vec4(specular,1)) * 12.0*vec4(lightDot, 1.0)));
+    finalColor += fragColor * (ambient/1.0);
     // gamma
     finalColor = pow(finalColor, vec4(1.0/2.2));
 
