@@ -31,7 +31,15 @@ struct Sphere{
     Model   model;
     Color   color;
 
-    /// Constructor ///
+    /// Constructors ///
+    
+    Sphere(){
+        center = Vector3Zero();
+        radius = 1.0;
+        color  = GRAY;
+        model  = LoadModelFromMesh( GenMeshSphere( radius, 32, 32 ) );
+    }
+
     Sphere( const Vector3& cntr, double rad ){
         center = cntr;
         radius = rad;
@@ -120,7 +128,7 @@ int main(){
         ClearBackground( BLACK );
 
         // Activate our custom shader to be applied on next shapes/textures drawings
-        BeginShaderMode( shader );
+        // BeginShaderMode( shader );
 
         // UpdateLightValues( shader, lights[0] );
 
@@ -133,7 +141,7 @@ int main(){
         }
 
         // Activate our default shader for next drawings
-        EndShaderMode();
+        // EndShaderMode();
 
         /// End Drawing ///
         EndMode3D();

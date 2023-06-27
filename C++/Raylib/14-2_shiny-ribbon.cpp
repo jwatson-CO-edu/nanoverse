@@ -1,4 +1,4 @@
-// g++ 14_boid-ribbons.cpp -std=c++17 -O3 -lraylib
+// g++ 14-2_shiny-ribbon.cpp -std=c++17 -lraylib
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
@@ -57,10 +57,9 @@ struct Sphere{
     Sphere copy() const {  return Sphere{ center, radius };  }
 };
 
-
 uint Nboids = 0;
 
-class BoidRibbon{ public:
+class BoidRibbon : public TriModel{ public:
 
     /// Members ///
     Color sldClr; // Boid color
@@ -90,7 +89,7 @@ class BoidRibbon{ public:
 
     /// Constructor ///
 
-    BoidRibbon( uint N, float Ah, float At ){
+    BoidRibbon( uint N, float Ah, float At ) : TriModel( (N-1)*4 ){
         // Build the geometry of the boid
         Npairs    = N;
         headAlpha = Ah;
@@ -271,76 +270,25 @@ class BoidRibbon{ public:
         );
     }
 
+    void coords_to_geo(){
+        // Build triangles from the coords list
+
+        // FIXME, START HERE: START AT TOYBOX, SEE NOTE THERE
+
+    }
+
     ///// Rendering //////////////////////////////
     // WARNING: Requires window init to call!
 
-    void draw(){
-        // Render plume as a batch job
-        uint    Nsize = coords.size()-1;        
-        float   R     = sldClr.r/255.0f;
-        float   G     = sldClr.g/255.0f;
-        float   B     = sldClr.b/255.0f;
-        float   Aspan = headAlpha - tailAlpha;
-        Vector3 c1, c2, c3, c4, n1, n2;
-        float   A_i;
-        float   A_ip1;
-        
-        // // Begin triangle batch job
-        // rlBegin( RL_TRIANGLES );
-
-        // Begin triangle batch job
-        rlBegin( RL_QUADS );
-
-        for( uint i = 0; i < Nsize; i++){
-            c1    = coords[i  ][0];
-            c2    = coords[i  ][1];
-            c3    = coords[i+1][0];
-            c4    = coords[i+1][1];
-            A_i   = tailAlpha + Aspan*(Nsize-(i  ))/(1.0f*Nsize);
-            A_ip1 = tailAlpha + Aspan*(Nsize-(i+1))/(1.0f*Nsize);
-
-            // DRAW NORMALS?: https://gist.github.com/ChrisDill/09de7c818bc8618e07d8d41174704fee
-
-            /// Quad 1: c2, c1, c3, c4 ///
-            n1 = Vector3Normalize( Vector3CrossProduct(
-                Vector3Subtract( c3, c1 ),
-                Vector3Subtract( c2, c1 )
-            ) );
-            rlNormal3f( n1.x, n1.y, n1.z );
-            // t1.p1 //
-            rlColor4f(R, G, B, A_i);
-            rlVertex3f(c2.x, c2.y, c2.z);
-            // t1.p2 //
-            rlVertex3f(c1.x, c1.y, c1.z);
-            // t1.p3 //
-            rlColor4f(R, G, B, A_ip1);
-            rlVertex3f(c3.x, c3.y, c3.z);
-            // t2.p2 //
-            rlVertex3f(c4.x, c4.y, c4.z);
-
-            /// Quad 2: c1, c2, c4, c3 ///
-            rlNormal3f( -n1.x, -n1.y, -n1.z );
-            // t1.p1 //
-            rlColor4f(R, G, B, A_i);
-            rlVertex3f(c1.x, c1.y, c1.z);
-            rlVertex3f(c2.x, c2.y, c2.z);
-            // t1.p2 //
-            
-            // t1.p3 //
-            rlColor4f(R, G, B, A_ip1);
-            rlVertex3f(c4.x, c4.y, c4.z);
-            rlVertex3f(c3.x, c3.y, c3.z);
-            // t2.p2 //
-            
-        }
-        // End quad batch job
-        rlEnd();
+    void load_geo(){
+        // Get the model ready for drawing
+        build_mesh_unshared();
+        build_normals_flat_unshared();
+        // FIXME: BUILD COLORS
+        load_mesh();
     }
 
 };
-typedef shared_ptr<BoidRibbon> rbbnPtr;
-
-
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
@@ -356,29 +304,7 @@ int main(){
     float halfBoxLen = 100.0/10.0;
 
     /// Init Objects ///
-    vector<rbbnPtr> flock;
-    for( uint i = 0; i < 100; i++ ){
-        rbbnPtr nuBirb = rbbnPtr( new BoidRibbon{ 200, 1.0f, 0.25f } );
-        nuBirb->headingB.Pt = Vector3{ 
-            randf( -halfBoxLen, halfBoxLen ), 
-            randf( -halfBoxLen, halfBoxLen ), 
-            randf( -halfBoxLen, halfBoxLen ) 
-        };
-        flock.push_back( nuBirb );
-    }
-    vector<Basis>  flockPoses;
-    vector<Sphere> sphereList;
-    for( uint i = 0; i < 16; i++ ){
-         sphereList.push_back( Sphere{ 
-            Vector3{
-                randf( -halfBoxLen*1.25, halfBoxLen*1.25 ), 
-                randf( -halfBoxLen*1.25, halfBoxLen*1.25 ), 
-                randf( -halfBoxLen*1.25, halfBoxLen*1.25 ) 
-            }, 
-            randf( 10/10.0, 40/10.0 )
-        } );
-    }
-   
+    
 
     // Camera
     Camera camera = Camera{
@@ -431,18 +357,6 @@ int main(){
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
         
-        for( Sphere& sphere : sphereList ){
-            sphere.draw();
-        }
-
-        flockPoses.clear();
-        for( rbbnPtr birb : flock ){  flockPoses.push_back( birb->get_Basis() );  }
-        for( rbbnPtr birb : flock ){  
-            birb->update_instincts_and_heading( flockPoses, sphereList );
-            birb->update_position( 0.50/10.0 );
-            birb->draw();  
-        }
-
         
 
         // Activate our default shader for next drawings
@@ -457,6 +371,5 @@ int main(){
     }
 
     ////////// CLEANUP /////////////////////////////////////////////////////////////////////////////
-    flock.clear();
     return 0;
 }

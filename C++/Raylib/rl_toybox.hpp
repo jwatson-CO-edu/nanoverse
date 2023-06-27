@@ -264,6 +264,15 @@ void init_mesh_normals( Mesh& mesh, ulong Ntri ){
     mesh.normals = (float *)MemAlloc(Nvrt*3*sizeof(float)); // 3 vertices, 3 coordinates each (x, y, z)
 }
 
+void init_mesh_colors( Mesh& mesh, ulong Ntri ){
+    // Allocate memory in the mesh for normals with unshared points
+
+    // FIXME, START HERE: INIT COLORS
+
+    ulong Nvrt = Ntri * 3;
+    mesh.normals = (float *)MemAlloc(Nvrt*3*sizeof(float)); // 3 vertices, 3 coordinates each (x, y, z)
+}
+
 ///// Shared Vertex Helpers ////////////////////
 
 void init_mesh( Mesh& mesh, ulong Npts, ulong Ntri ){
