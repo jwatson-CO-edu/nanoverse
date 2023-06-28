@@ -266,11 +266,8 @@ void init_mesh_normals( Mesh& mesh, ulong Ntri ){
 
 void init_mesh_colors( Mesh& mesh, ulong Ntri ){
     // Allocate memory in the mesh for normals with unshared points
-
-    // FIXME, START HERE: INIT COLORS
-
     ulong Nvrt = Ntri * 3;
-    mesh.normals = (float *)MemAlloc(Nvrt*3*sizeof(float)); // 3 vertices, 3 coordinates each (x, y, z)
+    mesh.colors = (ubyte *)MemAlloc(Nvrt*4*sizeof(ubyte)); // 3 vertices, 4 coordinates each (r, g, b, a)
 }
 
 ///// Shared Vertex Helpers ////////////////////
@@ -289,6 +286,9 @@ void init_mesh( Mesh& mesh, ulong Npts, ulong Ntri ){
 }
 
 
+///// TriModel ////////////////////////////////////////////////////////////
+
+
 class TriModel{ public:
     // Container class for simple models
 
@@ -297,6 +297,8 @@ class TriModel{ public:
     // vector<array<Color,3>>   tClr; //- Triangle color data
     vvec3 /*--------------*/ pnts; //- Point data
     vector<array<ushort,3>>  ndcs; //- Index data
+    vector<array<ubyte,4>>   clrs; //- Color data
+
 
     // Model //
     bool  visible; // Whether or not to draw the model
@@ -323,6 +325,27 @@ class TriModel{ public:
         pushArr[1] = v2;
         pushArr[2] = v3;
         tris.push_back( pushArr );
+    }
+
+    void load_facet_colors( const Color& v1c, const Color& v2c, const Color& v3c  ){
+        // Load colors to match the vertices
+        // NOTE: For best results, pair a call to `load_tri` with a call to this function
+        array<ubyte,4> pushArr;
+        pushArr[0] = v1c.r;
+        pushArr[1] = v1c.g;
+        pushArr[2] = v1c.b;
+        pushArr[3] = v1c.a;
+        clrs.push_back( pushArr );
+        pushArr[0] = v2c.r;
+        pushArr[1] = v2c.g;
+        pushArr[2] = v2c.b;
+        pushArr[3] = v2c.a;
+        clrs.push_back( pushArr );
+        pushArr[0] = v3c.r;
+        pushArr[1] = v3c.g;
+        pushArr[2] = v3c.b;
+        pushArr[3] = v3c.a;
+        clrs.push_back( pushArr );
     }
 
     void build_mesh_unshared(){
@@ -360,6 +383,8 @@ class TriModel{ public:
             }
         }
     }
+
+    // FIXME, START HERE: `build_colors_unshared`
 
     ///// Shared Vertex Ops ////////////////////
 
