@@ -231,6 +231,7 @@ class BoidRibbon : public TriModel{ public:
     double update_instincts_and_heading( const vector<Basis>& flockPoses, const vector<Sphere>& spheres ){
         // Main navigation function
         // 1. Update flocking instinct
+        Basis total;
         Basis flockDrive = consider_neighbors( flockPoses );
         flocking.blend_orientations_with_factor( flockDrive, ur );
         // 2. Update home seeking instinct
@@ -242,15 +243,24 @@ class BoidRibbon : public TriModel{ public:
             Basis freewDrive = consider_free_will();
             freeWill.blend_orientations_with_factor( freewDrive, ur );
         }
-        // 4. Update sphere avoidance instinct
-        Basis fearDrive = consider_spheres( spheres );
-        avoidSph.blend_orientations_with_factor( fearDrive, ur );
-        float fearDist = Vector3Distance( fearSphr.center, headingB.Pt );
-        // 4. Blend intincts
-        Basis total = flocking.get_scaled_orientation( 0.45f * Nnear ) + 
-                      homeSeek.get_scaled_orientation( dist/scale*5.0f ) + 
-                      freeWill.get_scaled_orientation( 10.0 ) + 
-                      avoidSph.get_scaled_orientation( fearSphr.radius / fearDist * 15 );
+        // Do not run routine if there are not spheres
+        if( spheres.size() == 0 ){
+            // 4. Blend intincts
+            total = flocking.get_scaled_orientation( 0.45f * Nnear ) + 
+                    homeSeek.get_scaled_orientation( dist/scale*5.0f ) + 
+                    freeWill.get_scaled_orientation( 10.0 );
+        }else{
+            // 4. Update sphere avoidance instinct
+            Basis fearDrive = consider_spheres( spheres );
+            avoidSph.blend_orientations_with_factor( fearDrive, ur );
+            float fearDist = Vector3Distance( fearSphr.center, headingB.Pt );
+            // 4. Blend intincts
+            total = flocking.get_scaled_orientation( 0.45f * Nnear ) + 
+                    homeSeek.get_scaled_orientation( dist/scale*5.0f ) + 
+                    freeWill.get_scaled_orientation( 10.0 ) + 
+                    avoidSph.get_scaled_orientation( fearSphr.radius / fearDist * 15 );
+        }
+        
         // 5. Limit turn and set heading
         double updateTurn = Vector3Angle( total.Zb, headingB.Zb );
         double turnMax    = PI/32;
@@ -323,13 +333,27 @@ class BoidRibbon : public TriModel{ public:
 
     void load_geo(){
         // Get the model ready for drawing
+        init_mesh_colors( mesh, Ntris );
         build_mesh_unshared();
         build_normals_flat_unshared();
-        // FIXME, START HERE: `build_colors_unshared` IN THE TOYBOX!
+        build_colors_unshared();
         load_mesh();
     }
 
+    void reload_geo(){
+        // Get the model ready for drawing, Assuming the memory has already been allocated
+        UnloadModel( model );
+        // UnloadMesh( mesh );
+        build_mesh_unshared();
+        build_normals_flat_unshared();
+        build_colors_unshared();
+        set_mesh_counts( mesh, tris.size(), tris.size()*3 );
+        model = LoadModelFromMesh( mesh );
+        model.transform = T;
+    }
+
 };
+typedef shared_ptr<BoidRibbon> rbbnPtr;
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
@@ -345,6 +369,19 @@ int main(){
     float halfBoxLen = 100.0/10.0;
 
     /// Init Objects ///
+    vector<rbbnPtr> flock;
+    for( uint i = 0; i < 100; i++ ){
+        rbbnPtr nuBirb = rbbnPtr( new BoidRibbon{ 200, 1.0f, 0.25f } );
+        nuBirb->headingB.Pt = Vector3{ 
+            randf( -halfBoxLen, halfBoxLen ), 
+            randf( -halfBoxLen, halfBoxLen ), 
+            randf( -halfBoxLen, halfBoxLen ) 
+        };
+        nuBirb->load_geo();
+        flock.push_back( nuBirb );
+    }
+    vector<Basis>  flockPoses;
+    vector<Sphere> sphereList;
     
 
     // Camera
@@ -378,7 +415,9 @@ int main(){
     // Using just 1 point lights
     CreateLight(LIGHT_POINT, (Vector3){ 100/10.0, 100/10.0, 100/10.0 }, Vector3Zero(), WHITE, shader);
 
-    
+    // for( rbbnPtr ribbon : flock ){
+        
+    // }
 
     ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
 
@@ -394,7 +433,16 @@ int main(){
 
         // UpdateLightValues( shader, lights[0] );
 
-        
+        flockPoses.clear();
+        for( rbbnPtr birb : flock ){  flockPoses.push_back( birb->get_Basis() );  }
+        for( rbbnPtr birb : flock ){  
+            birb->update_instincts_and_heading( flockPoses, sphereList );
+            birb->update_position( 0.50/10.0 );
+            birb->reload_geo();
+            birb->model.materials[0].shader = shader;
+            birb->draw();  
+        }
+
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
         

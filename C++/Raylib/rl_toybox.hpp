@@ -245,13 +245,18 @@ ostream& operator<<( ostream& os , const Vector3& vec ) {
 
 ///// Unshared Vertex Helpers ////////////////////
 
+void set_mesh_counts( Mesh& mesh, ulong Ntri, ulong Nvrt ){
+    // Tell the mesh how many elements there are
+    mesh.triangleCount = Ntri;
+    mesh.vertexCount   = Nvrt;
+}
+
 void init_mesh( Mesh& mesh, ulong Ntri ){
     // Allocate memory in the mesh for triangles with unshared points
     ulong Nvrt = Ntri * 3;
     mesh = Mesh{};
     // Init geo memory
-    mesh.triangleCount = Ntri;
-    mesh.vertexCount   = Nvrt;
+    set_mesh_counts( mesh, Ntri, Nvrt );
     // cout << "Allocating " << Nvrt*3*sizeof(float) << " bytes for vertices ..." << endl;
     mesh.vertices /**/ = (float *)MemAlloc(Nvrt*3*sizeof(float)); // 3 vertices, 3 coordinates each (x, y, z)
     // cout << "Allocating " << Nvrt*sizeof(ushort) << " bytes for indices ..." << endl;
@@ -362,6 +367,16 @@ class TriModel{ public:
         }
     }
 
+    void build_colors_unshared(){
+        ulong  k = 0;
+        for( ulong i = 0; i < clrs.size(); i++ ){
+            mesh.colors[k] = clrs[i][0];  k++;
+            mesh.colors[k] = clrs[i][1];  k++;
+            mesh.colors[k] = clrs[i][2];  k++;
+            mesh.colors[k] = clrs[i][3];  k++;
+        }
+    }
+
     void build_normals_flat_unshared( bool initMemory = true ){
         // Create normals for flat shading (unshared vertices)
         ulong   k = 0;
@@ -384,7 +399,7 @@ class TriModel{ public:
         }
     }
 
-    // FIXME, START HERE: `build_colors_unshared`
+    
 
     ///// Shared Vertex Ops ////////////////////
 
@@ -491,10 +506,7 @@ class TriModel{ public:
 
     void load_mesh(){
 		// Send triangle mesh geometry to RayLib, needed for drawing
-        // cout << "\t\t\t`UploadMesh()` ..." << endl;
 		UploadMesh( &mesh, true );
-		// UploadMesh( &mesh, false );
-        // cout << "\t\t\t`LoadModelFromMesh()` ..." << endl;
     	model = LoadModelFromMesh( mesh );
         model.transform = T;
 	}
