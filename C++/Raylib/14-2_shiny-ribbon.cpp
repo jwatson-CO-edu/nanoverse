@@ -355,6 +355,7 @@ class BoidRibbon : public TriModel{ public:
         // Get the model ready for drawing, Assuming the memory has already been allocated
         // UnloadModel( model );
         // UnloadMesh( mesh );
+        coords_to_color_geo();
         set_mesh_counts( mesh, tris.size(), tris.size()*3 );
         build_mesh_unshared();
         build_normals_flat_unshared( false );
