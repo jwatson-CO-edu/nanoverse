@@ -283,57 +283,59 @@ class BoidRibbon : public TriModel{ public:
     void coords_to_color_geo(){
         // Build triangles from the coords list
 
-        // 0. Init
-        uint    Nsize = coords.size()-1;        
-        // float   R     = sldClr.r/255.0f;
-        // float   G     = sldClr.g/255.0f;
-        // float   B     = sldClr.b/255.0f;
-        float   Aspan = headAlpha - tailAlpha;
-        Vector3 c1, c2, c3, c4;
-        ubyte   A_i, A_ip1;
-        Color   C_i, C_ip1;
-        
-        // 1. For each coordinate pair, build 2 pairs of opposing triangles, alternating direction of quad break
-        for( uint i = 0; i < Nsize; i++){
-            // 2. Fetch coords from the `deque`
-            c1    = coords[i  ][0];
-            c2    = coords[i  ][1];
-            c3    = coords[i+1][0];
-            c4    = coords[i+1][1];
-            // 3. Calculate the opacity at this segment along the ribbon
-            A_i   = (ubyte) 255 * (tailAlpha + Aspan*(Nsize-(i  ))/(1.0f*Nsize));
-            A_ip1 = (ubyte) 255 * (tailAlpha + Aspan*(Nsize-(i+1))/(1.0f*Nsize));
-            C_i   = Color{ sldClr.r, sldClr.g, sldClr.b, A_i   };
-            C_ip1 = Color{ sldClr.r, sldClr.g, sldClr.b, A_ip1 };
-           
+        if( coords.size() > 1 ){
+            // 0. Init
+            uint    Nsize = coords.size()-1;        
+            // float   R     = sldClr.r/255.0f;
+            // float   G     = sldClr.g/255.0f;
+            // float   B     = sldClr.b/255.0f;
+            float   Aspan = headAlpha - tailAlpha;
+            Vector3 c1, c2, c3, c4;
+            ubyte   A_i, A_ip1;
+            Color   C_i, C_ip1;
+            
+            // 1. For each coordinate pair, build 2 pairs of opposing triangles, alternating direction of quad break
+            for( uint i = 0; i < Nsize; i++){
+                // 2. Fetch coords from the `deque`
+                c1    = coords[i  ][0];
+                c2    = coords[i  ][1];
+                c3    = coords[i+1][0];
+                c4    = coords[i+1][1];
+                // 3. Calculate the opacity at this segment along the ribbon
+                A_i   = (ubyte) 255 * (tailAlpha + Aspan*(Nsize-(i  ))/(1.0f*Nsize));
+                A_ip1 = (ubyte) 255 * (tailAlpha + Aspan*(Nsize-(i+1))/(1.0f*Nsize));
+                C_i   = Color{ sldClr.r, sldClr.g, sldClr.b, A_i   };
+                C_ip1 = Color{ sldClr.r, sldClr.g, sldClr.b, A_ip1 };
+            
 
-            // 4. Choose the quad break and load the triangles
-            if( i%2==0 ){
-                /// Triangle 1, Side 1: c2, c1, c3 ///
-                load_tri( c2, c1, c3 );
-                load_facet_colors( C_i, C_i, C_ip1 );
-                /// Triangle 1, Side 2: c3, c1, c2 ///
-                load_tri( c3, c1, c2 );
-                load_facet_colors( C_ip1, C_i, C_i );
-                /// Triangle 2, Side 1: c3, c4, c2 ///
-                load_tri( c3, c4, c2 );
-                load_facet_colors( C_ip1, C_ip1, C_i );
-                /// Triangle 2, Side 2: c2, c4, c3 ///
-                load_tri( c2, c4, c3 );
-                load_facet_colors( C_i, C_ip1, C_ip1 );
-            }else{
-                /// Triangle 1, Side 1: c1, c3, c4 ///
-                load_tri( c1, c3, c4 );
-                load_facet_colors( C_i, C_ip1, C_ip1 );
-                /// Triangle 1, Side 2: c4, c3, c1 ///
-                load_tri( c4, c3, c1 );
-                load_facet_colors( C_ip1, C_ip1, C_i );
-                /// Triangle 2, Side 1: c4, c2, c1 ///
-                load_tri( c4, c2, c1 );
-                load_facet_colors( C_ip1, C_i, C_i );
-                /// Triangle 2, Side 1: c1, c2, c4 ///
-                load_tri( c1, c2, c4 );
-                load_facet_colors( C_i, C_i, C_ip1 );
+                // 4. Choose the quad break and load the triangles
+                if( i%2==0 ){
+                    /// Triangle 1, Side 1: c2, c1, c3 ///
+                    load_tri( c2, c1, c3 );
+                    load_facet_colors( C_i, C_i, C_ip1 );
+                    /// Triangle 1, Side 2: c3, c1, c2 ///
+                    load_tri( c3, c1, c2 );
+                    load_facet_colors( C_ip1, C_i, C_i );
+                    /// Triangle 2, Side 1: c3, c4, c2 ///
+                    load_tri( c3, c4, c2 );
+                    load_facet_colors( C_ip1, C_ip1, C_i );
+                    /// Triangle 2, Side 2: c2, c4, c3 ///
+                    load_tri( c2, c4, c3 );
+                    load_facet_colors( C_i, C_ip1, C_ip1 );
+                }else{
+                    /// Triangle 1, Side 1: c1, c3, c4 ///
+                    load_tri( c1, c3, c4 );
+                    load_facet_colors( C_i, C_ip1, C_ip1 );
+                    /// Triangle 1, Side 2: c4, c3, c1 ///
+                    load_tri( c4, c3, c1 );
+                    load_facet_colors( C_ip1, C_ip1, C_i );
+                    /// Triangle 2, Side 1: c4, c2, c1 ///
+                    load_tri( c4, c2, c1 );
+                    load_facet_colors( C_ip1, C_i, C_i );
+                    /// Triangle 2, Side 1: c1, c2, c4 ///
+                    load_tri( c1, c2, c4 );
+                    load_facet_colors( C_i, C_i, C_ip1 );
+                }
             }
         }
     }
