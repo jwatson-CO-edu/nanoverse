@@ -333,6 +333,7 @@ class BoidRibbon : public TriModel{ public:
 
     void load_geo(){
         // Get the model ready for drawing
+        init_mesh_normals( mesh, Ntris );
         init_mesh_colors( mesh, Ntris );
         build_mesh_unshared();
         build_normals_flat_unshared();
@@ -342,12 +343,13 @@ class BoidRibbon : public TriModel{ public:
 
     void reload_geo(){
         // Get the model ready for drawing, Assuming the memory has already been allocated
-        UnloadModel( model );
+        // UnloadModel( model );
         // UnloadMesh( mesh );
-        build_mesh_unshared();
-        build_normals_flat_unshared();
-        build_colors_unshared();
         set_mesh_counts( mesh, tris.size(), tris.size()*3 );
+        build_mesh_unshared();
+        build_normals_flat_unshared( false );
+        build_colors_unshared();
+        // UploadMesh( &mesh, true );
         model = LoadModelFromMesh( mesh );
         model.transform = T;
     }
@@ -433,6 +435,8 @@ int main(){
 
         // UpdateLightValues( shader, lights[0] );
 
+        ///// DRAW LOOP ///////////////////////////////////////////////////
+
         flockPoses.clear();
         for( rbbnPtr birb : flock ){  flockPoses.push_back( birb->get_Basis() );  }
         for( rbbnPtr birb : flock ){  
@@ -444,7 +448,7 @@ int main(){
         }
 
 
-        ///// DRAW LOOP ///////////////////////////////////////////////////
+        
         
         
 

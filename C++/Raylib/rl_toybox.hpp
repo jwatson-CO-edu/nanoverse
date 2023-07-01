@@ -283,7 +283,7 @@ void init_mesh( Mesh& mesh, ulong Npts, ulong Ntri ){
     mesh = Mesh{};
     // Init geo memory
     mesh.triangleCount = Ntri;
-    mesh.vertexCount   = Nvrt;
+    mesh.vertexCount   = Npts;
     // cout << "Allocating " << Npts*3*sizeof(float) << " bytes for vertices ..." << endl;
     mesh.vertices /**/ = (float *)MemAlloc(Npts*3*sizeof(float)); // 3 vertices, 3 coordinates each (x, y, z)
     // cout << "Allocating " << Nvrt*sizeof(ushort) << " bytes for indices ..." << endl;
@@ -382,7 +382,7 @@ class TriModel{ public:
         ulong   k = 0;
         Vector3 v1, v2, v3, e1, e2, nrm;
         // Allocate memory for normals
-        if( initMemory )  init_mesh_normals( mesh, Ntris );
+        // if( initMemory )  init_mesh_normals( mesh, Ntris );
         // Compute a vector perpendiculat to each triangle and store its components
         for( ulong i = 0; i < tris.size(); i++ ){
             v1  = tris[i][0];
