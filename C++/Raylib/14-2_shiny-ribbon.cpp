@@ -283,59 +283,83 @@ class BoidRibbon : public TriModel{ public:
     void coords_to_color_geo(){
         // Build triangles from the coords list
 
-        if( coords.size() > 1 ){
-            // 0. Init
-            uint    Nsize = coords.size()-1;        
-            // float   R     = sldClr.r/255.0f;
-            // float   G     = sldClr.g/255.0f;
-            // float   B     = sldClr.b/255.0f;
-            float   Aspan = headAlpha - tailAlpha;
-            Vector3 c1, c2, c3, c4;
-            ubyte   A_i, A_ip1;
-            Color   C_i, C_ip1;
-            
-            // 1. For each coordinate pair, build 2 pairs of opposing triangles, alternating direction of quad break
-            for( uint i = 0; i < Nsize; i++){
-                // 2. Fetch coords from the `deque`
-                c1    = coords[i  ][0];
-                c2    = coords[i  ][1];
-                c3    = coords[i+1][0];
-                c4    = coords[i+1][1];
-                // 3. Calculate the opacity at this segment along the ribbon
-                A_i   = (ubyte) 255 * (tailAlpha + Aspan*(Nsize-(i  ))/(1.0f*Nsize));
-                A_ip1 = (ubyte) 255 * (tailAlpha + Aspan*(Nsize-(i+1))/(1.0f*Nsize));
-                C_i   = Color{ sldClr.r, sldClr.g, sldClr.b, A_i   };
-                C_ip1 = Color{ sldClr.r, sldClr.g, sldClr.b, A_ip1 };
-            
+        // -1. Dump old data
+        tris.clear();
+        clrs.clear();
+        // 0. Init
+        uint Nsize = coords.size()-1;        
+        cout << "\tThere are " << Nsize << " coordinate pairs!" << endl;
+        // float   R     = sldClr.r/255.0f;
+        // float   G     = sldClr.g/255.0f;
+        // float   B     = sldClr.b/255.0f;
+        float   Aspan = headAlpha - tailAlpha;
+        Vector3 c1, c2, c3, c4;
+        ubyte   A_i, A_ip1;
+        Color   C_i, C_ip1;
+        
+        // 1. For each coordinate pair, build 2 pairs of opposing triangles, alternating direction of quad break
+        for( uint i = 0; i < Nsize; i++){
 
-                // 4. Choose the quad break and load the triangles
-                if( i%2==0 ){
-                    /// Triangle 1, Side 1: c2, c1, c3 ///
-                    load_tri( c2, c1, c3 );
-                    load_facet_colors( C_i, C_i, C_ip1 );
-                    /// Triangle 1, Side 2: c3, c1, c2 ///
-                    load_tri( c3, c1, c2 );
-                    load_facet_colors( C_ip1, C_i, C_i );
-                    /// Triangle 2, Side 1: c3, c4, c2 ///
-                    load_tri( c3, c4, c2 );
-                    load_facet_colors( C_ip1, C_ip1, C_i );
-                    /// Triangle 2, Side 2: c2, c4, c3 ///
-                    load_tri( c2, c4, c3 );
-                    load_facet_colors( C_i, C_ip1, C_ip1 );
-                }else{
-                    /// Triangle 1, Side 1: c1, c3, c4 ///
-                    load_tri( c1, c3, c4 );
-                    load_facet_colors( C_i, C_ip1, C_ip1 );
-                    /// Triangle 1, Side 2: c4, c3, c1 ///
-                    load_tri( c4, c3, c1 );
-                    load_facet_colors( C_ip1, C_ip1, C_i );
-                    /// Triangle 2, Side 1: c4, c2, c1 ///
-                    load_tri( c4, c2, c1 );
-                    load_facet_colors( C_ip1, C_i, C_i );
-                    /// Triangle 2, Side 1: c1, c2, c4 ///
-                    load_tri( c1, c2, c4 );
-                    load_facet_colors( C_i, C_i, C_ip1 );
-                }
+            cout << "\tIteration " << i << endl;
+
+            // 2. Fetch coords from the `deque`
+            cout << "\ti   = " << i << endl;
+            c1    = coords[i  ][0];
+            c2    = coords[i  ][1];
+            cout << "\ti+1 = " << (i+1) << endl;
+            c3    = coords[i+1][0];
+            c4    = coords[i+1][1];
+            cout << "\tAfter count!" << endl;
+            // 3. Calculate the opacity at this segment along the ribbon
+            A_i   = (ubyte) 255 * (tailAlpha + Aspan*(Nsize-(i  ))/(1.0f*Nsize));
+            A_ip1 = (ubyte) 255 * (tailAlpha + Aspan*(Nsize-(i+1))/(1.0f*Nsize));
+            C_i   = Color{ sldClr.r, sldClr.g, sldClr.b, A_i   };
+            C_ip1 = Color{ sldClr.r, sldClr.g, sldClr.b, A_ip1 };
+        
+
+            // 4. Choose the quad break and load the triangles
+            if( i%2==0 ){
+                /// Triangle 1, Side 1: c2, c1, c3 ///
+                cout << "\t1, " << flush;
+                load_tri( c2, c1, c3 );
+                cout << "\t2, " << flush;
+                load_facet_colors( C_i, C_i, C_ip1 );
+                /// Triangle 1, Side 2: c3, c1, c2 ///
+                cout << "\t3, " << flush;
+                load_tri( c3, c1, c2 );
+                cout << "\t4, " << flush;
+                load_facet_colors( C_ip1, C_i, C_i );
+                /// Triangle 2, Side 1: c3, c4, c2 ///
+                cout << "\t5, " << flush;
+                load_tri( c3, c4, c2 );
+                cout << "\t6, " << flush;
+                load_facet_colors( C_ip1, C_ip1, C_i );
+                /// Triangle 2, Side 2: c2, c4, c3 ///
+                cout << "\t7, " << flush;
+                load_tri( c2, c4, c3 );
+                cout << "\t8, " << flush;
+                load_facet_colors( C_i, C_ip1, C_ip1 );
+            }else{
+                /// Triangle 1, Side 1: c1, c3, c4 ///
+                cout << "\t9, " << flush;
+                load_tri( c1, c3, c4 );
+                cout << "\t10, " << flush;
+                load_facet_colors( C_i, C_ip1, C_ip1 );
+                /// Triangle 1, Side 2: c4, c3, c1 ///
+                cout << "\t11, " << flush;
+                load_tri( c4, c3, c1 );
+                cout << "\t12, " << flush;
+                load_facet_colors( C_ip1, C_ip1, C_i );
+                /// Triangle 2, Side 1: c4, c2, c1 ///
+                cout << "\t13, " << flush;
+                load_tri( c4, c2, c1 );
+                cout << "\t14, " << flush;
+                load_facet_colors( C_ip1, C_i, C_i );
+                /// Triangle 2, Side 1: c1, c2, c4 ///
+                cout << "\t15, " << flush;
+                load_tri( c1, c2, c4 );
+                cout << "\t16, " << flush;
+                load_facet_colors( C_i, C_i, C_ip1 );
             }
         }
     }
@@ -357,14 +381,23 @@ class BoidRibbon : public TriModel{ public:
         // Get the model ready for drawing, Assuming the memory has already been allocated
         // UnloadModel( model );
         // UnloadMesh( mesh );
-        coords_to_color_geo();
-        set_mesh_counts( mesh, tris.size(), tris.size()*3 );
-        build_mesh_unshared();
-        build_normals_flat_unshared( false );
-        build_colors_unshared();
-        // UploadMesh( &mesh, true );
-        model = LoadModelFromMesh( mesh );
-        model.transform = T;
+        if( coords.size() > 1 ){
+            cout << "About to build tris ..." << endl;
+            coords_to_color_geo();
+            cout << "About to set counts ..." << endl;
+            set_mesh_counts( mesh, tris.size(), tris.size()*3 );
+            cout << "About to build mesh ..." << endl;
+            build_mesh_unshared();
+            cout << "About to build normals ..." << endl;
+            build_normals_flat_unshared( false );
+            cout << "About to build colors ..." << endl;
+            build_colors_unshared();
+            // UploadMesh( &mesh, true );
+            cout << "About to reload model ..." << endl;
+            model = LoadModelFromMesh( mesh );
+            cout << "Model has: " << model.meshes->triangleCount << " triangles!" << endl;
+            model.transform = T;
+        }
     }
 
 };
@@ -385,7 +418,7 @@ int main(){
 
     /// Init Objects ///
     vector<rbbnPtr> flock;
-    for( uint i = 0; i < 100; i++ ){
+    for( uint i = 0; i < 2; i++ ){
         rbbnPtr nuBirb = rbbnPtr( new BoidRibbon{ 200, 1.0f, 0.25f } );
         nuBirb->headingB.Pt = Vector3{ 
             randf( -halfBoxLen, halfBoxLen ), 

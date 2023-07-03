@@ -7,7 +7,7 @@
 
 /// Standard ///
 #include <iostream>
-using std::cout, std::endl, std::ostream;
+using std::cout, std::endl, std::ostream, std::flush;
 #include <vector>     
 using std::vector; 
 #include <array>
