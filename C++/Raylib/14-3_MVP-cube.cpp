@@ -29,6 +29,7 @@ struct DynaCube{
     /// Constructor ///
     DynaCube( float sideLen ){
         // Create triangles that make up the cube
-        float halfLen = sideLen/2.0;
+        array<Vector3,3> pushArr;
+        float /*------*/ halfLen = sideLen/2.0;
     }
 };
