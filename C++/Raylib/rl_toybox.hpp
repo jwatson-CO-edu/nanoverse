@@ -299,9 +299,9 @@ class TriModel{ public:
 
     // Triangles //
     vector<array<Vector3,3>> tris; //- Triangle data
-    // vector<array<Color,3>>   tClr; //- Triangle color data
     vvec3 /*--------------*/ pnts; //- Point data
     vector<array<ushort,3>>  ndcs; //- Index data
+    vvec3 /*--------------*/ nrms; //- Normal data
     vector<array<ubyte,4>>   clrs; //- Color data
 
 
@@ -353,6 +353,15 @@ class TriModel{ public:
         clrs.push_back( pushArr );
     }
 
+    void load_facet_normals( const Vector3& v1, const Vector3& v2, const Vector3& v3 ){
+        // Load one triangle, Right hand rule
+        Vector3 e1, e2, nrm;
+        e1  = Vector3Subtract( v1, v2 );
+        e2  = Vector3Subtract( v3, v2 );
+        nrm = Vector3Normalize( Vector3CrossProduct( e1, e2 ) );
+        for( ubyte i = 0; i < 3; ++i ){  nrms.push_back( nrm );  }
+    }
+
     void build_mesh_unshared(){
         // Load the triangle data into the mesh
         ulong  k = 0;
@@ -377,25 +386,14 @@ class TriModel{ public:
         }
     }
 
-    void build_normals_flat_unshared( bool initMemory = true ){
+    void build_normals_flat_unshared(){
         // Create normals for flat shading (unshared vertices)
         ulong   k = 0;
-        Vector3 v1, v2, v3, e1, e2, nrm;
-        // Allocate memory for normals
-        // if( initMemory )  init_mesh_normals( mesh, Ntris );
         // Compute a vector perpendiculat to each triangle and store its components
-        for( ulong i = 0; i < tris.size(); i++ ){
-            v1  = tris[i][0];
-            v2  = tris[i][1];
-            v3  = tris[i][2];
-            e1  = Vector3Subtract( v1, v2 );
-            e2  = Vector3Subtract( v3, v2 );
-            nrm = Vector3CrossProduct( e1, e2 );
-            for( ubyte j = 0; j < 3; j++ ){
-                mesh.normals[k] = nrm.x;  k++;
-                mesh.normals[k] = nrm.y;  k++;
-                mesh.normals[k] = nrm.z;  k++;
-            }
+        for( ulong i = 0; i < nrms.size(); ++i ){
+            mesh.normals[k] = nrms[i].x;  k++;
+            mesh.normals[k] = nrms[i].y;  k++;
+            mesh.normals[k] = nrms[i].z;  k++;
         }
     }
 

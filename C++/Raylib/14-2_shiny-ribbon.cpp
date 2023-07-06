@@ -319,46 +319,54 @@ class BoidRibbon : public TriModel{ public:
 
             // 4. Choose the quad break and load the triangles
             if( i%2==0 ){
+                
                 /// Triangle 1, Side 1: c2, c1, c3 ///
-                cout << "\t1, " << flush;
+                cout << "\t1-1, " << flush;
                 load_tri( c2, c1, c3 );
-                cout << "\t2, " << flush;
+                load_facet_normals( c2, c1, c3 );
                 load_facet_colors( C_i, C_i, C_ip1 );
+                
                 /// Triangle 1, Side 2: c3, c1, c2 ///
-                cout << "\t3, " << flush;
+                cout << "\t1-2, " << flush;
                 load_tri( c3, c1, c2 );
-                cout << "\t4, " << flush;
+                load_facet_normals( c3, c1, c2 );
                 load_facet_colors( C_ip1, C_i, C_i );
+                
                 /// Triangle 2, Side 1: c3, c4, c2 ///
-                cout << "\t5, " << flush;
+                cout << "\t2-1, " << flush;
                 load_tri( c3, c4, c2 );
-                cout << "\t6, " << flush;
+                load_facet_normals( c3, c4, c2 );
                 load_facet_colors( C_ip1, C_ip1, C_i );
+                
                 /// Triangle 2, Side 2: c2, c4, c3 ///
-                cout << "\t7, " << flush;
+                cout << "\t2-2, " << flush;
                 load_tri( c2, c4, c3 );
-                cout << "\t8, " << flush;
+                load_facet_normals( c2, c4, c3 );
                 load_facet_colors( C_i, C_ip1, C_ip1 );
             }else{
+                
                 /// Triangle 1, Side 1: c1, c3, c4 ///
-                cout << "\t9, " << flush;
+                cout << "\t1-1, " << flush;
                 load_tri( c1, c3, c4 );
-                cout << "\t10, " << flush;
+                load_facet_normals( c1, c3, c4 );
                 load_facet_colors( C_i, C_ip1, C_ip1 );
+
                 /// Triangle 1, Side 2: c4, c3, c1 ///
-                cout << "\t11, " << flush;
+                cout << "\t1-2, " << flush;
                 load_tri( c4, c3, c1 );
-                cout << "\t12, " << flush;
+                load_facet_normals( c4, c3, c1 );
                 load_facet_colors( C_ip1, C_ip1, C_i );
+
                 /// Triangle 2, Side 1: c4, c2, c1 ///
-                cout << "\t13, " << flush;
+                cout << "\t2-1, " << flush;
                 load_tri( c4, c2, c1 );
-                cout << "\t14, " << flush;
+                load_facet_normals( c4, c2, c1 );
                 load_facet_colors( C_ip1, C_i, C_i );
+
                 /// Triangle 2, Side 1: c1, c2, c4 ///
-                cout << "\t15, " << flush;
+                cout << "\t2-2, " << flush;
                 load_tri( c1, c2, c4 );
-                cout << "\t16, " << flush;
+                load_facet_normals( c1, c2, c4 );
                 load_facet_colors( C_i, C_i, C_ip1 );
             }
         }
@@ -389,7 +397,7 @@ class BoidRibbon : public TriModel{ public:
             cout << "About to build mesh ..." << endl;
             build_mesh_unshared();
             cout << "About to build normals ..." << endl;
-            build_normals_flat_unshared( false );
+            build_normals_flat_unshared();
             cout << "About to build colors ..." << endl;
             build_colors_unshared();
             // UploadMesh( &mesh, true );
