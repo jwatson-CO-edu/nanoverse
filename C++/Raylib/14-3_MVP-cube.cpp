@@ -47,7 +47,7 @@ struct DynaCube{
 	Model /*-------------*/ model; // ----- Raylib drawable model
     size_t /*------------*/ Nfrms; // ----- Frame divisor for state change
     size_t /*------------*/ iFrms; // ----- Age of cube in frames
-    uint /*--------------*/ Nact = 0; // Active   counter
+    uint /*--------------*/ Nact = 0; // -- Active triangle counter
 
     /// Constructor ///
     DynaCube( float sideLen ){
@@ -210,7 +210,6 @@ struct DynaCube{
         if( Nact ){
             DrawModel( model, Vector3Zero(), 1.0, WHITE );
         }
-        
     }
 };
 
