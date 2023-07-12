@@ -13,10 +13,13 @@ using std::array;
 using std::vector;
 #include <stdlib.h>  // srand, rand
 #include <time.h>
+#include <iostream>
+using std::cout, std::endl;
 
 /// Raylib ///
 #include "raylib.h"
 #include "raymath.h"
+#include <rlgl.h>
 
 
 ////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
@@ -44,6 +47,7 @@ struct DynaCube{
 	Model /*-------------*/ model; // ----- Raylib drawable model
     size_t /*------------*/ Nfrms; // ----- Frame divisor for state change
     size_t /*------------*/ iFrms; // ----- Age of cube in frames
+    uint /*--------------*/ Nact = 0; // Active   counter
 
     /// Constructor ///
     DynaCube( float sideLen ){
@@ -167,12 +171,13 @@ struct DynaCube{
     void update_and_write_triangles(){
         // Choose the active triangles and write their geometry to memory
         ++iFrms;
+        
         if( iFrms%Nfrms == 0 ){
             uint  i    = 0; // Triangle counter
-            uint  Nact = 0; // Active   counter
-            ulong k    = 0; // Vertex   counter
-            ulong l    = 0; // Index    counter
-            ulong m    = 0;
+            ulong k    = 0; // Vertex _ counter
+            ulong l    = 0; // Index __ counter
+            ulong m    = 0; // Color __ counter
+            Nact = 0;
             for( bool& p_active : activeTri ){
                 p_active = (randf() < 0.50);
                 if( p_active ){
@@ -185,10 +190,10 @@ struct DynaCube{
                         mesh.normals[k]  = normals[i][j].z;
                         mesh.vertices[k] = triangles[i][j].z;    k++;
                         mesh.indices[l]  = l; /*--------------*/ l++; 
-                        mesh.colors[k]   = facetColors[i][j].r;  m++;
-                        mesh.colors[k]   = facetColors[i][j].g;  m++;
-                        mesh.colors[k]   = facetColors[i][j].b;  m++;
-                        mesh.colors[k]   = facetColors[i][j].a;  m++;
+                        mesh.colors[m]   = facetColors[i][j].r;  m++;
+                        mesh.colors[m]   = facetColors[i][j].g;  m++;
+                        mesh.colors[m]   = facetColors[i][j].b;  m++;
+                        mesh.colors[m]   = facetColors[i][j].a;  m++;
                     }
                 }
                 ++i;
@@ -198,12 +203,75 @@ struct DynaCube{
             model = LoadModelFromMesh( mesh );
             model.transform = MatrixIdentity();
         }
+        cout << iFrms << ", " << Nact << endl;
     }
 
     void draw(){
-        DrawModel( model, Vector3Zero(), 1.0, WHITE );
+        if( Nact ){
+            DrawModel( model, Vector3Zero(), 1.0, WHITE );
+        }
+        
     }
 };
 
 
-// FIXME, START HERE: ATTEMPT TO DRAW THE CUBE
+////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
+
+int main(){
+    rand_seed();
+
+    /// Window Init ///
+    InitWindow( 900, 900, "Dynamic Box!" );
+    SetTargetFPS( 60 );
+    // rlEnableSmoothLines();
+    rlDisableBackfaceCulling();
+
+    float halfBoxLen = 100.0/10.0;
+
+    /// Init Objects ///
+    DynaCube dc{ 5.0 };
+
+    // Camera
+    Camera camera = Camera{
+        Vector3{ 200.0/10.0, 200.0/10.0, 200.0/10.0 }, // Position
+        Vector3{   0.0,   0.0,   0.0 }, // Target
+        Vector3{   0.0,   0.0,   1.0 }, // Up
+        45.0, // ---------------------- FOV_y
+        0 // -------------------------- Projection mode
+    };
+
+    ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
+
+    while( !WindowShouldClose() ){
+
+        /// Begin Drawing ///
+        BeginDrawing();
+        BeginMode3D( camera );
+        ClearBackground( BLACK );
+
+        // Activate our custom shader to be applied on next shapes/textures drawings
+        // BeginShaderMode( shader );
+
+        // UpdateLightValues( shader, lights[0] );
+
+        
+
+        ///// DRAW LOOP ///////////////////////////////////////////////////
+        dc.update_and_write_triangles();
+        dc.draw();
+        
+
+        // Activate our default shader for next drawings
+        // EndShaderMode();
+
+        /// End Drawing ///
+        EndMode3D();
+
+        DrawFPS( 30, 30 );
+
+        EndDrawing();
+    }
+
+    ////////// CLEANUP /////////////////////////////////////////////////////////////////////////////
+    return 0;
+}
