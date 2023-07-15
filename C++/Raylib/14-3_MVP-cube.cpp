@@ -200,6 +200,8 @@ struct DynaCube{
             }
             mesh.triangleCount = Nact;
             mesh.vertexCount   = Nact*3;
+            UploadMesh( &mesh, false );
+            UpdateMeshBuffer()
             model = LoadModelFromMesh( mesh );
             model.transform = MatrixIdentity();
         }
@@ -208,6 +210,7 @@ struct DynaCube{
 
     void draw(){
         if( Nact ){
+            // DrawMesh( mesh, ,MatrixIdentity() )
             DrawModel( model, Vector3Zero(), 1.0, WHITE );
         }
     }
