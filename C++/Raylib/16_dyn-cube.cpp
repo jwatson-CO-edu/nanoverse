@@ -1,4 +1,4 @@
-// g++ 15_MVP-cube.cpp -std=c++17 -lraylib
+// g++ 16_dyn-cube.cpp -std=c++17 -lraylib
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
@@ -48,6 +48,7 @@ struct DynaCube{
     size_t /*------------*/ Nfrms; // ----- Frame divisor for state change
     size_t /*------------*/ iFrms; // ----- Age of cube in frames
     uint /*--------------*/ Nact = 0; // -- Active triangle counter
+    bool loaded = false;
 
     /// Constructor ///
     DynaCube( float sideLen ){
@@ -165,12 +166,21 @@ struct DynaCube{
         mesh.indices  = (ushort*) MemAlloc(Npts   * sizeof( ushort ));
         mesh.normals  = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
         mesh.colors   = (u_char*) MemAlloc(Npts*4 * sizeof( u_char )); // 3 vertices, 4 coordinates each (r, g, b, a)
-        UploadMesh( &mesh, true );
+        // UploadMesh( &mesh, true );
     }
 
     void update_and_write_triangles(){
         // Choose the active triangles and write their geometry to memory
         ++iFrms;
+
+        if( loaded ){
+            UnloadMesh( mesh );
+            uint Npts = 36;
+            mesh.vertices = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
+            mesh.indices  = (ushort*) MemAlloc(Npts   * sizeof( ushort ));
+            mesh.normals  = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
+            mesh.colors   = (u_char*) MemAlloc(Npts*4 * sizeof( u_char )); // 3 vertices, 4 coordinates each (r, g, b, a)
+        }  
         
         if( iFrms%Nfrms == 0 ){
             uint  i    = 0; // Triangle counter
@@ -200,10 +210,11 @@ struct DynaCube{
             }
             mesh.triangleCount = Nact;
             mesh.vertexCount   = Nact*3;
-            UnloadMesh( mesh );
+            
             UploadMesh( &mesh, false );
             // model = LoadModelFromMesh( mesh );
             // model.transform = MatrixIdentity();
+            loaded = true;
         }
         cout << iFrms << ", " << Nact << endl;
     }
@@ -211,7 +222,8 @@ struct DynaCube{
     void draw(){
         if( Nact ){
             // DrawMesh( mesh, ,MatrixIdentity() )
-            DrawModel( model, Vector3Zero(), 1.0, WHITE );
+            // DrawModel( model, Vector3Zero(), 1.0, WHITE );
+            DrawMesh( mesh, LoadMaterialDefault(), MatrixIdentity() ); 
         }
     }
 };

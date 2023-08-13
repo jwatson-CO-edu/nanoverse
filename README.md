@@ -7,8 +7,18 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 ## Architecture 1: C++ & RayLib  (Dangerous!)
 * Purpose: Let yourself have some graphics, as a treat!  
 
-* `[>]` Shiny Boid Ribbons - Generative art
-    - `[>]` Boid Ribbon class
+* `[>]` Raylib Lib Rebuild
+    - Problem:  All the Raylib code is broken!
+    - Solution: Restart from scratch!
+        * Avoid **changing** the number of triangles across frames
+        * **Hide** unused triangles
+            - $\alpha = 0$
+            - Zero-size
+    - `[Y]` Simplest Cube, 2023-08-13: Back to basics! `Model` was an unneeded middleman!
+    - `[>]` Simplest Cube Jiggle
+
+* `[P]` Shiny Boid Ribbons - Generative art
+    - `[P]` Boid Ribbon class
     - `[ ]` Spherical obstactle avoidance
     - `[ ]` Ribbons as dynamic, shaded meshes
         * `[ ]` Dynamic mesh
