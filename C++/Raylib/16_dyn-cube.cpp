@@ -1,25 +1,30 @@
 // g++ 16_dyn-cube.cpp -std=c++17 -lraylib
+// Cube with nervous vertices
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
 ///// Imports ////////////////////////////////////
 
 /// Standard ///
-#include <deque>
-using std::deque;
+#include <iostream>
+using std::cout, std::endl;
+#include <stdlib.h>  // srand, rand
+#include <time.h>
 #include <array>
 using std::array;
 #include <vector>
 using std::vector;
-#include <stdlib.h>  // srand, rand
-#include <time.h>
-#include <iostream>
-using std::cout, std::endl;
 
 /// Raylib ///
 #include "raylib.h"
 #include "raymath.h"
 #include <rlgl.h>
+
+
+///// Aliases ////////////////////////////////////
+typedef array<Vector3,3> triPnts; // Vector info for One Triangle (Vertices,nrms) 
+typedef array<Color,3>   triClrs; // Color  info for One Triangle
+typedef vector<Vector3>  vvec3; // - Vector of 3D vectors
 
 
 ////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
@@ -29,42 +34,111 @@ float randf(){
     return  1.0f * rand() / RAND_MAX;
 }
 
+float randf( float lo, float hi ){
+    // Return a pseudo-random number between `lo` and `hi`
+    // NOTE: This function assumes `hi > lo`
+    float span = hi - lo;
+    return lo + span * randf();
+}
+
 void rand_seed(){  srand( time(NULL) );  } // Seed RNG with unpredictable time-based seed
+
+Vector3 normal_of_tiangle( const triPnts& tri ){
+    // Get the normal of the triangle assuming CCW / Right-Hand ordering
+    return Vector3Normalize( Vector3CrossProduct(
+        Vector3Subtract( tri[0], tri[1] ),
+        Vector3Subtract( tri[2], tri[1] )
+    ));
+}
+
+Vector3 uniform_vector_noise( const Vector3& vec, float halfMag ){
+    // Return a perturbed `vec` moved up to `halfMag` in each direction in each dimension
+    return Vector3{
+        randf( vec.x - halfMag, vec.x + halfMag ),
+        randf( vec.y - halfMag, vec.y + halfMag ),
+        randf( vec.z - halfMag, vec.z + halfMag )
+    };
+}
 
 
 
 ////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
 
-struct DynaCube{
-    // A simple cube with optionally-drawn facets
+
+struct DynCube{
+    // A dynamic cube
 
     /// Members ///
-    deque<array<Vector3,3>> triangles; // - Dynamic geometry, each array is a facet of 3x vertices
-    deque<array<Vector3,3>> normals; // --- Normal vector for each facet
-    deque<array<Color,3>>   facetColors; // Vertex colors for each facet
-    deque<bool> /*-------*/ activeTri; // - Flags for whether to draw each triangle
-    Mesh /*--------------*/ mesh; // ------ Raylib mesh geometry
-	Model /*-------------*/ model; // ----- Raylib drawable model
-    size_t /*------------*/ Nfrms; // ----- Frame divisor for state change
-    size_t /*------------*/ iFrms; // ----- Age of cube in frames
-    uint /*--------------*/ Nact = 0; // -- Active triangle counter
-    bool loaded = false;
+    vector<triPnts> tris; // Dynamic geometry, each array is a facet of 3x vertices
+    vector<triPnts> nrms; // Normal vector for each facet
+    vector<triClrs> clrs; // Vertex colors for each facet
+    Mesh /*------*/ mesh; // Raylib mesh geometry
+    bool /*------*/ dynG; // Flag for whether geometry is dynamic
 
-    /// Constructor ///
-    DynaCube( float sideLen ){
-        // Create triangles that make up the cube
-        // -1. Init state
-        Nfrms = 40;
-        iFrms =  0;
+    /// Constructors ///
+
+    void push_triangle_w_norms( triPnts tri ){
+        // Add one triangle
+        Vector3 norm = normal_of_tiangle( tri );  
+        tris.push_back( tri );
+        nrms.push_back({ norm, norm, norm });
+    }
+
+    void init_mesh_memory( uint Ntri ){
+        // Create the `Mesh` struct and allocate memory there
+        uint Npts = Ntri*3;
+
+        // 1. Init mesh
+        mesh = Mesh{};
+        mesh.triangleCount = Ntri;
+        mesh.vertexCount   = Npts;
+
+        // 2. Init memory
+        mesh.vertices = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
+        mesh.indices  = (ushort*) MemAlloc(Npts   * sizeof( ushort ));
+        mesh.normals  = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
+        mesh.colors   = (u_char*) MemAlloc(Npts*4 * sizeof( u_char )); // 3 vertices, 4 coordinates each (r, g, b, a)
+    }
+
+    void load_mesh_buffers( bool loadGeo = true, bool loadColor = false ){
+        // Load geometry (and color) info into `mesh` buffers
+        ulong k    = 0; // Vertex _ counter
+        ulong l    = 0; // Index __ counter
+        ulong m    = 0; // Color __ counter
+        for( uint i = 0; i < mesh.triangleCount; ++i ){
+            for( u_char j = 0; j < 3; j++ ){
+                if( loadGeo ){
+                    mesh.normals[k]  = nrms[i][j].x;
+                    mesh.vertices[k] = tris[i][j].x;  k++;
+                    mesh.normals[k]  = nrms[i][j].y;
+                    mesh.vertices[k] = tris[i][j].y;  k++;
+                    mesh.normals[k]  = nrms[i][j].z;
+                    mesh.vertices[k] = tris[i][j].z;  k++;
+                    mesh.indices[l]  = l; /*-------*/ l++; 
+                }
+                if( loadColor ){
+                    mesh.colors[m] = clrs[i][j].r;  m++;
+                    mesh.colors[m] = clrs[i][j].g;  m++;
+                    mesh.colors[m] = clrs[i][j].b;  m++;
+                    mesh.colors[m] = clrs[i][j].a;  m++;
+                }
+            }
+        }
+    }
+
+    DynCube( float sideLen ){
+        // Create tris that make up the cube
+
         // 0. Init
-        array<Vector3,3> pushArr;
-        array<Color,3>   pushClr;
-        Vector3 /*----*/ norm;
-        vector<Vector3>  V;
-        float /*------*/ halfLen = sideLen/2.0;
-        Color /*------*/ R{ 255,   0,   0, 255 };
-        Color /*------*/ G{   0, 255,   0, 255 };
-        Color /*------*/ B{   0,   0, 255, 255 };
+        triPnts pushTri;
+        triClrs pushClr;
+        Vector3 norm;
+        vvec3   V;
+        float   halfLen = sideLen/2.0;
+        Color   R{ 255,   0,   0, 255 };
+        Color   G{   0, 255,   0, 255 };
+        Color   B{   0,   0, 255, 255 };
+
         // 1. Establish vertices
         V.push_back( Vector3{ -halfLen, -halfLen, -halfLen } );
         V.push_back( Vector3{ -halfLen, -halfLen,  halfLen } );
@@ -74,159 +148,72 @@ struct DynaCube{
         V.push_back( Vector3{  halfLen, -halfLen,  halfLen } );
         V.push_back( Vector3{  halfLen,  halfLen, -halfLen } );
         V.push_back( Vector3{  halfLen,  halfLen,  halfLen } );
-        // 2. Build triangles
-        pushArr = { V[0], V[3], V[2] };  triangles.push_back( pushArr );
-        norm    = Vector3Normalize( Vector3CrossProduct(
-            Vector3Subtract( V[2], V[3] ),
-            Vector3Subtract( V[0], V[3] )
-        ));  normals.push_back({ norm, norm, norm });
-        pushArr = { V[0], V[1], V[3] };  triangles.push_back( pushArr );
-        norm    = Vector3Normalize( Vector3CrossProduct(
-            Vector3Subtract( V[3], V[1] ),
-            Vector3Subtract( V[0], V[1] )
-        ));  normals.push_back({ norm, norm, norm });
-        pushArr = { V[6], V[4], V[0] };  triangles.push_back( pushArr );
-        norm    = Vector3Normalize( Vector3CrossProduct(
-            Vector3Subtract( V[0], V[4] ),
-            Vector3Subtract( V[6], V[4] )
-        ));  normals.push_back({ norm, norm, norm });
-        pushArr = { V[6], V[0], V[2] };  triangles.push_back( pushArr );
-        norm    = Vector3Normalize( Vector3CrossProduct(
-            Vector3Subtract( V[2], V[0] ),
-            Vector3Subtract( V[6], V[0] )
-        ));  normals.push_back({ norm, norm, norm });
-        pushArr = { V[0], V[4], V[5] };  triangles.push_back( pushArr );
-        norm    = Vector3Normalize( Vector3CrossProduct(
-            Vector3Subtract( V[5], V[4] ),
-            Vector3Subtract( V[0], V[4] )
-        ));  normals.push_back({ norm, norm, norm });
-        pushArr = { V[0], V[5], V[1] };  triangles.push_back( pushArr );
-        norm    = Vector3Normalize( Vector3CrossProduct(
-            Vector3Subtract( V[1], V[5] ),
-            Vector3Subtract( V[0], V[5] )
-        ));  normals.push_back({ norm, norm, norm });
-        pushArr = { V[7], V[6], V[2] };  triangles.push_back( pushArr );
-        norm    = Vector3Normalize( Vector3CrossProduct(
-            Vector3Subtract( V[2], V[6] ),
-            Vector3Subtract( V[7], V[6] )
-        ));  normals.push_back({ norm, norm, norm });
-        pushArr = { V[7], V[2], V[3] };  triangles.push_back( pushArr );
-        norm    = Vector3Normalize( Vector3CrossProduct(
-            Vector3Subtract( V[3], V[2] ),
-            Vector3Subtract( V[7], V[2] )
-        ));  normals.push_back({ norm, norm, norm });
-        pushArr = { V[4], V[6], V[7] };  triangles.push_back( pushArr );
-        norm    = Vector3Normalize( Vector3CrossProduct(
-            Vector3Subtract( V[7], V[6] ),
-            Vector3Subtract( V[4], V[6] )
-        ));  normals.push_back({ norm, norm, norm });
-        pushArr = { V[4], V[7], V[5] };  triangles.push_back( pushArr );
-        norm    = Vector3Normalize( Vector3CrossProduct(
-            Vector3Subtract( V[5], V[7] ),
-            Vector3Subtract( V[4], V[7] )
-        ));  normals.push_back({ norm, norm, norm });
-        pushArr = { V[1], V[5], V[7] };  triangles.push_back( pushArr );
-        norm    = Vector3Normalize( Vector3CrossProduct(
-            Vector3Subtract( V[7], V[5] ),
-            Vector3Subtract( V[1], V[5] )
-        ));  normals.push_back({ norm, norm, norm });
-        pushArr = { V[1], V[7], V[3] };  triangles.push_back( pushArr );
-        norm    = Vector3Normalize( Vector3CrossProduct(
-            Vector3Subtract( V[3], V[7] ),
-            Vector3Subtract( V[1], V[7] )
-        ));  normals.push_back({ norm, norm, norm });
+
+        // 2. Build tris
+        push_triangle_w_norms( { V[0], V[3], V[2] } );
+        push_triangle_w_norms( { V[0], V[1], V[3] } );
+        push_triangle_w_norms( { V[6], V[4], V[0] } );
+        push_triangle_w_norms( { V[6], V[0], V[2] } );
+        push_triangle_w_norms( { V[0], V[4], V[5] } );
+        push_triangle_w_norms( { V[0], V[5], V[1] } );
+        push_triangle_w_norms( { V[7], V[6], V[2] } );
+        push_triangle_w_norms( { V[7], V[2], V[3] } );
+        push_triangle_w_norms( { V[4], V[6], V[7] } );
+        push_triangle_w_norms( { V[4], V[7], V[5] } ); 
+        push_triangle_w_norms( { V[1], V[5], V[7] } );
+        push_triangle_w_norms( { V[1], V[7], V[3] } );
+
         // 3. Build Colors
-        pushClr = { R, G, B };  facetColors.push_back( pushClr );
-        pushClr = { B, R, G };  facetColors.push_back( pushClr );
-        pushClr = { G, B, R };  facetColors.push_back( pushClr );
-        pushClr = { R, G, B };  facetColors.push_back( pushClr );
-        pushClr = { B, R, G };  facetColors.push_back( pushClr );
-        pushClr = { G, B, R };  facetColors.push_back( pushClr );
-        pushClr = { R, G, B };  facetColors.push_back( pushClr );
-        pushClr = { B, R, G };  facetColors.push_back( pushClr );
-        pushClr = { G, B, R };  facetColors.push_back( pushClr );
-        pushClr = { R, G, B };  facetColors.push_back( pushClr );
-        pushClr = { B, R, G };  facetColors.push_back( pushClr );
-        pushClr = { G, B, R };  facetColors.push_back( pushClr );
-        // 4. Set active triangles
-        activeTri.push_back( true );  activeTri.push_back( true );  
-        activeTri.push_back( true );  activeTri.push_back( true );  
-        activeTri.push_back( true );  activeTri.push_back( true );  
-        activeTri.push_back( true );  activeTri.push_back( true );  
-        activeTri.push_back( true );  activeTri.push_back( true );  
-        activeTri.push_back( true );  activeTri.push_back( true );  
+        pushClr = { R, G, B };  clrs.push_back( pushClr );
+        pushClr = { B, R, G };  clrs.push_back( pushClr );
+        pushClr = { G, B, R };  clrs.push_back( pushClr );
+        pushClr = { R, G, B };  clrs.push_back( pushClr );
+        pushClr = { B, R, G };  clrs.push_back( pushClr );
+        pushClr = { G, B, R };  clrs.push_back( pushClr );
+        pushClr = { R, G, B };  clrs.push_back( pushClr );
+        pushClr = { B, R, G };  clrs.push_back( pushClr );
+        pushClr = { G, B, R };  clrs.push_back( pushClr );
+        pushClr = { R, G, B };  clrs.push_back( pushClr );
+        pushClr = { B, R, G };  clrs.push_back( pushClr );
+        pushClr = { G, B, R };  clrs.push_back( pushClr );
+
         // 4. Init mesh
-        mesh = Mesh{};
+        dynG = false;
         uint Ntri = 12;
-        uint Npts = Ntri*3;
-        mesh.triangleCount = Ntri;
-        mesh.vertexCount   = Npts;
-        // 4. Init memory
-        mesh.vertices = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
-        mesh.indices  = (ushort*) MemAlloc(Npts   * sizeof( ushort ));
-        mesh.normals  = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
-        mesh.colors   = (u_char*) MemAlloc(Npts*4 * sizeof( u_char )); // 3 vertices, 4 coordinates each (r, g, b, a)
-        // UploadMesh( &mesh, true );
+        init_mesh_memory( Ntri );
+
+        // 5. Load buffers
+        load_mesh_buffers( true, true );
+
+        // 5. Send geometry to GPU
+        UploadMesh( &mesh, dynG );
     }
 
-    void update_and_write_triangles(){
-        // Choose the active triangles and write their geometry to memory
-        ++iFrms;
-
-        if( loaded ){
-            UnloadMesh( mesh );
-            uint Npts = 36;
-            mesh.vertices = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
-            mesh.indices  = (ushort*) MemAlloc(Npts   * sizeof( ushort ));
-            mesh.normals  = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
-            mesh.colors   = (u_char*) MemAlloc(Npts*4 * sizeof( u_char )); // 3 vertices, 4 coordinates each (r, g, b, a)
-        }  
-        
-        if( iFrms%Nfrms == 0 ){
-            uint  i    = 0; // Triangle counter
-            ulong k    = 0; // Vertex _ counter
-            ulong l    = 0; // Index __ counter
-            ulong m    = 0; // Color __ counter
-            Nact = 0;
-            for( bool& p_active : activeTri ){
-                p_active = (randf() < 0.50);
-                if( p_active ){
-                    ++Nact;
-                    for( u_char j = 0; j < 3; j++ ){
-                        mesh.normals[k]  = normals[i][j].x;
-                        mesh.vertices[k] = triangles[i][j].x;    k++;
-                        mesh.normals[k]  = normals[i][j].y;
-                        mesh.vertices[k] = triangles[i][j].y;    k++;
-                        mesh.normals[k]  = normals[i][j].z;
-                        mesh.vertices[k] = triangles[i][j].z;    k++;
-                        mesh.indices[l]  = l; /*--------------*/ l++; 
-                        mesh.colors[m]   = facetColors[i][j].r;  m++;
-                        mesh.colors[m]   = facetColors[i][j].g;  m++;
-                        mesh.colors[m]   = facetColors[i][j].b;  m++;
-                        mesh.colors[m]   = facetColors[i][j].a;  m++;
-                    }
-                }
-                ++i;
-            }
-            mesh.triangleCount = Nact;
-            mesh.vertexCount   = Nact*3;
-            
-            UploadMesh( &mesh, false );
-            // model = LoadModelFromMesh( mesh );
-            // model.transform = MatrixIdentity();
-            loaded = true;
+    void update(){
+        for( triPnts& tri : tris ){
+            tri[0] = uniform_vector_noise( tri[0], 0.125 );
+            tri[1] = uniform_vector_noise( tri[1], 0.125 );
+            tri[2] = uniform_vector_noise( tri[2], 0.125 );
+            // 2023-08-13: Purposely avoiding a normal update until a shader is in use
         }
-        cout << iFrms << ", " << Nact << endl;
+        load_mesh_buffers( true, false );
+        UpdateMeshBuffer( 
+            mesh, 
+            0, 
+            mesh.vertices,  
+            mesh.vertexCount*3 * sizeof( float  ),
+            0
+        );
     }
 
     void draw(){
-        if( Nact ){
-            // DrawMesh( mesh, ,MatrixIdentity() )
-            // DrawModel( model, Vector3Zero(), 1.0, WHITE );
-            DrawMesh( mesh, LoadMaterialDefault(), MatrixIdentity() ); 
-        }
+        // Render the mesh
+        // 2023-08-13: Let's stop thinking about `Model`s unless they are absolutely necessary!
+        DrawMesh( mesh, LoadMaterialDefault(), MatrixIdentity() ); 
     }
+
 };
+
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
@@ -243,11 +230,11 @@ int main(){
     float halfBoxLen = 100.0/10.0;
 
     /// Init Objects ///
-    DynaCube dc{ 5.0 };
+    DynCube dc{ 5.0 };
 
     // Camera
     Camera camera = Camera{
-        Vector3{ 200.0/10.0, 200.0/10.0, 200.0/10.0 }, // Position
+        Vector3{ 300.0/10.0, 150.0/10.0, 200.0/10.0 }, // Position
         Vector3{   0.0,   0.0,   0.0 }, // Target
         Vector3{   0.0,   0.0,   1.0 }, // Up
         45.0, // ---------------------- FOV_y
@@ -263,20 +250,9 @@ int main(){
         BeginMode3D( camera );
         ClearBackground( BLACK );
 
-        // Activate our custom shader to be applied on next shapes/textures drawings
-        // BeginShaderMode( shader );
-
-        // UpdateLightValues( shader, lights[0] );
-
-        
-
         ///// DRAW LOOP ///////////////////////////////////////////////////
-        dc.update_and_write_triangles();
+        dc.update();
         dc.draw();
-        
-
-        // Activate our default shader for next drawings
-        // EndShaderMode();
 
         /// End Drawing ///
         EndMode3D();
