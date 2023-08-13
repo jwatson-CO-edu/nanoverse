@@ -25,6 +25,10 @@ using std::vector;
 typedef array<Vector3,3> triPnts; // Vector info for One Triangle (Vertices,nrms) 
 typedef array<Color,3>   triClrs; // Color  info for One Triangle
 typedef vector<Vector3>  vvec3; // - Vector of 3D vectors
+#define VERTEX_BUFFER_IDX 0 // Vertex coord VBO
+#define NORMAL_BUFFER_IDX 2 // Normal vector VBO
+#define COLORS_BUFFER_IDX 3 // Vertex color VBO
+#define INDEXF_BUFFER_IDX 6 // Indices of facet vertices VBO
 
 
 ////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
@@ -178,7 +182,7 @@ struct DynCube{
         pushClr = { G, B, R };  clrs.push_back( pushClr );
 
         // 4. Init mesh
-        dynG = false;
+        dynG = true;
         uint Ntri = 12;
         init_mesh_memory( Ntri );
 
@@ -198,11 +202,11 @@ struct DynCube{
         }
         load_mesh_buffers( true, false );
         UpdateMeshBuffer( 
-            mesh, 
-            0, 
-            mesh.vertices,  
-            mesh.vertexCount*3 * sizeof( float  ),
-            0
+            mesh, // -------------------------------- `Mesh` object
+            VERTEX_BUFFER_IDX, // ------------------- VBO Index
+            mesh.vertices, // ----------------------- Array of data 
+            mesh.vertexCount*3 * sizeof( float  ), // Total array size
+            0 // ------------------------------------ Starting index in array
         );
     }
 
