@@ -1,4 +1,4 @@
-// g++ 14-3_MVP-cube.cpp -std=c++17 -lraylib
+// g++ 15_MVP-cube.cpp -std=c++17 -lraylib
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
@@ -200,10 +200,10 @@ struct DynaCube{
             }
             mesh.triangleCount = Nact;
             mesh.vertexCount   = Nact*3;
+            UnloadMesh( mesh );
             UploadMesh( &mesh, false );
-            UpdateMeshBuffer()
-            model = LoadModelFromMesh( mesh );
-            model.transform = MatrixIdentity();
+            // model = LoadModelFromMesh( mesh );
+            // model.transform = MatrixIdentity();
         }
         cout << iFrms << ", " << Nact << endl;
     }

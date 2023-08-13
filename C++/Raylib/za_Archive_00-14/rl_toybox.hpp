@@ -464,7 +464,7 @@ class TriModel{ public:
 
     ~TriModel(){
         // Free all allocated memory
-        UnloadModel( model );  
+        // UnloadModel( model );  
     }
 
     ///// Pose Math //////////////////////////////

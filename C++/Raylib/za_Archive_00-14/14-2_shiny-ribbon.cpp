@@ -390,22 +390,29 @@ class BoidRibbon : public TriModel{ public:
         // UnloadModel( model );
         // UnloadMesh( mesh );
         if( coords.size() > 1 ){
-            cout << "About to build tris ..." << endl;
-            coords_to_color_geo();
             cout << "About to set counts ..." << endl;
             set_mesh_counts( mesh, tris.size(), tris.size()*3 );
+            cout << "About to build tris ..." << endl;
+            coords_to_color_geo();
             cout << "About to build mesh ..." << endl;
             build_mesh_unshared();
             cout << "About to build normals ..." << endl;
             build_normals_flat_unshared();
             cout << "About to build colors ..." << endl;
             build_colors_unshared();
-            // UploadMesh( &mesh, true );
-            cout << "About to reload model ..." << endl;
-            model = LoadModelFromMesh( mesh );
+            cout << "Graphics BUILT!" << endl;
+            // UpdateMeshBuffer( mesh, int index, const void *data, int dataSize, int offset);
+            UnloadMesh( mesh );
+            UploadMesh( &mesh, true );
+            cout << "Mesh UPLOADED!" << endl;
+            // model = LoadModelFromMesh( mesh );
             cout << "Model has: " << model.meshes->triangleCount << " triangles!" << endl;
-            model.transform = T;
+            // model.transform = T;
         }
+    }
+
+    void draw(){
+        DrawMesh( mesh, LoadMaterialDefault(), T); 
     }
 
 };
