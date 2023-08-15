@@ -79,6 +79,7 @@ Vector3 uniform_vector_noise( const Vector3& vec, float halfMag ){
 class DynaMesh{ public:
     // Straightforward container for a `Mesh` with changing geometry
     // 2023-08-14: This class assumes that the mesh will have a constant size for each buffer, though their values might change
+    // 2023-08-15: This class REQUIRES that vertices, indices, normals, and colors ALL be defined
 
     /// Members ///
     vector<triPnts> tris; // Dynamic geometry, each array is a facet of 3x vertices
@@ -109,7 +110,7 @@ class DynaMesh{ public:
     }
 
     void load_mesh_buffers( bool loadGeo = true, bool loadColor = false ){
-        // Load geometry (and color) info into `mesh` buffers
+        // Load geometry (and color) info into `mesh` buffers        
         // 2023-08-14: For now assume that the facet indices do NOT change!
 
         // 0. Init
@@ -170,7 +171,8 @@ class DynaMesh{ public:
     /// Constructors ///
 
     DynaMesh( uint Ntri ){
-
+        // Allocate memory only
+        init_mesh_memory( Ntri );
     }
 
     /// Geometry Methods ///
@@ -195,71 +197,12 @@ class DynaMesh{ public:
 
 };
 
-
-struct DynCube{
-    // A dynamic cube
-
-    /// Members ///
-    vector<triPnts> tris; // Dynamic geometry, each array is a facet of 3x vertices
-    vector<triPnts> nrms; // Normal vector for each facet
-    vector<triClrs> clrs; // Vertex colors for each facet
-    Mesh /*------*/ mesh; // Raylib mesh geometry
-    bool /*------*/ dynG; // Flag for whether geometry is dynamic
+class FractureCube : public DynaMesh{ public:
+    // A cube that shakes apart
 
     /// Constructors ///
 
-    void push_triangle_w_norms( triPnts tri ){
-        // Add one triangle
-        Vector3 norm = normal_of_tiangle( tri );  
-        tris.push_back( tri );
-        nrms.push_back({ norm, norm, norm });
-    }
-
-    void init_mesh_memory( uint Ntri ){
-        // Create the `Mesh` struct and allocate memory there
-        uint Npts = Ntri*3;
-
-        // 1. Init mesh
-        mesh = Mesh{};
-        mesh.triangleCount = Ntri;
-        mesh.vertexCount   = Npts;
-
-        // 2. Init memory
-        mesh.vertices = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
-        mesh.indices  = (ushort*) MemAlloc(Npts   * sizeof( ushort ));
-        mesh.normals  = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
-        mesh.colors   = (u_char*) MemAlloc(Npts*4 * sizeof( u_char )); // 3 vertices, 4 coordinates each (r, g, b, a)
-    }
-
-    void load_mesh_buffers( bool loadGeo = true, bool loadColor = false ){
-        // Load geometry (and color) info into `mesh` buffers
-        ulong k    = 0; // Vertex _ counter
-        ulong l    = 0; // Index __ counter
-        ulong m    = 0; // Color __ counter
-        for( uint i = 0; i < mesh.triangleCount; ++i ){
-            for( u_char j = 0; j < 3; j++ ){
-                if( loadGeo ){
-                    mesh.normals[k]  = nrms[i][j].x;
-                    mesh.vertices[k] = tris[i][j].x;  k++;
-                    mesh.normals[k]  = nrms[i][j].y;
-                    mesh.vertices[k] = tris[i][j].y;  k++;
-                    mesh.normals[k]  = nrms[i][j].z;
-                    mesh.vertices[k] = tris[i][j].z;  k++;
-                    mesh.indices[l]  = l; /*-------*/ l++; 
-                }
-                if( loadColor ){
-                    mesh.colors[m] = clrs[i][j].r;  m++;
-                    mesh.colors[m] = clrs[i][j].g;  m++;
-                    mesh.colors[m] = clrs[i][j].b;  m++;
-                    mesh.colors[m] = clrs[i][j].a;  m++;
-                }
-            }
-        }
-    }
-
-    DynCube( float sideLen ){
-        // Create tris that make up the cube
-
+    FractureCube( float sideLen ) : DynaMesh( 12 ){
         // 0. Init
         triPnts pushTri;
         triClrs pushClr;
@@ -308,16 +251,8 @@ struct DynCube{
         pushClr = { B, R, G };  clrs.push_back( pushClr );
         pushClr = { G, B, R };  clrs.push_back( pushClr );
 
-        // 4. Init mesh
-        dynG = true;
-        uint Ntri = 12;
-        init_mesh_memory( Ntri );
-
-        // 5. Load buffers
+        // 4. Load buffers
         load_mesh_buffers( true, true );
-
-        // 5. Send geometry to GPU
-        UploadMesh( &mesh, dynG );
     }
 
     void update(){
@@ -328,13 +263,6 @@ struct DynCube{
             // 2023-08-13: Purposely avoiding a normal update until a shader is in use
         }
         load_mesh_buffers( true, false );
-        UpdateMeshBuffer( 
-            mesh, // -------------------------------- `Mesh` object
-            VERTEX_BUFFER_IDX, // ------------------- VBO Index
-            mesh.vertices, // ----------------------- Array of data 
-            mesh.vertexCount*3 * sizeof( float  ), // Total array size
-            0 // ------------------------------------ Starting index in array
-        );
     }
 
     void draw(){
@@ -342,7 +270,6 @@ struct DynCube{
         // 2023-08-13: Let's stop thinking about `Model`s unless they are absolutely necessary!
         DrawMesh( mesh, LoadMaterialDefault(), MatrixIdentity() ); 
     }
-
 };
 
 
@@ -361,7 +288,7 @@ int main(){
     float halfBoxLen = 100.0/10.0;
 
     /// Init Objects ///
-    DynCube dc{ 5.0 };
+    FractureCube dc{ 5.0 };
 
     // Camera
     Camera camera = Camera{
