@@ -86,37 +86,41 @@ class DynaMesh{ public:
     vector<triPnts> nrms; // Normal vector for each facet
     vector<triClrs> clrs; // Vertex colors for each facet
     Mesh /*------*/ mesh; // Raylib mesh geometry
+    bool /*------*/ upld; // Has the mesh been uploaded?
 
     
     /// Memory Methods ///
 
     void init_mesh_memory( uint Ntri ){
         // Create the `Mesh` struct and allocate memory there
+
         uint Npts = Ntri*3;
 
         // 1. Init mesh
+        upld = false;
         mesh = Mesh{};
         mesh.triangleCount = Ntri;
         mesh.vertexCount   = Npts;
+        
+        cout << "GO!: init_mesh_memory( " << mesh.triangleCount << " )" << endl;
 
         // 2. Init memory
         mesh.vertices = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
         mesh.indices  = (ushort*) MemAlloc(Npts   * sizeof( ushort ));
         mesh.normals  = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
         mesh.colors   = (u_char*) MemAlloc(Npts*4 * sizeof( u_char )); // 3 vertices, 4 coordinates each (r, g, b, a)
-
-        // 3. Dummy load to GPU
-        UploadMesh( &mesh, true );
     }
 
     void load_mesh_buffers( bool loadGeo = true, bool loadColor = false ){
         // Load geometry (and color) info into `mesh` buffers        
         // 2023-08-14: For now assume that the facet indices do NOT change!
 
+        cout << "GO!: " << mesh.triangleCount << ", load_mesh_buffers( " << loadGeo <<", "<< loadColor << " )" << endl;
+
         // 0. Init
-        ulong k    = 0; // Vertex _ counter
-        ulong l    = 0; // Index __ counter
-        ulong m    = 0; // Color __ counter
+        ulong k = 0; // Vertex _ counter
+        ulong l = 0; // Index __ counter
+        ulong m = 0; // Color __ counter
 
         // 1. Load CPU-side
         for( uint i = 0; i < mesh.triangleCount; ++i ){
@@ -139,32 +143,40 @@ class DynaMesh{ public:
             }
         }
 
-        // 2. Send GPU-side
-        if( loadGeo ){
-            UpdateMeshBuffer( 
-                mesh, // -------------------------------- `Mesh` object
-                VERTEX_BUFFER_IDX, // ------------------- VBO Index
-                mesh.vertices, // ----------------------- Array of data 
-                mesh.vertexCount*3 * sizeof( float  ), // Total array size
-                0 // ------------------------------------ Starting index in array
-            );
-            UpdateMeshBuffer( 
-                mesh, // -------------------------------- `Mesh` object
-                NORMAL_BUFFER_IDX, // ------------------- VBO Index
-                mesh.normals, // ------------------------ Array of data 
-                mesh.vertexCount*3 * sizeof( float  ), // Total array size
-                0 // ------------------------------------ Starting index in array
-            );
-            // 2023-08-14: For now assume that the facet indices do NOT change!
-        }
-        if( loadColor ){
-            UpdateMeshBuffer( 
-                mesh, // -------------------------------- `Mesh` object
-                COLORS_BUFFER_IDX, // ------------------- VBO Index
-                mesh.colors, // ------------------------- Array of data 
-                mesh.vertexCount*4 * sizeof( u_char ), // Total array size
-                0 // ------------------------------------ Starting index in array
-            );
+        // If this mesh is not present on the GPU, then send it
+        if( !upld ){
+            // 3. Initial load to GPU
+            UploadMesh( &mesh, true );
+            upld = true;
+        // Else mesh is on GPU, update the mesh buffers there
+        }else{
+            // 2. Send GPU-side
+            if( loadGeo ){
+                UpdateMeshBuffer( 
+                    mesh, // -------------------------------- `Mesh` object
+                    VERTEX_BUFFER_IDX, // ------------------- VBO Index
+                    mesh.vertices, // ----------------------- Array of data 
+                    mesh.vertexCount*3 * sizeof( float  ), // Total array size
+                    0 // ------------------------------------ Starting index in array
+                );
+                UpdateMeshBuffer( 
+                    mesh, // -------------------------------- `Mesh` object
+                    NORMAL_BUFFER_IDX, // ------------------- VBO Index
+                    mesh.normals, // ------------------------ Array of data 
+                    mesh.vertexCount*3 * sizeof( float  ), // Total array size
+                    0 // ------------------------------------ Starting index in array
+                );
+                // 2023-08-14: For now assume that the facet indices do NOT change!
+            }
+            if( loadColor ){
+                UpdateMeshBuffer( 
+                    mesh, // -------------------------------- `Mesh` object
+                    COLORS_BUFFER_IDX, // ------------------- VBO Index
+                    mesh.colors, // ------------------------- Array of data 
+                    mesh.vertexCount*4 * sizeof( u_char ), // Total array size
+                    0 // ------------------------------------ Starting index in array
+                );
+            }
         }
     }
 
@@ -263,12 +275,6 @@ class FractureCube : public DynaMesh{ public:
             // 2023-08-13: Purposely avoiding a normal update until a shader is in use
         }
         load_mesh_buffers( true, false );
-    }
-
-    void draw(){
-        // Render the mesh
-        // 2023-08-13: Let's stop thinking about `Model`s unless they are absolutely necessary!
-        DrawMesh( mesh, LoadMaterialDefault(), MatrixIdentity() ); 
     }
 };
 
