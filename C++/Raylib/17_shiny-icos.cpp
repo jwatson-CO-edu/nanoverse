@@ -319,7 +319,93 @@ class FractureCube : public DynaMesh{ public:
     }
 };
 
+class Icosahedron_r : public DynaMesh{ public:
+    // Implementing icosahedron mesh in Raylib for the Nth time!
 
+    // ~ Constants ~
+	float sqrt5 = sqrt( 5.0f ); // ------------------------------------ Square root of 5
+	float phi   = ( 1.0f + sqrt5 ) * 0.5f; // ------------------------- The Golden Ratio
+	float ratio = sqrt( 10.0f + ( 2.0f * sqrt5 ) ) / ( 4.0f * phi ); // ratio of edge length to radius
+	
+	// ~ Variables ~
+	float radius;
+	float a; 
+	float b; 
+    vvec3 V;
+
+    // ~ Appearance ~
+    Color baseClr;
+    Color lineClr;
+    bool  drawWires;
+
+    // ~ Animation ~
+    bool  anim;
+    float rolVel;
+    float ptcVel;
+    float yawVel;
+
+    // ~ Constructors ~
+
+    Icosahedron_r( float rad , const Vector3& cntr, bool animate = true, bool wireframe = true,
+                   Color baseColor = BLUE, Color wireColor = GOLD ) : DynaMesh(20){
+        // Compute the vertices and faces
+        radius = rad;
+        a /**/ = ( radius / ratio ) * 0.5;
+        b /**/ = ( radius / ratio ) / ( 2.0f * phi );
+        set_posn( cntr );
+
+        // Appearance
+        baseClr = baseColor;
+        lineClr = wireColor;
+
+        // Animation
+        anim = animate;
+        float loRate = -0.01f;
+        float hiRate =  0.01f;
+        rolVel = randf( loRate, hiRate );
+        ptcVel = randf( loRate, hiRate );
+        yawVel = randf( loRate, hiRate );
+
+        // Define the icosahedron's 12 vertices:
+        V.push_back( Vector3{  0,  b, -a } );
+        V.push_back( Vector3{  b,  a,  0 } );
+        V.push_back( Vector3{ -b,  a,  0 } );
+        V.push_back( Vector3{  0,  b,  a } );
+        V.push_back( Vector3{  0, -b,  a } );
+        V.push_back( Vector3{ -a,  0,  b } );
+        V.push_back( Vector3{  0, -b, -a } );
+        V.push_back( Vector3{  a,  0, -b } );
+        V.push_back( Vector3{  a,  0,  b } );
+        V.push_back( Vector3{ -a,  0, -b } );
+        V.push_back( Vector3{  b, -a,  0 } );
+        V.push_back( Vector3{ -b, -a,  0 } );
+
+        // Define the icosahedron's 20 triangular faces: CCW-out
+        push_triangle_w_norms( {V[ 2], V[ 1], V[ 0]} );
+        push_triangle_w_norms( {V[ 1], V[ 2], V[ 3]} );
+        push_triangle_w_norms( {V[ 5], V[ 4], V[ 3]} );
+        push_triangle_w_norms( {V[ 4], V[ 8], V[ 3]} );
+        push_triangle_w_norms( {V[ 7], V[ 6], V[ 0]} );
+        push_triangle_w_norms( {V[ 6], V[ 9], V[ 0]} );
+        push_triangle_w_norms( {V[11], V[10], V[ 4]} );
+        push_triangle_w_norms( {V[10], V[11], V[ 6]} );
+        push_triangle_w_norms( {V[ 9], V[ 5], V[ 2]} );
+        push_triangle_w_norms( {V[ 5], V[ 9], V[11]} );
+        push_triangle_w_norms( {V[ 8], V[ 7], V[ 1]} );
+        push_triangle_w_norms( {V[ 7], V[ 8], V[10]} );
+        push_triangle_w_norms( {V[ 2], V[ 5], V[ 3]} );
+        push_triangle_w_norms( {V[ 8], V[ 1], V[ 3]} );
+        push_triangle_w_norms( {V[ 9], V[ 2], V[ 0]} );
+        push_triangle_w_norms( {V[ 1], V[ 7], V[ 0]} );
+        push_triangle_w_norms( {V[11], V[ 9], V[ 6]} );
+        push_triangle_w_norms( {V[ 7], V[10], V[ 6]} );
+        push_triangle_w_norms( {V[ 5], V[11], V[ 4]} );
+        push_triangle_w_norms( {V[10], V[ 8], V[ 4]} );
+
+        // FIXME, START HERE: FINISH THE ICOS CONSTRUCTOR IN THE NEW REGIME!
+
+    }
+};
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
