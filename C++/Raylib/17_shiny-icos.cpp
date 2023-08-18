@@ -1,4 +1,4 @@
-// g++ 17_dyn-ribbons.cpp -std=c++17 -lraylib
+// g++ 17_shiny-icos.cpp -std=c++17 -lraylib
 // Re-implement Boid Ribbons **without** `Model`s!
 // 2023-08-14: Do not break into smaller files until everything works
 
@@ -71,6 +71,15 @@ Vector3 uniform_vector_noise( const Vector3& vec, float halfMag ){
     };
 }
 
+Vector3 uniform_vector_noise( float halfMag ){
+    // Return a perturbed `vec` moved up to `halfMag` in each direction in each dimension
+    return Vector3{
+        randf( -halfMag, halfMag ),
+        randf( -halfMag, halfMag ),
+        randf( -halfMag, halfMag )
+    };
+}
+
 
 
 ////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
@@ -87,6 +96,7 @@ class DynaMesh{ public:
     vector<triClrs> clrs; // Vertex colors for each facet
     Mesh /*------*/ mesh; // Raylib mesh geometry
     bool /*------*/ upld; // Has the mesh been uploaded?
+    Matrix /*----*/ T; // -- Pose in the parent frame
 
     
     /// Memory Methods ///
@@ -183,8 +193,9 @@ class DynaMesh{ public:
     /// Constructors ///
 
     DynaMesh( uint Ntri ){
-        // Allocate memory only
+        // Allocate memory and set default pose
         init_mesh_memory( Ntri );
+        T = MatrixIdentity();
     }
 
     /// Geometry Methods ///
@@ -196,6 +207,33 @@ class DynaMesh{ public:
         nrms.push_back({ norm, norm, norm });
     }
 
+    /// Pose Math ///
+    /* T = 
+    m0 m4 m8  m12
+    m1 m5 m9  m13
+    m2 m6 m10 m14
+    m3 m7 m11 m15
+    */
+
+    Vector3 get_posn(){
+        // Get the position components of the homogeneous coordinates as a vector
+        return Vector3{ T.m12, T.m13, T.m14 };
+    }
+
+    void set_posn( const Vector3& posn ){
+        // Set the position components of the homogeneous coordinates
+        T.m12 = posn.x;
+        T.m13 = posn.y;
+        T.m14 = posn.z;
+    }
+
+    void translate( const Vector3& delta ){
+        // Increment the position components of the homogeneous coordinates by the associated `delta` components
+        T.m12 += delta.x;
+        T.m13 += delta.y;
+        T.m14 += delta.z;
+    }
+
     ///// Drawing Context Methods ////////////////
     // NOTE: Method beyond this point require a drawing context being instantiated before calling!
 
@@ -204,7 +242,7 @@ class DynaMesh{ public:
     void draw(){
         // Render the mesh
         // 2023-08-13: Let's stop thinking about `Model`s unless they are absolutely necessary!
-        DrawMesh( mesh, LoadMaterialDefault(), MatrixIdentity() ); 
+        DrawMesh( mesh, LoadMaterialDefault(), T ); 
     }
 
 };
@@ -268,11 +306,14 @@ class FractureCube : public DynaMesh{ public:
     }
 
     void update(){
-        for( triPnts& tri : tris ){
-            tri[0] = uniform_vector_noise( tri[0], 0.125 );
-            tri[1] = uniform_vector_noise( tri[1], 0.125 );
-            tri[2] = uniform_vector_noise( tri[2], 0.125 );
-            // 2023-08-13: Purposely avoiding a normal update until a shader is in use
+        translate( uniform_vector_noise( 0.125 ) );
+        if( randf() < 0.20 ){
+            for( triPnts& tri : tris ){
+                tri[0] = uniform_vector_noise( tri[0], 0.125 );
+                tri[1] = uniform_vector_noise( tri[1], 0.125 );
+                tri[2] = uniform_vector_noise( tri[2], 0.125 );
+                // 2023-08-13: Purposely avoiding a normal update until a shader is in use
+            }
         }
         load_mesh_buffers( true, false );
     }

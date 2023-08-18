@@ -15,7 +15,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
             - $\alpha = 0$
             - Zero-size
     - `[Y]` Simplest Cube, 2023-08-13: Back to basics! `Model` was an unneeded middleman!
-    - `[>]` Simplest Cube Jiggle
+    - `[Y]` Simplest Cube Jiggle, 2023-08-18: Identical behavior with new struct
 
 * `[P]` Shiny Boid Ribbons - Generative art
     - `[P]` Boid Ribbon class
