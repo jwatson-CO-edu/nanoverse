@@ -234,6 +234,14 @@ class DynaMesh{ public:
         T.m14 += delta.z;
     }
 
+    void rotate_RPY( float r_, float p_, float y_ ){
+		// Increment the world Roll, Pitch, Yaw of the model
+        T = MatrixMultiply( 
+            MatrixMultiply( MatrixMultiply( MatrixRotateY( y_ ), MatrixRotateX( p_ ) ), MatrixRotateZ( r_ ) ), 
+            T 
+        );
+	}
+
     ///// Drawing Context Methods ////////////////
     // NOTE: Method beyond this point require a drawing context being instantiated before calling!
 
@@ -346,8 +354,7 @@ class Icosahedron_r : public DynaMesh{ public:
 
     // ~ Constructors ~
 
-    Icosahedron_r( float rad , const Vector3& cntr, bool animate = true, bool wireframe = true,
-                   Color baseColor = BLUE, Color wireColor = GOLD ) : DynaMesh(20){
+    Icosahedron_r( float rad , const Vector3& cntr, bool animate = true, Color baseColor = BLUE ) : DynaMesh(20){
         // Compute the vertices and faces
         radius = rad;
         a /**/ = ( radius / ratio ) * 0.5;
@@ -356,7 +363,6 @@ class Icosahedron_r : public DynaMesh{ public:
 
         // Appearance
         baseClr = baseColor;
-        lineClr = wireColor;
 
         // Animation
         anim = animate;
@@ -381,30 +387,37 @@ class Icosahedron_r : public DynaMesh{ public:
         V.push_back( Vector3{ -b, -a,  0 } );
 
         // Define the icosahedron's 20 triangular faces: CCW-out
-        push_triangle_w_norms( {V[ 2], V[ 1], V[ 0]} );
-        push_triangle_w_norms( {V[ 1], V[ 2], V[ 3]} );
-        push_triangle_w_norms( {V[ 5], V[ 4], V[ 3]} );
-        push_triangle_w_norms( {V[ 4], V[ 8], V[ 3]} );
-        push_triangle_w_norms( {V[ 7], V[ 6], V[ 0]} );
-        push_triangle_w_norms( {V[ 6], V[ 9], V[ 0]} );
-        push_triangle_w_norms( {V[11], V[10], V[ 4]} );
-        push_triangle_w_norms( {V[10], V[11], V[ 6]} );
-        push_triangle_w_norms( {V[ 9], V[ 5], V[ 2]} );
-        push_triangle_w_norms( {V[ 5], V[ 9], V[11]} );
-        push_triangle_w_norms( {V[ 8], V[ 7], V[ 1]} );
-        push_triangle_w_norms( {V[ 7], V[ 8], V[10]} );
-        push_triangle_w_norms( {V[ 2], V[ 5], V[ 3]} );
-        push_triangle_w_norms( {V[ 8], V[ 1], V[ 3]} );
-        push_triangle_w_norms( {V[ 9], V[ 2], V[ 0]} );
-        push_triangle_w_norms( {V[ 1], V[ 7], V[ 0]} );
-        push_triangle_w_norms( {V[11], V[ 9], V[ 6]} );
-        push_triangle_w_norms( {V[ 7], V[10], V[ 6]} );
-        push_triangle_w_norms( {V[ 5], V[11], V[ 4]} );
-        push_triangle_w_norms( {V[10], V[ 8], V[ 4]} );
+        push_triangle_w_norms( {V[ 2], V[ 1], V[ 0]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[ 1], V[ 2], V[ 3]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[ 5], V[ 4], V[ 3]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[ 4], V[ 8], V[ 3]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[ 7], V[ 6], V[ 0]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[ 6], V[ 9], V[ 0]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[11], V[10], V[ 4]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[10], V[11], V[ 6]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[ 9], V[ 5], V[ 2]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[ 5], V[ 9], V[11]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[ 8], V[ 7], V[ 1]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[ 7], V[ 8], V[10]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[ 2], V[ 5], V[ 3]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[ 8], V[ 1], V[ 3]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[ 9], V[ 2], V[ 0]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[ 1], V[ 7], V[ 0]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[11], V[ 9], V[ 6]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[ 7], V[10], V[ 6]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[ 5], V[11], V[ 4]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[10], V[ 8], V[ 4]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
 
-        // FIXME, START HERE: FINISH THE ICOS CONSTRUCTOR IN THE NEW REGIME!
-
+        // 4. Load buffers
+        load_mesh_buffers( true, true );
     }
+
+    void draw(){
+        // Draw the model
+        if( anim ){  rotate_RPY( rolVel, ptcVel, yawVel );  }
+        DrawMesh( mesh, LoadMaterialDefault(), T );
+    }
+
 };
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
@@ -421,7 +434,8 @@ int main(){
     float halfBoxLen = 100.0/10.0;
 
     /// Init Objects ///
-    FractureCube dc{ 5.0 };
+    // FractureCube dc{ 5.0 };
+    Icosahedron_r ic{ 5.0, Vector3Zero(), true, BLUE };
 
     // Camera
     Camera camera = Camera{
@@ -442,8 +456,10 @@ int main(){
         ClearBackground( BLACK );
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
-        dc.update();
-        dc.draw();
+        // dc.update();
+        // dc.draw();
+        ic.translate( uniform_vector_noise( 0.125 ) );
+        ic.draw();
 
         /// End Drawing ///
         EndMode3D();
