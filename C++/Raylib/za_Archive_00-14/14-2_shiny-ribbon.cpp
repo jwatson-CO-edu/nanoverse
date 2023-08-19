@@ -460,7 +460,7 @@ int main(){
     // Shader shader = LoadShader( "shaders/lighting.vs", "shaders/lighting.fs" );
     Shader shader = LoadShader( "shaders/fogLight.vs", "shaders/fogLight.fs" );
     shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
-    shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
+    shader.locs[SHADER_LOC_VECTOR_VIEW]  = GetShaderLocation(shader, "viewPos");
 
     // Ambient light level
     int ambientLoc = GetShaderLocation(shader, "ambient");

@@ -17,9 +17,13 @@ using std::array;
 using std::vector;
 
 /// Raylib ///
-#include "raylib.h"
-#include "raymath.h"
+#include <raylib.h>
+#include <raymath.h>
 #include <rlgl.h>
+
+/// Local ///
+#define RLIGHTS_IMPLEMENTATION
+#include "rlights.h"
 
 
 ///// Aliases ////////////////////////////////////
@@ -96,7 +100,8 @@ class DynaMesh{ public:
     vector<triClrs> clrs; // Vertex colors for each facet
     Mesh /*------*/ mesh; // Raylib mesh geometry
     bool /*------*/ upld; // Has the mesh been uploaded?
-    Matrix /*----*/ T; // -- Pose in the parent frame
+    Matrix /*----*/ xfrm; // Pose in the parent frame
+    Material /*--*/ matl; // 
 
     
     /// Memory Methods ///
@@ -111,10 +116,13 @@ class DynaMesh{ public:
         mesh = Mesh{};
         mesh.triangleCount = Ntri;
         mesh.vertexCount   = Npts;
+
+        // 2. Init material
+        matl = LoadMaterialDefault();
         
         cout << "GO!: init_mesh_memory( " << mesh.triangleCount << " )" << endl;
 
-        // 2. Init memory
+        // 3. Init memory
         mesh.vertices = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
         mesh.indices  = (ushort*) MemAlloc(Npts   * sizeof( ushort ));
         mesh.normals  = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
@@ -195,7 +203,7 @@ class DynaMesh{ public:
     DynaMesh( uint Ntri ){
         // Allocate memory and set default pose
         init_mesh_memory( Ntri );
-        T = MatrixIdentity();
+        xfrm = MatrixIdentity();
     }
 
     /// Geometry Methods ///
@@ -208,7 +216,7 @@ class DynaMesh{ public:
     }
 
     /// Pose Math ///
-    /* T = 
+    /* xfrm = 
     m0 m4 m8  m12
     m1 m5 m9  m13
     m2 m6 m10 m14
@@ -217,28 +225,28 @@ class DynaMesh{ public:
 
     Vector3 get_posn(){
         // Get the position components of the homogeneous coordinates as a vector
-        return Vector3{ T.m12, T.m13, T.m14 };
+        return Vector3{ xfrm.m12, xfrm.m13, xfrm.m14 };
     }
 
     void set_posn( const Vector3& posn ){
         // Set the position components of the homogeneous coordinates
-        T.m12 = posn.x;
-        T.m13 = posn.y;
-        T.m14 = posn.z;
+        xfrm.m12 = posn.x;
+        xfrm.m13 = posn.y;
+        xfrm.m14 = posn.z;
     }
 
     void translate( const Vector3& delta ){
         // Increment the position components of the homogeneous coordinates by the associated `delta` components
-        T.m12 += delta.x;
-        T.m13 += delta.y;
-        T.m14 += delta.z;
+        xfrm.m12 += delta.x;
+        xfrm.m13 += delta.y;
+        xfrm.m14 += delta.z;
     }
 
     void rotate_RPY( float r_, float p_, float y_ ){
 		// Increment the world Roll, Pitch, Yaw of the model
-        T = MatrixMultiply( 
+        xfrm = MatrixMultiply( 
             MatrixMultiply( MatrixMultiply( MatrixRotateY( y_ ), MatrixRotateX( p_ ) ), MatrixRotateZ( r_ ) ), 
-            T 
+            xfrm 
         );
 	}
 
@@ -247,10 +255,12 @@ class DynaMesh{ public:
 
     /// Rendering ///
 
+    void set_shader( Shader shader ){ matl.shader = shader; }
+
     void draw(){
         // Render the mesh
         // 2023-08-13: Let's stop thinking about `Model`s unless they are absolutely necessary!
-        DrawMesh( mesh, LoadMaterialDefault(), T ); 
+        DrawMesh( mesh, matl, xfrm ); 
     }
 
 };
@@ -415,7 +425,7 @@ class Icosahedron_r : public DynaMesh{ public:
     void draw(){
         // Draw the model
         if( anim ){  rotate_RPY( rolVel, ptcVel, yawVel );  }
-        DrawMesh( mesh, LoadMaterialDefault(), T );
+        DrawMesh( mesh, LoadMaterialDefault(), xfrm );
     }
 
 };
@@ -429,7 +439,7 @@ int main(){
     InitWindow( 900, 900, "Dynamic Box!" );
     SetTargetFPS( 60 );
     // rlEnableSmoothLines();
-    rlDisableBackfaceCulling();
+    // rlDisableBackfaceCulling();
 
     float halfBoxLen = 100.0/10.0;
 
@@ -446,6 +456,30 @@ int main(){
         0 // -------------------------- Projection mode
     };
 
+    // Load basic lighting shader
+    // Shader shader = LoadShader( "shaders/lighting.vs", "shaders/lighting.fs" );
+    Shader shader = LoadShader( "shaders/fogLight.vs", "shaders/fogLight.fs" );
+    shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
+    shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
+
+    // Ambient light level
+    int ambientLoc = GetShaderLocation(shader, "ambient");
+    float ambientCol[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
+    SetShaderValue(shader, ambientLoc, ambientCol, SHADER_UNIFORM_VEC4);
+
+    int fColorLoc = GetShaderLocation(shader, "fogColor");
+    float fogColor[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
+    SetShaderValue(shader, ambientLoc, fogColor, SHADER_UNIFORM_VEC4);
+
+    float fogDensity = 0.015f;
+    int fogDensityLoc = GetShaderLocation(shader, "fogDensity");
+    SetShaderValue(shader, fogDensityLoc, &fogDensity, SHADER_UNIFORM_FLOAT);
+
+    // Using just 1 point lights
+    Light light = CreateLight(LIGHT_POINT, (Vector3){ 100/10.0, 100/10.0, 100/10.0 }, Vector3Zero(), WHITE, shader);
+
+    ic.set_shader( shader );
+
     ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
 
     while( !WindowShouldClose() ){
@@ -454,6 +488,9 @@ int main(){
         BeginDrawing();
         BeginMode3D( camera );
         ClearBackground( BLACK );
+        // BeginShaderMode( shader );
+
+        UpdateLightValues( shader, light );
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
         // dc.update();
@@ -462,6 +499,7 @@ int main(){
         ic.draw();
 
         /// End Drawing ///
+        // EndShaderMode();
         EndMode3D();
 
         DrawFPS( 30, 30 );
