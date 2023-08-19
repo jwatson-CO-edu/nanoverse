@@ -449,7 +449,7 @@ int main(){
 
     // Camera
     Camera camera = Camera{
-        Vector3{ 300.0/10.0, 150.0/10.0, 200.0/10.0 }, // Position
+        Vector3{  15.0,  15.0,  15.0 }, // Position
         Vector3{   0.0,   0.0,   0.0 }, // Target
         Vector3{   0.0,   0.0,   1.0 }, // Up
         45.0, // ---------------------- FOV_y
@@ -460,23 +460,23 @@ int main(){
     // Shader shader = LoadShader( "shaders/lighting.vs", "shaders/lighting.fs" );
     Shader shader = LoadShader( "shaders/fogLight.vs", "shaders/fogLight.fs" );
     shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
-    shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
+    shader.locs[SHADER_LOC_VECTOR_VIEW]  = GetShaderLocation(shader, "viewPos");
 
     // Ambient light level
     int ambientLoc = GetShaderLocation(shader, "ambient");
     float ambientCol[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
-    SetShaderValue(shader, ambientLoc, ambientCol, SHADER_UNIFORM_VEC4);
+    // SetShaderValue(shader, ambientLoc, ambientCol, SHADER_UNIFORM_VEC4);
 
     int fColorLoc = GetShaderLocation(shader, "fogColor");
     float fogColor[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
-    SetShaderValue(shader, ambientLoc, fogColor, SHADER_UNIFORM_VEC4);
+    // SetShaderValue(shader, ambientLoc, fogColor, SHADER_UNIFORM_VEC4);
 
-    float fogDensity = 0.015f;
+    float fogDensity = 0.15f;
     int fogDensityLoc = GetShaderLocation(shader, "fogDensity");
-    SetShaderValue(shader, fogDensityLoc, &fogDensity, SHADER_UNIFORM_FLOAT);
+    // SetShaderValue(shader, fogDensityLoc, &fogDensity, SHADER_UNIFORM_FLOAT);
 
     // Using just 1 point lights
-    Light light = CreateLight(LIGHT_POINT, (Vector3){ 100/10.0, 100/10.0, 100/10.0 }, Vector3Zero(), WHITE, shader);
+    Light light = CreateLight(LIGHT_POINT, (Vector3){ 20.0, 20.0, 20.0 }, Vector3Zero(), WHITE, shader);
 
     ic.set_shader( shader );
 
@@ -488,9 +488,12 @@ int main(){
         BeginDrawing();
         BeginMode3D( camera );
         ClearBackground( BLACK );
-        // BeginShaderMode( shader );
+        BeginShaderMode( shader );
 
-        UpdateLightValues( shader, light );
+        // UpdateLightValues( shader, light );
+
+        SetShaderValue(shader, fogDensityLoc, &fogDensity, SHADER_UNIFORM_FLOAT);
+        SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
         // dc.update();
@@ -499,7 +502,7 @@ int main(){
         ic.draw();
 
         /// End Drawing ///
-        // EndShaderMode();
+        EndShaderMode();
         EndMode3D();
 
         DrawFPS( 30, 30 );
