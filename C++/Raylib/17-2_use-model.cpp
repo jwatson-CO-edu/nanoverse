@@ -101,7 +101,9 @@ class DynaMesh{ public:
     Mesh /*------*/ mesh; // Raylib mesh geometry
     bool /*------*/ upld; // Has the mesh been uploaded?
     Matrix /*----*/ xfrm; // Pose in the parent frame
-    Material /*--*/ matl; // 
+    Model /*-----*/ modl; // USE MODEL I GUESS
+    Shader /*----*/ shdr; // USE MODEL I GUESS
+    // Material /*--*/ matl; // 
 
     
     /// Memory Methods ///
@@ -119,7 +121,7 @@ class DynaMesh{ public:
 
         // 2. Init material
         // matl = LoadMaterialDefault();
-        matl = Material{};
+        // matl = Material{};
         
         cout << "GO!: init_mesh_memory( " << mesh.triangleCount << " )" << endl;
 
@@ -199,6 +201,11 @@ class DynaMesh{ public:
         }
     }
 
+    void remodel(){
+        modl = LoadModelFromMesh( mesh );
+        modl.materials[0].shader = shdr;
+    }
+
     /// Constructors ///
 
     DynaMesh( uint Ntri ){
@@ -256,12 +263,16 @@ class DynaMesh{ public:
 
     /// Rendering ///
 
-    void set_shader( Shader shader ){ matl.shader = shader; }
+    // void set_shader( Shader shader ){ matl.shader = shader; }
+    // void set_shader( Shader shader ){ modl.materials[0].shader = shader; }
+    void set_shader( Shader shader ){ shdr = shader; }
 
     void draw(){
         // Render the mesh
         // 2023-08-13: Let's stop thinking about `Model`s unless they are absolutely necessary!
-        DrawMesh( mesh, matl, xfrm ); 
+        modl.transform = xfrm;
+        // DrawMesh( mesh, matl, xfrm ); 
+        DrawModel( modl, get_posn(), 1.0f, WHITE );
     }
 
 };
@@ -426,7 +437,9 @@ class Icosahedron_r : public DynaMesh{ public:
     void draw(){
         // Draw the model
         if( anim ){  rotate_RPY( rolVel, ptcVel, yawVel );  }
-        DrawMesh( mesh, matl, xfrm );
+        // DrawMesh( mesh, matl, xfrm );
+        modl.transform = xfrm;
+        DrawModel( modl, Vector3Zero(), 1.0f, WHITE );
     }
 
 };
@@ -484,12 +497,12 @@ int main(){
         BeginDrawing();
         BeginMode3D( camera );
         ClearBackground( BLACK );
-        BeginShaderMode( shader );
+        // BeginShaderMode( shader );
 
         ic.translate( uniform_vector_noise( 0.125 ) );
-        
+        ic.remodel();
 
-        // UpdateLightValues( shader, light );
+        UpdateLightValues( shader, light );
 
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
 
@@ -500,7 +513,7 @@ int main(){
         ic.draw();
 
         /// End Drawing ///
-        EndShaderMode();
+        // EndShaderMode();
         EndMode3D();
 
         DrawFPS( 30, 30 );
