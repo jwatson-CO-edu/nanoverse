@@ -1,4 +1,4 @@
-// g++ 17_shiny-icos.cpp -std=c++17 -lraylib
+// g++ 18_shiny-ribbons.cpp -std=c++17 -lraylib
 // Re-implement Boid Ribbons **without** `Model`s!
 // 2023-08-14: Do not break into smaller files until everything works
 
@@ -15,6 +15,12 @@ using std::cout, std::endl;
 using std::array;
 #include <vector>
 using std::vector;
+#include <algorithm>
+using std::clamp, std::min;
+#include <memory>
+using std::shared_ptr;
+#include <deque>
+using std::deque;
 
 /// Raylib ///
 #include <raylib.h>
@@ -27,14 +33,18 @@ using std::vector;
 
 
 ///// Aliases ////////////////////////////////////
-typedef array<Vector3,3> triPnts; // Vector info for One Triangle (Vertices,nrms) 
-typedef array<Color,3>   triClrs; // Color  info for One Triangle
-typedef vector<Vector3>  vvec3; // - Vector of 3D vectors
+typedef unsigned char /*---*/ ubyte;
+typedef unsigned long /*---*/ ulong;
+typedef vector<float> /*---*/ vf;
+typedef vector<vector<float>> vvf;
+typedef vector<Vector3> /*-*/ vvec3;
+typedef array<Vector3,3> /**/ triPnts; // Vector info for One Triangle (Vertices,nrms) 
+typedef array<Color,3> /*--*/ triClrs; // Color  info for One Triangle
+typedef vector<Vector3> /*-*/ vvec3; // - Vector of 3D vectors
 #define VERTEX_BUFFER_IDX 0 // Vertex coord VBO
 #define NORMAL_BUFFER_IDX 2 // Normal vector VBO
 #define COLORS_BUFFER_IDX 3 // Vertex color VBO
 #define INDEXF_BUFFER_IDX 6 // Indices of facet vertices VBO
-
 
 
 ////////// RANDOM NUMBERS //////////////////////////////////////////////////////////////////////////
@@ -49,6 +59,12 @@ float randf( float lo, float hi ){
     // NOTE: This function assumes `hi > lo`
     float span = hi - lo;
     return lo + span * randf();
+}
+
+int randi( int lo, int hi ){
+    // Return a pseudo-random number between `lo` and `hi` (int)
+    int span = hi - lo;
+    return lo + (rand() % span);
 }
 
 void rand_seed(){  srand( time(NULL) );  } // Seed RNG with unpredictable time-based seed
@@ -84,6 +100,107 @@ Vector3 uniform_vector_noise( float halfMag ){
     };
 }
 
+////////// VECTOR MATH STRUCTS /////////////////////////////////////////////////////////////////////
+
+struct Basis{
+    // Pose exchange format for `Boid`s, Z-basis has primacy
+    // NOTE: None of the operations with other bases assume any operand is orthonormalized
+    // NOTE: Position is largely absent from Basis-Basis operations
+
+    /// Members ///
+    Vector3 Xb; // X-basis
+    Vector3 Yb; // Y-basis
+    Vector3 Zb; // Z-basis
+    Vector3 Pt; // Position
+
+    /// Static Methods ///
+
+    static Basis origin(){
+        // Get the origin `Basis`
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3{ 1.0f, 0.0f, 0.0f };
+        rtnBasis.Yb = Vector3{ 0.0f, 1.0f, 0.0f };
+        rtnBasis.Zb = Vector3{ 0.0f, 0.0f, 1.0f };
+        rtnBasis.Pt = Vector3{ 0.0f, 0.0f, 0.0f };
+        return rtnBasis;
+    }
+
+    static Basis random(){
+        // Sample from a +/-1.0f cube for all vectors, then `orthonormalize`
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3{ randf( -1.0,  1.0 ), randf( -1.0,  1.0 ), randf( -1.0,  1.0 ) };
+        rtnBasis.Yb = Vector3{ randf( -1.0,  1.0 ), randf( -1.0,  1.0 ), randf( -1.0,  1.0 ) };
+        rtnBasis.Zb = Vector3{ randf( -1.0,  1.0 ), randf( -1.0,  1.0 ), randf( -1.0,  1.0 ) };
+        rtnBasis.Pt = Vector3{ randf( -1.0,  1.0 ), randf( -1.0,  1.0 ), randf( -1.0,  1.0 ) };
+        rtnBasis.orthonormalize();
+        return rtnBasis;
+    }
+
+    static Basis from_transform_and_point( const Matrix& xform, const Vector3& point ){
+        // Get a `Basis` from a `xform` matrix and a `point`
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3Transform( Vector3{1.0, 0.0, 0.0}, xform );
+        rtnBasis.Yb = Vector3Transform( Vector3{0.0, 1.0, 0.0}, xform );
+        rtnBasis.Zb = Vector3Transform( Vector3{0.0, 0.0, 1.0}, xform );
+        rtnBasis.Pt = point;
+        return rtnBasis;
+    }
+
+    /// Methods ///
+
+    void orthonormalize(){
+        // Make sure this is an orthonormal basis, Z-basis has primacy
+        // No need to normalize `Xb`, see below
+        Yb = Vector3Normalize( Yb );
+        Zb = Vector3Normalize( Zb );
+        Xb = Vector3Normalize( Vector3CrossProduct( Yb, Zb ) );
+        Yb = Vector3Normalize( Vector3CrossProduct( Zb, Xb ) );
+    };
+
+    void blend_orientations_with_factor( const Basis& other, float factor ){
+        // Exponential filter between this basis and another Orthonormalize separately
+        // 1. Clamp factor
+        factor = clamp( factor, 0.0f, 1.0f );
+        // 2. Blend bases
+        // No need to compute `Xb`, see `orthonormalize`
+        Yb = Vector3Add(  Vector3Scale( Yb, 1.0-factor ), Vector3Scale( other.Yb, factor )  );
+        Zb = Vector3Add(  Vector3Scale( Zb, 1.0-factor ), Vector3Scale( other.Zb, factor )  );
+        // 3. Correct basis
+        orthonormalize();
+    }
+
+    Basis operator+( const Basis& other ){
+        // Addition operator for bases, Just the vector sum of each basis, Orthonormalize separately
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3Add( Xb, other.Xb );
+        rtnBasis.Yb = Vector3Add( Yb, other.Yb );
+        rtnBasis.Zb = Vector3Add( Zb, other.Zb );
+        rtnBasis.Pt = Vector3Add( Pt, other.Pt );
+        return rtnBasis;
+    }
+
+    Basis get_scaled_orientation( float factor ){
+        // Return a copy of the `Basis` with each individual basis scaled by a factor
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3Scale( Xb, factor );
+        rtnBasis.Yb = Vector3Scale( Yb, factor );
+        rtnBasis.Zb = Vector3Scale( Zb, factor );
+        // rtnBasis.Pt = Vector3Scale( Pt, factor );
+        return rtnBasis;
+    }
+
+    Basis copy(){
+        // Return a copy of the basis.
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3( Xb );
+        rtnBasis.Yb = Vector3( Yb );
+        rtnBasis.Zb = Vector3( Zb );
+        rtnBasis.Pt = Vector3( Pt );
+        return rtnBasis;
+    }
+};
+typedef shared_ptr<Basis> basPtr; // 2023-06-17: For now assume that Bases are lightweight enough to pass by value
+
 
 
 ////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
@@ -103,6 +220,7 @@ class DynaMesh{ public:
     Matrix /*----*/ xfrm; // Pose in the parent frame
     Model /*-----*/ modl; // Needed for shaders
     Shader /*----*/ shdr; // Needed for shaders
+    Color /*-----*/ bClr; // Base color
     
     /// Memory Methods ///
 
@@ -203,6 +321,7 @@ class DynaMesh{ public:
         // Allocate memory and set default pose
         init_mesh_memory( Ntri );
         xfrm = MatrixIdentity();
+        bClr = WHITE;
     }
 
     /// Geometry Methods ///
@@ -259,7 +378,7 @@ class DynaMesh{ public:
     void draw(){
         // Render the mesh
         modl.transform = xfrm;
-        DrawModel( modl, get_posn(), 1.0f, WHITE );
+        DrawModel( modl, get_posn(), 1.0f, bClr );
     }
 
 };
@@ -357,6 +476,13 @@ struct Sphere{
         xfrm.m14 = posn.z;
     }
 
+    void translate( const Vector3& delta ){
+        // Increment the position components of the homogeneous coordinates by the associated `delta` components
+        xfrm.m12 += delta.x;
+        xfrm.m13 += delta.y;
+        xfrm.m14 += delta.z;
+    }
+
     /// Constructors ///
     
     Sphere(){
@@ -369,17 +495,23 @@ struct Sphere{
         set_posn( cntr );
     }
 
-    Sphere( const Vector3& cntr_, float rad_ ){
-        cntr = cntr_;
-        rads = rad_;
+    Sphere( const Vector3& center, float radius, Color color = GRAY ){
+        cntr = center;
+        rads = radius;
         mesh = GenMeshSphere( rads, 32, 32 );
         upld = false;
         xfrm = MatrixIdentity();
-        colr = GRAY;
+        colr = color;
         set_posn( cntr );
     }
 
     /// Methods ///
+
+    void remodel(){
+        // Reset the `Model`
+        modl = LoadModelFromMesh( mesh );
+        modl.materials[0].shader = shdr;
+    }
 
     /// Rendering ///
 
@@ -388,10 +520,71 @@ struct Sphere{
     void draw(){
         // Render the mesh
         modl.transform = xfrm;
-        DrawModel( modl, Vector3Zero(), 1.0f, WHITE );
+        DrawModel( modl, Vector3Zero(), 1.0f, colr );
     }
 
     Sphere copy() const {  return Sphere{ cntr, rads };  }
+};
+
+uint Nboids = 0;
+
+class BoidRibbon : public DynaMesh{ public:
+
+    /// Members ///
+    uint  ID; // --- Identifier
+    
+    /// Pose ///
+    Basis headingB; // Where the boid is actually pointed
+
+    /// Way-Finding ///
+    float   ur; // ----- Update rate
+    float   dNear; // -- Radius of hemisphere for flocking consideration
+    uint    Nnear; // -- How many neighbors are there?
+    float   scale; // -- Habitat scale
+    Vector3 home; // --- Don't get too far from this point
+    Basis   flocking; // Flocking instinct
+    Basis   homeSeek; // Home seeking instinct
+    Basis   freeWill; // Drunken walk
+    Basis   avoidSph; // Sphere avoidance instinct
+    Sphere  fearSphr; // The sphere to fear
+
+    /// Rendering ///
+    uint /*--------------*/ Npairs; // -- Number of coordinate pairs allowed
+    uint /*--------------*/ Nviz; // ---- Number of coordinate pairs visible now
+    float /*-------------*/ headAlpha; // Beginning opacity
+    float /*-------------*/ tailAlpha; // Ending    opacity
+    deque<array<Vector3,2>> coords; // -- Ribbon data, listed from head to tail
+    double /*------------*/ width; // --- Width of the ribbon 
+
+    /// Constructor ///
+
+    BoidRibbon( uint N_pairs, float width_, float d_Near, float updateRate, float alphaHead = 1.0f, float alphaTail = 0.0f,
+                const Vector3& home_ )
+        : DynaMesh( (N_pairs-1)*4 ){
+        // Build the geometry of the boid
+        Npairs    = N_pairs;
+        headAlpha = alphaHead;
+        tailAlpha = alphaTail;
+        width     = width_;
+        dNear     = d_Near;
+        ur /*--*/ = updateRate;
+        home /**/ = home_;
+        bClr /**/ = Color{
+            (ubyte) randi( 0, 255 ),
+            (ubyte) randi( 0, 255 ),
+            (ubyte) randi( 0, 255 ),
+            255
+        };
+        headingB = Basis::random(); // Where the boid is actually pointed
+        flocking = headingB.copy(); // Flocking instinct
+        homeSeek = headingB.copy(); // Home seeking instinct
+        freeWill = headingB.copy(); // Drunken walk
+        avoidSph = headingB.copy(); // Sphere avoidance instinct
+
+        Nboids++;
+        ID = Nboids;
+    }
+
 };
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
@@ -409,6 +602,7 @@ int main(){
 
     /// Init Objects ///
     FractureCube dc{ 5.0 };
+    Sphere /*-*/ sp{ Vector3Zero(), 6.0, BLUE };
 
     // Camera
     Camera camera = Camera{
@@ -441,6 +635,8 @@ int main(){
     );
 
     dc.set_shader( shader );
+    sp.set_shader( shader );
+    sp.remodel();
 
     ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
 
@@ -459,6 +655,8 @@ int main(){
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
+        sp.translate( uniform_vector_noise( 0.125 ) );
+        sp.draw();
         
 
         /// End Drawing ///
