@@ -101,8 +101,8 @@ class DynaMesh{ public:
     Mesh /*------*/ mesh; // Raylib mesh geometry
     bool /*------*/ upld; // Has the mesh been uploaded?
     Matrix /*----*/ xfrm; // Pose in the parent frame
-    Model /*-----*/ modl; // USE MODEL I GUESS
-    Shader /*----*/ shdr; // USE MODEL I GUESS
+    Model /*-----*/ modl; // Needed for shaders
+    Shader /*----*/ shdr; // Needed for shaders
     
     /// Memory Methods ///
 
@@ -192,6 +192,7 @@ class DynaMesh{ public:
     }
 
     void remodel(){
+        // Reset the `Model`
         modl = LoadModelFromMesh( mesh );
         modl.materials[0].shader = shdr;
     }
@@ -336,102 +337,61 @@ class FractureCube : public DynaMesh{ public:
     }
 };
 
-class Icosahedron_r : public DynaMesh{ public:
-    // Implementing icosahedron mesh in Raylib for the Nth time!
+struct Sphere{
+    // Container struct for an obstacle to avoid
+    
+    /// Members ///
+    Vector3 cntr;
+    float   rads;
+    Mesh    mesh; // Raylib mesh geometry
+    bool    upld; // Has the mesh been uploaded?
+    Matrix  xfrm; // Pose in the parent frame
+    Model   modl; // Needed for shaders
+    Shader  shdr; // Needed for shaders
+    Color   colr;
 
-    // ~ Constants ~
-	float sqrt5 = sqrt( 5.0f ); // ------------------------------------ Square root of 5
-	float phi   = ( 1.0f + sqrt5 ) * 0.5f; // ------------------------- The Golden Ratio
-	float ratio = sqrt( 10.0f + ( 2.0f * sqrt5 ) ) / ( 4.0f * phi ); // ratio of edge length to radius
-	
-	// ~ Variables ~
-	float radius;
-	float a; 
-	float b; 
-    vvec3 V;
-
-    // ~ Appearance ~
-    Color baseClr;
-    Color lineClr;
-    bool  drawWires;
-
-    // ~ Animation ~
-    bool  anim;
-    float rolVel;
-    float ptcVel;
-    float yawVel;
-
-    // ~ Constructors ~
-
-    Icosahedron_r( float rad , const Vector3& cntr, bool animate = true, Color baseColor = BLUE ) : DynaMesh(20){
-        // Compute the vertices and faces
-        radius = rad;
-        a /**/ = ( radius / ratio ) * 0.5;
-        b /**/ = ( radius / ratio ) / ( 2.0f * phi );
-        set_posn( cntr );
-
-        // Appearance
-        baseClr = baseColor;
-
-        // Animation
-        anim = animate;
-        float loRate = -0.01f;
-        float hiRate =  0.01f;
-        rolVel = randf( loRate, hiRate );
-        ptcVel = randf( loRate, hiRate );
-        yawVel = randf( loRate, hiRate );
-
-        // Define the icosahedron's 12 vertices:
-        V.push_back( Vector3{  0,  b, -a } );
-        V.push_back( Vector3{  b,  a,  0 } );
-        V.push_back( Vector3{ -b,  a,  0 } );
-        V.push_back( Vector3{  0,  b,  a } );
-        V.push_back( Vector3{  0, -b,  a } );
-        V.push_back( Vector3{ -a,  0,  b } );
-        V.push_back( Vector3{  0, -b, -a } );
-        V.push_back( Vector3{  a,  0, -b } );
-        V.push_back( Vector3{  a,  0,  b } );
-        V.push_back( Vector3{ -a,  0, -b } );
-        V.push_back( Vector3{  b, -a,  0 } );
-        V.push_back( Vector3{ -b, -a,  0 } );
-
-        Color   R{ 255,   0,   0, 255 };
-        Color   G{   0, 255,   0, 255 };
-        Color   B{   0,   0, 255, 255 };
-
-        // Define the icosahedron's 20 triangular faces: CCW-out
-        push_triangle_w_norms( {V[ 2], V[ 1], V[ 0]} );  clrs.push_back( {R, G, B} );
-        push_triangle_w_norms( {V[ 1], V[ 2], V[ 3]} );  clrs.push_back( {B, R, G} );
-        push_triangle_w_norms( {V[ 5], V[ 4], V[ 3]} );  clrs.push_back( {G, B, R} );
-        push_triangle_w_norms( {V[ 4], V[ 8], V[ 3]} );  clrs.push_back( {R, G, B} );
-        push_triangle_w_norms( {V[ 7], V[ 6], V[ 0]} );  clrs.push_back( {B, R, G} );
-        push_triangle_w_norms( {V[ 6], V[ 9], V[ 0]} );  clrs.push_back( {G, B, R} );
-        push_triangle_w_norms( {V[11], V[10], V[ 4]} );  clrs.push_back( {R, G, B} );
-        push_triangle_w_norms( {V[10], V[11], V[ 6]} );  clrs.push_back( {B, R, G} );
-        push_triangle_w_norms( {V[ 9], V[ 5], V[ 2]} );  clrs.push_back( {G, B, R} );
-        push_triangle_w_norms( {V[ 5], V[ 9], V[11]} );  clrs.push_back( {R, G, B} );
-        push_triangle_w_norms( {V[ 8], V[ 7], V[ 1]} );  clrs.push_back( {B, R, G} );
-        push_triangle_w_norms( {V[ 7], V[ 8], V[10]} );  clrs.push_back( {G, B, R} );
-        push_triangle_w_norms( {V[ 2], V[ 5], V[ 3]} );  clrs.push_back( {R, G, B} );
-        push_triangle_w_norms( {V[ 8], V[ 1], V[ 3]} );  clrs.push_back( {B, R, G} );
-        push_triangle_w_norms( {V[ 9], V[ 2], V[ 0]} );  clrs.push_back( {G, B, R} );
-        push_triangle_w_norms( {V[ 1], V[ 7], V[ 0]} );  clrs.push_back( {R, G, B} );
-        push_triangle_w_norms( {V[11], V[ 9], V[ 6]} );  clrs.push_back( {B, R, G} );
-        push_triangle_w_norms( {V[ 7], V[10], V[ 6]} );  clrs.push_back( {G, B, R} );
-        push_triangle_w_norms( {V[ 5], V[11], V[ 4]} );  clrs.push_back( {R, G, B} );
-        push_triangle_w_norms( {V[10], V[ 8], V[ 4]} );  clrs.push_back( {B, R, G} );
-
-        // 4. Load buffers
-        load_mesh_buffers( true, true );
+    void set_posn( const Vector3& posn ){
+        // Set the position components of the homogeneous coordinates
+        xfrm.m12 = posn.x;
+        xfrm.m13 = posn.y;
+        xfrm.m14 = posn.z;
     }
+
+    /// Constructors ///
+    
+    Sphere(){
+        cntr = Vector3Zero();
+        rads = 1.0;
+        mesh = GenMeshSphere( rads, 32, 32 );
+        upld = false;
+        xfrm = MatrixIdentity();
+        colr = GRAY;
+        set_posn( cntr );
+    }
+
+    Sphere( const Vector3& cntr_, float rad_ ){
+        cntr = cntr_;
+        rads = rad_;
+        mesh = GenMeshSphere( rads, 32, 32 );
+        upld = false;
+        xfrm = MatrixIdentity();
+        colr = GRAY;
+        set_posn( cntr );
+    }
+
+    /// Methods ///
+
+    /// Rendering ///
+
+    void set_shader( Shader shader ){ shdr = shader; }
 
     void draw(){
-        // Draw the model
-        if( anim ){  rotate_RPY( rolVel, ptcVel, yawVel );  }
+        // Render the mesh
         modl.transform = xfrm;
-        DrawModel( modl, Vector3Zero(), 1.0f, Color{ 255,255,255,255 } );
+        DrawModel( modl, Vector3Zero(), 1.0f, WHITE );
     }
 
+    Sphere copy() const {  return Sphere{ cntr, rads };  }
 };
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
@@ -449,7 +409,6 @@ int main(){
 
     /// Init Objects ///
     FractureCube dc{ 5.0 };
-    Icosahedron_r ic{ 5.0, Vector3Zero(), true, BLUE };
 
     // Camera
     Camera camera = Camera{
@@ -481,7 +440,6 @@ int main(){
         shader
     );
 
-    ic.set_shader( shader );
     dc.set_shader( shader );
 
     ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
@@ -493,9 +451,6 @@ int main(){
         BeginMode3D( camera );
         ClearBackground( BLACK );
 
-        ic.translate( uniform_vector_noise( 0.125 ) );
-        ic.remodel();
-        
         // dc.update();
         // dc.remodel();
 
@@ -504,7 +459,6 @@ int main(){
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
-        ic.draw();
         
 
         /// End Drawing ///
