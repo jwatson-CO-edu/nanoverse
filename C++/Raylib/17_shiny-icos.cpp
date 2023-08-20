@@ -61,8 +61,8 @@ void rand_seed(){  srand( time(NULL) );  } // Seed RNG with unpredictable time-b
 Vector3 normal_of_tiangle( const triPnts& tri ){
     // Get the normal of the triangle assuming CCW / Right-Hand ordering
     return Vector3Normalize( Vector3CrossProduct(
-        Vector3Subtract( tri[0], tri[1] ),
-        Vector3Subtract( tri[2], tri[1] )
+        Vector3Subtract( tri[2], tri[1] ),
+        Vector3Subtract( tri[0], tri[1] )
     ));
 }
 
@@ -101,8 +101,8 @@ class DynaMesh{ public:
     Mesh /*------*/ mesh; // Raylib mesh geometry
     bool /*------*/ upld; // Has the mesh been uploaded?
     Matrix /*----*/ xfrm; // Pose in the parent frame
-    Material /*--*/ matl; // 
-
+    Model /*-----*/ modl; // USE MODEL I GUESS
+    Shader /*----*/ shdr; // USE MODEL I GUESS
     
     /// Memory Methods ///
 
@@ -119,7 +119,7 @@ class DynaMesh{ public:
 
         // 2. Init material
         // matl = LoadMaterialDefault();
-        matl = Material{};
+        // matl = Material{};
         
         cout << "GO!: init_mesh_memory( " << mesh.triangleCount << " )" << endl;
 
@@ -199,6 +199,12 @@ class DynaMesh{ public:
         }
     }
 
+    void remodel(){
+        modl = LoadModelFromMesh( mesh );
+        modl.materials[0] = LoadMaterialDefault();
+        modl.materials[0].shader = shdr;
+    }
+
     /// Constructors ///
 
     DynaMesh( uint Ntri ){
@@ -256,12 +262,12 @@ class DynaMesh{ public:
 
     /// Rendering ///
 
-    void set_shader( Shader shader ){ matl.shader = shader; }
+    void set_shader( Shader shader ){ shdr = shader; }
 
     void draw(){
         // Render the mesh
-        // 2023-08-13: Let's stop thinking about `Model`s unless they are absolutely necessary!
-        DrawMesh( mesh, matl, xfrm ); 
+        modl.transform = xfrm;
+        DrawModel( modl, get_posn(), 1.0f, WHITE );
     }
 
 };
@@ -325,8 +331,8 @@ class FractureCube : public DynaMesh{ public:
     }
 
     void update(){
-        translate( uniform_vector_noise( 0.125 ) );
-        if( randf() < 0.20 ){
+        // translate( uniform_vector_noise( 0.125 ) );
+        if( randf() < 0.50 ){
             for( triPnts& tri : tris ){
                 tri[0] = uniform_vector_noise( tri[0], 0.125 );
                 tri[1] = uniform_vector_noise( tri[1], 0.125 );
@@ -335,6 +341,7 @@ class FractureCube : public DynaMesh{ public:
             }
         }
         load_mesh_buffers( true, false );
+        remodel();
     }
 };
 
@@ -397,36 +404,44 @@ class Icosahedron_r : public DynaMesh{ public:
         V.push_back( Vector3{  b, -a,  0 } );
         V.push_back( Vector3{ -b, -a,  0 } );
 
+        Color   R{ 255,   0,   0, 255 };
+        Color   G{   0, 255,   0, 255 };
+        Color   B{   0,   0, 255, 255 };
+
         // Define the icosahedron's 20 triangular faces: CCW-out
-        push_triangle_w_norms( {V[ 2], V[ 1], V[ 0]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
-        push_triangle_w_norms( {V[ 1], V[ 2], V[ 3]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
-        push_triangle_w_norms( {V[ 5], V[ 4], V[ 3]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
-        push_triangle_w_norms( {V[ 4], V[ 8], V[ 3]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
-        push_triangle_w_norms( {V[ 7], V[ 6], V[ 0]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
-        push_triangle_w_norms( {V[ 6], V[ 9], V[ 0]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
-        push_triangle_w_norms( {V[11], V[10], V[ 4]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
-        push_triangle_w_norms( {V[10], V[11], V[ 6]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
-        push_triangle_w_norms( {V[ 9], V[ 5], V[ 2]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
-        push_triangle_w_norms( {V[ 5], V[ 9], V[11]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
-        push_triangle_w_norms( {V[ 8], V[ 7], V[ 1]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
-        push_triangle_w_norms( {V[ 7], V[ 8], V[10]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
-        push_triangle_w_norms( {V[ 2], V[ 5], V[ 3]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
-        push_triangle_w_norms( {V[ 8], V[ 1], V[ 3]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
-        push_triangle_w_norms( {V[ 9], V[ 2], V[ 0]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
-        push_triangle_w_norms( {V[ 1], V[ 7], V[ 0]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
-        push_triangle_w_norms( {V[11], V[ 9], V[ 6]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
-        push_triangle_w_norms( {V[ 7], V[10], V[ 6]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
-        push_triangle_w_norms( {V[ 5], V[11], V[ 4]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
-        push_triangle_w_norms( {V[10], V[ 8], V[ 4]} );  clrs.push_back( {baseClr, baseClr, baseClr} );
+        push_triangle_w_norms( {V[ 2], V[ 1], V[ 0]} );  clrs.push_back( {R, G, B} );
+        push_triangle_w_norms( {V[ 1], V[ 2], V[ 3]} );  clrs.push_back( {B, R, G} );
+        push_triangle_w_norms( {V[ 5], V[ 4], V[ 3]} );  clrs.push_back( {G, B, R} );
+        push_triangle_w_norms( {V[ 4], V[ 8], V[ 3]} );  clrs.push_back( {R, G, B} );
+        push_triangle_w_norms( {V[ 7], V[ 6], V[ 0]} );  clrs.push_back( {B, R, G} );
+        push_triangle_w_norms( {V[ 6], V[ 9], V[ 0]} );  clrs.push_back( {G, B, R} );
+        push_triangle_w_norms( {V[11], V[10], V[ 4]} );  clrs.push_back( {R, G, B} );
+        push_triangle_w_norms( {V[10], V[11], V[ 6]} );  clrs.push_back( {B, R, G} );
+        push_triangle_w_norms( {V[ 9], V[ 5], V[ 2]} );  clrs.push_back( {G, B, R} );
+        push_triangle_w_norms( {V[ 5], V[ 9], V[11]} );  clrs.push_back( {R, G, B} );
+        push_triangle_w_norms( {V[ 8], V[ 7], V[ 1]} );  clrs.push_back( {B, R, G} );
+        push_triangle_w_norms( {V[ 7], V[ 8], V[10]} );  clrs.push_back( {G, B, R} );
+        push_triangle_w_norms( {V[ 2], V[ 5], V[ 3]} );  clrs.push_back( {R, G, B} );
+        push_triangle_w_norms( {V[ 8], V[ 1], V[ 3]} );  clrs.push_back( {B, R, G} );
+        push_triangle_w_norms( {V[ 9], V[ 2], V[ 0]} );  clrs.push_back( {G, B, R} );
+        push_triangle_w_norms( {V[ 1], V[ 7], V[ 0]} );  clrs.push_back( {R, G, B} );
+        push_triangle_w_norms( {V[11], V[ 9], V[ 6]} );  clrs.push_back( {B, R, G} );
+        push_triangle_w_norms( {V[ 7], V[10], V[ 6]} );  clrs.push_back( {G, B, R} );
+        push_triangle_w_norms( {V[ 5], V[11], V[ 4]} );  clrs.push_back( {R, G, B} );
+        push_triangle_w_norms( {V[10], V[ 8], V[ 4]} );  clrs.push_back( {B, R, G} );
 
         // 4. Load buffers
         load_mesh_buffers( true, true );
     }
 
     void draw(){
+        // load_mesh_buffers( true, true );
         // Draw the model
         if( anim ){  rotate_RPY( rolVel, ptcVel, yawVel );  }
-        DrawMesh( mesh, matl, xfrm );
+        // DrawMesh( mesh, matl, xfrm );
+        modl.transform = xfrm;
+        // DrawModel( modl, Vector3Zero(), 1.0f, WHITE );
+        DrawModel( modl, Vector3Zero(), 1.0f, Color{ 255,255,255,255 } );
     }
 
 };
@@ -445,7 +460,7 @@ int main(){
     float halfBoxLen = 100.0/10.0;
 
     /// Init Objects ///
-    // FractureCube dc{ 5.0 };
+    FractureCube dc{ 5.0 };
     Icosahedron_r ic{ 5.0, Vector3Zero(), true, BLUE };
 
     // Camera
@@ -467,14 +482,23 @@ int main(){
     //shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
     
     // Ambient light level (some basic lighting)
-    float ambientColor[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
+    // float ambientColor[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
+    float ambientColor[4] = { 0.25f, 0.25f, 0.25f, 0.50f };
     int ambientLoc = GetShaderLocation(shader, "ambient");
     SetShaderValue(shader, ambientLoc, ambientColor, SHADER_UNIFORM_VEC4);
 
     // Using just 1 point lights
-    Light light = CreateLight(LIGHT_POINT, (Vector3){ 20.0, 20.0, 20.0 }, Vector3Zero(), WHITE, shader);
+    Light light = CreateLight(
+        LIGHT_POINT, 
+        Vector3{ 20.0, 20.0, 20.0 }, 
+        Vector3Zero(), 
+        // WHITE, 
+        Color{ 255, 255, 255, 125 }, 
+        shader
+    );
 
     ic.set_shader( shader );
+    dc.set_shader( shader );
 
     ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
 
@@ -484,23 +508,26 @@ int main(){
         BeginDrawing();
         BeginMode3D( camera );
         ClearBackground( BLACK );
-        BeginShaderMode( shader );
+        // BeginShaderMode( shader );
 
-        ic.translate( uniform_vector_noise( 0.125 ) );
+        // ic.translate( uniform_vector_noise( 0.125 ) );
+        // ic.remodel();
         
+        dc.update();
+        // dc.remodel();
 
-        // UpdateLightValues( shader, light );
+        UpdateLightValues( shader, light );
 
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
-        // dc.update();
-        // dc.draw();
+        // 
+        dc.draw();
         
-        ic.draw();
+        // ic.draw();
 
         /// End Drawing ///
-        EndShaderMode();
+        // EndShaderMode();
         EndMode3D();
 
         DrawFPS( 30, 30 );

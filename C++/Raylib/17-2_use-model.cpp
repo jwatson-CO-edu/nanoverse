@@ -103,8 +103,6 @@ class DynaMesh{ public:
     Matrix /*----*/ xfrm; // Pose in the parent frame
     Model /*-----*/ modl; // USE MODEL I GUESS
     Shader /*----*/ shdr; // USE MODEL I GUESS
-    // Material /*--*/ matl; // 
-
     
     /// Memory Methods ///
 
@@ -264,15 +262,11 @@ class DynaMesh{ public:
 
     /// Rendering ///
 
-    // void set_shader( Shader shader ){ matl.shader = shader; }
-    // void set_shader( Shader shader ){ modl.materials[0].shader = shader; }
     void set_shader( Shader shader ){ shdr = shader; }
 
     void draw(){
         // Render the mesh
-        // 2023-08-13: Let's stop thinking about `Model`s unless they are absolutely necessary!
         modl.transform = xfrm;
-        // DrawMesh( mesh, matl, xfrm ); 
         DrawModel( modl, get_posn(), 1.0f, WHITE );
     }
 
@@ -337,8 +331,8 @@ class FractureCube : public DynaMesh{ public:
     }
 
     void update(){
-        translate( uniform_vector_noise( 0.125 ) );
-        if( randf() < 0.20 ){
+        // translate( uniform_vector_noise( 0.125 ) );
+        if( randf() < 0.50 ){
             for( triPnts& tri : tris ){
                 tri[0] = uniform_vector_noise( tri[0], 0.125 );
                 tri[1] = uniform_vector_noise( tri[1], 0.125 );
@@ -347,6 +341,7 @@ class FractureCube : public DynaMesh{ public:
             }
         }
         load_mesh_buffers( true, false );
+        remodel();
     }
 };
 
@@ -414,26 +409,26 @@ class Icosahedron_r : public DynaMesh{ public:
         Color   B{   0,   0, 255, 255 };
 
         // Define the icosahedron's 20 triangular faces: CCW-out
-        push_triangle_w_norms( {V[ 2], V[ 1], V[ 0]} );  clrs.push_back( {R, baseClr, baseClr} );
-        push_triangle_w_norms( {V[ 1], V[ 2], V[ 3]} );  clrs.push_back( {baseClr, R, baseClr} );
-        push_triangle_w_norms( {V[ 5], V[ 4], V[ 3]} );  clrs.push_back( {baseClr, baseClr, R} );
-        push_triangle_w_norms( {V[ 4], V[ 8], V[ 3]} );  clrs.push_back( {R, baseClr, baseClr} );
-        push_triangle_w_norms( {V[ 7], V[ 6], V[ 0]} );  clrs.push_back( {baseClr, R, baseClr} );
-        push_triangle_w_norms( {V[ 6], V[ 9], V[ 0]} );  clrs.push_back( {baseClr, baseClr, R} );
-        push_triangle_w_norms( {V[11], V[10], V[ 4]} );  clrs.push_back( {R, baseClr, baseClr} );
-        push_triangle_w_norms( {V[10], V[11], V[ 6]} );  clrs.push_back( {baseClr, R, baseClr} );
-        push_triangle_w_norms( {V[ 9], V[ 5], V[ 2]} );  clrs.push_back( {baseClr, baseClr, R} );
-        push_triangle_w_norms( {V[ 5], V[ 9], V[11]} );  clrs.push_back( {R, baseClr, baseClr} );
-        push_triangle_w_norms( {V[ 8], V[ 7], V[ 1]} );  clrs.push_back( {baseClr, R, baseClr} );
-        push_triangle_w_norms( {V[ 7], V[ 8], V[10]} );  clrs.push_back( {baseClr, baseClr, R} );
-        push_triangle_w_norms( {V[ 2], V[ 5], V[ 3]} );  clrs.push_back( {R, baseClr, baseClr} );
-        push_triangle_w_norms( {V[ 8], V[ 1], V[ 3]} );  clrs.push_back( {baseClr, R, baseClr} );
-        push_triangle_w_norms( {V[ 9], V[ 2], V[ 0]} );  clrs.push_back( {baseClr, baseClr, R} );
-        push_triangle_w_norms( {V[ 1], V[ 7], V[ 0]} );  clrs.push_back( {R, baseClr, baseClr} );
-        push_triangle_w_norms( {V[11], V[ 9], V[ 6]} );  clrs.push_back( {baseClr, R, baseClr} );
-        push_triangle_w_norms( {V[ 7], V[10], V[ 6]} );  clrs.push_back( {baseClr, baseClr, R} );
-        push_triangle_w_norms( {V[ 5], V[11], V[ 4]} );  clrs.push_back( {R, baseClr, baseClr} );
-        push_triangle_w_norms( {V[10], V[ 8], V[ 4]} );  clrs.push_back( {baseClr, R, baseClr} );
+        push_triangle_w_norms( {V[ 2], V[ 1], V[ 0]} );  clrs.push_back( {R, G, B} );
+        push_triangle_w_norms( {V[ 1], V[ 2], V[ 3]} );  clrs.push_back( {B, R, G} );
+        push_triangle_w_norms( {V[ 5], V[ 4], V[ 3]} );  clrs.push_back( {G, B, R} );
+        push_triangle_w_norms( {V[ 4], V[ 8], V[ 3]} );  clrs.push_back( {R, G, B} );
+        push_triangle_w_norms( {V[ 7], V[ 6], V[ 0]} );  clrs.push_back( {B, R, G} );
+        push_triangle_w_norms( {V[ 6], V[ 9], V[ 0]} );  clrs.push_back( {G, B, R} );
+        push_triangle_w_norms( {V[11], V[10], V[ 4]} );  clrs.push_back( {R, G, B} );
+        push_triangle_w_norms( {V[10], V[11], V[ 6]} );  clrs.push_back( {B, R, G} );
+        push_triangle_w_norms( {V[ 9], V[ 5], V[ 2]} );  clrs.push_back( {G, B, R} );
+        push_triangle_w_norms( {V[ 5], V[ 9], V[11]} );  clrs.push_back( {R, G, B} );
+        push_triangle_w_norms( {V[ 8], V[ 7], V[ 1]} );  clrs.push_back( {B, R, G} );
+        push_triangle_w_norms( {V[ 7], V[ 8], V[10]} );  clrs.push_back( {G, B, R} );
+        push_triangle_w_norms( {V[ 2], V[ 5], V[ 3]} );  clrs.push_back( {R, G, B} );
+        push_triangle_w_norms( {V[ 8], V[ 1], V[ 3]} );  clrs.push_back( {B, R, G} );
+        push_triangle_w_norms( {V[ 9], V[ 2], V[ 0]} );  clrs.push_back( {G, B, R} );
+        push_triangle_w_norms( {V[ 1], V[ 7], V[ 0]} );  clrs.push_back( {R, G, B} );
+        push_triangle_w_norms( {V[11], V[ 9], V[ 6]} );  clrs.push_back( {B, R, G} );
+        push_triangle_w_norms( {V[ 7], V[10], V[ 6]} );  clrs.push_back( {G, B, R} );
+        push_triangle_w_norms( {V[ 5], V[11], V[ 4]} );  clrs.push_back( {R, G, B} );
+        push_triangle_w_norms( {V[10], V[ 8], V[ 4]} );  clrs.push_back( {B, R, G} );
 
         // 4. Load buffers
         load_mesh_buffers( true, true );
@@ -465,7 +460,7 @@ int main(){
     float halfBoxLen = 100.0/10.0;
 
     /// Init Objects ///
-    // FractureCube dc{ 5.0 };
+    FractureCube dc{ 5.0 };
     Icosahedron_r ic{ 5.0, Vector3Zero(), true, BLUE };
 
     // Camera
@@ -503,6 +498,7 @@ int main(){
     );
 
     ic.set_shader( shader );
+    dc.set_shader( shader );
 
     ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
 
@@ -514,18 +510,21 @@ int main(){
         ClearBackground( BLACK );
         // BeginShaderMode( shader );
 
-        ic.translate( uniform_vector_noise( 0.125 ) );
-        ic.remodel();
+        // ic.translate( uniform_vector_noise( 0.125 ) );
+        // ic.remodel();
+        
+        dc.update();
+        // dc.remodel();
 
         UpdateLightValues( shader, light );
 
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
-        // dc.update();
-        // dc.draw();
+        // 
+        dc.draw();
         
-        ic.draw();
+        // ic.draw();
 
         /// End Drawing ///
         // EndShaderMode();
