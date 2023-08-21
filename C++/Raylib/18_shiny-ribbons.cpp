@@ -585,7 +585,196 @@ class BoidRibbon : public DynaMesh{ public:
         ID = Nboids;
     }
 
+    /// Methods ///
+
+    Basis get_Basis(){
+        // Get pose info for this boid
+        return headingB.copy();
+    }
+
+    void push_coord_pair( const Vector3& c1, const Vector3& c2 ){
+        // Add coordinates to the head of the plume
+        if( coords.size() >= Npairs )  coords.pop_back(); // If queue is full, drop the tail element
+        coords.push_front(  array<Vector3,2>{ c1, c2 }  );
+    }
+
+    /// Navigation ///
+
+    Basis consider_neighbors( const vector<Basis>& nghbrPoses ){
+        // Flocking instinct: Adjust bearing according to the closest neighbors in front of the boid
+        Vector3 Xmean;
+        Vector3 Ymean;
+        Vector3 Zmean;
+        Vector3 Zfly , diffVec;
+        Basis   rtnMsg;
+        uint    relevant = 0;
+        float   dist, dotFront;
+        Xmean = Vector3{0.0f, 0.0f, 0.0f};
+        Ymean = Vector3{0.0f, 0.0f, 0.0f};
+        Zmean = Vector3{0.0f, 0.0f, 0.0f};
+        for( const Basis& msg : nghbrPoses ){
+            diffVec  = Vector3Subtract( msg.Pt, headingB.Pt );
+            dist     = Vector3Length( diffVec );
+            if( dist > 0.0 ){
+                Zfly     = headingB.Zb;
+                dotFront = Vector3DotProduct( Zfly, diffVec );
+                if( (dist <= dNear) || (dotFront >= 0.0f) ){
+                    Xmean  = Vector3Add( Xmean, msg.Xb );
+                    Ymean  = Vector3Add( Ymean, msg.Yb );
+                    Zmean  = Vector3Add( Zmean, msg.Zb );
+                    relevant++;
+                }
+            }
+        }
+        Nnear = relevant;
+        if( relevant ){
+            rtnMsg.Xb = Xmean;
+            rtnMsg.Yb = Ymean;
+            rtnMsg.Zb = Zmean;
+            rtnMsg.orthonormalize();
+        }else{
+            rtnMsg.Xb = Vector3{0.0f, 0.0f, 0.0f};
+            rtnMsg.Yb = Vector3{0.0f, 0.0f, 0.0f};
+            rtnMsg.Zb = Vector3{0.0f, 0.0f, 0.0f};
+        }
+        return rtnMsg;
+    }
+
+    Basis consider_home(){
+        // Home seeking instinct: Take `N_samples` and choose the one that points closest to `home`
+        Basis   rtnMsg;
+        Vector3 hVec = Vector3Subtract( home, headingB.Pt );
+        rtnMsg.Zb = Vector3Normalize( hVec );
+        rtnMsg.Xb = Vector3Normalize( Vector3CrossProduct( headingB.Yb, rtnMsg.Zb ) );
+        rtnMsg.Yb = Vector3Normalize( Vector3CrossProduct( rtnMsg.Zb  , rtnMsg.Xb ) );
+        return rtnMsg;
+    }
+
+    Basis consider_free_will(){
+        // Drunken walk: Choose a random direction in which to nudge free will
+        Basis   rtnMsg;
+        Vector3 vWil = Vector3{
+            randf( -1.0,  1.0 ),
+            randf( -1.0,  1.0 ),
+            randf( -1.0,  1.0 )
+        };
+        rtnMsg.Zb = Vector3Normalize( vWil );
+        rtnMsg.Xb = Vector3Normalize( Vector3CrossProduct( headingB.Yb, rtnMsg.Zb ) );
+        rtnMsg.Yb = Vector3Normalize( Vector3CrossProduct( rtnMsg.Zb  , rtnMsg.Xb ) );
+        return rtnMsg;
+    }
+
+    Basis consider_spheres( const vector<Sphere>& sphereList ){
+        // Sphere avoidance instinct
+        float nearDist = 1e9;
+        float sphrDist = 0.0;
+        uint  i /*--*/ = 0;
+        // 1. Find the closest sphere
+        for( const Sphere& sphere : sphereList ){
+            sphrDist = Vector3Distance( sphere.cntr, headingB.Pt );
+            if( sphrDist < nearDist ){
+                nearDist = sphrDist;
+                fearSphr = sphere.copy();
+            }
+            i++;
+        }
+        // 2. Generate an avoiding heading
+        Vector3 toSphr = Vector3Subtract( fearSphr.cntr, headingB.Pt );
+        if( nearDist < fearSphr.rads ){
+            Basis rtnBasis;
+            rtnBasis.Zb = Vector3Scale( toSphr, -1.0f );
+            rtnBasis.Yb = Vector3CrossProduct( rtnBasis.Zb, headingB.Xb );
+            rtnBasis.orthonormalize();
+            return rtnBasis;
+        }else if( Vector3DotProduct( headingB.Zb, toSphr ) > 0.0 ){
+            Basis rtnBasis;
+            rtnBasis.Yb = Vector3Scale( toSphr, -1.0 );
+            rtnBasis.Xb = Vector3CrossProduct( rtnBasis.Yb, headingB.Zb );
+            rtnBasis.Zb = Vector3CrossProduct( rtnBasis.Xb, rtnBasis.Yb );
+            rtnBasis.orthonormalize();
+            return rtnBasis;
+        }else{
+            return headingB.copy();
+        }
+    }
+
+    double update_instincts_and_heading( const vector<Basis>& flockPoses, const vector<Sphere>& spheres ){
+        // Main navigation function
+        // 1. Update flocking instinct
+        Basis flockDrive = consider_neighbors( flockPoses );
+        flocking.blend_orientations_with_factor( flockDrive, ur );
+        // 2. Update home seeking instinct
+        float dist /*-*/ = Vector3Distance( home, headingB.Pt );
+        Basis centrDrive = consider_home();
+        homeSeek.blend_orientations_with_factor( centrDrive, ur );
+        // 3. Update drunken walk
+        if( randf() < 0.25 ){
+            Basis freewDrive = consider_free_will();
+            freeWill.blend_orientations_with_factor( freewDrive, ur );
+        }
+        // 4. Update sphere avoidance instinct
+        Basis fearDrive = consider_spheres( spheres );
+        avoidSph.blend_orientations_with_factor( fearDrive, ur );
+        float fearDist = Vector3Distance( fearSphr.cntr, headingB.Pt );
+        // 4. Blend intincts
+        Basis total = flocking.get_scaled_orientation( 0.45f * Nnear ) + 
+                      homeSeek.get_scaled_orientation( dist/scale*5.0f ) + 
+                      freeWill.get_scaled_orientation( 10.0 ) + 
+                      avoidSph.get_scaled_orientation( fearSphr.rads / fearDist * 15 );
+        // 5. Limit turn and set heading
+        double updateTurn = Vector3Angle( total.Zb, headingB.Zb );
+        double turnMax    = PI/32;
+        double factor     = updateTurn/turnMax;
+
+        headingB.blend_orientations_with_factor( total, ur/factor );
+        return 0.0;
+    }
+
+    void update_position( float zThrust ){
+        // Move forward and push a segment to the ribbon
+        // 1. Z Thrust
+        headingB.Pt = Vector3Add( headingB.Pt, Vector3Scale( headingB.Zb, zThrust ) );
+        push_coord_pair(
+            Vector3Add( headingB.Pt, Vector3Scale( headingB.Xb,  width/2.0f ) ),
+            Vector3Add( headingB.Pt, Vector3Scale( headingB.Xb, -width/2.0f ) )
+        );
+    }
+
+    ///// Rendering //////////////////////////////
+    // WARNING: Requires window init to call!
+
+    void update(){
+        // Create geometry
+        /*---*/ Nviz  = coords.size()-1;        
+        float   R     = bClr.r/255.0f;
+        float   G     = bClr.g/255.0f;
+        float   B     = bClr.b/255.0f;
+        float   Aspan = headAlpha - tailAlpha;
+        Vector3 c1, c2, c3, c4, n1, n2;
+        float   A_i;
+        float   A_ip1;
+
+        for( uint i = 0; i < Nviz; i++){
+            c1    = coords[i  ][0];
+            c2    = coords[i  ][1];
+            c3    = coords[i+1][0];
+            c4    = coords[i+1][1];
+            A_i   = tailAlpha + Aspan*(Nviz-(i  ))/(1.0f*Nviz);
+            A_ip1 = tailAlpha + Aspan*(Nviz-(i+1))/(1.0f*Nviz);
+
+            // FIXME, START HERE: PUSH TRIANGLES!
+
+        }
+    }
+
+    void draw(){
+        // Render plume as a `Model`
+        
+
+    }
+
 };
+typedef shared_ptr<BoidRibbon> rbbnPtr;
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
