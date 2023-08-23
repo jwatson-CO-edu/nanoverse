@@ -764,50 +764,52 @@ class BoidRibbon : public DynaMesh{ public:
         Vector3 c1, c2, c3, c4, n1, n2;
         ubyte   A_i, A_ip1;
         Color   C_i, C_ip1;
+        Color   C_clr = Color{ 0, 0, 0, 0 };
 
         wipe_geo( true, true );
 
-        for( uint i = 0; i < Nviz; i++){
-            c1    = coords[i  ][0];
-            c2    = coords[i  ][1];
-            c3    = coords[i+1][0];
-            c4    = coords[i+1][1];
-            // 3. Calculate the opacity at this segment along the ribbon
-            A_i   = (ubyte) 255 * (tailAlpha + Aspan*(Nviz-(i  ))/(1.0f*Nviz));
-            A_ip1 = (ubyte) 255 * (tailAlpha + Aspan*(Nviz-(i+1))/(1.0f*Nviz));
-            C_i   = Color{ bClr.r, bClr.g, bClr.b, A_i   };
-            C_ip1 = Color{ bClr.r, bClr.g, bClr.b, A_ip1 };
+        for( uint i = 0; i < Npairs; i++){
+            if( i < Nviz ){
+                c1 = coords[i  ][0];
+                c2 = coords[i  ][1];
+                c3 = coords[i+1][0];
+                c4 = coords[i+1][1];
+                // 3. Calculate the opacity at this segment along the ribbon
+                A_i   = (ubyte) 255 * (tailAlpha + Aspan*(Nviz-(i  ))/(1.0f*Nviz));
+                A_ip1 = (ubyte) 255 * (tailAlpha + Aspan*(Nviz-(i+1))/(1.0f*Nviz));
+                C_i   = Color{ bClr.r, bClr.g, bClr.b, A_i   };
+                C_ip1 = Color{ bClr.r, bClr.g, bClr.b, A_ip1 };
 
-            if( i%2==0 ){
-                /// Triangle 1, Side 1: c2, c1, c3 ///
-                push_triangle_w_norms( { c2, c1, c3 } );  clrs.push_back( {C_i, C_i, C_ip1} );
-                /// Triangle 1, Side 2: c3, c1, c2 ///
-                push_triangle_w_norms( { c3, c1, c2 } );  clrs.push_back( {C_ip1, C_i, C_i} );
-                /// Triangle 2, Side 1: c3, c4, c2 ///
-                push_triangle_w_norms( { c3, c4, c2 } );  clrs.push_back( {C_ip1, C_ip1, C_i} );
-                /// Triangle 2, Side 2: c2, c4, c3 ///
-                push_triangle_w_norms( { c2, c4, c3 } );  clrs.push_back( {C_i, C_ip1, C_ip1} );
+                if( i%2==0 ){
+                    /// Triangle 1, Side 1: c2, c1, c3 ///
+                    push_triangle_w_norms( { c2, c1, c3 } );  clrs.push_back( {C_i, C_i, C_ip1} );
+                    /// Triangle 1, Side 2: c3, c1, c2 ///
+                    push_triangle_w_norms( { c3, c1, c2 } );  clrs.push_back( {C_ip1, C_i, C_i} );
+                    /// Triangle 2, Side 1: c3, c4, c2 ///
+                    push_triangle_w_norms( { c3, c4, c2 } );  clrs.push_back( {C_ip1, C_ip1, C_i} );
+                    /// Triangle 2, Side 2: c2, c4, c3 ///
+                    push_triangle_w_norms( { c2, c4, c3 } );  clrs.push_back( {C_i, C_ip1, C_ip1} );
+                }else{
+                    /// Triangle 1, Side 1: c1, c3, c4 ///
+                    push_triangle_w_norms( { c1, c3, c4 } );  clrs.push_back( {C_i, C_ip1, C_ip1} );
+                    /// Triangle 1, Side 2: c4, c3, c1 ///
+                    push_triangle_w_norms( { c4, c3, c1 } );  clrs.push_back( {C_ip1, C_ip1, C_i} );
+                    /// Triangle 2, Side 1: c4, c2, c1 ///
+                    push_triangle_w_norms( { c4, c2, c1 } );  clrs.push_back( {C_ip1, C_i, C_i} );
+                    /// Triangle 2, Side 1: c1, c2, c4 ///
+                    push_triangle_w_norms( { c1, c2, c4 } );  clrs.push_back( {C_i, C_i, C_ip1} );
+                }
             }else{
-                /// Triangle 1, Side 1: c1, c3, c4 ///
-                push_triangle_w_norms( { c1, c3, c4 } );  clrs.push_back( {C_i, C_ip1, C_ip1} );
-                /// Triangle 1, Side 2: c4, c3, c1 ///
-                push_triangle_w_norms( { c4, c3, c1 } );  clrs.push_back( {C_ip1, C_ip1, C_i} );
-                /// Triangle 2, Side 1: c4, c2, c1 ///
-                push_triangle_w_norms( { c4, c2, c1 } );  clrs.push_back( {C_ip1, C_i, C_i} );
-                /// Triangle 2, Side 1: c1, c2, c4 ///
-                push_triangle_w_norms( { c1, c2, c4 } );  clrs.push_back( {C_i, C_i, C_ip1} );
+                for( ubyte j = 0; j < 4; ++j ){
+                    push_triangle_w_norms( { Vector3Zero(), Vector3Zero(), Vector3Zero() } );  clrs.push_back( {C_clr, C_clr, C_clr} );
+                }
             }
-
-            
-
         }
+        load_mesh_buffers( true, true );
+        remodel();
     }
 
-    void draw(){
-        // Render plume as a `Model`
-        
-
-    }
+    // FIXME, START HERE: TEST DRAWING
 
 };
 typedef shared_ptr<BoidRibbon> rbbnPtr;
