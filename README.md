@@ -7,7 +7,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 ## Architecture 1: C++ & RayLib  (Dangerous!)
 * Purpose: Let yourself have some graphics, as a treat!  
 
-* `[>]` Raylib Lib Rebuild
+* `[P]` Raylib Lib Rebuild
     - Problem:  All the Raylib code is broken!
     - Solution: Restart from scratch!
         * Avoid **changing** the number of triangles across frames
@@ -16,8 +16,12 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
             - Zero-size
     - `[Y]` Simplest Cube, 2023-08-13: Back to basics! `Model` was an unneeded middleman!
     - `[Y]` Simplest Cube Jiggle, 2023-08-18: Identical behavior with new struct
+    - `[P]` Use "Shiny Boid Ribbons" as the basis of the new library
 
-* `[P]` Shiny Boid Ribbons - Generative art
+* `[>]` Shiny Boid Ribbons - Generative art
+    - `[>]` Experiment with memory cycle {Unload Model --> Populate Geo --> Load Mesh --> Load Model}
+        * `{?}` Possibly need flag(s) for this?
+        * `[ ]` If the experiment fails, ask the Discord!
     - `[P]` Boid Ribbon class
     - `[ ]` Spherical obstactle avoidance
     - `[ ]` Ribbons as dynamic, shaded meshes
