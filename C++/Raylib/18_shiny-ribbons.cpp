@@ -569,9 +569,8 @@ class BoidRibbon : public DynaMesh{ public:
 
     /// Constructor ///
 
-    BoidRibbon( uint N_pairs, float width_, float d_Near, float updateRate, float alphaHead = 1.0f, float alphaTail = 0.0f,
-                const Vector3& home_ )
-        : DynaMesh( (N_pairs-1)*4 ){
+    BoidRibbon( uint N_pairs, float width_, float d_Near, float updateRate, const Vector3& home_, 
+                float alphaHead = 1.0f, float alphaTail = 0.0f ) : DynaMesh( (N_pairs-1)*4 ){
         // Build the geometry of the boid
         Npairs    = N_pairs;
         headAlpha = alphaHead;
@@ -801,16 +800,13 @@ class BoidRibbon : public DynaMesh{ public:
                 }
             }else{
                 for( ubyte j = 0; j < 4; ++j ){
-                    push_triangle_w_norms( { Vector3Zero(), Vector3Zero(), Vector3Zero() } );  clrs.push_back( {C_clr, C_clr, C_clr} );
+                    push_triangle_w_norms( { Vector3Zero(), Vector3Zero(), Vector3Zero() } );  
+                    clrs.push_back( {C_clr, C_clr, C_clr} );
                 }
             }
         }
         load_mesh_buffers( true, true );
-        remodel();
     }
-
-    // FIXME, START HERE: TEST DRAWING
-
 };
 typedef shared_ptr<BoidRibbon> rbbnPtr;
 
@@ -825,11 +821,37 @@ int main(){
     // rlEnableSmoothLines();
     // rlDisableBackfaceCulling();
 
-    float halfBoxLen = 100.0/10.0;
+    float halfBoxLen = 10.0;
 
+    vector<Sphere> sphereList;
+    for( uint i = 0; i < 16; i++ ){
+         sphereList.push_back( Sphere{ 
+            Vector3{
+                randf( -halfBoxLen*1.25, halfBoxLen*1.25 ), 
+                randf( -halfBoxLen*1.25, halfBoxLen*1.25 ), 
+                randf( -halfBoxLen*1.25, halfBoxLen*1.25 ) 
+            }, 
+            randf( 1.0, 4.0 )
+        } );
+    }
+
+    vector<rbbnPtr> flock;
+    vector<Basis>   flockPoses;
+    for( uint i = 0; i < 100; i++ ){
+        rbbnPtr nuBirb = rbbnPtr( new BoidRibbon{ 
+            200, 1.0f, 5.0f, 0.25f, 
+            Vector3Zero(), 
+            1.0f, 0.0f
+        } );
+        nuBirb->headingB.Pt = Vector3{ 
+            randf( -halfBoxLen, halfBoxLen ), 
+            randf( -halfBoxLen, halfBoxLen ), 
+            randf( -halfBoxLen, halfBoxLen ) 
+        };
+        flock.push_back( nuBirb );
+    }
+    
     /// Init Objects ///
-    FractureCube dc{ 5.0 };
-    Sphere /*-*/ sp{ Vector3Zero(), 6.0, BLUE };
 
     // Camera
     Camera camera = Camera{
@@ -861,9 +883,14 @@ int main(){
         shader
     );
 
-    dc.set_shader( shader );
-    sp.set_shader( shader );
-    sp.remodel();
+    for( Sphere& s : sphereList ){
+        s.set_shader( shader );
+        s.remodel();
+    }
+    for( rbbnPtr birb : flock ){  
+        birb->set_shader( shader );  
+        birb->remodel();  
+    }
 
     ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
 
@@ -882,9 +909,18 @@ int main(){
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
-        sp.translate( uniform_vector_noise( 0.125 ) );
-        sp.draw();
+        for( Sphere& sphere : sphereList ){
+            sphere.draw();
+        }
         
+        flockPoses.clear();
+        for( rbbnPtr birb : flock ){  flockPoses.push_back( birb->get_Basis() );  }
+        for( rbbnPtr birb : flock ){  
+            birb->update_instincts_and_heading( flockPoses, sphereList );
+            birb->update_position( 0.05 );
+            birb->update();
+            birb->draw();  
+        }
 
         /// End Drawing ///
         EndMode3D();
