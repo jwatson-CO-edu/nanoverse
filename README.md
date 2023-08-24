@@ -19,8 +19,8 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     - `[P]` Use "Shiny Boid Ribbons" as the basis of the new library
 
 * `[>]` Shiny Boid Ribbons - Generative art
-    - `[>]` Experiment with memory cycle {Unload Model --> Populate Geo --> Load Mesh --> Load Model}
-        * `{?}` Possibly need flag(s) for this?
+    - `[N]` Experiment with memory cycle {Unload Model --> Populate Geo --> Load Mesh --> Load Model}, 2023-08-24: Experiment failed. It appears that the mesh is not actually erased from the GPU?
+        * `{Y}` Possibly need flag(s) for this?, 2023-08-24: Flags used.  Did not help!
         * `[ ]` If the experiment fails, ask the Discord!
     - `[P]` Boid Ribbon class
     - `[ ]` Spherical obstactle avoidance

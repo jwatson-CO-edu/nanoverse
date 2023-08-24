@@ -1,4 +1,4 @@
-// g++ 18_shiny-ribbons.cpp -std=c++17 -lraylib
+// g++ 18-1_memory-ops.cpp -std=c++17 -lraylib
 // Re-implement Boid Ribbons **without** `Model`s!
 // 2023-08-14: Do not break into smaller files until everything works
 
@@ -8,7 +8,7 @@
 
 /// Standard ///
 #include <iostream>
-using std::cout, std::endl;
+using std::cout, std::endl, std::flush;
 #include <stdlib.h>  // srand, rand
 #include <time.h>
 #include <array>
@@ -132,10 +132,12 @@ class DynaMesh{ public:
 
     void init_memory( uint Ntri ){
         // Create the `Mesh` struct and allocate memory there
+        // NOTE: This function should only be run ONCE per object!
 
         uint Npts = Ntri*3;
 
         // 0. Init flags
+        cout << "All flags FALSE!" << endl;
         upldMesh = false; // Has the `Mesh`   been uploaded?
         upldModl = false; // Has the `Model`  been uploaded?
         loadShdr = false; // Has the `Shader` been loaded?
@@ -150,6 +152,8 @@ class DynaMesh{ public:
         mesh.indices  = (ushort*) MemAlloc(Npts   * sizeof( ushort ));
         mesh.normals  = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
         mesh.colors   = (u_char*) MemAlloc(Npts*4 * sizeof( u_char )); // 3 vertices, 4 coordinates each (r, g, b, a)
+
+        cout << "Memory allocated at CPU!" << endl;
     }
 
     void load_mesh_buffers( bool loadGeo = true, bool loadColor = false ){
@@ -182,13 +186,19 @@ class DynaMesh{ public:
             }
         }
 
-        // If this mesh is not present on the GPU, then send it
-        if( !upld ){
-            // 3. Initial load to GPU
-            UploadMesh( &mesh, true );
-            upld = true;
-        // Else mesh is on GPU, update the mesh buffers there
-        }else{
+        cout << "CPU memory modified!" << endl;
+
+        
+        
+        
+  
+        // If mesh is on GPU, update the mesh buffers there
+        if( upldMesh ){
+
+            // WARNING: THIS SEEMS REDUNDANT, I THINK I AM WRITING THE SAME DATA
+
+            cout << "About to send mesh data to GPU ... " << flush;
+
             // 2. Send GPU-side
             if( loadGeo ){
                 UpdateMeshBuffer( 
@@ -205,7 +215,6 @@ class DynaMesh{ public:
                     mesh.vertexCount*3 * sizeof( float  ), // Total array size
                     0 // ------------------------------------ Starting index in array
                 );
-                // 2023-08-14: For now assume that the facet indices do NOT change!
             }
             if( loadColor ){
                 UpdateMeshBuffer( 
@@ -217,12 +226,28 @@ class DynaMesh{ public:
                 );
             }
         }
+
+        if( !upldMesh ){
+            cout << "About to upload mesh ... " << flush;
+            // 3. Initial load to GPU
+            UploadMesh( &mesh, true );
+            upldMesh = true;
+            cout << "Mesh uploaded!" << endl;
+        }
+
+        cout << "Data sent!" << endl;
+
     }
 
     void remodel(){
-        // Reset the `Model`
-        modl = LoadModelFromMesh( mesh );
-        modl.materials[0].shader = shdr;
+        // Reload the `Model`
+        if( !upldModl ){
+            cout << "About to create model ... " << flush;
+            modl = LoadModelFromMesh( mesh );
+            modl.materials[0].shader = shdr;
+            upldModl = true;
+            cout << "Model created!" << endl;
+        }
     }
 
     /// Constructors ///
@@ -298,8 +323,10 @@ class DynaMesh{ public:
 
     void draw(){
         // Render the mesh
+        cout << "About to draw ... " << flush;
         modl.transform = xfrm;
         DrawModel( modl, get_posn(), 1.0f, bClr );
+        cout << "Drawn!" << endl;
     }
 
 };
@@ -373,7 +400,7 @@ class FractureCube : public DynaMesh{ public:
             }
         }
         load_mesh_buffers( true, false );
-        remodel();
+        // remodel();
     }
 };
 
@@ -395,6 +422,7 @@ int main(){
     
     
     /// Init Objects ///
+    FractureCube fc{ 5.0 };
 
     // Camera
     Camera camera = Camera{
@@ -426,7 +454,8 @@ int main(){
         shader
     );
 
-    
+    fc.set_shader( shader );
+    fc.remodel();
 
     ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
 
@@ -445,7 +474,9 @@ int main(){
         SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
-        
+        fc.update();
+        // fc.remodel();
+        fc.draw();
 
         /// End Drawing ///
         EndMode3D();
