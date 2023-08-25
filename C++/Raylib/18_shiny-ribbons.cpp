@@ -287,14 +287,6 @@ class DynaMesh{ public:
 
         cout << "CPU memory modified!" << endl;
 
-        if( !upldMesh ){
-            cout << "About to upload mesh ... " << flush;
-            // 3. Initial load to GPU
-            UploadMesh( &mesh, true );
-            upldMesh = true;
-            cout << "Mesh uploaded!" << endl;
-        }
-
         // If mesh is on GPU, update the mesh buffers there
         if( upldMesh ){
 
@@ -328,11 +320,19 @@ class DynaMesh{ public:
                     0 // ------------------------------------ Starting index in array
                 );
             }
+
+            cout << "Data sent!" << endl;
+        }
+
+        if( !upldMesh ){
+            cout << "About to upload mesh ... " << flush;
+            // 3. Initial load to GPU
+            UploadMesh( &mesh, true );
+            upldMesh = true;
+            cout << "Mesh uploaded!" << endl;
         }
 
         
-
-        cout << "Data sent!" << endl;
 
     }
 
@@ -852,7 +852,7 @@ int main(){
     rand_seed();
 
     /// Window Init ///
-    InitWindow( 900, 900, "Dynamic Box!" );
+    InitWindow( 900, 900, "Boid Ribbons!" );
     SetTargetFPS( 60 );
     // rlEnableSmoothLines();
     // rlDisableBackfaceCulling();
@@ -873,7 +873,7 @@ int main(){
 
     vector<rbbnPtr> flock;
     vector<Basis>   flockPoses;
-    for( uint i = 0; i < 10; i++ ){
+    for( uint i = 0; i < 20; i++ ){
         rbbnPtr nuBirb = rbbnPtr( new BoidRibbon{ 
             200, 1.0f, 5.0f, 0.25f, 
             Vector3Zero(), 
@@ -925,7 +925,7 @@ int main(){
     }
     for( rbbnPtr birb : flock ){  
         birb->set_shader( shader );  
-        birb->remodel();  
+        // birb->remodel();  
     }
 
     ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
@@ -955,6 +955,7 @@ int main(){
             birb->update_instincts_and_heading( flockPoses, sphereList );
             birb->update_position( 0.05 );
             birb->update();
+            birb->remodel();
             birb->draw();  
         }
 
