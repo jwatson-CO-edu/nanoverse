@@ -8,7 +8,7 @@
 
 /// Standard ///
 #include <iostream>
-using std::cout, std::endl;
+using std::cout, std::endl, std::flush;
 #include <stdlib.h>  // srand, rand
 #include <time.h>
 #include <array>
@@ -211,26 +211,37 @@ class DynaMesh{ public:
     // 2023-08-14: This class assumes that the mesh will have a constant size for each buffer, though their values might change
     // 2023-08-15: This class REQUIRES that vertices, indices, normals, and colors ALL be defined
 
-    /// Members ///
+    /// Rendering Members ///
     vector<triPnts> tris; // Dynamic geometry, each array is a facet of 3x vertices
     vector<triPnts> nrms; // Normal vector for each facet
     vector<triClrs> clrs; // Vertex colors for each facet
-    Mesh /*------*/ mesh; // Raylib mesh geometry
-    bool /*------*/ upld; // Has the mesh been uploaded?
     Matrix /*----*/ xfrm; // Pose in the parent frame
-    Model /*-----*/ modl; // Needed for shaders
-    Shader /*----*/ shdr; // Needed for shaders
     Color /*-----*/ bClr; // Base color
+
+    /// Memory Members ///
+    Mesh   mesh; // --- Raylib mesh geometry
+    bool   upldMesh; // Has the `Mesh` been uploaded?
+    Model  modl; // --- Needed for shaders
+    bool   upldModl; // Has the `Model` been uploaded?
+    Shader shdr; // --- Needed for shaders
+    bool   loadShdr; // Has the `Shader` been loaded?
+    
     
     /// Memory Methods ///
 
-    void init_mesh_memory( uint Ntri ){
+    void init_memory( uint Ntri ){
         // Create the `Mesh` struct and allocate memory there
+        // NOTE: This function should only be run ONCE per object!
 
         uint Npts = Ntri*3;
 
+        // 0. Init flags
+        cout << "All flags FALSE!" << endl;
+        upldMesh = false; // Has the `Mesh`   been uploaded?
+        upldModl = false; // Has the `Model`  been uploaded?
+        loadShdr = false; // Has the `Shader` been loaded?
+
         // 1. Init mesh
-        upld = false;
         mesh = Mesh{};
         mesh.triangleCount = Ntri;
         mesh.vertexCount   = Npts;
@@ -240,6 +251,8 @@ class DynaMesh{ public:
         mesh.indices  = (ushort*) MemAlloc(Npts   * sizeof( ushort ));
         mesh.normals  = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
         mesh.colors   = (u_char*) MemAlloc(Npts*4 * sizeof( u_char )); // 3 vertices, 4 coordinates each (r, g, b, a)
+
+        cout << "Memory allocated at CPU!" << endl;
     }
 
     void load_mesh_buffers( bool loadGeo = true, bool loadColor = false ){
@@ -272,13 +285,23 @@ class DynaMesh{ public:
             }
         }
 
-        // If this mesh is not present on the GPU, then send it
-        if( !upld ){
+        cout << "CPU memory modified!" << endl;
+
+        if( !upldMesh ){
+            cout << "About to upload mesh ... " << flush;
             // 3. Initial load to GPU
             UploadMesh( &mesh, true );
-            upld = true;
-        // Else mesh is on GPU, update the mesh buffers there
-        }else{
+            upldMesh = true;
+            cout << "Mesh uploaded!" << endl;
+        }
+
+        // If mesh is on GPU, update the mesh buffers there
+        if( upldMesh ){
+
+            // WARNING: THIS SEEMS REDUNDANT, I THINK I AM WRITING THE SAME DATA
+
+            cout << "About to send mesh data to GPU ... " << flush;
+
             // 2. Send GPU-side
             if( loadGeo ){
                 UpdateMeshBuffer( 
@@ -295,7 +318,6 @@ class DynaMesh{ public:
                     mesh.vertexCount*3 * sizeof( float  ), // Total array size
                     0 // ------------------------------------ Starting index in array
                 );
-                // 2023-08-14: For now assume that the facet indices do NOT change!
             }
             if( loadColor ){
                 UpdateMeshBuffer( 
@@ -307,19 +329,29 @@ class DynaMesh{ public:
                 );
             }
         }
+
+        
+
+        cout << "Data sent!" << endl;
+
     }
 
     void remodel(){
-        // Reset the `Model`
-        modl = LoadModelFromMesh( mesh );
-        modl.materials[0].shader = shdr;
+        // Reload the `Model`
+        if( !upldModl ){
+            cout << "About to create model ... " << flush;
+            modl = LoadModelFromMesh( mesh );
+            modl.materials[0].shader = shdr;
+            upldModl = true;
+            cout << "Model created!" << endl;
+        }
     }
 
     /// Constructors ///
 
     DynaMesh( uint Ntri ){
         // Allocate memory and set default pose
-        init_mesh_memory( Ntri );
+        init_memory( Ntri );
         xfrm = MatrixIdentity();
         bClr = WHITE;
     }
@@ -388,8 +420,10 @@ class DynaMesh{ public:
 
     void draw(){
         // Render the mesh
+        cout << "About to draw ... " << flush;
         modl.transform = xfrm;
-        DrawModel( modl, get_posn(), 1.0f, bClr );
+        DrawModel( modl, Vector3Zero(), 1.0f, bClr );
+        cout << "Drawn!" << endl;
     }
 
 };
@@ -463,7 +497,7 @@ class FractureCube : public DynaMesh{ public:
             }
         }
         load_mesh_buffers( true, false );
-        remodel();
+        // remodel();
     }
 };
 
@@ -593,6 +627,8 @@ class BoidRibbon : public DynaMesh{ public:
 
         Nboids++;
         ID = Nboids;
+
+        // load_mesh_buffers( true, true );
     }
 
     /// Methods ///
@@ -768,7 +804,7 @@ class BoidRibbon : public DynaMesh{ public:
         wipe_geo( true, true );
 
         for( uint i = 0; i < Npairs; i++){
-            if( i < Nviz ){
+            if( (i < Nviz) && (Nviz > 2) ){
                 c1 = coords[i  ][0];
                 c2 = coords[i  ][1];
                 c3 = coords[i+1][0];
@@ -837,7 +873,7 @@ int main(){
 
     vector<rbbnPtr> flock;
     vector<Basis>   flockPoses;
-    for( uint i = 0; i < 100; i++ ){
+    for( uint i = 0; i < 10; i++ ){
         rbbnPtr nuBirb = rbbnPtr( new BoidRibbon{ 
             200, 1.0f, 5.0f, 0.25f, 
             Vector3Zero(), 

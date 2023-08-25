@@ -188,10 +188,6 @@ class DynaMesh{ public:
 
         cout << "CPU memory modified!" << endl;
 
-        
-        
-        
-  
         // If mesh is on GPU, update the mesh buffers there
         if( upldMesh ){
 
