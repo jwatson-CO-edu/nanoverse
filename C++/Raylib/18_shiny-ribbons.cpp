@@ -219,7 +219,7 @@ class DynaMesh{ public:
     Color /*-----*/ bClr; // Base color
 
     /// Memory Members ///
-    Mesh   mesh; // --- Raylib mesh geometry
+    Mesh*  mesh; // --- Raylib mesh geometry
     bool   upldMesh; // Has the `Mesh` been uploaded?
     Model  modl; // --- Needed for shaders
     bool   upldModl; // Has the `Model` been uploaded?
@@ -242,15 +242,15 @@ class DynaMesh{ public:
         loadShdr = false; // Has the `Shader` been loaded?
 
         // 1. Init mesh
-        mesh = Mesh{};
-        mesh.triangleCount = Ntri;
-        mesh.vertexCount   = Npts;
+        mesh = new Mesh{};
+        mesh->triangleCount = Ntri;
+        mesh->vertexCount   = Npts;
         
         // 3. Init memory
-        mesh.vertices = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
-        mesh.indices  = (ushort*) MemAlloc(Npts   * sizeof( ushort ));
-        mesh.normals  = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
-        mesh.colors   = (u_char*) MemAlloc(Npts*4 * sizeof( u_char )); // 3 vertices, 4 coordinates each (r, g, b, a)
+        mesh->vertices = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
+        mesh->indices  = (ushort*) MemAlloc(Npts   * sizeof( ushort ));
+        mesh->normals  = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
+        mesh->colors   = (u_char*) MemAlloc(Npts*4 * sizeof( u_char )); // 3 vertices, 4 coordinates each (r, g, b, a)
 
         cout << "Memory allocated at CPU!" << endl;
     }
@@ -265,27 +265,35 @@ class DynaMesh{ public:
         ulong m = 0; // Color __ counter
 
         // 1. Load CPU-side
-        for( uint i = 0; i < mesh.triangleCount; ++i ){
+        for( uint i = 0; i < mesh->triangleCount; ++i ){
             for( u_char j = 0; j < 3; j++ ){
                 if( loadGeo ){
-                    mesh.normals[k]  = nrms[i][j].x;
-                    mesh.vertices[k] = tris[i][j].x;  k++;
-                    mesh.normals[k]  = nrms[i][j].y;
-                    mesh.vertices[k] = tris[i][j].y;  k++;
-                    mesh.normals[k]  = nrms[i][j].z;
-                    mesh.vertices[k] = tris[i][j].z;  k++;
-                    mesh.indices[l]  = l; /*-------*/ l++; 
+                    mesh->normals[k]  = nrms[i][j].x;
+                    mesh->vertices[k] = tris[i][j].x;  k++;
+                    mesh->normals[k]  = nrms[i][j].y;
+                    mesh->vertices[k] = tris[i][j].y;  k++;
+                    mesh->normals[k]  = nrms[i][j].z;
+                    mesh->vertices[k] = tris[i][j].z;  k++;
+                    mesh->indices[l]  = l; /*-------*/ l++; 
                 }
                 if( loadColor ){
-                    mesh.colors[m] = clrs[i][j].r;  m++;
-                    mesh.colors[m] = clrs[i][j].g;  m++;
-                    mesh.colors[m] = clrs[i][j].b;  m++;
-                    mesh.colors[m] = clrs[i][j].a;  m++;
+                    mesh->colors[m] = clrs[i][j].r;  m++;
+                    mesh->colors[m] = clrs[i][j].g;  m++;
+                    mesh->colors[m] = clrs[i][j].b;  m++;
+                    mesh->colors[m] = clrs[i][j].a;  m++;
                 }
             }
         }
 
         cout << "CPU memory modified!" << endl;
+
+        if( !upldMesh ){
+            cout << "About to upload mesh ... " << flush;
+            // 3. Initial load to GPU
+            UploadMesh( mesh, true );
+            upldMesh = true;
+            cout << "Mesh uploaded!" << endl;
+        }
 
         // If mesh is on GPU, update the mesh buffers there
         if( upldMesh ){
@@ -297,26 +305,26 @@ class DynaMesh{ public:
             // 2. Send GPU-side
             if( loadGeo ){
                 UpdateMeshBuffer( 
-                    mesh, // -------------------------------- `Mesh` object
+                    *mesh, // -------------------------------- `Mesh` object
                     VERTEX_BUFFER_IDX, // ------------------- VBO Index
-                    mesh.vertices, // ----------------------- Array of data 
-                    mesh.vertexCount*3 * sizeof( float  ), // Total array size
+                    mesh->vertices, // ----------------------- Array of data 
+                    mesh->vertexCount*3 * sizeof( float  ), // Total array size
                     0 // ------------------------------------ Starting index in array
                 );
                 UpdateMeshBuffer( 
-                    mesh, // -------------------------------- `Mesh` object
+                    *mesh, // -------------------------------- `Mesh` object
                     NORMAL_BUFFER_IDX, // ------------------- VBO Index
-                    mesh.normals, // ------------------------ Array of data 
-                    mesh.vertexCount*3 * sizeof( float  ), // Total array size
+                    mesh->normals, // ------------------------ Array of data 
+                    mesh->vertexCount*3 * sizeof( float  ), // Total array size
                     0 // ------------------------------------ Starting index in array
                 );
             }
             if( loadColor ){
                 UpdateMeshBuffer( 
-                    mesh, // -------------------------------- `Mesh` object
+                    *mesh, // -------------------------------- `Mesh` object
                     COLORS_BUFFER_IDX, // ------------------- VBO Index
-                    mesh.colors, // ------------------------- Array of data 
-                    mesh.vertexCount*4 * sizeof( u_char ), // Total array size
+                    mesh->colors, // ------------------------- Array of data 
+                    mesh->vertexCount*4 * sizeof( u_char ), // Total array size
                     0 // ------------------------------------ Starting index in array
                 );
             }
@@ -324,13 +332,7 @@ class DynaMesh{ public:
             cout << "Data sent!" << endl;
         }
 
-        if( !upldMesh ){
-            cout << "About to upload mesh ... " << flush;
-            // 3. Initial load to GPU
-            UploadMesh( &mesh, true );
-            upldMesh = true;
-            cout << "Mesh uploaded!" << endl;
-        }
+        
 
         
 
@@ -340,7 +342,7 @@ class DynaMesh{ public:
         // Reload the `Model`
         if( !upldModl ){
             cout << "About to create model ... " << flush;
-            modl = LoadModelFromMesh( mesh );
+            modl = LoadModelFromMesh( *mesh );
             modl.materials[0].shader = shdr;
             upldModl = true;
             cout << "Model created!" << endl;
@@ -640,7 +642,7 @@ class BoidRibbon : public DynaMesh{ public:
 
     void push_coord_pair( const Vector3& c1, const Vector3& c2 ){
         // Add coordinates to the head of the plume
-        if( coords.size() >= Npairs )  coords.pop_back(); // If queue is full, drop the tail element
+        while( coords.size() >= Npairs )  coords.pop_back(); // If queue is full, drop the tail element
         coords.push_front(  array<Vector3,2>{ c1, c2 }  );
     }
 
@@ -874,17 +876,19 @@ int main(){
     vector<rbbnPtr> flock;
     vector<Basis>   flockPoses;
     for( uint i = 0; i < 20; i++ ){
-        rbbnPtr nuBirb = rbbnPtr( new BoidRibbon{ 
-            200, 1.0f, 5.0f, 0.25f, 
+        // rbbnPtr nuBirb = rbbnPtr( new BoidRibbon{ 
+        rbbnPtr nuBirb = std::make_shared<BoidRibbon>(
+            20, 1.0f, 5.0f, 0.25f, 
             Vector3Zero(), 
             1.0f, 0.0f
-        } );
+        // } );
+        );
         nuBirb->headingB.Pt = Vector3{ 
             randf( -halfBoxLen, halfBoxLen ), 
             randf( -halfBoxLen, halfBoxLen ), 
             randf( -halfBoxLen, halfBoxLen ) 
         };
-        flock.push_back( nuBirb );
+        flock.push_back( rbbnPtr( nuBirb ) );
     }
     
     /// Init Objects ///
@@ -923,9 +927,11 @@ int main(){
         s.set_shader( shader );
         s.remodel();
     }
-    for( rbbnPtr birb : flock ){  
+    for( rbbnPtr& birb : flock ){  
         birb->set_shader( shader );  
-        // birb->remodel();  
+        birb->update_position( 0.25 );
+        birb->update();
+        birb->remodel(); 
     }
 
     ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
@@ -940,9 +946,9 @@ int main(){
         // dc.update();
         // dc.remodel();
 
-        UpdateLightValues( shader, light );
+        // UpdateLightValues( shader, light );
 
-        SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
+        // SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
         for( Sphere& sphere : sphereList ){
@@ -950,12 +956,12 @@ int main(){
         }
         
         flockPoses.clear();
-        for( rbbnPtr birb : flock ){  flockPoses.push_back( birb->get_Basis() );  }
-        for( rbbnPtr birb : flock ){  
+        for( rbbnPtr& birb : flock ){  flockPoses.push_back( birb->get_Basis() );  }
+        for( rbbnPtr& birb : flock ){  
             birb->update_instincts_and_heading( flockPoses, sphereList );
-            birb->update_position( 0.05 );
+            birb->update_position( 0.5 );
             birb->update();
-            birb->remodel();
+            // birb->remodel();
             birb->draw();  
         }
 
