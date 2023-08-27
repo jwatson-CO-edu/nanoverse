@@ -10,7 +10,7 @@
 
 /// Standard ///
 #include <iostream>
-using std::cout, std::endl;
+using std::cout, std::endl, std::flush;
 #include <stdlib.h>  // srand, rand
 #include <time.h>
 #include <array>
@@ -19,6 +19,8 @@ using std::array;
 using std::vector;
 #include <memory>
 using std::shared_ptr;
+#include <deque>
+using std::deque;
 
 /// Raylib ///
 #include <raylib.h>
@@ -34,6 +36,7 @@ using std::shared_ptr;
 typedef array<Vector3,3> triPnts; // Vector info for One Triangle (Vertices,nrms) 
 typedef array<Color,3>   triClrs; // Color  info for One Triangle
 typedef vector<Vector3>  vvec3; // - Vector of 3D vectors
+typedef unsigned char    ubyte;
 #define VERTEX_BUFFER_IDX 0 // Vertex coord VBO
 #define NORMAL_BUFFER_IDX 2 // Normal vector VBO
 #define COLORS_BUFFER_IDX 3 // Vertex color VBO
@@ -53,6 +56,11 @@ float randf( float lo, float hi ){
     // NOTE: This function assumes `hi > lo`
     float span = hi - lo;
     return lo + span * randf();
+}
+
+ubyte rand_ubyte(){
+    // Return a pseudo-random unsigned byte
+    return (ubyte) randf( 0.0, 256.0 );
 }
 
 void rand_seed(){  srand( time(NULL) );  } // Seed RNG with unpredictable time-based seed
@@ -88,6 +96,11 @@ Vector3 uniform_vector_noise( float halfMag ){
     };
 }
 
+Color uniform_random_color(){
+    // Return a random fully opaque color
+    return Color{ rand_ubyte(), rand_ubyte(), rand_ubyte(), 255 };
+}
+
 
 
 ////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
@@ -103,10 +116,11 @@ class DynaMesh{ public:
     vector<triPnts> tris; // Dynamic geometry, each array is a facet of 3x vertices
     vector<triPnts> nrms; // Normal vector for each facet
     vector<triClrs> clrs; // Vertex colors for each facet
-    bool /*------*/ upld; // Has the mesh been uploaded?
     Matrix /*----*/ xfrm; // Pose in the parent frame
     Mesh* /*-----*/ mesh; // Raylib mesh geometry
+    bool /*------*/ upldMesh; // Has the mesh been uploaded?
     Model* /*----*/ modl; // Model
+    bool /*------*/ upldModl; // Has the mesh been uploaded?
     Shader* /*---*/ shdr; // Shader
     
     /// Memory Methods ///
@@ -118,8 +132,9 @@ class DynaMesh{ public:
         Nvtx = Ntri*3;
 
         // 1. Init mesh
-        upld = false;
-        mesh = new Mesh{};
+        upldMesh = false;
+        upldModl = false;
+        mesh     = new Mesh{};
         mesh->triangleCount = Ntri;
         mesh->vertexCount   = Nvtx;
         
@@ -165,10 +180,10 @@ class DynaMesh{ public:
         }
 
         // If this mesh is not present on the GPU, then send it
-        if( !upld ){
+        if( !upldMesh ){
             // 3. Initial load to GPU
             UploadMesh( mesh, true );
-            upld = true;
+            upldMesh = true;
         // Else mesh is on GPU, update the mesh buffers there
         }else{
             // 2. Send GPU-side
@@ -202,15 +217,17 @@ class DynaMesh{ public:
     }
 
     void remodel(){
+        cout << "About to create model ... " << flush;
         modl = new Model{ LoadModelFromMesh( *mesh ) };
         modl->materials[0] = LoadMaterialDefault();
         modl->materials[0].shader = *shdr;
+        upldModl = true;
+        cout << "Model created!" << endl;
     }
 
     ~DynaMesh(){
         delete mesh;
         delete modl;
-        delete shdr;
     }
 
     /// Constructors ///
@@ -281,10 +298,11 @@ class DynaMesh{ public:
 
     /// Rendering ///
 
-    void set_shader( Shader& shader ){ shdr = &shader; }
+    void set_shader( Shader* shader ){ shdr = shader; }
 
     void draw(){
         // Render the mesh
+        if( !upldModl )  remodel();
         modl->transform = xfrm;
         DrawModel( *modl, get_posn(), 1.0f, WHITE );
     }
@@ -351,15 +369,122 @@ class FractureCube : public DynaMesh{ public:
 
     void update(){
         // translate( uniform_vector_noise( 0.125 ) );
+        uint    i = 0;
+        Vector3 norm;
         for( triPnts& tri : tris ){
             tri[0] = uniform_vector_noise( tri[0], 0.125 );
             tri[1] = uniform_vector_noise( tri[1], 0.125 );
             tri[2] = uniform_vector_noise( tri[2], 0.125 );
-            // 2023-08-13: Purposely avoiding a normal update until a shader is in use
+            ++i;
+            norm = normal_of_tiangle( tri );
+            nrms[i] = { norm, norm, norm };
         }
         load_mesh_buffers( true, false );
-        remodel();
+        // remodel();
     }
+};
+
+class TestRibbon : public DynaMesh{ public:
+    // Trying to find out where the memory problem is
+
+    /// Members ///
+    double /*------------*/ width; // --- Width of the ribbon 
+    uint /*--------------*/ Npair;
+    uint /*--------------*/ Nviz; // ---- Number of coordinate pairs visible now
+    deque<array<Vector3,2>> pairs;
+    float /*-------------*/ headAlpha; // Beginning opacity
+    float /*-------------*/ tailAlpha; // Ending    opacity
+    Color /*-------------*/ colr;
+
+    /// TEST ///
+    Vector3 lastPosn;
+
+    /// Constructor ///
+    TestRibbon( uint N_pairs, float width_, float alphaHead = 1.0f, float alphaTail = 0.0f ) : DynaMesh( (N_pairs-1)*4 ){
+        width     = width_;
+        Npair     = N_pairs;
+        headAlpha = alphaHead;
+        tailAlpha = alphaTail;
+        colr /**/ = uniform_random_color();
+
+        // TEST //
+        lastPosn = uniform_vector_noise( 10.0 );
+    }
+
+    /// Methods ///
+
+    void push_coord_pair( const Vector3& c1, const Vector3& c2 ){
+        // Add coordinates to the head of the plume
+        while( pairs.size() >= Npair )  pairs.pop_back(); // If queue is full, drop the tail element
+        pairs.push_front(  array<Vector3,2>{ c1, c2 }  );
+    }
+
+    void update_position_TEST( float zThrust ){
+        // Move forward and push a segment to the ribbon
+        Vector3 nextPosn = Vector3Add( lastPosn, uniform_vector_noise( zThrust ) );
+        Vector3 wingDrct = Vector3Normalize( uniform_vector_noise( 1.0 ) );
+        push_coord_pair(
+            Vector3Add( nextPosn, Vector3Scale( wingDrct,  width/2.0f ) ),
+            Vector3Add( nextPosn, Vector3Scale( wingDrct, -width/2.0f ) )
+        );
+        lastPosn = nextPosn;
+    }
+
+    ///// Rendering //////////////////////////////
+    // WARNING: Requires window init to call!
+
+    void update(){
+        // Create geometry
+        /*---*/ Nviz  = pairs.size()-1;        
+        float   Aspan = headAlpha - tailAlpha;
+        Vector3 c1, c2, c3, c4, n1, n2;
+        ubyte   A_i, A_ip1;
+        Color   C_i, C_ip1;
+        Color   C_clr = Color{ 0, 0, 0, 0 };
+
+        wipe_geo( true, true );
+
+        for( uint i = 0; i < Npair-1; i++){
+            if( (i <= Nviz) && (Nviz > 0) ){
+                c1 = pairs[i  ][0];
+                c2 = pairs[i  ][1];
+                c3 = pairs[i+1][0];
+                c4 = pairs[i+1][1];
+                // 3. Calculate the opacity at this segment along the ribbon
+                A_i   = (ubyte) 255 * (tailAlpha + Aspan*(Nviz-(i  ))/(1.0f*Nviz));
+                A_ip1 = (ubyte) 255 * (tailAlpha + Aspan*(Nviz-(i+1))/(1.0f*Nviz));
+                C_i   = Color{ colr.r, colr.g, colr.b, A_i   };
+                C_ip1 = Color{ colr.r, colr.g, colr.b, A_ip1 };
+
+                if( i%2==0 ){
+                    /// Triangle 1, Side 1: c2, c1, c3 ///
+                    push_triangle_w_norms( { c2, c1, c3 } );  clrs.push_back( {C_i, C_i, C_ip1} );
+                    /// Triangle 1, Side 2: c3, c1, c2 ///
+                    push_triangle_w_norms( { c3, c1, c2 } );  clrs.push_back( {C_ip1, C_i, C_i} );
+                    /// Triangle 2, Side 1: c3, c4, c2 ///
+                    push_triangle_w_norms( { c3, c4, c2 } );  clrs.push_back( {C_ip1, C_ip1, C_i} );
+                    /// Triangle 2, Side 2: c2, c4, c3 ///
+                    push_triangle_w_norms( { c2, c4, c3 } );  clrs.push_back( {C_i, C_ip1, C_ip1} );
+                }else{
+                    /// Triangle 1, Side 1: c1, c3, c4 ///
+                    push_triangle_w_norms( { c1, c3, c4 } );  clrs.push_back( {C_i, C_ip1, C_ip1} );
+                    /// Triangle 1, Side 2: c4, c3, c1 ///
+                    push_triangle_w_norms( { c4, c3, c1 } );  clrs.push_back( {C_ip1, C_ip1, C_i} );
+                    /// Triangle 2, Side 1: c4, c2, c1 ///
+                    push_triangle_w_norms( { c4, c2, c1 } );  clrs.push_back( {C_ip1, C_i, C_i} );
+                    /// Triangle 2, Side 1: c1, c2, c4 ///
+                    push_triangle_w_norms( { c1, c2, c4 } );  clrs.push_back( {C_i, C_i, C_ip1} );
+                }
+            }else{
+                for( ubyte j = 0; j < 4; ++j ){
+                    push_triangle_w_norms( { uniform_vector_noise( 0.5 ), uniform_vector_noise( 0.5 ), uniform_vector_noise( 0.5 ) } );  
+                    clrs.push_back( {C_clr, C_clr, C_clr} );
+                }
+            }
+        }
+        load_mesh_buffers( true, true );
+    }
+
 };
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
@@ -368,7 +493,7 @@ int main(){
     rand_seed();
 
     /// Window Init ///
-    InitWindow( 900, 900, "Dynamic Box!" );
+    InitWindow( 900, 900, "Ribbon Test" );
     SetTargetFPS( 60 );
     // rlEnableSmoothLines();
     // rlDisableBackfaceCulling();
@@ -378,9 +503,9 @@ int main(){
     /// Init Objects ///
     vector<shared_ptr<FractureCube>> cubes;
     shared_ptr<FractureCube> nuCube;
-    for( uint i = 0; i < 3; ++i ){
+    for( uint i = 0; i < 30; ++i ){
         nuCube = shared_ptr<FractureCube>( new FractureCube{ 5.0 } );
-        nuCube->set_posn( uniform_vector_noise( 3.0 ) );
+        nuCube->set_posn( uniform_vector_noise( 5.0 ) );
         cubes.push_back( nuCube );
     }
     
@@ -403,10 +528,8 @@ int main(){
     shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
     // NOTE: "matModel" location name is automatically assigned on shader loading, 
     // no need to get the location again if using that uniform name
-    //shader.locs[SHADER_LOC_MATRIX_MODEL] = GetShaderLocation(shader, "matModel");
     
     // Ambient light level (some basic lighting)
-    // float ambientColor[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
     float ambientColor[4] = { 0.25f, 0.25f, 0.25f, 0.50f };
     int ambientLoc = GetShaderLocation(shader, "ambient");
     SetShaderValue(shader, ambientLoc, ambientColor, SHADER_UNIFORM_VEC4);
@@ -422,11 +545,9 @@ int main(){
     );
 
     for( shared_ptr<FractureCube>& cube : cubes ){
-        cube->set_shader( shader );
+        cube->set_shader( &shader );
     }
 
-    // ic.set_shader( shader );
-    // dc.set_shader( shader );
 
     ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
 
@@ -436,15 +557,10 @@ int main(){
         BeginDrawing();
         BeginMode3D( camera );
         ClearBackground( BLACK );
-        // BeginShaderMode( shader );
 
-        // ic.translate( uniform_vector_noise( 0.125 ) );
-        // ic.remodel();
-        
         for( shared_ptr<FractureCube>& cube : cubes ){
             cube->update();
         }
-        // dc.remodel();
 
         UpdateLightValues( shader, light );
 
@@ -452,15 +568,12 @@ int main(){
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
         // 
-        // dc.draw();
         for( shared_ptr<FractureCube>& cube : cubes ){
             cube->draw();
         }
         
-        // ic.draw();
 
         /// End Drawing ///
-        // EndShaderMode();
         EndMode3D();
 
         DrawFPS( 30, 30 );
