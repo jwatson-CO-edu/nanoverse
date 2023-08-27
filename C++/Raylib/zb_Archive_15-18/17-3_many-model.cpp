@@ -225,6 +225,17 @@ class DynaMesh{ public:
         tris.push_back( tri );
         nrms.push_back({ norm, norm, norm });
     }
+    
+    void wipe_geo( bool wipeTris = true, bool wipeColors = false ){
+        // Remove all built geometry
+        if( wipeTris ){
+            tris.clear();
+            nrms.clear();
+        }
+        if( wipeColors ){
+            clrs.clear();
+        }
+    }
 
     /// Pose Math ///
     /* xfrm = 
@@ -279,6 +290,8 @@ class DynaMesh{ public:
 class FractureCube : public DynaMesh{ public:
     // A cube that shakes apart
 
+    vvec3   V;
+
     /// Constructors ///
 
     FractureCube( float sideLen ) : DynaMesh( 12 ){
@@ -286,7 +299,7 @@ class FractureCube : public DynaMesh{ public:
         triPnts pushTri;
         triClrs pushClr;
         Vector3 norm;
-        vvec3   V;
+        
         float   halfLen = sideLen/2.0;
         Color   R{ 255,   0,   0, 255 };
         Color   G{   0, 255,   0, 255 };
@@ -336,6 +349,37 @@ class FractureCube : public DynaMesh{ public:
 
     void update(){
         // translate( uniform_vector_noise( 0.125 ) );
+
+        wipe_geo( true, true );
+
+        // 2. Build tris
+        push_triangle_w_norms( { V[0], V[3], V[2] } );
+        push_triangle_w_norms( { V[0], V[1], V[3] } );
+        push_triangle_w_norms( { V[6], V[4], V[0] } );
+        push_triangle_w_norms( { V[6], V[0], V[2] } );
+        push_triangle_w_norms( { V[0], V[4], V[5] } );
+        push_triangle_w_norms( { V[0], V[5], V[1] } );
+        push_triangle_w_norms( { V[7], V[6], V[2] } );
+        push_triangle_w_norms( { V[7], V[2], V[3] } );
+        push_triangle_w_norms( { V[4], V[6], V[7] } );
+        push_triangle_w_norms( { V[4], V[7], V[5] } ); 
+        push_triangle_w_norms( { V[1], V[5], V[7] } );
+        push_triangle_w_norms( { V[1], V[7], V[3] } );
+
+        // 3. Build Colors
+        clrs.push_back( { RED, GREEN, BLUE } );
+        clrs.push_back( { RED, GREEN, BLUE } );
+        clrs.push_back( { RED, GREEN, BLUE } );
+        clrs.push_back( { RED, GREEN, BLUE } );
+        clrs.push_back( { RED, GREEN, BLUE } );
+        clrs.push_back( { RED, GREEN, BLUE } );
+        clrs.push_back( { RED, GREEN, BLUE } );
+        clrs.push_back( { RED, GREEN, BLUE } );
+        clrs.push_back( { RED, GREEN, BLUE } );
+        clrs.push_back( { RED, GREEN, BLUE } );
+        clrs.push_back( { RED, GREEN, BLUE } );
+        clrs.push_back( { RED, GREEN, BLUE } );
+
         if( randf() < 0.50 ){
             for( triPnts& tri : tris ){
                 tri[0] = uniform_vector_noise( tri[0], 0.125 );
@@ -345,110 +389,11 @@ class FractureCube : public DynaMesh{ public:
             }
         }
         load_mesh_buffers( true, false );
-        remodel();
+        // remodel();
     }
 };
 
-class Icosahedron_r : public DynaMesh{ public:
-    // Implementing icosahedron mesh in Raylib for the Nth time!
 
-    // ~ Constants ~
-	float sqrt5 = sqrt( 5.0f ); // ------------------------------------ Square root of 5
-	float phi   = ( 1.0f + sqrt5 ) * 0.5f; // ------------------------- The Golden Ratio
-	float ratio = sqrt( 10.0f + ( 2.0f * sqrt5 ) ) / ( 4.0f * phi ); // ratio of edge length to radius
-	
-	// ~ Variables ~
-	float radius;
-	float a; 
-	float b; 
-    vvec3 V;
-
-    // ~ Appearance ~
-    Color baseClr;
-    Color lineClr;
-    bool  drawWires;
-
-    // ~ Animation ~
-    bool  anim;
-    float rolVel;
-    float ptcVel;
-    float yawVel;
-
-    // ~ Constructors ~
-
-    Icosahedron_r( float rad , const Vector3& cntr, bool animate = true, Color baseColor = BLUE ) : DynaMesh(20){
-        // Compute the vertices and faces
-        radius = rad;
-        a /**/ = ( radius / ratio ) * 0.5;
-        b /**/ = ( radius / ratio ) / ( 2.0f * phi );
-        set_posn( cntr );
-
-        // Appearance
-        baseClr = baseColor;
-
-        // Animation
-        anim = animate;
-        float loRate = -0.01f;
-        float hiRate =  0.01f;
-        rolVel = randf( loRate, hiRate );
-        ptcVel = randf( loRate, hiRate );
-        yawVel = randf( loRate, hiRate );
-
-        // Define the icosahedron's 12 vertices:
-        V.push_back( Vector3{  0,  b, -a } );
-        V.push_back( Vector3{  b,  a,  0 } );
-        V.push_back( Vector3{ -b,  a,  0 } );
-        V.push_back( Vector3{  0,  b,  a } );
-        V.push_back( Vector3{  0, -b,  a } );
-        V.push_back( Vector3{ -a,  0,  b } );
-        V.push_back( Vector3{  0, -b, -a } );
-        V.push_back( Vector3{  a,  0, -b } );
-        V.push_back( Vector3{  a,  0,  b } );
-        V.push_back( Vector3{ -a,  0, -b } );
-        V.push_back( Vector3{  b, -a,  0 } );
-        V.push_back( Vector3{ -b, -a,  0 } );
-
-        Color   R{ 255,   0,   0, 255 };
-        Color   G{   0, 255,   0, 255 };
-        Color   B{   0,   0, 255, 255 };
-
-        // Define the icosahedron's 20 triangular faces: CCW-out
-        push_triangle_w_norms( {V[ 2], V[ 1], V[ 0]} );  clrs.push_back( {R, G, B} );
-        push_triangle_w_norms( {V[ 1], V[ 2], V[ 3]} );  clrs.push_back( {B, R, G} );
-        push_triangle_w_norms( {V[ 5], V[ 4], V[ 3]} );  clrs.push_back( {G, B, R} );
-        push_triangle_w_norms( {V[ 4], V[ 8], V[ 3]} );  clrs.push_back( {R, G, B} );
-        push_triangle_w_norms( {V[ 7], V[ 6], V[ 0]} );  clrs.push_back( {B, R, G} );
-        push_triangle_w_norms( {V[ 6], V[ 9], V[ 0]} );  clrs.push_back( {G, B, R} );
-        push_triangle_w_norms( {V[11], V[10], V[ 4]} );  clrs.push_back( {R, G, B} );
-        push_triangle_w_norms( {V[10], V[11], V[ 6]} );  clrs.push_back( {B, R, G} );
-        push_triangle_w_norms( {V[ 9], V[ 5], V[ 2]} );  clrs.push_back( {G, B, R} );
-        push_triangle_w_norms( {V[ 5], V[ 9], V[11]} );  clrs.push_back( {R, G, B} );
-        push_triangle_w_norms( {V[ 8], V[ 7], V[ 1]} );  clrs.push_back( {B, R, G} );
-        push_triangle_w_norms( {V[ 7], V[ 8], V[10]} );  clrs.push_back( {G, B, R} );
-        push_triangle_w_norms( {V[ 2], V[ 5], V[ 3]} );  clrs.push_back( {R, G, B} );
-        push_triangle_w_norms( {V[ 8], V[ 1], V[ 3]} );  clrs.push_back( {B, R, G} );
-        push_triangle_w_norms( {V[ 9], V[ 2], V[ 0]} );  clrs.push_back( {G, B, R} );
-        push_triangle_w_norms( {V[ 1], V[ 7], V[ 0]} );  clrs.push_back( {R, G, B} );
-        push_triangle_w_norms( {V[11], V[ 9], V[ 6]} );  clrs.push_back( {B, R, G} );
-        push_triangle_w_norms( {V[ 7], V[10], V[ 6]} );  clrs.push_back( {G, B, R} );
-        push_triangle_w_norms( {V[ 5], V[11], V[ 4]} );  clrs.push_back( {R, G, B} );
-        push_triangle_w_norms( {V[10], V[ 8], V[ 4]} );  clrs.push_back( {B, R, G} );
-
-        // 4. Load buffers
-        load_mesh_buffers( true, true );
-    }
-
-    void draw(){
-        // load_mesh_buffers( true, true );
-        // Draw the model
-        if( anim ){  rotate_RPY( rolVel, ptcVel, yawVel );  }
-        // DrawMesh( mesh, matl, xfrm );
-        modl.transform = xfrm;
-        // DrawModel( modl, Vector3Zero(), 1.0f, WHITE );
-        DrawModel( modl, Vector3Zero(), 1.0f, Color{ 255,255,255,255 } );
-    }
-
-};
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
@@ -464,8 +409,16 @@ int main(){
     float halfBoxLen = 100.0/10.0;
 
     /// Init Objects ///
-    FractureCube dc{ 5.0 };
-    Icosahedron_r ic{ 5.0, Vector3Zero(), true, BLUE };
+    vector<shared_ptr<FractureCube>> cubes;
+    shared_ptr<FractureCube> nuCube;
+    for( uint i = 0; i < 3; ++i ){
+        nuCube = shared_ptr<FractureCube>( new FractureCube{ 5.0 } );
+        nuCube->set_posn( uniform_vector_noise( 3.0 ) );
+        cubes.push_back( nuCube );
+    }
+    
+    // FractureCube dc{ 5.0 };
+    // Icosahedron_r ic{ 5.0, Vector3Zero(), true, BLUE };
 
     // Camera
     Camera camera = Camera{
@@ -501,8 +454,12 @@ int main(){
         shader
     );
 
-    ic.set_shader( shader );
-    dc.set_shader( shader );
+    for( shared_ptr<FractureCube>& cube : cubes ){
+        cube->set_shader( shader );
+    }
+
+    // ic.set_shader( shader );
+    // dc.set_shader( shader );
 
     ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
 
@@ -517,7 +474,9 @@ int main(){
         // ic.translate( uniform_vector_noise( 0.125 ) );
         // ic.remodel();
         
-        dc.update();
+        for( shared_ptr<FractureCube>& cube : cubes ){
+            cube->update();
+        }
         // dc.remodel();
 
         UpdateLightValues( shader, light );
@@ -526,7 +485,10 @@ int main(){
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
         // 
-        dc.draw();
+        // dc.draw();
+        for( shared_ptr<FractureCube>& cube : cubes ){
+            cube->draw();
+        }
         
         // ic.draw();
 

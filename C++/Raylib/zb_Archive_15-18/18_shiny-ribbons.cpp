@@ -211,53 +211,47 @@ class DynaMesh{ public:
     // 2023-08-14: This class assumes that the mesh will have a constant size for each buffer, though their values might change
     // 2023-08-15: This class REQUIRES that vertices, indices, normals, and colors ALL be defined
 
-    /// Rendering Members ///
+    /// Members ///
     vector<triPnts> tris; // Dynamic geometry, each array is a facet of 3x vertices
     vector<triPnts> nrms; // Normal vector for each facet
     vector<triClrs> clrs; // Vertex colors for each facet
+    Mesh /*------*/ mesh; // Raylib mesh geometry
+    bool /*------*/ upld; // Has the mesh been uploaded?
     Matrix /*----*/ xfrm; // Pose in the parent frame
-    Color /*-----*/ bClr; // Base color
-
-    /// Memory Members ///
-    Mesh*  mesh; // --- Raylib mesh geometry
-    bool   upldMesh; // Has the `Mesh` been uploaded?
-    Model  modl; // --- Needed for shaders
-    bool   upldModl; // Has the `Model` been uploaded?
-    Shader shdr; // --- Needed for shaders
-    bool   loadShdr; // Has the `Shader` been loaded?
-    
+    Model /*-----*/ modl; // USE MODEL I GUESS
+    Shader /*----*/ shdr; // USE MODEL I GUESS
     
     /// Memory Methods ///
 
-    void init_memory( uint Ntri ){
+    void init_mesh_memory( uint Ntri ){
         // Create the `Mesh` struct and allocate memory there
-        // NOTE: This function should only be run ONCE per object!
 
         uint Npts = Ntri*3;
 
-        // 0. Init flags
-        cout << "All flags FALSE!" << endl;
-        upldMesh = false; // Has the `Mesh`   been uploaded?
-        upldModl = false; // Has the `Model`  been uploaded?
-        loadShdr = false; // Has the `Shader` been loaded?
-
         // 1. Init mesh
-        mesh = new Mesh{};
-        mesh->triangleCount = Ntri;
-        mesh->vertexCount   = Npts;
-        
-        // 3. Init memory
-        mesh->vertices = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
-        mesh->indices  = (ushort*) MemAlloc(Npts   * sizeof( ushort ));
-        mesh->normals  = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
-        mesh->colors   = (u_char*) MemAlloc(Npts*4 * sizeof( u_char )); // 3 vertices, 4 coordinates each (r, g, b, a)
+        upld = false;
+        mesh = Mesh{};
+        mesh.triangleCount = Ntri;
+        mesh.vertexCount   = Npts;
 
-        cout << "Memory allocated at CPU!" << endl;
+        // 2. Init material
+        // matl = LoadMaterialDefault();
+        // matl = Material{};
+        
+        cout << "GO!: init_mesh_memory( " << mesh.triangleCount << " )" << endl;
+
+        // 3. Init memory
+        mesh.vertices = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
+        mesh.indices  = (ushort*) MemAlloc(Npts   * sizeof( ushort ));
+        mesh.normals  = (float* ) MemAlloc(Npts*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
+        mesh.colors   = (u_char*) MemAlloc(Npts*4 * sizeof( u_char )); // 3 vertices, 4 coordinates each (r, g, b, a)
     }
 
     void load_mesh_buffers( bool loadGeo = true, bool loadColor = false ){
         // Load geometry (and color) info into `mesh` buffers        
         // 2023-08-14: For now assume that the facet indices do NOT change!
+
+        cout << "GO!: " << mesh.triangleCount << ", load_mesh_buffers( " << loadGeo <<", "<< loadColor << " )" << endl;
 
         // 0. Init
         ulong k = 0; // Vertex _ counter
@@ -265,106 +259,67 @@ class DynaMesh{ public:
         ulong m = 0; // Color __ counter
 
         // 1. Load CPU-side
-        for( uint i = 0; i < mesh->triangleCount; ++i ){
+        for( uint i = 0; i < mesh.triangleCount; ++i ){
             for( u_char j = 0; j < 3; j++ ){
                 if( loadGeo ){
-                    mesh->normals[k]  = nrms[i][j].x;
-                    mesh->vertices[k] = tris[i][j].x;  k++;
-                    mesh->normals[k]  = nrms[i][j].y;
-                    mesh->vertices[k] = tris[i][j].y;  k++;
-                    mesh->normals[k]  = nrms[i][j].z;
-                    mesh->vertices[k] = tris[i][j].z;  k++;
-                    mesh->indices[l]  = l; /*-------*/ l++; 
+                    mesh.normals[k]  = nrms[i][j].x;
+                    mesh.vertices[k] = tris[i][j].x;  k++;
+                    mesh.normals[k]  = nrms[i][j].y;
+                    mesh.vertices[k] = tris[i][j].y;  k++;
+                    mesh.normals[k]  = nrms[i][j].z;
+                    mesh.vertices[k] = tris[i][j].z;  k++;
+                    mesh.indices[l]  = l; /*-------*/ l++; 
                 }
                 if( loadColor ){
-                    mesh->colors[m] = clrs[i][j].r;  m++;
-                    mesh->colors[m] = clrs[i][j].g;  m++;
-                    mesh->colors[m] = clrs[i][j].b;  m++;
-                    mesh->colors[m] = clrs[i][j].a;  m++;
+                    mesh.colors[m] = clrs[i][j].r;  m++;
+                    mesh.colors[m] = clrs[i][j].g;  m++;
+                    mesh.colors[m] = clrs[i][j].b;  m++;
+                    mesh.colors[m] = clrs[i][j].a;  m++;
                 }
             }
         }
 
-        cout << "CPU memory modified!" << endl;
-
-        if( !upldMesh ){
-            cout << "About to upload mesh ... " << flush;
+        // If this mesh is not present on the GPU, then send it
+        if( !upld ){
             // 3. Initial load to GPU
-            UploadMesh( mesh, true );
-            upldMesh = true;
-            cout << "Mesh uploaded!" << endl;
-        }
-
-        // If mesh is on GPU, update the mesh buffers there
-        if( upldMesh ){
-
-            // WARNING: THIS SEEMS REDUNDANT, I THINK I AM WRITING THE SAME DATA
-
-            cout << "About to send mesh data to GPU ... " << flush;
-
+            UploadMesh( &mesh, true );
+            upld = true;
+        // Else mesh is on GPU, update the mesh buffers there
+        }else{
             // 2. Send GPU-side
             if( loadGeo ){
                 UpdateMeshBuffer( 
-                    *mesh, // -------------------------------- `Mesh` object
+                    mesh, // -------------------------------- `Mesh` object
                     VERTEX_BUFFER_IDX, // ------------------- VBO Index
-                    mesh->vertices, // ----------------------- Array of data 
-                    mesh->vertexCount*3 * sizeof( float  ), // Total array size
+                    mesh.vertices, // ----------------------- Array of data 
+                    mesh.vertexCount*3 * sizeof( float  ), // Total array size
                     0 // ------------------------------------ Starting index in array
                 );
                 UpdateMeshBuffer( 
-                    *mesh, // -------------------------------- `Mesh` object
+                    mesh, // -------------------------------- `Mesh` object
                     NORMAL_BUFFER_IDX, // ------------------- VBO Index
-                    mesh->normals, // ------------------------ Array of data 
-                    mesh->vertexCount*3 * sizeof( float  ), // Total array size
+                    mesh.normals, // ------------------------ Array of data 
+                    mesh.vertexCount*3 * sizeof( float  ), // Total array size
                     0 // ------------------------------------ Starting index in array
                 );
+                // 2023-08-14: For now assume that the facet indices do NOT change!
             }
             if( loadColor ){
                 UpdateMeshBuffer( 
-                    *mesh, // -------------------------------- `Mesh` object
+                    mesh, // -------------------------------- `Mesh` object
                     COLORS_BUFFER_IDX, // ------------------- VBO Index
-                    mesh->colors, // ------------------------- Array of data 
-                    mesh->vertexCount*4 * sizeof( u_char ), // Total array size
+                    mesh.colors, // ------------------------- Array of data 
+                    mesh.vertexCount*4 * sizeof( u_char ), // Total array size
                     0 // ------------------------------------ Starting index in array
                 );
             }
-
-            cout << "Data sent!" << endl;
         }
-
-        
-
-        
-
     }
 
     void remodel(){
-        // Reload the `Model`
-        if( !upldModl ){
-            cout << "About to create model ... " << flush;
-            modl = LoadModelFromMesh( *mesh );
-            modl.materials[0].shader = shdr;
-            upldModl = true;
-            cout << "Model created!" << endl;
-        }
-    }
-
-    /// Constructors ///
-
-    DynaMesh( uint Ntri ){
-        // Allocate memory and set default pose
-        init_memory( Ntri );
-        xfrm = MatrixIdentity();
-        bClr = WHITE;
-    }
-
-    /// Geometry Methods ///
-
-    void push_triangle_w_norms( triPnts tri ){
-        // Add one triangle
-        Vector3 norm = normal_of_tiangle( tri );  
-        tris.push_back( tri );
-        nrms.push_back({ norm, norm, norm });
+        modl = LoadModelFromMesh( mesh );
+        modl.materials[0] = LoadMaterialDefault();
+        modl.materials[0].shader = shdr;
     }
 
     void wipe_geo( bool wipeTris = true, bool wipeColors = false ){
@@ -376,6 +331,23 @@ class DynaMesh{ public:
         if( wipeColors ){
             clrs.clear();
         }
+    }
+
+    /// Constructors ///
+
+    DynaMesh( uint Ntri ){
+        // Allocate memory and set default pose
+        init_mesh_memory( Ntri );
+        xfrm = MatrixIdentity();
+    }
+
+    /// Geometry Methods ///
+
+    void push_triangle_w_norms( triPnts tri ){
+        // Add one triangle
+        Vector3 norm = normal_of_tiangle( tri );  
+        tris.push_back( tri );
+        nrms.push_back({ norm, norm, norm });
     }
 
     /// Pose Math ///
@@ -422,86 +394,13 @@ class DynaMesh{ public:
 
     void draw(){
         // Render the mesh
-        cout << "About to draw ... " << flush;
         modl.transform = xfrm;
-        DrawModel( modl, Vector3Zero(), 1.0f, bClr );
-        cout << "Drawn!" << endl;
+        DrawModel( modl, get_posn(), 1.0f, WHITE );
     }
 
 };
 
-class FractureCube : public DynaMesh{ public:
-    // A cube that shakes apart
 
-    /// Constructors ///
-
-    FractureCube( float sideLen ) : DynaMesh( 12 ){
-        // 0. Init
-        triPnts pushTri;
-        triClrs pushClr;
-        Vector3 norm;
-        vvec3   V;
-        float   halfLen = sideLen/2.0;
-        Color   R{ 255,   0,   0, 255 };
-        Color   G{   0, 255,   0, 255 };
-        Color   B{   0,   0, 255, 255 };
-
-        // 1. Establish vertices
-        V.push_back( Vector3{ -halfLen, -halfLen, -halfLen } );
-        V.push_back( Vector3{ -halfLen, -halfLen,  halfLen } );
-        V.push_back( Vector3{ -halfLen,  halfLen, -halfLen } );
-        V.push_back( Vector3{ -halfLen,  halfLen,  halfLen } );
-        V.push_back( Vector3{  halfLen, -halfLen, -halfLen } );
-        V.push_back( Vector3{  halfLen, -halfLen,  halfLen } );
-        V.push_back( Vector3{  halfLen,  halfLen, -halfLen } );
-        V.push_back( Vector3{  halfLen,  halfLen,  halfLen } );
-
-        // 2. Build tris
-        push_triangle_w_norms( { V[0], V[3], V[2] } );
-        push_triangle_w_norms( { V[0], V[1], V[3] } );
-        push_triangle_w_norms( { V[6], V[4], V[0] } );
-        push_triangle_w_norms( { V[6], V[0], V[2] } );
-        push_triangle_w_norms( { V[0], V[4], V[5] } );
-        push_triangle_w_norms( { V[0], V[5], V[1] } );
-        push_triangle_w_norms( { V[7], V[6], V[2] } );
-        push_triangle_w_norms( { V[7], V[2], V[3] } );
-        push_triangle_w_norms( { V[4], V[6], V[7] } );
-        push_triangle_w_norms( { V[4], V[7], V[5] } ); 
-        push_triangle_w_norms( { V[1], V[5], V[7] } );
-        push_triangle_w_norms( { V[1], V[7], V[3] } );
-
-        // 3. Build Colors
-        pushClr = { R, G, B };  clrs.push_back( pushClr );
-        pushClr = { B, R, G };  clrs.push_back( pushClr );
-        pushClr = { G, B, R };  clrs.push_back( pushClr );
-        pushClr = { R, G, B };  clrs.push_back( pushClr );
-        pushClr = { B, R, G };  clrs.push_back( pushClr );
-        pushClr = { G, B, R };  clrs.push_back( pushClr );
-        pushClr = { R, G, B };  clrs.push_back( pushClr );
-        pushClr = { B, R, G };  clrs.push_back( pushClr );
-        pushClr = { G, B, R };  clrs.push_back( pushClr );
-        pushClr = { R, G, B };  clrs.push_back( pushClr );
-        pushClr = { B, R, G };  clrs.push_back( pushClr );
-        pushClr = { G, B, R };  clrs.push_back( pushClr );
-
-        // 4. Load buffers
-        load_mesh_buffers( true, true );
-    }
-
-    void update(){
-        // translate( uniform_vector_noise( 0.125 ) );
-        if( randf() < 0.50 ){
-            for( triPnts& tri : tris ){
-                tri[0] = uniform_vector_noise( tri[0], 0.125 );
-                tri[1] = uniform_vector_noise( tri[1], 0.125 );
-                tri[2] = uniform_vector_noise( tri[2], 0.125 );
-                // 2023-08-13: Purposely avoiding a normal update until a shader is in use
-            }
-        }
-        load_mesh_buffers( true, false );
-        // remodel();
-    }
-};
 
 struct Sphere{
     // Container struct for an obstacle to avoid
@@ -594,6 +493,7 @@ class BoidRibbon : public DynaMesh{ public:
     Basis   freeWill; // Drunken walk
     Basis   avoidSph; // Sphere avoidance instinct
     Sphere  fearSphr; // The sphere to fear
+    Color   colr;
 
     /// Rendering ///
     uint /*--------------*/ Npairs; // -- Number of coordinate pairs allowed
@@ -615,7 +515,7 @@ class BoidRibbon : public DynaMesh{ public:
         dNear     = d_Near;
         ur /*--*/ = updateRate;
         home /**/ = home_;
-        bClr /**/ = Color{
+        colr /**/ = Color{
             (ubyte) randi( 0, 255 ),
             (ubyte) randi( 0, 255 ),
             (ubyte) randi( 0, 255 ),
@@ -629,6 +529,8 @@ class BoidRibbon : public DynaMesh{ public:
 
         Nboids++;
         ID = Nboids;
+
+        update();
 
         // load_mesh_buffers( true, true );
     }
@@ -794,9 +696,9 @@ class BoidRibbon : public DynaMesh{ public:
     void update(){
         // Create geometry
         /*---*/ Nviz  = coords.size()-1;        
-        float   R     = bClr.r/255.0f;
-        float   G     = bClr.g/255.0f;
-        float   B     = bClr.b/255.0f;
+        float   R     = colr.r/255.0f;
+        float   G     = colr.g/255.0f;
+        float   B     = colr.b/255.0f;
         float   Aspan = headAlpha - tailAlpha;
         Vector3 c1, c2, c3, c4, n1, n2;
         ubyte   A_i, A_ip1;
@@ -814,8 +716,8 @@ class BoidRibbon : public DynaMesh{ public:
                 // 3. Calculate the opacity at this segment along the ribbon
                 A_i   = (ubyte) 255 * (tailAlpha + Aspan*(Nviz-(i  ))/(1.0f*Nviz));
                 A_ip1 = (ubyte) 255 * (tailAlpha + Aspan*(Nviz-(i+1))/(1.0f*Nviz));
-                C_i   = Color{ bClr.r, bClr.g, bClr.b, A_i   };
-                C_ip1 = Color{ bClr.r, bClr.g, bClr.b, A_ip1 };
+                C_i   = Color{ colr.r, colr.g, colr.b, A_i   };
+                C_ip1 = Color{ colr.r, colr.g, colr.b, A_ip1 };
 
                 if( i%2==0 ){
                     /// Triangle 1, Side 1: c2, c1, c3 ///
