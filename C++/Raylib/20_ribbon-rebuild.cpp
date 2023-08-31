@@ -1,8 +1,7 @@
-// g++ 17_shiny-icos.cpp -std=c++17 -lraylib
-// Re-implement Boid Ribbons **without** `Model`s!
+// g++ 20_ribbon-rebuild.cpp -std=c++17 -lraylib -O3
+// Re-implement Boid Ribbons **without** constantly creating meshes!
 // 2023-08-14: Do not break into smaller files until everything works
 
-// FIXME: PUT FRACTURED CUBE IN A VECTOR OF POINTERS
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
@@ -151,7 +150,7 @@ class DynaMesh{ public:
         // Load geometry (and color) info into `mesh` buffers        
         // 2023-08-14: For now assume that the facet indices do NOT change!
 
-        cout << "GO!: " << Ntri << ", load_mesh_buffers( " << loadGeo <<", "<< loadColor << " )" << endl;
+        // cout << "GO!: " << Ntri << ", load_mesh_buffers( " << loadGeo <<", "<< loadColor << " )" << endl;
 
         // 0. Init
         ulong k = 0; // Vertex _ counter
@@ -486,11 +485,14 @@ class TestRibbon : public DynaMesh{ public:
     }
 
 };
+typedef shared_ptr<TestRibbon> ribbonPtr;
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
 int main(){
     rand_seed();
+
+    uint Nrib = 1600;
 
     /// Window Init ///
     InitWindow( 900, 900, "Ribbon Test" );
@@ -501,13 +503,22 @@ int main(){
     float halfBoxLen = 100.0/10.0;
 
     /// Init Objects ///
-    vector<shared_ptr<FractureCube>> cubes;
-    shared_ptr<FractureCube> nuCube;
-    for( uint i = 0; i < 30; ++i ){
-        nuCube = shared_ptr<FractureCube>( new FractureCube{ 5.0 } );
-        nuCube->set_posn( uniform_vector_noise( 5.0 ) );
-        cubes.push_back( nuCube );
+    // vector<shared_ptr<FractureCube>> cubes;
+    // shared_ptr<FractureCube> nuCube;
+    // for( uint i = 0; i < 30; ++i ){
+    //     nuCube = shared_ptr<FractureCube>( new FractureCube{ 5.0 } );
+    //     nuCube->set_posn( uniform_vector_noise( 5.0 ) );
+    //     cubes.push_back( nuCube );
+    // }
+    // TestRibbon tr{ 20, 5.0, 1.0, 0.0 };
+    ribbonPtr /*---*/ nuTest;
+    vector<ribbonPtr> testModels;
+    for( uint i = 0; i < Nrib; ++i ){
+        nuTest = ribbonPtr( new TestRibbon{ 20, 5.0, 1.0, 0.0 } );
+        testModels.push_back( nuTest );
     }
+
+
     
     // FractureCube dc{ 5.0 };
     // Icosahedron_r ic{ 5.0, Vector3Zero(), true, BLUE };
@@ -544,8 +555,13 @@ int main(){
         shader
     );
 
-    for( shared_ptr<FractureCube>& cube : cubes ){
-        cube->set_shader( &shader );
+    // for( shared_ptr<FractureCube>& cube : cubes ){
+    //     cube->set_shader( &shader );
+    // }
+
+    // tr.set_shader( &shader );
+    for( uint i = 0; i < Nrib; ++i ){
+        testModels[i]->set_shader( &shader );
     }
 
 
@@ -558,8 +574,14 @@ int main(){
         BeginMode3D( camera );
         ClearBackground( BLACK );
 
-        for( shared_ptr<FractureCube>& cube : cubes ){
-            cube->update();
+        // for( shared_ptr<FractureCube>& cube : cubes ){
+        //     cube->update();
+        // }
+        // tr.update_position_TEST( 0.50 );
+        // tr.update();
+        for( uint i = 0; i < Nrib; ++i ){
+            testModels[i]->update_position_TEST( 0.75 );
+            testModels[i]->update();
         }
 
         UpdateLightValues( shader, light );
@@ -568,10 +590,13 @@ int main(){
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
         // 
-        for( shared_ptr<FractureCube>& cube : cubes ){
-            cube->draw();
+        // for( shared_ptr<FractureCube>& cube : cubes ){
+        //     cube->draw();
+        // }
+        // tr.draw();
+        for( uint i = 0; i < Nrib; ++i ){
+            testModels[i]->draw();
         }
-        
 
         /// End Drawing ///
         EndMode3D();
