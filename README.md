@@ -7,7 +7,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 ## Architecture 1: C++ & RayLib  (Dangerous!)
 * Purpose: Let yourself have some graphics, as a treat!  
 
-* `[P]` Raylib Lib Rebuild
+* `[>]` Raylib Lib Rebuild
     - Problem:  All the Raylib code is broken!
     - Solution: Restart from scratch!
         * Avoid **changing** the number of triangles across frames
@@ -16,12 +16,20 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
             - Zero-size
     - `[Y]` Simplest Cube, 2023-08-13: Back to basics! `Model` was an unneeded middleman!
     - `[Y]` Simplest Cube Jiggle, 2023-08-18: Identical behavior with new struct
-    - `[P]` Use "Shiny Boid Ribbons" as the basis of the new library
+    - `[>]` Use "Shiny Boid Ribbons" as the basis of the new library
+        * `[Y]` `TestRibbon`, 2023-08-31: 1600 ribbons in a `vector` of `shared_ptr` without rampant mesh creation
+        * `[>]` Test C++ list comprehension of  `vector` of `shared_ptr` with `shared_ptr<TestRibbon>&` elements
+        * `[ ]` Test removing `DynaMesh` member pointers one at a time in order to avoid double-indirection
+        * `[ ]` New Headers
+            - `[ ]` Confirm memory is behaving!
+            - `[ ]` New "utils.hpp"
+            - `[ ]` New "toybox.hpp"
+        * `[ ]` Test "Shiny Boid Ribbons" project
 
-* `[>]` Shiny Boid Ribbons - Generative art
+* `[P]` Shiny Boid Ribbons - Generative art
     - `[N]` Experiment with memory cycle {Unload Model --> Populate Geo --> Load Mesh --> Load Model}, 2023-08-24: Experiment failed. It appears that the mesh is not actually erased from the GPU?
         * `{Y}` Possibly need flag(s) for this?, 2023-08-24: Flags used.  Did not help!
-        * `[ ]` If the experiment fails, ask the Discord!
+        * `[N]` If the experiment fails, ask the Discord!, 2023-08-31: Need MVP before asking for help, see "Raylib Lib Rebuild" project
     - `[P]` Boid Ribbon class
     - `[ ]` Spherical obstactle avoidance
     - `[ ]` Ribbons as dynamic, shaded meshes
