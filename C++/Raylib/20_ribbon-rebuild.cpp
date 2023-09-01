@@ -20,6 +20,8 @@ using std::vector;
 using std::shared_ptr;
 #include <deque>
 using std::deque;
+#include <algorithm>
+using std::clamp, std::min;
 
 /// Raylib ///
 #include <raylib.h>
@@ -99,6 +101,109 @@ Color uniform_random_color(){
     // Return a random fully opaque color
     return Color{ rand_ubyte(), rand_ubyte(), rand_ubyte(), 255 };
 }
+
+
+
+////////// VECTOR MATH STRUCTS /////////////////////////////////////////////////////////////////////
+
+struct Basis{
+    // Pose exchange format for `Boid`s, Z-basis has primacy
+    // NOTE: None of the operations with other bases assume any operand is orthonormalized
+    // NOTE: Position is largely absent from Basis-Basis operations
+
+    /// Members ///
+    Vector3 Xb; // X-basis
+    Vector3 Yb; // Y-basis
+    Vector3 Zb; // Z-basis
+    Vector3 Pt; // Position
+
+    /// Static Methods ///
+
+    static Basis origin(){
+        // Get the origin `Basis`
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3{ 1.0f, 0.0f, 0.0f };
+        rtnBasis.Yb = Vector3{ 0.0f, 1.0f, 0.0f };
+        rtnBasis.Zb = Vector3{ 0.0f, 0.0f, 1.0f };
+        rtnBasis.Pt = Vector3{ 0.0f, 0.0f, 0.0f };
+        return rtnBasis;
+    }
+
+    static Basis random(){
+        // Sample from a +/-1.0f cube for all vectors, then `orthonormalize`
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3{ randf( -1.0,  1.0 ), randf( -1.0,  1.0 ), randf( -1.0,  1.0 ) };
+        rtnBasis.Yb = Vector3{ randf( -1.0,  1.0 ), randf( -1.0,  1.0 ), randf( -1.0,  1.0 ) };
+        rtnBasis.Zb = Vector3{ randf( -1.0,  1.0 ), randf( -1.0,  1.0 ), randf( -1.0,  1.0 ) };
+        rtnBasis.Pt = Vector3{ randf( -1.0,  1.0 ), randf( -1.0,  1.0 ), randf( -1.0,  1.0 ) };
+        rtnBasis.orthonormalize();
+        return rtnBasis;
+    }
+
+    static Basis from_transform_and_point( const Matrix& xform, const Vector3& point ){
+        // Get a `Basis` from a `xform` matrix and a `point`
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3Transform( Vector3{1.0, 0.0, 0.0}, xform );
+        rtnBasis.Yb = Vector3Transform( Vector3{0.0, 1.0, 0.0}, xform );
+        rtnBasis.Zb = Vector3Transform( Vector3{0.0, 0.0, 1.0}, xform );
+        rtnBasis.Pt = point;
+        return rtnBasis;
+    }
+
+    /// Methods ///
+
+    void orthonormalize(){
+        // Make sure this is an orthonormal basis, Z-basis has primacy
+        // No need to normalize `Xb`, see below
+        Yb = Vector3Normalize( Yb );
+        Zb = Vector3Normalize( Zb );
+        Xb = Vector3Normalize( Vector3CrossProduct( Yb, Zb ) );
+        Yb = Vector3Normalize( Vector3CrossProduct( Zb, Xb ) );
+    };
+
+    void blend_orientations_with_factor( const Basis& other, float factor ){
+        // Exponential filter between this basis and another Orthonormalize separately
+        // 1. Clamp factor
+        factor = clamp( factor, 0.0f, 1.0f );
+        // 2. Blend bases
+        // No need to compute `Xb`, see `orthonormalize`
+        Yb = Vector3Add(  Vector3Scale( Yb, 1.0-factor ), Vector3Scale( other.Yb, factor )  );
+        Zb = Vector3Add(  Vector3Scale( Zb, 1.0-factor ), Vector3Scale( other.Zb, factor )  );
+        // 3. Correct basis
+        orthonormalize();
+    }
+
+    Basis operator+( const Basis& other ){
+        // Addition operator for bases, Just the vector sum of each basis, Orthonormalize separately
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3Add( Xb, other.Xb );
+        rtnBasis.Yb = Vector3Add( Yb, other.Yb );
+        rtnBasis.Zb = Vector3Add( Zb, other.Zb );
+        rtnBasis.Pt = Vector3Add( Pt, other.Pt );
+        return rtnBasis;
+    }
+
+    Basis get_scaled_orientation( float factor ){
+        // Return a copy of the `Basis` with each individual basis scaled by a factor
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3Scale( Xb, factor );
+        rtnBasis.Yb = Vector3Scale( Yb, factor );
+        rtnBasis.Zb = Vector3Scale( Zb, factor );
+        // rtnBasis.Pt = Vector3Scale( Pt, factor );
+        return rtnBasis;
+    }
+
+    Basis copy(){
+        // Return a copy of the basis.
+        Basis rtnBasis;
+        rtnBasis.Xb = Vector3( Xb );
+        rtnBasis.Yb = Vector3( Yb );
+        rtnBasis.Zb = Vector3( Zb );
+        rtnBasis.Pt = Vector3( Pt );
+        return rtnBasis;
+    }
+};
+typedef shared_ptr<Basis> basPtr; // 2023-06-17: For now assume that Bases are lightweight enough to pass by value
 
 
 
@@ -466,10 +571,109 @@ class FractureCube : public DynaMesh{ public:
     }
 };
 
-class TestRibbon : public DynaMesh{ public:
-    // Trying to find out where the memory problem is
+
+struct Sphere{
+    // Container struct for an obstacle to avoid
+    
+    /// Members ///
+    Vector3 cntr;
+    float   rads;
+    Mesh    mesh; // Raylib mesh geometry
+    bool    upld; // Has the mesh been uploaded?
+    Matrix  xfrm; // Pose in the parent frame
+    Model   modl; // Needed for shaders
+    bool    modlUpld;
+    Shader  shdr; // Needed for shaders
+    Color   colr;
+
+    void set_posn( const Vector3& posn ){
+        // Set the position components of the homogeneous coordinates
+        xfrm.m12 = posn.x;
+        xfrm.m13 = posn.y;
+        xfrm.m14 = posn.z;
+    }
+
+    void translate( const Vector3& delta ){
+        // Increment the position components of the homogeneous coordinates by the associated `delta` components
+        xfrm.m12 += delta.x;
+        xfrm.m13 += delta.y;
+        xfrm.m14 += delta.z;
+    }
+
+    /// Constructors ///
+    
+    Sphere(){
+        cntr = Vector3Zero();
+        rads = 1.0;
+        mesh = GenMeshSphere( rads, 32, 32 );
+        upld = false;
+        xfrm = MatrixIdentity();
+        colr = GRAY;
+        set_posn( cntr );
+        modlUpld = false;
+    }
+
+    Sphere( const Vector3& center, float radius, Color color = GRAY ){
+        cntr = center;
+        rads = radius;
+        mesh = GenMeshSphere( rads, 32, 32 );
+        upld = false;
+        xfrm = MatrixIdentity();
+        colr = color;
+        set_posn( cntr );
+        modlUpld = false;
+    }
+
+    /// Methods ///
+
+    void remodel(){
+        // Reset the `Model`
+        modl = LoadModelFromMesh( mesh );
+        modl.materials[0].shader = shdr;
+    }
+
+    /// Rendering ///
+
+    void set_shader( Shader shader ){ shdr = shader; }
+
+    void draw(){
+        // Render the mesh
+        if( !modlUpld ){  
+            remodel();
+            modlUpld = true;  
+        }
+        modl.transform = xfrm;
+        DrawModel( modl, Vector3Zero(), 1.0f, colr );
+    }
+
+    Sphere copy() const {  return Sphere{ cntr, rads };  }
+};
+typedef shared_ptr<Sphere> sphrPtr;
+
+
+class BoidRibbon : public DynaMesh{ public:
+    // (Mostly) Complete rewrite
 
     /// Members ///
+    uint  ID; // --- Identifier
+    
+    /// Pose ///
+    Basis headingB; // Where the boid is actually pointed
+
+    /// Way-Finding ///
+    float   ur; // ----- Update rate
+    float   dNear; // -- Radius of hemisphere for flocking consideration
+    uint    Nnear; // -- How many neighbors are there?
+    float   scale; // -- Habitat scale
+    Vector3 home; // --- Don't get too far from this point
+    Basis   flocking; // Flocking instinct
+    Basis   homeSeek; // Home seeking instinct
+    Basis   freeWill; // Drunken walk
+    Basis   avoidSph; // Sphere avoidance instinct
+    sphrPtr fearSphr; // The sphere to fear
+    Color   colr;
+
+    /// Rendering ///
     double /*------------*/ width; // --- Width of the ribbon 
     uint /*--------------*/ Npair;
     uint /*--------------*/ Nviz; // ---- Number of coordinate pairs visible now
@@ -482,7 +686,7 @@ class TestRibbon : public DynaMesh{ public:
     Vector3 lastPosn;
 
     /// Constructor ///
-    TestRibbon( uint N_pairs, float width_, float alphaHead = 1.0f, float alphaTail = 0.0f ) : DynaMesh( (N_pairs-1)*4 ){
+    BoidRibbon( uint N_pairs, float width_, float alphaHead = 1.0f, float alphaTail = 0.0f ) : DynaMesh( (N_pairs-1)*4 ){
         width     = width_;
         Npair     = N_pairs;
         headAlpha = alphaHead;
@@ -568,14 +772,14 @@ class TestRibbon : public DynaMesh{ public:
     }
 
 };
-typedef shared_ptr<TestRibbon> ribbonPtr;
+typedef shared_ptr<BoidRibbon> ribbonPtr;
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
 int main(){
     rand_seed();
 
-    uint Nrib = 1024; // 2048;
+    uint Nrib = 512; // 1024; // 2048;
 
     /// Window Init ///
     InitWindow( 900, 900, "Ribbon Test" );
@@ -593,11 +797,11 @@ int main(){
     //     nuCube->set_posn( uniform_vector_noise( 5.0 ) );
     //     cubes.push_back( nuCube );
     // }
-    // TestRibbon tr{ 20, 5.0, 1.0, 0.0 };
+    // BoidRibbon tr{ 20, 5.0, 1.0, 0.0 };
     ribbonPtr /*---*/ nuTest;
     vector<ribbonPtr> testModels;
     for( uint i = 0; i < Nrib; ++i ){
-        nuTest = ribbonPtr( new TestRibbon{ 20, 5.0, 1.0, 0.0 } );
+        nuTest = ribbonPtr( new BoidRibbon{ 20, 5.0, 1.0, 0.0 } );
         testModels.push_back( nuTest );
     }
 

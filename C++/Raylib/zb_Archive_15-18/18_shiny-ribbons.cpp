@@ -412,6 +412,7 @@ struct Sphere{
     bool    upld; // Has the mesh been uploaded?
     Matrix  xfrm; // Pose in the parent frame
     Model   modl; // Needed for shaders
+    bool    modlUpld;
     Shader  shdr; // Needed for shaders
     Color   colr;
 
@@ -439,6 +440,7 @@ struct Sphere{
         xfrm = MatrixIdentity();
         colr = GRAY;
         set_posn( cntr );
+        modlUpld = false;
     }
 
     Sphere( const Vector3& center, float radius, Color color = GRAY ){
@@ -449,6 +451,7 @@ struct Sphere{
         xfrm = MatrixIdentity();
         colr = color;
         set_posn( cntr );
+        modlUpld = false;
     }
 
     /// Methods ///
@@ -465,6 +468,10 @@ struct Sphere{
 
     void draw(){
         // Render the mesh
+        if( !modlUpld ){  
+            remodel();
+            modlUpld = true;  
+        }
         modl.transform = xfrm;
         DrawModel( modl, Vector3Zero(), 1.0f, colr );
     }
