@@ -116,11 +116,19 @@ class DynaMesh{ public:
     vector<triPnts> nrms; // Normal vector for each facet
     vector<triClrs> clrs; // Vertex colors for each facet
     Matrix /*----*/ xfrm; // Pose in the parent frame
-    Mesh* /*-----*/ mesh; // Raylib mesh geometry
+    
+    // Mesh* /*-----*/ mesh; // Raylib mesh geometry
+    Mesh /*-----*/ mesh; // Raylib mesh geometry
+
     bool /*------*/ upldMesh; // Has the mesh been uploaded?
-    Model* /*----*/ modl; // Model
+
+    // Model* /*----*/ modl; // Model
+    Model /*----*/ modl; // Model
+
     bool /*------*/ upldModl; // Has the mesh been uploaded?
-    Shader* /*---*/ shdr; // Shader
+
+    // Shader* /*---*/ shdr; // Shader
+    Shader /*---*/ shdr; // Shader
     
     /// Memory Methods ///
 
@@ -133,17 +141,29 @@ class DynaMesh{ public:
         // 1. Init mesh
         upldMesh = false;
         upldModl = false;
-        mesh     = new Mesh{};
-        mesh->triangleCount = Ntri;
-        mesh->vertexCount   = Nvtx;
+
+        // mesh     = new Mesh{};
+        mesh     = Mesh{};
+
+        // mesh->triangleCount = Ntri;
+        // mesh->vertexCount   = Nvtx;
+
+        mesh.triangleCount = Ntri;
+        mesh.vertexCount   = Nvtx;
         
-        cout << "GO!: init_mesh_memory( " << mesh->triangleCount << " )" << endl;
+        // cout << "GO!: init_mesh_memory( " << mesh->triangleCount << " )" << endl;
+        cout << "GO!: init_mesh_memory( " << mesh.triangleCount << " )" << endl;
 
         // 2. Init memory
-        mesh->vertices = (float* ) MemAlloc(Nvtx*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
-        mesh->indices  = (ushort*) MemAlloc(Nvtx   * sizeof( ushort ));
-        mesh->normals  = (float* ) MemAlloc(Nvtx*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
-        mesh->colors   = (u_char*) MemAlloc(Nvtx*4 * sizeof( u_char )); // 3 vertices, 4 coordinates each (r, g, b, a)
+        // mesh->vertices = (float* ) MemAlloc(Nvtx*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
+        // mesh->indices  = (ushort*) MemAlloc(Nvtx   * sizeof( ushort ));
+        // mesh->normals  = (float* ) MemAlloc(Nvtx*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
+        // mesh->colors   = (u_char*) MemAlloc(Nvtx*4 * sizeof( u_char )); // 3 vertices, 4 coordinates each (r, g, b, a)
+
+        mesh.vertices = (float* ) MemAlloc(Nvtx*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
+        mesh.indices  = (ushort*) MemAlloc(Nvtx   * sizeof( ushort ));
+        mesh.normals  = (float* ) MemAlloc(Nvtx*3 * sizeof( float  )); // 3 vertices, 3 coordinates each (x, y, z)
+        mesh.colors   = (u_char*) MemAlloc(Nvtx*4 * sizeof( u_char )); // 3 vertices, 4 coordinates each (r, g, b, a)
     }
 
     void load_mesh_buffers( bool loadGeo = true, bool loadColor = false ){
@@ -161,19 +181,36 @@ class DynaMesh{ public:
         for( uint i = 0; i < Ntri; ++i ){
             for( u_char j = 0; j < 3; j++ ){
                 if( loadGeo ){
-                    mesh->normals[k]  = nrms[i][j].x;
-                    mesh->vertices[k] = tris[i][j].x;  k++;
-                    mesh->normals[k]  = nrms[i][j].y;
-                    mesh->vertices[k] = tris[i][j].y;  k++;
-                    mesh->normals[k]  = nrms[i][j].z;
-                    mesh->vertices[k] = tris[i][j].z;  k++;
-                    mesh->indices[l]  = l; /*-------*/ l++; 
+
+                    // mesh->normals[k]  = nrms[i][j].x;
+                    // mesh->vertices[k] = tris[i][j].x;  k++;
+                    // mesh->normals[k]  = nrms[i][j].y;
+                    // mesh->vertices[k] = tris[i][j].y;  k++;
+                    // mesh->normals[k]  = nrms[i][j].z;
+                    // mesh->vertices[k] = tris[i][j].z;  k++;
+                    // mesh->indices[l]  = l; /*-------*/ l++; 
+
+                    mesh.normals[k]  = nrms[i][j].x;
+                    mesh.vertices[k] = tris[i][j].x;  k++;
+                    mesh.normals[k]  = nrms[i][j].y;
+                    mesh.vertices[k] = tris[i][j].y;  k++;
+                    mesh.normals[k]  = nrms[i][j].z;
+                    mesh.vertices[k] = tris[i][j].z;  k++;
+                    mesh.indices[l]  = l; /*-------*/ l++; 
+
                 }
                 if( loadColor ){
-                    mesh->colors[m] = clrs[i][j].r;  m++;
-                    mesh->colors[m] = clrs[i][j].g;  m++;
-                    mesh->colors[m] = clrs[i][j].b;  m++;
-                    mesh->colors[m] = clrs[i][j].a;  m++;
+                    
+                    // mesh->colors[m] = clrs[i][j].r;  m++;
+                    // mesh->colors[m] = clrs[i][j].g;  m++;
+                    // mesh->colors[m] = clrs[i][j].b;  m++;
+                    // mesh->colors[m] = clrs[i][j].a;  m++;
+
+                    mesh.colors[m] = clrs[i][j].r;  m++;
+                    mesh.colors[m] = clrs[i][j].g;  m++;
+                    mesh.colors[m] = clrs[i][j].b;  m++;
+                    mesh.colors[m] = clrs[i][j].a;  m++;
+
                 }
             }
         }
@@ -181,35 +218,64 @@ class DynaMesh{ public:
         // If this mesh is not present on the GPU, then send it
         if( !upldMesh ){
             // 3. Initial load to GPU
-            UploadMesh( mesh, true );
+
+            cout << "Initial `Mesh` upload, ID: " << mesh.vaoId << endl;
+
+            // UploadMesh( mesh, true );
+            UploadMesh( &mesh, true );
+
             upldMesh = true;
         // Else mesh is on GPU, update the mesh buffers there
         }else{
             // 2. Send GPU-side
             if( loadGeo ){
                 UpdateMeshBuffer( 
-                    *mesh, // -------------------------------- `Mesh` object
+
+                    // *mesh, // -------------------------------- `Mesh` object
+                    // VERTEX_BUFFER_IDX, // ------------------- VBO Index
+                    // mesh->vertices, // ----------------------- Array of data 
+                    // mesh->vertexCount*3 * sizeof( float  ), // Total array size
+                    // 0 // ------------------------------------ Starting index in array
+
+                    mesh, // -------------------------------- `Mesh` object
                     VERTEX_BUFFER_IDX, // ------------------- VBO Index
-                    mesh->vertices, // ----------------------- Array of data 
-                    mesh->vertexCount*3 * sizeof( float  ), // Total array size
+                    mesh.vertices, // ----------------------- Array of data 
+                    mesh.vertexCount*3 * sizeof( float  ), // Total array size
                     0 // ------------------------------------ Starting index in array
+
                 );
                 UpdateMeshBuffer( 
-                    *mesh, // -------------------------------- `Mesh` object
+
+                    // *mesh, // -------------------------------- `Mesh` object
+                    // NORMAL_BUFFER_IDX, // ------------------- VBO Index
+                    // mesh->normals, // ------------------------ Array of data 
+                    // mesh->vertexCount*3 * sizeof( float  ), // Total array size
+                    // 0 // ------------------------------------ Starting index in array
+
+                    mesh, // -------------------------------- `Mesh` object
                     NORMAL_BUFFER_IDX, // ------------------- VBO Index
-                    mesh->normals, // ------------------------ Array of data 
-                    mesh->vertexCount*3 * sizeof( float  ), // Total array size
+                    mesh.normals, // ------------------------ Array of data 
+                    mesh.vertexCount*3 * sizeof( float  ), // Total array size
                     0 // ------------------------------------ Starting index in array
+
                 );
                 // 2023-08-14: For now assume that the facet indices do NOT change!
             }
             if( loadColor ){
                 UpdateMeshBuffer( 
-                    *mesh, // -------------------------------- `Mesh` object
+
+                    // *mesh, // -------------------------------- `Mesh` object
+                    // COLORS_BUFFER_IDX, // ------------------- VBO Index
+                    // mesh->colors, // ------------------------- Array of data 
+                    // mesh->vertexCount*4 * sizeof( u_char ), // Total array size
+                    // 0 // ------------------------------------ Starting index in array
+
+                    mesh, // -------------------------------- `Mesh` object
                     COLORS_BUFFER_IDX, // ------------------- VBO Index
-                    mesh->colors, // ------------------------- Array of data 
-                    mesh->vertexCount*4 * sizeof( u_char ), // Total array size
+                    mesh.colors, // ------------------------- Array of data 
+                    mesh.vertexCount*4 * sizeof( u_char ), // Total array size
                     0 // ------------------------------------ Starting index in array
+
                 );
             }
         }
@@ -217,16 +283,27 @@ class DynaMesh{ public:
 
     void remodel(){
         cout << "About to create model ... " << flush;
-        modl = new Model{ LoadModelFromMesh( *mesh ) };
-        modl->materials[0] = LoadMaterialDefault();
-        modl->materials[0].shader = *shdr;
+
+        // modl = new Model{ LoadModelFromMesh( *mesh ) };
+        // modl = new Model{ LoadModelFromMesh( mesh ) };
+        modl = LoadModelFromMesh( mesh );
+
+        // modl->materials[0] = LoadMaterialDefault();
+        // modl->materials[0].shader = *shdr;
+        modl.materials[0] = LoadMaterialDefault();
+
+        // modl.materials[0].shader = *shdr;
+        modl.materials[0].shader = shdr;
+
         upldModl = true;
         cout << "Model created!" << endl;
     }
 
     ~DynaMesh(){
-        delete mesh;
-        delete modl;
+        // delete mesh;
+        // delete modl;
+        // cout << "DynaMesh says bye!" << endl;
+        cout << "." << flush;
     }
 
     /// Constructors ///
@@ -297,13 +374,19 @@ class DynaMesh{ public:
 
     /// Rendering ///
 
-    void set_shader( Shader* shader ){ shdr = shader; }
+    // void set_shader( Shader* shader ){ shdr = shader; }
+    void set_shader( Shader shader ){ shdr = shader; }
 
     void draw(){
         // Render the mesh
         if( !upldModl )  remodel();
-        modl->transform = xfrm;
-        DrawModel( *modl, get_posn(), 1.0f, WHITE );
+
+        // modl->transform = xfrm;
+        // DrawModel( *modl, get_posn(), 1.0f, WHITE );
+
+        modl.transform = xfrm;
+        DrawModel( modl, get_posn(), 1.0f, WHITE );
+
     }
 
 };
@@ -492,7 +575,7 @@ typedef shared_ptr<TestRibbon> ribbonPtr;
 int main(){
     rand_seed();
 
-    uint Nrib = 1600;
+    uint Nrib = 1024; // 2048;
 
     /// Window Init ///
     InitWindow( 900, 900, "Ribbon Test" );
@@ -560,8 +643,19 @@ int main(){
     // }
 
     // tr.set_shader( &shader );
-    for( uint i = 0; i < Nrib; ++i ){
-        testModels[i]->set_shader( &shader );
+    // for( uint i = 0; i < Nrib; ++i ){
+
+    //     // testModels[i]->set_shader( &shader );
+    //     testModels[i]->set_shader( shader );
+
+    // }
+
+    for( ribbonPtr& test : testModels ){
+
+        // testModels[i]->set_shader( &shader );
+        // testModels[i]->set_shader( shader );
+        test->set_shader( shader );
+
     }
 
 
@@ -579,9 +673,15 @@ int main(){
         // }
         // tr.update_position_TEST( 0.50 );
         // tr.update();
-        for( uint i = 0; i < Nrib; ++i ){
-            testModels[i]->update_position_TEST( 0.75 );
-            testModels[i]->update();
+
+        // for( uint i = 0; i < Nrib; ++i ){
+        //     testModels[i]->update_position_TEST( 0.75 );
+        //     testModels[i]->update();
+        // }
+
+        for( ribbonPtr& test : testModels ){
+            test->update_position_TEST( 0.75 );
+            test->update();
         }
 
         UpdateLightValues( shader, light );
@@ -594,8 +694,12 @@ int main(){
         //     cube->draw();
         // }
         // tr.draw();
-        for( uint i = 0; i < Nrib; ++i ){
-            testModels[i]->draw();
+        // for( uint i = 0; i < Nrib; ++i ){
+        //     testModels[i]->draw();
+        // }
+
+        for( ribbonPtr& test : testModels ){
+            test->draw();
         }
 
         /// End Drawing ///
