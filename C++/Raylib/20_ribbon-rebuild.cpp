@@ -1094,9 +1094,9 @@ int main(){
         for( rbbnPtr& birb : flock ){  flockPoses.push_back( birb->get_Basis() );  }
 
         for( rbbnPtr& test : flock ){
-            // test->update_position_TEST( 0.75 );
+            test->update_position_TEST( 0.75 );
             // test->update_instincts_and_heading( flockPoses, sphereList );
-            test->update_position( 0.25 );
+            // test->update_position( 0.25 );
             test->update();
         }
 
