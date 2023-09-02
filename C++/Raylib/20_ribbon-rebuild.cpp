@@ -712,6 +712,7 @@ class BoidRibbon : public DynaMesh{ public:
         tailAlpha = alphaTail;
         width     = width_;
         dNear     = d_Near;
+        scale     = dNear*2.0;
         ur /*--*/ = updateRate;
         home /**/ = home_;
         colr /**/ = Color{
@@ -834,7 +835,8 @@ class BoidRibbon : public DynaMesh{ public:
             sphrDist = Vector3Distance( sphere->cntr, headingB.Pt );
             if( sphrDist < nearDist ){
                 nearDist = sphrDist;
-                fearSphr = sphrPtr( new Sphere{ sphere } );
+                // fearSphr = sphrPtr( new Sphere{ sphere } ); // THIS WAS WRONG
+                fearSphr = sphrPtr( sphere );
             }
             i++;
         }
@@ -858,36 +860,36 @@ class BoidRibbon : public DynaMesh{ public:
         }
     }
 
-    double update_instincts_and_heading( const vector<Basis>& flockPoses, const vector<sphrPtr>& spheres ){
+    void update_instincts_and_heading( const vector<Basis>& flockPoses, const vector<sphrPtr>& spheres ){
         // Main navigation function
         // 1. Update flocking instinct
         Basis flockDrive = consider_neighbors( flockPoses );
         flocking.blend_orientations_with_factor( flockDrive, ur );
-        // 2. Update home seeking instinct
+        // // 2. Update home seeking instinct
         float dist /*-*/ = Vector3Distance( home, headingB.Pt );
         Basis centrDrive = consider_home();
         homeSeek.blend_orientations_with_factor( centrDrive, ur );
-        // 3. Update drunken walk
+        // // 3. Update drunken walk
         if( randf() < 0.25 ){
             Basis freewDrive = consider_free_will();
             freeWill.blend_orientations_with_factor( freewDrive, ur );
         }
-        // 4. Update sphere avoidance instinct
+        // // 4. Update sphere avoidance instinct
         Basis fearDrive = consider_spheres( spheres );
         avoidSph.blend_orientations_with_factor( fearDrive, ur );
         float fearDist = Vector3Distance( fearSphr->cntr, headingB.Pt );
-        // 4. Blend intincts
-        Basis total = flocking.get_scaled_orientation( 0.45f * Nnear ) + 
-                      homeSeek.get_scaled_orientation( dist/scale*5.0f ) + 
+        // // 4. Blend intincts
+        Basis total = flocking.get_scaled_orientation( 1.0f * Nnear ) + 
+                      homeSeek.get_scaled_orientation( dist/scale*2.0f ) + 
                       freeWill.get_scaled_orientation( 10.0 ) + 
                       avoidSph.get_scaled_orientation( fearSphr->rads / fearDist * 15 );
-        // 5. Limit turn and set heading
+        // // 5. Limit turn and set heading
         double updateTurn = Vector3Angle( total.Zb, headingB.Zb );
         double turnMax    = PI/32;
         double factor     = updateTurn/turnMax;
 
         headingB.blend_orientations_with_factor( total, ur/factor );
-        return 0.0;
+        // return 0.0;
     }
 
     void update_position( float zThrust ){
@@ -907,10 +909,11 @@ class BoidRibbon : public DynaMesh{ public:
         // Create geometry
         /*---*/ Nviz  = pairs.size()-1;        
         float   Aspan = headAlpha - tailAlpha;
-        Vector3 c1, c2, c3, c4, n1, n2;
+        Vector3 c1, c2, c3, c4, n1, n2, df, nLastS1, nLastS2;
         ubyte   A_i, A_ip1;
         Color   C_i, C_ip1;
         Color   C_clr = Color{ 0, 0, 0, 0 };
+        triPnts t1, t2;
 
         wipe_geo( true, true );
 
@@ -927,23 +930,81 @@ class BoidRibbon : public DynaMesh{ public:
                 C_ip1 = Color{ colr.r, colr.g, colr.b, A_ip1 };
 
                 if( i%2==0 ){
+                    
                     /// Triangle 1, Side 1: c2, c1, c3 ///
-                    push_triangle_w_norms( { c2, c1, c3 } );  clrs.push_back( {C_i, C_i, C_ip1} );
-                    /// Triangle 1, Side 2: c3, c1, c2 ///
-                    push_triangle_w_norms( { c3, c1, c2 } );  clrs.push_back( {C_ip1, C_i, C_i} );
+                    t1 = { c2, c1, c3 };
+                    tris.push_back( t1 );
+                    clrs.push_back( {C_i, C_i, C_ip1} );
                     /// Triangle 2, Side 1: c3, c4, c2 ///
-                    push_triangle_w_norms( { c3, c4, c2 } );  clrs.push_back( {C_ip1, C_ip1, C_i} );
+                    t2 = { c3, c4, c2 };
+                    tris.push_back( t2 );
+                    clrs.push_back( {C_ip1, C_ip1, C_i} );
+                    /// Normals, Side 1 ///
+                    n1 = normal_of_tiangle( t1 );
+                    n2 = normal_of_tiangle( t2 );
+                    if( i > 0 ){
+                        n1 = Vector3Normalize( Vector3Add( n1, nLastS1 ) );
+                    }
+                    nLastS1 = n2;                    
+                    nrms.push_back( { n1, n1, n2 } );
+                    nrms.push_back( { n2, n2, n1 } );
+                    
+                    /// Triangle 1, Side 2: c3, c1, c2 ///
+                    t1 = { c3, c1, c2 };
+                    tris.push_back( t1 );
+                    clrs.push_back( {C_ip1, C_i, C_i} );
                     /// Triangle 2, Side 2: c2, c4, c3 ///
-                    push_triangle_w_norms( { c2, c4, c3 } );  clrs.push_back( {C_i, C_ip1, C_ip1} );
+                    t2 = { c2, c4, c3 };
+                    tris.push_back( t2 );
+                    clrs.push_back( {C_i, C_ip1, C_ip1} );
+                    /// Normals, Side 2 ///
+                    n1 = normal_of_tiangle( t1 );
+                    n2 = normal_of_tiangle( t2 );
+                    if( i > 0 ){
+                        n1 = Vector3Normalize( Vector3Add( n1, nLastS2 ) );
+                    }
+                    nLastS2 = n2;                    
+                    nrms.push_back( { n2, n1, n1 } );
+                    nrms.push_back( { n1, n2, n2 } );
+
                 }else{
+
                     /// Triangle 1, Side 1: c1, c3, c4 ///
-                    push_triangle_w_norms( { c1, c3, c4 } );  clrs.push_back( {C_i, C_ip1, C_ip1} );
-                    /// Triangle 1, Side 2: c4, c3, c1 ///
-                    push_triangle_w_norms( { c4, c3, c1 } );  clrs.push_back( {C_ip1, C_ip1, C_i} );
+                    t1 = { c1, c3, c4 };
+                    tris.push_back( t1 );
+                    clrs.push_back( {C_i, C_ip1, C_ip1} );
                     /// Triangle 2, Side 1: c4, c2, c1 ///
-                    push_triangle_w_norms( { c4, c2, c1 } );  clrs.push_back( {C_ip1, C_i, C_i} );
+                    t2 = { c4, c2, c1 };
+                    tris.push_back( t2 );
+                    clrs.push_back( {C_ip1, C_i, C_i} );
+                    /// Normals, Side 1 ///
+                    n1 = normal_of_tiangle( t1 );
+                    n2 = normal_of_tiangle( t2 );
+                    if( i > 0 ){
+                        n1 = Vector3Normalize( Vector3Add( n1, nLastS1 ) );
+                    }
+                    nLastS1 = n2;                    
+                    nrms.push_back( { n1, n2, n2 } );
+                    nrms.push_back( { n2, n1, n1 } );
+                    
+                    /// Triangle 1, Side 2: c4, c3, c1 ///
+                    t1 = { c4, c3, c1 };
+                    tris.push_back( t1 );
+                    clrs.push_back( {C_ip1, C_ip1, C_i} );
                     /// Triangle 2, Side 1: c1, c2, c4 ///
-                    push_triangle_w_norms( { c1, c2, c4 } );  clrs.push_back( {C_i, C_i, C_ip1} );
+                    t2 = { c1, c2, c4 };
+                    tris.push_back( t2 );
+                    clrs.push_back( {C_i, C_i, C_ip1} );
+                    /// Normals, Side 2 ///
+                    n1 = normal_of_tiangle( t1 );
+                    n2 = normal_of_tiangle( t2 );
+                    if( i > 0 ){
+                        n1 = Vector3Normalize( Vector3Add( n1, nLastS2 ) );
+                    }
+                    nLastS2 = n2;                    
+                    nrms.push_back( { n2, n2, n1 } );
+                    nrms.push_back( { n1, n1, n2 } );
+
                 }
             }else{
                 for( ubyte j = 0; j < 4; ++j ){
@@ -963,10 +1024,11 @@ typedef shared_ptr<BoidRibbon> rbbnPtr;
 int main(){
     rand_seed();
 
-    uint Nrib = 512; // 1024; // 2048;
+    uint Nrib = 50; 
+    uint Nsph = 12;
 
     /// Window Init ///
-    InitWindow( 900, 900, "Ribbon Test" );
+    InitWindow( 900, 900, "Boid Ribbon Aquarium" );
     SetTargetFPS( 60 );
     // rlEnableSmoothLines();
     // rlDisableBackfaceCulling();
@@ -974,7 +1036,7 @@ int main(){
     float halfBoxLen = 10.0;
 
     vector<sphrPtr> sphereList;
-    for( uint i = 0; i < 16; i++ ){
+    for( uint i = 0; i < Nsph; i++ ){
          sphereList.push_back( sphrPtr( new Sphere{ 
             Vector3{
                 randf( -halfBoxLen*1.25, halfBoxLen*1.25 ), 
@@ -987,14 +1049,14 @@ int main(){
 
     vector<rbbnPtr> flock;
     vector<Basis>   flockPoses;
-    for( uint i = 0; i < 20; i++ ){
-        // rbbnPtr nuBirb = rbbnPtr( new BoidRibbon{ 
-        rbbnPtr nuBirb = std::make_shared<BoidRibbon>(
-            20, 1.0f, 5.0f, 0.25f, 
+    for( uint i = 0; i < Nrib; i++ ){
+        rbbnPtr nuBirb = rbbnPtr( new BoidRibbon{ 
+        // rbbnPtr nuBirb = std::make_shared<BoidRibbon>(
+            50, 2.0f, 7.5f, 0.25f, 
             Vector3Zero(), 
             1.0f, 0.0f
-        // } );
-        );
+        } );
+        // );
         nuBirb->headingB.Pt = Vector3{ 
             randf( -halfBoxLen, halfBoxLen ), 
             randf( -halfBoxLen, halfBoxLen ), 
@@ -1010,7 +1072,7 @@ int main(){
 
     // Camera
     Camera camera = Camera{
-        Vector3{  15.0,  15.0,  15.0 }, // Position
+        Vector3{  30.0,   0.0,   0.0 }, // Position
         Vector3{   0.0,   0.0,   0.0 }, // Target
         Vector3{   0.0,   0.0,   1.0 }, // Up
         45.0, // ---------------------- FOV_y
@@ -1094,9 +1156,9 @@ int main(){
         for( rbbnPtr& birb : flock ){  flockPoses.push_back( birb->get_Basis() );  }
 
         for( rbbnPtr& test : flock ){
-            test->update_position_TEST( 0.75 );
-            // test->update_instincts_and_heading( flockPoses, sphereList );
-            // test->update_position( 0.25 );
+            // test->update_position_TEST( 0.75 );
+            test->update_instincts_and_heading( flockPoses, sphereList );
+            test->update_position( 0.25 );
             test->update();
         }
 
@@ -1121,7 +1183,7 @@ int main(){
         /// End Drawing ///
         EndMode3D();
 
-        DrawFPS( 30, 30 );
+        // DrawFPS( 30, 30 );
 
         EndDrawing();
     }
