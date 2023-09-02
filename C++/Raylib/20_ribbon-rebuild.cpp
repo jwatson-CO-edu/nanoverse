@@ -59,6 +59,12 @@ float randf( float lo, float hi ){
     return lo + span * randf();
 }
 
+int randi( int lo, int hi ){
+    // Return a pseudo-random number between `lo` and `hi` (int)
+    int span = hi - lo;
+    return lo + (rand() % span);
+}
+
 ubyte rand_ubyte(){
     // Return a pseudo-random unsigned byte
     return (ubyte) randf( 0.0, 256.0 );
@@ -624,6 +630,17 @@ struct Sphere{
         modlUpld = false;
     }
 
+    Sphere( const shared_ptr<Sphere>& sphere ){
+        cntr = sphere->cntr;
+        rads = sphere->rads;
+        mesh = GenMeshSphere( rads, 32, 32 );
+        upld = false;
+        xfrm = MatrixIdentity();
+        colr = sphere->colr;
+        set_posn( cntr );
+        modlUpld = false;
+    }
+
     /// Methods ///
 
     void remodel(){
@@ -650,6 +667,7 @@ struct Sphere{
 };
 typedef shared_ptr<Sphere> sphrPtr;
 
+uint Nboids = 0;
 
 class BoidRibbon : public DynaMesh{ public:
     // (Mostly) Complete rewrite
@@ -680,24 +698,48 @@ class BoidRibbon : public DynaMesh{ public:
     deque<array<Vector3,2>> pairs;
     float /*-------------*/ headAlpha; // Beginning opacity
     float /*-------------*/ tailAlpha; // Ending    opacity
-    Color /*-------------*/ colr;
+    // Color /*-------------*/ colr;
 
     /// TEST ///
     Vector3 lastPosn;
 
     /// Constructor ///
-    BoidRibbon( uint N_pairs, float width_, float alphaHead = 1.0f, float alphaTail = 0.0f ) : DynaMesh( (N_pairs-1)*4 ){
-        width     = width_;
+    BoidRibbon( uint N_pairs, float width_, float d_Near, float updateRate, const Vector3& home_, 
+                float alphaHead = 1.0f, float alphaTail = 0.0f ) : DynaMesh( (N_pairs-1)*4 ){
+        // Build the geometry of the boid
         Npair     = N_pairs;
         headAlpha = alphaHead;
         tailAlpha = alphaTail;
-        colr /**/ = uniform_random_color();
+        width     = width_;
+        dNear     = d_Near;
+        ur /*--*/ = updateRate;
+        home /**/ = home_;
+        colr /**/ = Color{
+            (ubyte) randi( 0, 255 ),
+            (ubyte) randi( 0, 255 ),
+            (ubyte) randi( 0, 255 ),
+            255
+        };
+        headingB = Basis::random(); // Where the boid is actually pointed
+        flocking = headingB.copy(); // Flocking instinct
+        homeSeek = headingB.copy(); // Home seeking instinct
+        freeWill = headingB.copy(); // Drunken walk
+        avoidSph = headingB.copy(); // Sphere avoidance instinct
 
-        // TEST //
-        lastPosn = uniform_vector_noise( 10.0 );
+        Nboids++;
+        ID = Nboids;
+
+        // update();
+
+        // load_mesh_buffers( true, true );
     }
 
     /// Methods ///
+
+    Basis get_Basis(){
+        // Get pose info for this boid
+        return headingB.copy();
+    }
 
     void push_coord_pair( const Vector3& c1, const Vector3& c2 ){
         // Add coordinates to the head of the plume
@@ -714,6 +756,148 @@ class BoidRibbon : public DynaMesh{ public:
             Vector3Add( nextPosn, Vector3Scale( wingDrct, -width/2.0f ) )
         );
         lastPosn = nextPosn;
+    }
+
+    /// Navigation ///
+
+    Basis consider_neighbors( const vector<Basis>& nghbrPoses ){
+        // Flocking instinct: Adjust bearing according to the closest neighbors in front of the boid
+        Vector3 Xmean;
+        Vector3 Ymean;
+        Vector3 Zmean;
+        Vector3 Zfly , diffVec;
+        Basis   rtnMsg;
+        uint    relevant = 0;
+        float   dist, dotFront;
+        Xmean = Vector3{0.0f, 0.0f, 0.0f};
+        Ymean = Vector3{0.0f, 0.0f, 0.0f};
+        Zmean = Vector3{0.0f, 0.0f, 0.0f};
+        for( const Basis& msg : nghbrPoses ){
+            diffVec  = Vector3Subtract( msg.Pt, headingB.Pt );
+            dist     = Vector3Length( diffVec );
+            if( dist > 0.0 ){
+                Zfly     = headingB.Zb;
+                dotFront = Vector3DotProduct( Zfly, diffVec );
+                if( (dist <= dNear) || (dotFront >= 0.0f) ){
+                    Xmean  = Vector3Add( Xmean, msg.Xb );
+                    Ymean  = Vector3Add( Ymean, msg.Yb );
+                    Zmean  = Vector3Add( Zmean, msg.Zb );
+                    relevant++;
+                }
+            }
+        }
+        Nnear = relevant;
+        if( relevant ){
+            rtnMsg.Xb = Xmean;
+            rtnMsg.Yb = Ymean;
+            rtnMsg.Zb = Zmean;
+            rtnMsg.orthonormalize();
+        }else{
+            rtnMsg.Xb = Vector3{0.0f, 0.0f, 0.0f};
+            rtnMsg.Yb = Vector3{0.0f, 0.0f, 0.0f};
+            rtnMsg.Zb = Vector3{0.0f, 0.0f, 0.0f};
+        }
+        return rtnMsg;
+    }
+
+    Basis consider_home(){
+        // Home seeking instinct: Take `N_samples` and choose the one that points closest to `home`
+        Basis   rtnMsg;
+        Vector3 hVec = Vector3Subtract( home, headingB.Pt );
+        rtnMsg.Zb = Vector3Normalize( hVec );
+        rtnMsg.Xb = Vector3Normalize( Vector3CrossProduct( headingB.Yb, rtnMsg.Zb ) );
+        rtnMsg.Yb = Vector3Normalize( Vector3CrossProduct( rtnMsg.Zb  , rtnMsg.Xb ) );
+        return rtnMsg;
+    }
+
+    Basis consider_free_will(){
+        // Drunken walk: Choose a random direction in which to nudge free will
+        Basis   rtnMsg;
+        Vector3 vWil = Vector3{
+            randf( -1.0,  1.0 ),
+            randf( -1.0,  1.0 ),
+            randf( -1.0,  1.0 )
+        };
+        rtnMsg.Zb = Vector3Normalize( vWil );
+        rtnMsg.Xb = Vector3Normalize( Vector3CrossProduct( headingB.Yb, rtnMsg.Zb ) );
+        rtnMsg.Yb = Vector3Normalize( Vector3CrossProduct( rtnMsg.Zb  , rtnMsg.Xb ) );
+        return rtnMsg;
+    }
+
+    Basis consider_spheres( const vector<sphrPtr>& sphereList ){
+        // Sphere avoidance instinct
+        float nearDist = 1e9;
+        float sphrDist = 0.0;
+        uint  i /*--*/ = 0;
+        // 1. Find the closest sphere
+        for( const sphrPtr& sphere : sphereList ){
+            sphrDist = Vector3Distance( sphere->cntr, headingB.Pt );
+            if( sphrDist < nearDist ){
+                nearDist = sphrDist;
+                fearSphr = sphrPtr( new Sphere{ sphere } );
+            }
+            i++;
+        }
+        // 2. Generate an avoiding heading
+        Vector3 toSphr = Vector3Subtract( fearSphr->cntr, headingB.Pt );
+        if( nearDist < fearSphr->rads ){
+            Basis rtnBasis;
+            rtnBasis.Zb = Vector3Scale( toSphr, -1.0f );
+            rtnBasis.Yb = Vector3CrossProduct( rtnBasis.Zb, headingB.Xb );
+            rtnBasis.orthonormalize();
+            return rtnBasis;
+        }else if( Vector3DotProduct( headingB.Zb, toSphr ) > 0.0 ){
+            Basis rtnBasis;
+            rtnBasis.Yb = Vector3Scale( toSphr, -1.0 );
+            rtnBasis.Xb = Vector3CrossProduct( rtnBasis.Yb, headingB.Zb );
+            rtnBasis.Zb = Vector3CrossProduct( rtnBasis.Xb, rtnBasis.Yb );
+            rtnBasis.orthonormalize();
+            return rtnBasis;
+        }else{
+            return headingB.copy();
+        }
+    }
+
+    double update_instincts_and_heading( const vector<Basis>& flockPoses, const vector<sphrPtr>& spheres ){
+        // Main navigation function
+        // 1. Update flocking instinct
+        Basis flockDrive = consider_neighbors( flockPoses );
+        flocking.blend_orientations_with_factor( flockDrive, ur );
+        // 2. Update home seeking instinct
+        float dist /*-*/ = Vector3Distance( home, headingB.Pt );
+        Basis centrDrive = consider_home();
+        homeSeek.blend_orientations_with_factor( centrDrive, ur );
+        // 3. Update drunken walk
+        if( randf() < 0.25 ){
+            Basis freewDrive = consider_free_will();
+            freeWill.blend_orientations_with_factor( freewDrive, ur );
+        }
+        // 4. Update sphere avoidance instinct
+        Basis fearDrive = consider_spheres( spheres );
+        avoidSph.blend_orientations_with_factor( fearDrive, ur );
+        float fearDist = Vector3Distance( fearSphr->cntr, headingB.Pt );
+        // 4. Blend intincts
+        Basis total = flocking.get_scaled_orientation( 0.45f * Nnear ) + 
+                      homeSeek.get_scaled_orientation( dist/scale*5.0f ) + 
+                      freeWill.get_scaled_orientation( 10.0 ) + 
+                      avoidSph.get_scaled_orientation( fearSphr->rads / fearDist * 15 );
+        // 5. Limit turn and set heading
+        double updateTurn = Vector3Angle( total.Zb, headingB.Zb );
+        double turnMax    = PI/32;
+        double factor     = updateTurn/turnMax;
+
+        headingB.blend_orientations_with_factor( total, ur/factor );
+        return 0.0;
+    }
+
+    void update_position( float zThrust ){
+        // Move forward and push a segment to the ribbon
+        // 1. Z Thrust
+        headingB.Pt = Vector3Add( headingB.Pt, Vector3Scale( headingB.Zb, zThrust ) );
+        push_coord_pair(
+            Vector3Add( headingB.Pt, Vector3Scale( headingB.Xb,  width/2.0f ) ),
+            Vector3Add( headingB.Pt, Vector3Scale( headingB.Xb, -width/2.0f ) )
+        );
     }
 
     ///// Rendering //////////////////////////////
@@ -772,7 +956,7 @@ class BoidRibbon : public DynaMesh{ public:
     }
 
 };
-typedef shared_ptr<BoidRibbon> ribbonPtr;
+typedef shared_ptr<BoidRibbon> rbbnPtr;
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
@@ -787,22 +971,36 @@ int main(){
     // rlEnableSmoothLines();
     // rlDisableBackfaceCulling();
 
-    float halfBoxLen = 100.0/10.0;
+    float halfBoxLen = 10.0;
 
-    /// Init Objects ///
-    // vector<shared_ptr<FractureCube>> cubes;
-    // shared_ptr<FractureCube> nuCube;
-    // for( uint i = 0; i < 30; ++i ){
-    //     nuCube = shared_ptr<FractureCube>( new FractureCube{ 5.0 } );
-    //     nuCube->set_posn( uniform_vector_noise( 5.0 ) );
-    //     cubes.push_back( nuCube );
-    // }
-    // BoidRibbon tr{ 20, 5.0, 1.0, 0.0 };
-    ribbonPtr /*---*/ nuTest;
-    vector<ribbonPtr> testModels;
-    for( uint i = 0; i < Nrib; ++i ){
-        nuTest = ribbonPtr( new BoidRibbon{ 20, 5.0, 1.0, 0.0 } );
-        testModels.push_back( nuTest );
+    vector<sphrPtr> sphereList;
+    for( uint i = 0; i < 16; i++ ){
+         sphereList.push_back( sphrPtr( new Sphere{ 
+            Vector3{
+                randf( -halfBoxLen*1.25, halfBoxLen*1.25 ), 
+                randf( -halfBoxLen*1.25, halfBoxLen*1.25 ), 
+                randf( -halfBoxLen*1.25, halfBoxLen*1.25 ) 
+            }, 
+            randf( 1.0, 4.0 )
+        } ) );
+    }
+
+    vector<rbbnPtr> flock;
+    vector<Basis>   flockPoses;
+    for( uint i = 0; i < 20; i++ ){
+        // rbbnPtr nuBirb = rbbnPtr( new BoidRibbon{ 
+        rbbnPtr nuBirb = std::make_shared<BoidRibbon>(
+            20, 1.0f, 5.0f, 0.25f, 
+            Vector3Zero(), 
+            1.0f, 0.0f
+        // } );
+        );
+        nuBirb->headingB.Pt = Vector3{ 
+            randf( -halfBoxLen, halfBoxLen ), 
+            randf( -halfBoxLen, halfBoxLen ), 
+            randf( -halfBoxLen, halfBoxLen ) 
+        };
+        flock.push_back( rbbnPtr( nuBirb ) );
     }
 
 
@@ -849,17 +1047,22 @@ int main(){
     // tr.set_shader( &shader );
     // for( uint i = 0; i < Nrib; ++i ){
 
-    //     // testModels[i]->set_shader( &shader );
-    //     testModels[i]->set_shader( shader );
+    //     // flock[i]->set_shader( &shader );
+    //     flock[i]->set_shader( shader );
 
     // }
 
-    for( ribbonPtr& test : testModels ){
+    for( rbbnPtr& test : flock ){
 
-        // testModels[i]->set_shader( &shader );
-        // testModels[i]->set_shader( shader );
+        // flock[i]->set_shader( &shader );
+        // flock[i]->set_shader( shader );
         test->set_shader( shader );
 
+    }
+
+    for( sphrPtr& s : sphereList ){
+        s->set_shader( shader );
+        // s.remodel();
     }
 
 
@@ -879,12 +1082,21 @@ int main(){
         // tr.update();
 
         // for( uint i = 0; i < Nrib; ++i ){
-        //     testModels[i]->update_position_TEST( 0.75 );
-        //     testModels[i]->update();
+        //     flock[i]->update_position_TEST( 0.75 );
+        //     flock[i]->update();
         // }
 
-        for( ribbonPtr& test : testModels ){
-            test->update_position_TEST( 0.75 );
+        for( sphrPtr& s : sphereList ){
+            s->draw();
+        }
+        
+        flockPoses.clear();
+        for( rbbnPtr& birb : flock ){  flockPoses.push_back( birb->get_Basis() );  }
+
+        for( rbbnPtr& test : flock ){
+            // test->update_position_TEST( 0.75 );
+            // test->update_instincts_and_heading( flockPoses, sphereList );
+            test->update_position( 0.25 );
             test->update();
         }
 
@@ -899,10 +1111,10 @@ int main(){
         // }
         // tr.draw();
         // for( uint i = 0; i < Nrib; ++i ){
-        //     testModels[i]->draw();
+        //     flock[i]->draw();
         // }
 
-        for( ribbonPtr& test : testModels ){
+        for( rbbnPtr& test : flock ){
             test->draw();
         }
 
