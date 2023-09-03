@@ -7,7 +7,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 ## Architecture 1: C++ & RayLib  (Dangerous!)
 * Purpose: Let yourself have some graphics, as a treat!  
 
-* `[P]` Raylib Lib Rebuild
+* `[>]` Raylib Lib Rebuild
     - Problem:  All the Raylib code is broken!
     - Solution: Restart from scratch!
         * Avoid **changing** the number of triangles across frames
@@ -20,34 +20,16 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         * `[Y]` `TestRibbon`, 2023-08-31: 1600 ribbons in a `vector` of `shared_ptr` without rampant mesh creation
         * `[Y]` Test removing `DynaMesh` member pointers one at a time in order to avoid double-indirection, 2023-09-01: Pointer tests PASSED!
         * `[Y]` Test C++ list comprehension of `vector` of `shared_ptr` with `shared_ptr<TestRibbon>&` elements, 2023-09-01: All `for` loops over `vector` of `shared_ptr` now use the comprehension. Left to cook for 11 minutes, no rampant copying with 1024 meshes! The only drop in framerate occurs when I view the window after hiding it
-        * `[P]` New Headers
+        * `[>]` New Headers
             - `[ ]` Confirm memory is behaving!
             - `[ ]` New "utils.hpp"
             - `[ ]` New "toybox.hpp"
-        * `[P]` Test "Shiny Boid Ribbons" project
 
-* `[>]` Shiny Boid Ribbons - Generative art
-    - `[N]` Experiment with memory cycle {Unload Model --> Populate Geo --> Load Mesh --> Load Model}, 2023-08-24: Experiment failed. It appears that the mesh is not actually erased from the GPU?
-        * `{Y}` Possibly need flag(s) for this?, 2023-08-24: Flags used.  Did not help!
-        * `[N]` If the experiment fails, ask the Discord!, 2023-08-31: Need MVP before asking for help, see "Raylib Lib Rebuild" project
-    - `[ ]` `Sphere` class
-    - `[ ]` Boid Ribbon class
-        * `[ ]` `Basis`
-        * `[ ]` Logic
-            - `[ ]` Spherical obstactle avoidance
-    - `[ ]` Ribbons as dynamic, shaded meshes
-        * `[ ]` Dynamic mesh
-        * `[ ]` **Smooth** decay from leading edge
-        * `[ ]` Add specular glare 
-        * `[ ]` Bloom shader
-    - `[ ]` Video -or- animated GIF output --to-> IG
-
-&nbsp;  
 
 * `[ ]` Engineering Center FROM SPACE - Generative art
     - `[ ]` Generative angular, intimidating castle (a la EC), L-system?
-        * `[ ]` Large Blocks
         * `[ ]` Angular Towers
+        * `[ ]` Large Blocks
         * `[ ]` Windows
             - `[ ]` Concrete awnings
         * `[ ]` Bridges
@@ -235,7 +217,24 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 
 ## Completed Projects
 
-* `[>]` Boids, 2023-06-24: Satisfying flocking and wandering
+* `[Y]` Shiny Boid Ribbons - Generative art, 2023-09-02: Boidular!
+    - `[N]` Experiment with memory cycle {Unload Model --> Populate Geo --> Load Mesh --> Load Model}, 2023-08-24: Experiment failed. It appears that the mesh is not actually erased from the GPU?
+        * `{Y}` Possibly need flag(s) for this?, 2023-08-24: Flags used.  Did not help!
+        * `[N]` If the experiment fails, ask the Discord!, 2023-08-31: Need MVP before asking for help, see "Raylib Lib Rebuild" project
+    - `[Y]` `Sphere` class, 2023-09-02: The memory copy issue was due to passing `Sphere`s by value!
+    - `[Y]` Boid Ribbon class, 2023-09-02: Boidular!
+        * `[Y]` `Basis`, 2023-09-02: Boidular!
+        * `[Y]` Logic, 2023-09-02: Boidular!
+            - `[Y]` Spherical obstactle avoidance, 2023-09-02: Boidular!
+    - `[Y]` Ribbons as dynamic, shaded meshes, 2023-09-02: Boidular!
+        * `[Y]` Dynamic mesh, 2023-09-02: Boidular!
+        * `[Y]` **Smooth** decay from leading edge, 2023-09-02: Boidular!
+        * `[Y]` Add specular glare , 2023-09-02: Boidular!
+    - `[Y]` Video -or- animated GIF output --to-> IG, 2023-09-02: Posted!
+
+&nbsp;  
+
+* `[Y]` Boids, 2023-06-24: Satisfying flocking and wandering, 2023-06-24: Satisfying flocking and wandering
     - `[Y]` Boids consider nearby visible neighbors, 2023-06-10: Wrote pose aggregator
     - `[Y]` Instincts driven by gradually-updating transformation matrices, 2023-06-24: Satisfying flocking and wandering
     - `[N]` Add strong obstacle avoidance, 2023-06-24: Too much work for reward
@@ -244,7 +243,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         
 &nbsp;  
 
-* `[>]` Terrain generation - Delta Glider
+* `[Y]` Terrain generation - Delta Glider, 2023-06-03: Render plume as a batch job 
     - `[Y]` Perlin Noise terrain grid tiles, 2023-04-12: Tuned scaling and elevation
         * `[Y]` Unshaded with lines, 2023-04-05: Finally got random, non-vibrating triangles w/ correct orientation! Stored in models as tiles instead of individual triangles.
         * `[Y]` Add XY position noise, 2023-04-10: Added
