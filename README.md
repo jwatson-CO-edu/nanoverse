@@ -25,10 +25,11 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
             - `[ ]` New "utils.hpp"
             - `[ ]` New "toybox.hpp"
 
+&nbsp;
 
-* `[ ]` Engineering Center FROM SPACE - Generative art
-    - `[ ]` Generative angular, intimidating castle (a la EC), L-system?
-        * `[ ]` Angular Towers
+* `[>]` Engineering Center FROM SPACE - Generative art
+    - `[>]` Generative angular, intimidating castle (a la EC), L-system?
+        * `[>]` Angular Towers
         * `[ ]` Large Blocks
         * `[ ]` Windows
             - `[ ]` Concrete awnings
