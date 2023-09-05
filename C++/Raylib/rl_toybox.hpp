@@ -177,7 +177,7 @@ class DynaMesh{ public:
     // 2023-08-14: This class assumes that the mesh will have a constant size for each buffer, though their values might change
     // 2023-08-15: This class REQUIRES that vertices, indices, normals, and colors ALL be defined
 
-    /// Members ///
+    /// Core Members ///
     uint /*------*/ Ntri;
     uint /*------*/ Nvtx;
     vector<triPnts> tris; // Dynamic geometry, each array is a facet of 3x vertices
@@ -189,6 +189,10 @@ class DynaMesh{ public:
     Model /*-----*/ modl; // Model
     bool /*------*/ upldModl; // Has the mesh been uploaded?
     Shader /*----*/ shdr; // Shader
+
+    /// Optional Members ///
+    vvec3 vrts; // Vertex store for building `tris`
+    Color colr; // Base color
     
     /// Memory Methods ///
 
@@ -363,12 +367,22 @@ class DynaMesh{ public:
         );
 	}
 
+    /// Appearance & Color ///
+
+    void set_shader( Shader shader ){ shdr = shader; } // Set the shader that will be used for rendering, if applicable
+
+    void set_uniform_color( Color color ){
+        // Set base `color` and set all vertex colors to that `color`
+        // NOTE: This function assumes that `tris` has been populated!
+        colr = color;
+        clrs.clear();
+        for( size_t i = 0; i < tris.size(); ++i ){  clrs.push_back( {colr, colr, colr} );  }
+    }
+
     ///// Drawing Context Methods ////////////////
     // NOTE: Method beyond this point require a drawing context being instantiated before calling!
 
     /// Rendering ///
-
-    void set_shader( Shader shader ){ shdr = shader; }
 
     void draw(){
         // Render the mesh

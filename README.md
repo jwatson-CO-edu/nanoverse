@@ -29,25 +29,46 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 
 * `[>]` Engineering Center FROM SPACE - Generative art
     - `[>]` Generative angular, intimidating castle (a la EC), L-system?
-        * `[>]` Angular Towers
+        * Classes: `Cuboid` and `Wedge`, 2023-09-06: These are the drawable parts of the EC L-system
+        * `[>]` L-system
+            - `[>]` `shared_ptr` Test: Attempt to access child class overridden functions thru a `vector` of `shared_ptr` of the parent class
+            - `[ ]` Nodes: Drawable, heritable `DynaMesh` 
+            - `[ ]` Edges
+                * `[ ]` Relative transform
+                * `[ ]` Ability to rotate about an axis (translation axis)
+            - `[ ]` Draw from root to leaves
+            - `[ ]` Angular Towers
         * `[ ]` Large Blocks
         * `[ ]` Windows
             - `[ ]` Concrete awnings
         * `[ ]` Bridges
+            - `[ ]` "False" loops (Touching but not closed on the tree)
         * `[ ]` Greebles
+            - `[ ]` Leaves only!
             - `[ ]` Dishes
             - `[ ]` Cell antennae
-    - `[ ]` Textures
-        * `[ ]` Glider
+    - `[ ]` Textures && Appearance: Only do enough to make it look good!
         * `[ ]` EC
-    - `[ ]` Rotating "turrets" - Warning: Do not imply damage to public buildings
+        * `[ ]` Glider
+        * `{ }` Bump mapping ???
+    - `[ ]` Point Defence - Warning: Do not imply damage to public buildings
+        * `[ ]` Leaves only!
         * `[ ]` Friggin' laser beams
-        * `[ ]` Primary Weapon
+        * `{ }` Flak?
+        * `{ }` Missiles?
+        * `{ }` Primary Weapon ??
             - `{ }` Dynamic lighting for primary weapon?
-        * `[ ]` AA Batteries
-            - `{ }` Flak?
-            - `{ }` Missiles?
-        * `{ }` Playable?  Food delivery?
+    - `{ }` Better follow camera: Behind and above
+    - `{ }` Gamification - Food delivery ??? : "Eat Fleet", "Food Flotilla"
+        * `{ }` Collision handling
+            - `{ }` Projectile-Ship
+            - `{ }` Ship-EC - Warning: Do not imply damage to public buildings
+        * `{ }` Shield
+        * `{ }` Chaff / Flares (Limited?)
+        * `{ }` Food-delivery Lock-On: Time-delayed "firing solution", Msg: "Delivery Ready"
+        * `{ }` Short intro
+        * `{ }` Release from carrier
+        * `{ }` Win/Lose conditions w/ Game Over screen(s)
     - `[ ]` Video -or- animated GIF output --to-> IG
 
 &nbsp;  

@@ -11,44 +11,87 @@
 
 
 
-////////// STRUCTS /////////////////////////////////////////////////////////////////////////////////
+////////// DRAWABLE ////////////////////////////////////////////////////////////////////////////////
 
 class Cuboid : public DynaMesh{
+    // Axis-aligned cuboid with centroid at <0,0,0>
 
-    vvec3 V;
+    vvec3 vrts;
     Color colr;
 
     Cuboid( float xLen, float yLen, float zLen, Color color ) : DynaMesh( 12 ){
+        // Generate and store geometry with a uniform color
+
         float xHalf = xLen/2.0;
         float yHalf = yLen/2.0;
         float zHalf = zLen/2.0;
-        colr = color;
 
         // 1. Establish vertices
-        V.push_back( Vector3{ -xHalf, -yHalf, -zHalf } );
-        V.push_back( Vector3{ -xHalf, -yHalf,  zHalf } );
-        V.push_back( Vector3{ -xHalf,  yHalf, -zHalf } );
-        V.push_back( Vector3{ -xHalf,  yHalf,  zHalf } );
-        V.push_back( Vector3{  xHalf, -yHalf, -zHalf } );
-        V.push_back( Vector3{  xHalf, -yHalf,  zHalf } );
-        V.push_back( Vector3{  xHalf,  yHalf, -zHalf } );
-        V.push_back( Vector3{  xHalf,  yHalf,  zHalf } );
+        vrts.push_back( Vector3{ -xHalf, -yHalf, -zHalf } );
+        vrts.push_back( Vector3{ -xHalf, -yHalf,  zHalf } );
+        vrts.push_back( Vector3{ -xHalf,  yHalf, -zHalf } );
+        vrts.push_back( Vector3{ -xHalf,  yHalf,  zHalf } );
+        vrts.push_back( Vector3{  xHalf, -yHalf, -zHalf } );
+        vrts.push_back( Vector3{  xHalf, -yHalf,  zHalf } );
+        vrts.push_back( Vector3{  xHalf,  yHalf, -zHalf } );
+        vrts.push_back( Vector3{  xHalf,  yHalf,  zHalf } );
 
         // 2. Build tris
-        push_triangle_w_norms( { V[0], V[3], V[2] } );
-        push_triangle_w_norms( { V[0], V[1], V[3] } );
-        push_triangle_w_norms( { V[6], V[4], V[0] } );
-        push_triangle_w_norms( { V[6], V[0], V[2] } );
-        push_triangle_w_norms( { V[0], V[4], V[5] } );
-        push_triangle_w_norms( { V[0], V[5], V[1] } );
-        push_triangle_w_norms( { V[7], V[6], V[2] } );
-        push_triangle_w_norms( { V[7], V[2], V[3] } );
-        push_triangle_w_norms( { V[4], V[6], V[7] } );
-        push_triangle_w_norms( { V[4], V[7], V[5] } ); 
-        push_triangle_w_norms( { V[1], V[5], V[7] } );
-        push_triangle_w_norms( { V[1], V[7], V[3] } );
+        push_triangle_w_norms( { vrts[0], vrts[3], vrts[2] } );
+        push_triangle_w_norms( { vrts[0], vrts[1], vrts[3] } );
+        push_triangle_w_norms( { vrts[6], vrts[4], vrts[0] } );
+        push_triangle_w_norms( { vrts[6], vrts[0], vrts[2] } );
+        push_triangle_w_norms( { vrts[0], vrts[4], vrts[5] } );
+        push_triangle_w_norms( { vrts[0], vrts[5], vrts[1] } );
+        push_triangle_w_norms( { vrts[7], vrts[6], vrts[2] } );
+        push_triangle_w_norms( { vrts[7], vrts[2], vrts[3] } );
+        push_triangle_w_norms( { vrts[4], vrts[6], vrts[7] } );
+        push_triangle_w_norms( { vrts[4], vrts[7], vrts[5] } ); 
+        push_triangle_w_norms( { vrts[1], vrts[5], vrts[7] } );
+        push_triangle_w_norms( { vrts[1], vrts[7], vrts[3] } );
 
         // 3. Set color
-        for( ubyte i = 0; i < 12; ++i ){  clrs.push_back( {colr, colr, colr} );  }
+        set_uniform_color( color );
+
+        // 4. Load buffers
+        load_mesh_buffers( true, true );
     }
 };
+
+class Wedge : public DynaMesh{
+    // Right-Triangular prism with axis-aligned rectangular faces pointing in +Y and -Z
+
+    Wedge( float xLen, float yLen, float zLen, Color color ) : DynaMesh( 8 ){
+        // Generate and store geometry with a uniform color
+        
+        float xHalf = xLen/2.0;
+        float yHalf = yLen/2.0;
+        float zHalf = zLen/2.0;
+
+        // 1. Establish vertices
+        vrts.push_back( Vector3{ -xHalf, -yHalf, -zHalf } );
+        vrts.push_back( Vector3{ -xHalf,  yHalf, -zHalf } );
+        vrts.push_back( Vector3{ -xHalf,  yHalf,  zHalf } );
+        vrts.push_back( Vector3{  xHalf, -yHalf, -zHalf } );        
+        vrts.push_back( Vector3{  xHalf,  yHalf, -zHalf } );
+        vrts.push_back( Vector3{  xHalf,  yHalf,  zHalf } );
+
+        // 2. Build tris
+        push_triangle_w_norms( { vrts[0], vrts[2], vrts[1] } );
+        push_triangle_w_norms( { vrts[4], vrts[3], vrts[0] } );
+        push_triangle_w_norms( { vrts[4], vrts[0], vrts[1] } );
+        push_triangle_w_norms( { vrts[5], vrts[4], vrts[1] } );
+        push_triangle_w_norms( { vrts[5], vrts[1], vrts[2] } );
+        push_triangle_w_norms( { vrts[3], vrts[4], vrts[5] } );
+        push_triangle_w_norms( { vrts[2], vrts[0], vrts[3] } );
+        push_triangle_w_norms( { vrts[3], vrts[5], vrts[2] } );
+
+        // 3. Set color
+        set_uniform_color( color );
+
+        // 4. Load buffers
+        load_mesh_buffers( true, true );
+    }
+};
+
+////////// LINDENMAYER SYSTEM //////////////////////////////////////////////////////////////////////
