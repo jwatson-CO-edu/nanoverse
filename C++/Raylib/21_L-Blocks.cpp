@@ -95,3 +95,27 @@ class Wedge : public DynaMesh{
 };
 
 ////////// LINDENMAYER SYSTEM //////////////////////////////////////////////////////////////////////
+
+///// Forward Declarations /////
+class L_Node;
+typedef shared_ptr<L_Node> nodePtr;
+
+
+///// Node ///////////////////////////////////////
+
+class L_Rule{ public:
+    // Base class for L-System transformation rules
+    nodePtr node; // ------------- Node to be transformed
+    virtual void transform(){}; // Transformation strategy
+};
+typedef shared_ptr<L_Rule> rulePtr;
+
+class L_Node{ public:
+    // Basis for a graphical Lindenmayer System
+    nodePtr /*---*/ parent; // - Edge from parent
+    vector<nodePtr> children; // Edges to children
+    rulePtr /*---*/ rule; // --- Production rule for transforming the graph, FIXME: MANY INSTANCES OR ONE?
+    Matrix /*----*/ Trel; // --- Relative transform from the parent frame
+    Matrix /*----*/ Tabs; // --- Absolute transform in the world frame
+    dynaPtr /*---*/ drawable; // `DynaMesh` that renders this node
+};

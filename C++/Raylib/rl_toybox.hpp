@@ -393,5 +393,6 @@ class DynaMesh{ public:
     }
 
 };
+typedef shared_ptr<DynaMesh> dynaPtr;
 
 #endif /* RL_TOYBOX_H */ 
