@@ -94,6 +94,8 @@ class Wedge : public DynaMesh{
     }
 };
 
+
+
 ////////// LINDENMAYER SYSTEM //////////////////////////////////////////////////////////////////////
 
 ///// Forward Declarations /////
@@ -119,3 +121,25 @@ class L_Node{ public:
     Matrix /*----*/ Tabs; // --- Absolute transform in the world frame
     dynaPtr /*---*/ drawable; // `DynaMesh` that renders this node
 };
+
+
+
+////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
+
+int main(){
+
+    ///// Raylib Init /////////////////////////////////////////////////////
+
+    /// RNG Init ///
+    rand_seed();
+
+    /// Window Init ///
+    InitWindow( 900, 900, "L-System Test" );
+    SetTargetFPS( 60 );
+
+    ///// Create Objects //////////////////////////////////////////////////
+
+    
+
+    return 0;
+}
