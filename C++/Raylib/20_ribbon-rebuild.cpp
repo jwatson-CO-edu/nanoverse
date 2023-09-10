@@ -989,8 +989,8 @@ int main(){
     };
 
     // Load basic lighting shader
-    Shader shader = LoadShader(TextFormat("shaders/lighting.vs"),
-                               TextFormat("shaders/lighting.fs"));
+    Shader shader = LoadShader( TextFormat("shaders/lighting.vs") ,
+                                TextFormat("shaders/lighting.fs") );
     // Get some required shader locations
     shader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(shader, "viewPos");
     // NOTE: "matModel" location name is automatically assigned on shader loading, 
@@ -1043,7 +1043,7 @@ int main(){
 
         UpdateLightValues( shader, light );
 
-        SetShaderValue(shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3);
+        SetShaderValue( shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &camera.position.x, SHADER_UNIFORM_VEC3 );
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
 
@@ -1053,7 +1053,6 @@ int main(){
 
         /// End Drawing ///
         EndMode3D();
-
         EndDrawing();
     }
 

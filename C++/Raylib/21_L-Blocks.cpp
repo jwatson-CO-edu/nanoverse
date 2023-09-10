@@ -8,17 +8,16 @@
 
 /// Local ///
 #include "rl_toybox.hpp"
-
+#define RLIGHTS_IMPLEMENTATION
+#include "rlights.h"
 
 
 ////////// DRAWABLE ////////////////////////////////////////////////////////////////////////////////
 
-class Cuboid : public DynaMesh{
+class Cuboid : public DynaMesh{ public:
     // Axis-aligned cuboid with centroid at <0,0,0>
 
-    vvec3 vrts;
-    Color colr;
-
+    /// Constructors ///
     Cuboid( float xLen, float yLen, float zLen, Color color ) : DynaMesh( 12 ){
         // Generate and store geometry with a uniform color
 
@@ -58,9 +57,10 @@ class Cuboid : public DynaMesh{
     }
 };
 
-class Wedge : public DynaMesh{
+class Wedge : public DynaMesh{ public:
     // Right-Triangular prism with axis-aligned rectangular faces pointing in +Y and -Z
 
+    /// Constructors ///
     Wedge( float xLen, float yLen, float zLen, Color color ) : DynaMesh( 8 ){
         // Generate and store geometry with a uniform color
         
@@ -99,7 +99,7 @@ class Wedge : public DynaMesh{
 ////////// LINDENMAYER SYSTEM //////////////////////////////////////////////////////////////////////
 
 ///// Forward Declarations /////
-class L_Node;
+class   L_Node;
 typedef shared_ptr<L_Node> nodePtr;
 
 
@@ -122,6 +122,50 @@ class L_Node{ public:
     dynaPtr /*---*/ drawable; // `DynaMesh` that renders this node
 };
 
+////////// LIGHTING ////////////////////////////////////////////////////////////////////////////////
+
+struct Lighting{
+    // Container struct for light(s) and associated shader
+
+    /// Members ///
+    Shader shader;
+    float  ambientColor[4];
+    int    ambientLoc;
+    Light  light;
+
+    /// Constructor ///
+    Lighting(){
+        // Load basic lighting shader
+        shader = LoadShader( TextFormat("shaders/lighting.vs") ,
+                             TextFormat("shaders/lighting.fs") );
+        // Get some required shader locations
+        shader.locs[ SHADER_LOC_VECTOR_VIEW ] = GetShaderLocation( shader, "viewPos" );
+        // Ambient light level (some basic lighting)
+        ambientColor[0] = 0.25f;
+        ambientColor[1] = 0.25f;
+        ambientColor[2] = 0.25f;
+        ambientColor[3] = 0.50f;
+        ambientLoc /**/ = GetShaderLocation( shader, "ambient" );
+        SetShaderValue( shader, ambientLoc, ambientColor, SHADER_UNIFORM_VEC4 );
+        // Using just 1 point lights
+        light = CreateLight(
+            LIGHT_POINT, 
+            Vector3{ 20.0, 20.0, 20.0 }, 
+            Vector3Zero(), 
+            Color{ 255, 255, 255, 125 }, 
+            shader
+        );
+    }
+
+    /// Methods ///
+
+    void update(){  UpdateLightValues( shader, light );  } // Update the light
+
+    void set_camera_posn( Camera& cam ){
+        // Tell the shader where the camera is
+        SetShaderValue( shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &cam.position.x, SHADER_UNIFORM_VEC3 );
+    }
+};
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
@@ -139,7 +183,50 @@ int main(){
 
     ///// Create Objects //////////////////////////////////////////////////
 
-    
+    /// Create Camera ///
+    Camera camera = Camera{
+        Vector3{  15.0,  15.0, -15.0 }, // Position
+        Vector3{   0.0,   0.0,   0.0 }, // Target
+        Vector3{   0.0,   0.0,   1.0 }, // Up
+        45.0, // ---------------------- FOV_y
+        0 // -------------------------- Projection mode
+    };
+
+    /// Lighting ///
+    Lighting lightShader{};
+    lightShader.set_camera_posn( camera );
+
+    /// Drawables ///
+    Cuboid cuboid{ 2.0f, 2.0f, 3.0f, BLUE  };
+    Wedge  wedge{  2.0f, 2.0f, 2.0f, GREEN };
+    wedge.set_posn( Vector3{ 0.0f, 0.0f, 1.25f } );
+    cuboid.set_shader( lightShader.shader );
+    wedge.set_shader( lightShader.shader );
+
+
+    ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
+
+    while( !WindowShouldClose() ){
+
+        /// Begin Drawing ///
+        BeginDrawing();
+        BeginMode3D( camera );
+        ClearBackground( BLACK );
+
+        ///// DRAW LOOP ///////////////////////////////////////////////////
+
+        lightShader.update();
+        // lightShader.set_camera_posn( camera ); // Uncomment if camera moves
+        cuboid.draw();
+        wedge.rotate_RPY( M_PI/60.0f, 0.0f, 0.0f );
+        wedge.draw();
+
+        ///// END DRAWING /////////////////////////////////////////////////
+
+        /// End Drawing ///
+        EndMode3D();
+        EndDrawing();
+    }
 
     return 0;
 }

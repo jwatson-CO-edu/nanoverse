@@ -384,7 +384,7 @@ class DynaMesh{ public:
 
     /// Rendering ///
 
-    void draw(){
+    virtual void draw(){
         // Render the mesh
         if( !upldModl )  remodel();
         modl.transform = xfrm;
