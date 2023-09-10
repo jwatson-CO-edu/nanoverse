@@ -12,6 +12,26 @@
 #include "rlights.h"
 
 
+////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
+
+Matrix set_posn( const Matrix& xfrm, const Vector3& posn ){
+    // Set the position components of the homogeneous coordinates
+    Matrix rtnMatx{ xfrm };
+    rtnMatx.m12 = posn.x;
+    rtnMatx.m13 = posn.y;
+    rtnMatx.m14 = posn.z;
+    return rtnMatx;
+}
+
+Matrix rotate_RPY( const Matrix& xfrm, float r_, float p_, float y_ ){
+    // Increment the world Roll, Pitch, Yaw of the model
+    return MatrixMultiply( 
+        MatrixMultiply( MatrixMultiply( MatrixRotateY( y_ ), MatrixRotateX( p_ ) ), MatrixRotateZ( r_ ) ), 
+        xfrm 
+    );
+}
+
+
 ////////// DRAWABLE ////////////////////////////////////////////////////////////////////////////////
 
 class Cuboid : public DynaMesh{ public:
@@ -114,12 +134,47 @@ typedef shared_ptr<L_Rule> rulePtr;
 
 class L_Node{ public:
     // Basis for a graphical Lindenmayer System
+
+    /// Members ///
     nodePtr /*---*/ parent; // - Edge from parent
     vector<nodePtr> children; // Edges to children
     rulePtr /*---*/ rule; // --- Production rule for transforming the graph, FIXME: MANY INSTANCES OR ONE?
     Matrix /*----*/ Trel; // --- Relative transform from the parent frame
     Matrix /*----*/ Tabs; // --- Absolute transform in the world frame
     dynaPtr /*---*/ drawable; // `DynaMesh` that renders this node
+
+    /// Constructor ///
+    L_Node(){
+        // Empty node
+        parent   = nullptr;
+        rule     = nullptr;
+        Trel     = MatrixIdentity();
+        Tabs     = MatrixIdentity();
+        drawable = nullptr;
+    }
+
+    /// Methods ///
+
+    void add_child( nodePtr nuChild ){
+        nuChild->parent = nodePtr( this );
+        children.push_back( nodePtr( nuChild ) );
+    }
+
+    bool p_leaf(){  return (children.size() == 0);  } // Retur true if the node has no children
+
+    void update_poses( Matrix parentXform ){
+        // Set the pose of this node and subtree of node below
+        Tabs = MatrixMultiply( Trel, parentXform );
+        if( !p_leaf() ){  for( nodePtr& child : children ){  child->update_poses( Tabs );  }  }
+    }
+
+    void draw(){
+        if( drawable ){  
+            drawable->xfrm = Tabs;  
+            drawable->draw();
+        }
+        for( nodePtr& child : children ){  child->draw();  }
+    }
 };
 
 ////////// LIGHTING ////////////////////////////////////////////////////////////////////////////////
@@ -203,6 +258,16 @@ int main(){
     cuboid.set_shader( lightShader.shader );
     wedge.set_shader( lightShader.shader );
 
+    /// L-System ///
+    L_Node root{};
+    root.drawable = dynaPtr( new Cuboid{ 2.0f, 2.0f, 3.0f, BLUE  } );
+    root.drawable->set_shader( lightShader.shader );
+
+    nodePtr top{ new L_Node{} };
+    top->drawable = dynaPtr( new Wedge{  2.0f, 2.0f, 2.0f, GREEN } );
+    top->drawable->set_shader( lightShader.shader );
+    top->Trel = set_posn( top->Trel, Vector3{ 0.0f, 0.0f, 1.25f } );
+    root.add_child( top );
 
     ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
 
@@ -217,9 +282,13 @@ int main(){
 
         lightShader.update();
         // lightShader.set_camera_posn( camera ); // Uncomment if camera moves
-        cuboid.draw();
-        wedge.rotate_RPY( M_PI/60.0f, 0.0f, 0.0f );
-        wedge.draw();
+        // cuboid.draw();
+        // wedge.rotate_RPY( M_PI/60.0f, 0.0f, 0.0f ); // RPY seems out of order?
+        // wedge.draw();
+        root.children[0]->Trel = rotate_RPY( root.children[0]->Trel, M_PI/60.0f, 0.0f, 0.0f );
+        // root.update_poses( rotate_RPY( root.Tabs, M_PI/120.0f, M_PI/120.0f, M_PI/120.0f ) );
+        root.update_poses( MatrixIdentity() );
+        root.draw();
 
         ///// END DRAWING /////////////////////////////////////////////////
 
