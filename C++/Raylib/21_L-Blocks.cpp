@@ -119,7 +119,7 @@ class Wedge : public DynaMesh{ public:
 ////////// LINDENMAYER SYSTEM //////////////////////////////////////////////////////////////////////
 
 ///// Forward Declarations /////
-class   L_Node;
+class /*----------------*/ L_Node;
 typedef shared_ptr<L_Node> nodePtr;
 
 
@@ -127,15 +127,33 @@ typedef shared_ptr<L_Node> nodePtr;
 
 class L_Rule{ public:
     // Base class for L-System transformation rules
-    nodePtr node; // ------------- Node to be transformed
-    virtual void transform(){}; // Transformation strategy
+    nodePtr node; // ------- Node to be transformed
+    virtual void run(){}; // Transformation strategy
 };
 typedef shared_ptr<L_Rule> rulePtr;
+
+enum NodeType{
+    EMPTY, // Default node, not rendered or updated
+    TOWER, // Defensive structure, capped on top and bottom by turrets
+    TURET, // Point defense
+};
+
+struct L_Port{
+    // Holds a potential attachment point where an edge may pass through in 3D space
+    Vector3 /*----*/ posn; // Position in the parent's frame
+    Vector3 /*----*/ norm; // Vector pointing away from the parent's rendered body
+    Vector3 /*----*/ upDr; // Global "up" vector, expressed in the parent's frame
+    vector<NodeType> spec; // Constraints on attachment type
+};
 
 class L_Node{ public:
     // Basis for a graphical Lindenmayer System
 
     /// Members ///
+    NodeType /*--*/ type; // --- String designator governing rendering and rules
+    float /*-----*/ unitLen; //- Unit length [m] for generating geometry
+    vvf /*-------*/ params; // - Generic node info for sharing, TBD
+    vector<L_Port>  ports; // -- "Attachment points" potential edges may pass through
     nodePtr /*---*/ parent; // - Edge from parent
     vector<nodePtr> children; // Edges to children
     rulePtr /*---*/ rule; // --- Production rule for transforming the graph, FIXME: MANY INSTANCES OR ONE?
@@ -146,6 +164,7 @@ class L_Node{ public:
     /// Constructor ///
     L_Node(){
         // Empty node
+        type     = EMPTY;
         parent   = nullptr;
         rule     = nullptr;
         Trel     = MatrixIdentity();
@@ -176,6 +195,20 @@ class L_Node{ public:
         for( nodePtr& child : children ){  child->draw();  }
     }
 };
+
+///// Factories //////////////////////////////////
+
+nodePtr make_tower( nodePtr parent_, L_Port attachment, float unit, uint distance, uint height, uint depth ){
+    /* Towers always have a square `unit` x `unit` vertical cross section
+       Non-zero `height` and `depth` towers are capped by regular and inverted turrets, respectively */
+    nodePtr rtnNode{ new L_Node{} };
+    float   halfUnit = unit/2.0f;
+    Vector3 nucleus  = Vector3Add( attachment.posn, Vector3Scale( attachment.norm, distance*unit ) );
+    /* FIXME, START HERE: DO THE FOLLOWING 
+        - Calc the center and dimensions of the `Cuboid`
+        - Create `Cuboid`
+        - Generate ports */
+}
 
 ////////// LIGHTING ////////////////////////////////////////////////////////////////////////////////
 

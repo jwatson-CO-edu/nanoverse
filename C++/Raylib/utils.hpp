@@ -10,9 +10,12 @@
 #include <time.h>
 #include <iostream>
 using std::cout, std::endl, std::flush;
+#include <string>
+using std::string;
 
 ///// Aliases ////////////////////////////////////
-typedef unsigned char ubyte;
+typedef unsigned char /*---*/ ubyte;
+typedef vector<vector<float>> vvf;
 
 
 ////////// RANDOM NUMBERS //////////////////////////////////////////////////////////////////////////
