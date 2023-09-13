@@ -78,6 +78,8 @@ vvvf read_NPY_tomog( const string& fName ){
     vvf /**/ slice;
     vf /*-*/ row;
     float    val;
+    float    magMin =  1e6;
+    float    magMax = -1e6;
     if( file_exists( fName ) ){
         npy = ifstream{ fName };
         // The first 6 bytes are a magic string: exactly \x93NUMPY
@@ -105,6 +107,8 @@ vvvf read_NPY_tomog( const string& fName ){
                 row.clear();
                 for( ubyte k = 0; k < dim; ++k ){
                     fetch_next_float( npy, &val );
+                    if( val < magMin )  magMin = val;
+                    if( val > magMax )  magMax = val;
                     row.push_back( val );
                 }
                 slice.push_back( row );
@@ -112,15 +116,18 @@ vvvf read_NPY_tomog( const string& fName ){
             rtnCube.push_back( slice );
         }
         cout << "Read a data cube of size " << rtnCube.size() << " x " << rtnCube[0].size() << " x " << rtnCube[0][0].size() << endl;
-
+        cout << "Values are in range [" << magMin << ", " << magMax << "]" << endl;
     }else{  cout << "404: " << fName << " NOT found!" << endl;  }
     return rtnCube;
 }
 
 
-// FIXME, START HERE: DISPLAY RAW DATA AS MONOCHROME POINTS ON 3D GRID, MAGNITUDE DETERMINES SIZE
+// FIXME, START HERE: DISPLAY RAW DATA AS MONOCHROME POINTS ON 3D GRID, MAGNITUDE DETERMINES SIZE AND COLOR
  
-
+void render_tomog_cube( const vvvf& data, float magMin, float magMax, 
+                        float scale, float radMin, float radMax, Color clrMin, Color clrMax ){
+    
+}
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
