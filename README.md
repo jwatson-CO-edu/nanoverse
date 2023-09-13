@@ -54,6 +54,12 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         * `[ ]` Obtain time series of solor tomography data cubes
         * `[ ]` Animate using best method of static display
         * `[ ]` Q: Are you able to generate in-betweens for greater smoothness?
+    - `[ ]` Shaded tomography
+        * `[ ]` What is the texture of publicly available sun visualizations?
+        * `[ ]` Choose image(s) that evoke the look you are going for
+        * `[ ]` Write a shader that implies finer structure/texture than the data cube provides
+        * `[ ]` Animate!
+            - `[ ]` Try to avoid "jittery" textures
 
 &nbsp;
 
