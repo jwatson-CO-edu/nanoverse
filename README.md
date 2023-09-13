@@ -27,11 +27,41 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 
 &nbsp;
 
-* `[>]` Engineering Center FROM SPACE - Generative art
-    - `[>]` Generative angular, intimidating castle (a la EC), L-system?
+* `[>]` Solar Tomography Visualization
+    - `[Y]` Parse NPY datacube, 2023-09-13: Read into vector of vector of vector of floats!
+    - `[>]` Visualize raw data as points. Display magnitude with color and/or size
+    - `[ ]` Visualize "cleaned" data as points.
+        * `[ ]` Filter
+        * `[ ]` Display magnitude with color and/or size 
+    - `[ ]` Visualize "cleaned" data as opaque polygons
+        * `[ ]` Cluster filtered data
+        * `[ ]` Display clusters with Marching Cubes, You have literature on this!
+            - `{ }` Q: When to start a new region in Marching Cubes?
+        * `{ }` If marching cubes unsat, then accrue tetrahedra
+            - `{ }` Maybe try to grow a tetrahedron at a time?
+            - `{ }` Q: Is there a way to add tetrahedra that guarantees the smallest triangles?
+            - `{ }` Reject tetrahedra that dilute the points/volume metric --> Start new region
+    - `[ ]` Visualize data as transparent polygons
+        * `[ ]` Inspect point-based output, above. Is there internal structure or not?
+            - `[ ]` Q: What are the names of the structures in this datacube? How are those structures usually depicted?
+            - `[ ]` Q: Do plumes have hot "cores"? Can you see through the plumes to their cores?
+        * `[ ]` Inspect publicly available sun visualizations
+        * `{ }` Depending on findings, consider nested clustering and rendering to match  
+            - `{ }` Luminescent cores? -or- Greater luminosity with greater magnitude? 
+            - `{ }` Does my method produce/tolerate open polygons? (not airtight)
+    - `[ ]` Animated tomography
+        * `[ ]` Determine best static display, above
+        * `[ ]` Obtain time series of solor tomography data cubes
+        * `[ ]` Animate using best method of static display
+        * `[ ]` Q: Are you able to generate in-betweens for greater smoothness?
+
+&nbsp;
+
+* `[P]` Engineering Center FROM SPACE - Generative art
+    - `[P]` Generative angular, intimidating castle (a la EC), L-system?
         * Classes: `Cuboid` and `Wedge`, 2023-09-06: These are the drawable parts of the EC L-system
-        * `[>]` L-system
-            - `[>]` `shared_ptr` Test: Attempt to access child class overridden functions thru a `vector` of `shared_ptr` of the parent class
+        * `[P]` L-system
+            - `[P]` `shared_ptr` Test: Attempt to access child class overridden functions thru a `vector` of `shared_ptr` of the parent class
             - `[ ]` Nodes: Drawable, heritable `DynaMesh` 
             - `[ ]` Edges
                 * `[ ]` Relative transform

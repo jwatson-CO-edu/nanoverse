@@ -18,6 +18,7 @@ using std::ifstream, std::ofstream;
 
 ///// Aliases ////////////////////////////////////
 typedef vector<vector<vector<float>>> vvvf;
+typedef vector<float> /*-----------*/ vf;
 
 ////////// FILE OPERATIONS /////////////////////////////////////////////////////////////////////////
 
@@ -41,6 +42,13 @@ void fetch_next_ushort( ifstream& file, ushort* numVar ){
     }
 }
 
+void fetch_next_float( ifstream& file, float* numVar ){
+    // Fetch 1 byte from `buffer` and cast as an `int`
+    if( !file.eof() && file.is_open() ){
+        file.read( reinterpret_cast<char*>( numVar ), sizeof( float ) );
+    }
+}
+
 string fetch_ASCII_chars_as_string( ifstream& file, uint N ){
     // Read `N` ASCII chars from the file and return as a string
     string rtnStr;
@@ -56,7 +64,7 @@ string fetch_ASCII_chars_as_string( ifstream& file, uint N ){
 
 ////////// NUMPY ///////////////////////////////////////////////////////////////////////////////////
 
-void read_NPY_tomog( const string& fName ){
+vvvf read_NPY_tomog( const string& fName ){
     // Read the contents of an NPY matrix created by the Numpy Python library
     // https://numpy.org/devdocs/reference/generated/numpy.lib.format.html
     // WARNING, 2023-09-13: This function is TAILOR-MADE for this application only and does NOT GENERALIZE to all NPY!
@@ -66,6 +74,10 @@ void read_NPY_tomog( const string& fName ){
     ushort   dBt;
     string   dct;
     ubyte    dim = 100;
+    vvvf     rtnCube;
+    vvf /**/ slice;
+    vf /*-*/ row;
+    float    val;
     if( file_exists( fName ) ){
         npy = ifstream{ fName };
         // The first 6 bytes are a magic string: exactly \x93NUMPY
@@ -85,18 +97,36 @@ void read_NPY_tomog( const string& fName ){
         // It is an ASCII string which contains a Python literal expression of a dictionary.
         dct = fetch_ASCII_chars_as_string( npy, dBt );
         cout << "Dim Dict:  " << dct << endl; // {'descr': '<f4', 'fortran_order': False, 'shape': (100, 100, 100), } 
-        // WARNING, 2023-09-13: Assume 100 x 100 x 100 of floats
+        // WARNING, 2023-09-13: Assume 100 x 100 x 100 of floats, Assume innermost dimension is contiguous
+        // 6+4+118+100*100*100*4 = 4,000,128  -  An array of double would be 8MB but the file is not that big
+        for( ubyte i = 0; i < dim; ++i ){
+            slice.clear();
+            for( ubyte j = 0; j < dim; ++j ){
+                row.clear();
+                for( ubyte k = 0; k < dim; ++k ){
+                    fetch_next_float( npy, &val );
+                    row.push_back( val );
+                }
+                slice.push_back( row );
+            }
+            rtnCube.push_back( slice );
+        }
+        cout << "Read a data cube of size " << rtnCube.size() << " x " << rtnCube[0].size() << " x " << rtnCube[0][0].size() << endl;
 
     }else{  cout << "404: " << fName << " NOT found!" << endl;  }
+    return rtnCube;
 }
 
+
+// FIXME, START HERE: DISPLAY RAW DATA AS MONOCHROME POINTS ON 3D GRID, MAGNITUDE DETERMINES SIZE
+ 
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
 int main(){
 
-    read_NPY_tomog( "data/model.npy" );
+    vvvf data = read_NPY_tomog( "data/model.npy" );
 
     return 0;
 }
