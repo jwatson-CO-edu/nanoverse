@@ -120,20 +120,102 @@ vvvf read_NPY_tomog( const string& fName ){
     }else{  cout << "404: " << fName << " NOT found!" << endl;  }
     return rtnCube;
 }
-
-
-// FIXME, START HERE: DISPLAY RAW DATA AS MONOCHROME POINTS ON 3D GRID, MAGNITUDE DETERMINES SIZE AND COLOR
  
 void render_tomog_cube( const vvvf& data, float magMin, float magMax, 
-                        float scale, float radMin, float radMax, Color clrMin, Color clrMax ){
-    
+                        float scale, Color clrMin, Color clrMax ){
+    ubyte   dim    = 100; // --- Size of each dimension
+    float   offset = dim * scale / 2.0f;
+    Vector3 nudge{ 0.0f, 0.0f, 0.05f };
+    Vector3 cellCntr, dotBgn, dotEnd;
+    Color   ngtClr = BLUE;
+    Color   cellClr;
+    float   cellVal, blendFrac;
+    // WARNING, 2023-09-13: Assume 100 x 100 x 100 of floats, Assume innermost dimension is contiguous
+
+    rlBegin( RL_LINES );
+
+    for( ubyte i = 0; i < dim; ++i ){
+        for( ubyte j = 0; j < dim; ++j ){
+            for( ubyte k = 0; k < dim; ++k ){
+                
+                // Fetch datum
+                cellVal = data[i][j][k];
+                
+                // Determine cell color && set
+                // if( cellVal < 0.0     ){  cellClr = ngtClr;  }else 
+                if( cellVal <= magMin ){  cellClr = clrMin;  }else
+                if( cellVal >= magMax ){  cellClr = clrMax;  }else{
+                    blendFrac = (cellVal - magMin) / (magMax - magMin);
+                    cellClr = {
+                        (ubyte)(blendFrac*clrMax.r + (1.0f-blendFrac)*clrMin.r),
+                        (ubyte)(blendFrac*clrMax.g + (1.0f-blendFrac)*clrMin.g),
+                        (ubyte)(blendFrac*clrMax.b + (1.0f-blendFrac)*clrMin.b),
+                        (ubyte)(blendFrac*clrMax.a + (1.0f-blendFrac)*clrMin.a)
+                    };
+                }
+                rlColor4ub( cellClr.r, cellClr.g, cellClr.b, cellClr.a );
+
+                // Calc cell center && place dot
+                cellCntr = { i*scale-offset, j*scale-offset, -k*scale+offset }; // Is `data[0][0][0]` above or below the orbital plane?
+                dotBgn   = Vector3Add( cellCntr, nudge );
+                dotEnd   = Vector3Subtract( cellCntr, nudge );
+                rlVertex3f( dotBgn.x, dotBgn.y, dotBgn.z );
+                rlVertex3f( dotEnd.x, dotEnd.y, dotEnd.z );
+            }
+        }
+    }
+
+    rlEnd();
 }
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
 int main(){
 
+    ///// Raylib Init /////////////////////////////////////////////////////
+
+    /// RNG Init ///
+    rand_seed();
+
+    /// Window Init ///
+    InitWindow( 900, 900, "Solor Tomograph Test" );
+    SetTargetFPS( 60 );
+
+    ///// Create Objects //////////////////////////////////////////////////
+
+    /// Create Camera ///
+    Camera camera = Camera{
+        Vector3{  12.0,  15.0,  15.0 }, // Position
+        Vector3{   0.0,   0.0,   0.0 }, // Target
+        Vector3{   0.0,   0.0,   1.0 }, // Up
+        45.0, // ---------------------- FOV_y
+        0 // -------------------------- Projection mode
+    };
+
     vvvf data = read_NPY_tomog( "data/model.npy" );
+    Color clrMin = ORANGE;
+    clrMin.a = 25;
+    Color clrMax = YELLOW;
+
+    ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
+
+    while( !WindowShouldClose() ){
+
+        /// Begin Drawing ///
+        BeginDrawing();
+        BeginMode3D( camera );
+        ClearBackground( BLACK );
+
+        ///// DRAW LOOP ///////////////////////////////////////////////////
+
+        render_tomog_cube( data, -25.0f, 135.0f, 0.1f, clrMin, clrMax );
+
+        ///// END DRAWING /////////////////////////////////////////////////
+
+        /// End Drawing ///
+        EndMode3D();
+        EndDrawing();
+    }
 
     return 0;
 }
