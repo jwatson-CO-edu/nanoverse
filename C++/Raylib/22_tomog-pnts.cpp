@@ -68,18 +68,18 @@ vvvf read_NPY_tomog( const string& fName ){
     // Read the contents of an NPY matrix created by the Numpy Python library
     // https://numpy.org/devdocs/reference/generated/numpy.lib.format.html
     // WARNING, 2023-09-13: This function is TAILOR-MADE for this application only and does NOT GENERALIZE to all NPY!
-    ifstream npy;
-    string   hdr;
-    ubyte    byt;
-    ushort   dBt;
-    string   dct;
-    ubyte    dim = 100;
-    vvvf     rtnCube;
-    vvf /**/ slice;
-    vf /*-*/ row;
-    float    val;
-    float    magMin =  1e6;
-    float    magMax = -1e6;
+    ifstream npy; // --------- NPY file
+    string   hdr; // --------- Magic string
+    ubyte    byt; // --------- Byte value
+    ushort   dBt; // --------- Short value
+    string   dct; // --------- Array format
+    ubyte    dim = 100; // --- Size of each dimension
+    vvvf     rtnCube; // ----- Struct to return
+    vvf /**/ slice; // ------- Inner struct
+    vf /*-*/ row; // --------- Innermost struct
+    float    val; // --------- Data point
+    float    magMin =  1e6; // Min magnitude
+    float    magMax = -1e6; // Max magnitude
     if( file_exists( fName ) ){
         npy = ifstream{ fName };
         // The first 6 bytes are a magic string: exactly \x93NUMPY
