@@ -12,6 +12,7 @@
 using std::cout, std::endl, std::flush;
 #include <string>
 using std::string;
+#include <cmath>
 
 ///// Aliases ////////////////////////////////////
 typedef unsigned char /*---*/ ubyte;

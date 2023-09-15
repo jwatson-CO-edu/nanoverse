@@ -19,6 +19,7 @@ using std::ifstream, std::ofstream;
 ///// Aliases ////////////////////////////////////
 typedef vector<vector<vector<float>>> vvvf;
 typedef vector<float> /*-----------*/ vf;
+typedef array<long,3> /*-----------*/ address;
 
 ////////// FILE OPERATIONS /////////////////////////////////////////////////////////////////////////
 
@@ -123,49 +124,72 @@ vvvf read_NPY_tomog( const string& fName ){
  
 void render_tomog_cube( const vvvf& data, float magMin, float magMax, 
                         float scale, Color clrMin, Color clrMax ){
-    ubyte   dim    = 100; // --- Size of each dimension
-    float   offset = dim * scale / 2.0f;
-    Vector3 nudge{ 0.0f, 0.0f, 0.05f };
-    Vector3 cellCntr, dotBgn, dotEnd;
-    Color   ngtClr = BLUE;
-    Color   cellClr;
-    float   cellVal, blendFrac;
-    // WARNING, 2023-09-13: Assume 100 x 100 x 100 of floats, Assume innermost dimension is contiguous
+    // Render solar tomography data as a 3D array of dots, Value determines color and opacity
+    // 2023-09-15: This rendering method produces an ugly moire, esp. w/ screencaps, How to fix?
+    ubyte   dim    = 100; // -------------- Size of each dimension
+    float   offset = dim * scale / 2.0f; // Places the center at <0,0,0>
+    Vector3 nudge{ 0.0f, 0.0f, 0.05f }; //- Length of line segment producing a dot
+    Vector3 cellCntr, dotBgn, dotEnd; // -- Cell coords in the world frame
+    Color   cellClr; // ------------------- Voxel color
+    float   cellVal, blendFrac; // -------- Voxel value and fraction along min-->max number line
+    Color   ngtClr = BLUE; // ------------- Unused!
+    // WARNING, 2023-09-13: Assume 100 x 100 x 100 of floats
 
-    rlBegin( RL_LINES );
+    rlBegin( RL_LINES ); // Begin batch drawing
 
+    // For each voxel in the datacube
     for( ubyte i = 0; i < dim; ++i ){
         for( ubyte j = 0; j < dim; ++j ){
             for( ubyte k = 0; k < dim; ++k ){
                 
-                // Fetch datum
+                // Fetch voxel datum
                 cellVal = data[i][j][k];
                 
-                // Determine cell color && set
-                // if( cellVal < 0.0     ){  cellClr = ngtClr;  }else 
-                if( cellVal <= magMin ){  cellClr = clrMin;  }else
-                if( cellVal >= magMax ){  cellClr = clrMax;  }else{
-                    blendFrac = (cellVal - magMin) / (magMax - magMin);
+                // If the voxel has a value within the given interval, then render it, Only draw sensible values!
+                if( (cellVal >= magMin) && (cellVal <= magMax) ){
+                    // Determine cell color && set, Assume higher values are hotter
+                    blendFrac = (cellVal - magMin) / (magMax - magMin); // [0.0, 1.0] --> [lo, hi]
                     cellClr = {
                         (ubyte)(blendFrac*clrMax.r + (1.0f-blendFrac)*clrMin.r),
                         (ubyte)(blendFrac*clrMax.g + (1.0f-blendFrac)*clrMin.g),
                         (ubyte)(blendFrac*clrMax.b + (1.0f-blendFrac)*clrMin.b),
                         (ubyte)(blendFrac*clrMax.a + (1.0f-blendFrac)*clrMin.a)
                     };
-                }
-                rlColor4ub( cellClr.r, cellClr.g, cellClr.b, cellClr.a );
+                    rlColor4ub( cellClr.r, cellClr.g, cellClr.b, cellClr.a );
 
-                // Calc cell center && place dot
-                cellCntr = { i*scale-offset, j*scale-offset, -k*scale+offset }; // Is `data[0][0][0]` above or below the orbital plane?
-                dotBgn   = Vector3Add( cellCntr, nudge );
-                dotEnd   = Vector3Subtract( cellCntr, nudge );
-                rlVertex3f( dotBgn.x, dotBgn.y, dotBgn.z );
-                rlVertex3f( dotEnd.x, dotEnd.y, dotEnd.z );
+                    // Calc cell center && place dot
+                    cellCntr = { i*scale-offset, j*scale-offset, -k*scale+offset }; // Is `data[0][0][0]` above or below the orbital plane?
+                    dotBgn   = Vector3Add( cellCntr, nudge );
+                    dotEnd   = Vector3Subtract( cellCntr, nudge );
+                    rlVertex3f( dotBgn.x, dotBgn.y, dotBgn.z );
+                    rlVertex3f( dotEnd.x, dotEnd.y, dotEnd.z );
+                } // else don't draw!
             }
         }
     }
+    rlEnd(); // End batch drawing
+}
 
-    rlEnd();
+vector<address> get_spherical_window( float radius ){
+    // Get a `vector` of the offset `address`es for a spherical window with `radius` (One unit = stride 1)
+    vector<address> window;
+    long /*------*/ halfLen = ceil( abs( radius ) + 1.0f );
+    float /*-----*/ radSqr = radius * radius;
+    // address /*---*/ elem;
+    for( long i = -halfLen; i <= halfLen; ++i ){
+        for( long j = -halfLen; j <= halfLen; ++j ){
+            for( long k = -halfLen; k <= halfLen; ++k ){
+                if( (1.0*i*i + 1.0*j*j + 1.0*k*k) <= radSqr ){  window.push_back( {i,j,k} );  }
+            }
+        }
+    }
+    return window;
+}
+
+float average_value_thresh_filter( const vvvf& data, const vector<address>& window, address addr, float thresh ){
+    // Return the filtered value of `addr` within `data` given the `window` and the `thresh` value
+    // 2023-09-15: Goal is to remove streaks without smoothing the data, Preserve structure where things are happening!
+    // FIXME, START HERE: ACCEPT THE VALUE IF THE SPHERICAL NEIGHBORHOOD HAS AVERAGE THRESH VALUE OR GREATER, OTHERWISE ZERO
 }
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
@@ -193,6 +217,9 @@ int main(){
     };
 
     vvvf data = read_NPY_tomog( "data/model.npy" );
+
+    // FIXME: GET FILTERED DATACUBE
+
     Color clrMin = ORANGE;
     clrMin.a = 25;
     Color clrMax = YELLOW;
@@ -208,7 +235,8 @@ int main(){
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
 
-        render_tomog_cube( data, -25.0f, 135.0f, 0.1f, clrMin, clrMax );
+        // FIXME: DRAW FILTERED DATACUBE
+        render_tomog_cube( data, 0.5f, 125.0f, 0.1f, clrMin, clrMax );
 
         ///// END DRAWING /////////////////////////////////////////////////
 

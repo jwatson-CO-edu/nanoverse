@@ -29,29 +29,32 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 
 * `[>]` Solar Tomography Visualization
     - `[Y]` Parse NPY datacube, 2023-09-13: Read into vector of vector of vector of floats!
-    - `[>]` Visualize raw data as points. Display magnitude with color and/or size
-    - `[ ]` Visualize "cleaned" data as points.
-        * `[ ]` Filter
-        * `[ ]` Display magnitude with color and/or size 
-    - `[ ]` Visualize "cleaned" data as opaque polygons
-        * `[ ]` Cluster filtered data
-        * `[ ]` Display clusters with Marching Cubes, You have literature on this!
-            - `{ }` Q: When to start a new region in Marching Cubes?
-        * `{ }` If marching cubes unsat, then accrue tetrahedra
-            - `{ }` Maybe try to grow a tetrahedron at a time?
-            - `{ }` Q: Is there a way to add tetrahedra that guarantees the smallest triangles?
-            - `{ }` Reject tetrahedra that dilute the points/volume metric --> Start new region
-    - `[ ]` Visualize data as transparent polygons
-        * `[ ]` Inspect point-based output, above. Is there internal structure or not?
+    - `[Y]` Visualize raw data as points. Display magnitude with color and opacity, 2023-09-15: Fixed an obvious mistake and data looks sensible now, dots (mini line segments) produce an unappealing moire pattern
+        * Empty space has value zero
+        * Negative values appear to be artefacts and not real data
+    - `[>]` Visualize "cleaned" data as points
+        * `[>]` Filter
+        * `[ ]` Display magnitude with color and opacity
+        * `[ ]` Try cubic or "spherical" voxels to fix the ugly moire of the dots
+        * `[ ]` Q: Is there internal structure? If so, what is the best way to render it?
             - `[ ]` Q: What are the names of the structures in this datacube? How are those structures usually depicted?
             - `[ ]` Q: Do plumes have hot "cores"? Can you see through the plumes to their cores?
-        * `[ ]` Inspect publicly available sun visualizations
+    - `[ ]` Visualize "cleaned" data as polygons
+        * `[ ]` Cluster filtered data
+        * `[ ]` Display clusters with Marching Cubes, You have literature on this!
+            - `[ ]` Magnitude determines vertex color and opacity
+            - `[ ]` E: Think about blending Marching Cubes with dbScan and/or Region Growing Algo such that regions of different magnitude get their own polygons
+                * `{ }` Q: When to start a new region in Marching Cubes?
+        * `{ }` If marching cubes unsat, then accrue tetrahedra
+            - `{ }` Maybe try to grow one tetrahedron at a time?
+            - `{ }` Q: Is there a way to add tetrahedra that guarantees the smallest triangles?
+            - `{ }` Reject tetrahedra that dilute the points/volume metric --> Start new region
         * `{ }` Depending on findings, consider nested clustering and rendering to match  
             - `{ }` Luminescent cores? -or- Greater luminosity with greater magnitude? 
             - `{ }` Does my method produce/tolerate open polygons? (not airtight)
     - `[ ]` Animated tomography
         * `[ ]` Determine best static display, above
-        * `[ ]` Obtain time series of solor tomography data cubes
+        * `[ ]` Obtain time series of solar tomography data cubes (hypercube?)
         * `[ ]` Animate using best method of static display
         * `[ ]` Q: Are you able to generate in-betweens for greater smoothness?
     - `[ ]` Shaded tomography
@@ -63,7 +66,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 
 &nbsp;
 
-* `[P]` Engineering Center FROM SPACE - Generative art
+* `[P]` Engineering Center FROM SPACE - Generative art `[PAUSED]`
     - `[P]` Generative angular, intimidating castle (a la EC), L-system?
         * Classes: `Cuboid` and `Wedge`, 2023-09-06: These are the drawable parts of the EC L-system
         * `[P]` L-system
