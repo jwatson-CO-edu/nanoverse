@@ -189,7 +189,30 @@ vector<address> get_spherical_window( float radius ){
 float average_value_thresh_filter( const vvvf& data, const vector<address>& window, address addr, float thresh ){
     // Return the filtered value of `addr` within `data` given the `window` and the `thresh` value
     // 2023-09-15: Goal is to remove streaks without smoothing the data, Preserve structure where things are happening!
+
     // FIXME, START HERE: ACCEPT THE VALUE IF THE SPHERICAL NEIGHBORHOOD HAS AVERAGE THRESH VALUE OR GREATER, OTHERWISE ZERO
+    long    dim = 100;
+    float   Nps = 0.0;
+    float   acc = 0.0f;
+    address flt;
+    bool    vld;
+
+    for( address win : window ){
+        flt = { addr[0]+win[0], addr[1]+win[1], addr[2]+win[2] };
+        vld = (0 <= flt[0]) && (flt[0] < dim) &&
+              (0 <= flt[1]) && (flt[1] < dim) &&
+              (0 <= flt[2]) && (flt[2] < dim);
+        if( vld ){  
+
+            // FIXME: DO NOT ACCUM NEGATIVE VALUES!
+
+            acc += data[ flt[0] ][ flt[1] ][ flt[2] ];  
+            Nps += 1.0f;
+        }
+    }
+
+    if( (acc/Nps) >= thresh )  return data[ addr[0] ][ addr[1] ][ addr[2] ];
+    else /*----------------*/  return 0.0f;
 }
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
