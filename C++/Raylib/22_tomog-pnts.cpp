@@ -81,6 +81,8 @@ vvvf read_NPY_tomog( const string& fName ){
     float    val; // --------- Data point
     float    magMin =  1e6; // Min magnitude
     float    magMax = -1e6; // Max magnitude
+    float    accum  = 0.0f;
+    float    N /**/ = 0.0f;
     if( file_exists( fName ) ){
         npy = ifstream{ fName };
         // The first 6 bytes are a magic string: exactly \x93NUMPY
@@ -110,6 +112,7 @@ vvvf read_NPY_tomog( const string& fName ){
                     fetch_next_float( npy, &val );
                     if( val < magMin )  magMin = val;
                     if( val > magMax )  magMax = val;
+                    if( val > 0.0f   ){  accum += val;  N += 1.0f;  }
                     row.push_back( val );
                 }
                 slice.push_back( row );
@@ -117,7 +120,7 @@ vvvf read_NPY_tomog( const string& fName ){
             rtnCube.push_back( slice );
         }
         cout << "Read a data cube of size " << rtnCube.size() << " x " << rtnCube[0].size() << " x " << rtnCube[0][0].size() << endl;
-        cout << "Values are in range [" << magMin << ", " << magMax << "]" << endl;
+        cout << "Values are in range [" << magMin << ", " << magMax << "], Positive Mean = " << (accum/N) << endl;
     }else{  cout << "404: " << fName << " NOT found!" << endl;  }
     return rtnCube;
 }
@@ -128,8 +131,9 @@ void render_tomog_cube( const vvvf& data, float magMin, float magMax,
     // 2023-09-15: This rendering method produces an ugly moire, esp. w/ screencaps, How to fix?
     ubyte   dim    = 100; // -------------- Size of each dimension
     float   offset = dim * scale / 2.0f; // Places the center at <0,0,0>
-    Vector3 nudge{ 0.0f, 0.0f, 0.05f }; //- Length of line segment producing a dot
-    Vector3 cellCntr, dotBgn, dotEnd; // -- Cell coords in the world frame
+    Vector3 nudge1{ 0.0f, 0.04f, 0.04f }; //- Length of line segment producing a dot
+    Vector3 nudge2{ 0.04f, 0.0f, 0.04f }; //- Length of line segment producing a dot
+    Vector3 cellCntr, dotBgn, dotEnd, nudge; // -- Cell coords in the world frame
     Color   cellClr; // ------------------- Voxel color
     float   cellVal, blendFrac; // -------- Voxel value and fraction along min-->max number line
     Color   ngtClr = BLUE; // ------------- Unused!
@@ -158,6 +162,7 @@ void render_tomog_cube( const vvvf& data, float magMin, float magMax,
                     rlColor4ub( cellClr.r, cellClr.g, cellClr.b, cellClr.a );
 
                     // Calc cell center && place dot
+                    if( (i+j+k)%2==0 )  nudge = nudge1;  else  nudge = nudge2;
                     cellCntr = { i*scale-offset, j*scale-offset, -k*scale+offset }; // Is `data[0][0][0]` above or below the orbital plane?
                     dotBgn   = Vector3Add( cellCntr, nudge );
                     dotEnd   = Vector3Subtract( cellCntr, nudge );
@@ -190,10 +195,10 @@ float average_value_thresh_filter( const vvvf& data, const vector<address>& wind
     // Return the filtered value of `addr` within `data` given the `window` and the `thresh` value
     // 2023-09-15: Goal is to remove streaks without smoothing the data, Preserve structure where things are happening!
 
-    // FIXME, START HERE: ACCEPT THE VALUE IF THE SPHERICAL NEIGHBORHOOD HAS AVERAGE THRESH VALUE OR GREATER, OTHERWISE ZERO
     long    dim = 100;
     float   Nps = 0.0;
     float   acc = 0.0f;
+    float   val;
     address flt;
     bool    vld;
 
@@ -202,22 +207,55 @@ float average_value_thresh_filter( const vvvf& data, const vector<address>& wind
         vld = (0 <= flt[0]) && (flt[0] < dim) &&
               (0 <= flt[1]) && (flt[1] < dim) &&
               (0 <= flt[2]) && (flt[2] < dim);
-        if( vld ){  
-
-            // FIXME: DO NOT ACCUM NEGATIVE VALUES!
-
-            acc += data[ flt[0] ][ flt[1] ][ flt[2] ];  
+        val = data[ flt[0] ][ flt[1] ][ flt[2] ];  
+        if( vld && (val >= 0.0) ){  
+            acc += val;
             Nps += 1.0f;
         }
     }
 
-    if( (acc/Nps) >= thresh )  return data[ addr[0] ][ addr[1] ][ addr[2] ];
-    else /*----------------*/  return 0.0f;
+    if( (Nps > 0.0f) && ((acc/Nps) >= thresh) )  return data[ addr[0] ][ addr[1] ][ addr[2] ];
+    else /*----------------------------------*/  return 0.0f;
+}
+
+vvvf get_filtered_datacube( const vvvf& data, float thresh, float radius ){
+    // Try to remove wispy artefacts while preserving structure
+    ubyte /*-----*/ dim    = 100; // -------------- Size of each dimension
+    vector<address> window = get_spherical_window( radius );
+    address /*---*/ addr;
+    vvvf /*------*/ rtnCube; // ----- Struct to return
+    vvf /*-------*/ slice; // ------- Inner struct
+    vf /*--------*/ row; // --------- Innermost struct
+    float val;
+    // For each voxel in the datacube
+    for( ubyte i = 0; i < dim; ++i ){
+        slice.clear();
+        for( ubyte j = 0; j < dim; ++j ){
+            row.clear();
+            for( ubyte k = 0; k < dim; ++k ){
+                addr = {i,j,k};
+                val  = average_value_thresh_filter( data, window, addr, thresh );
+                row.push_back( val );
+            }
+            slice.push_back( row );    
+        }
+        rtnCube.push_back( slice );
+    }
+    return rtnCube;
 }
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
 int main(){
+
+    ///// Preproccessing //////////////////////////////////////////////////
+
+    vvvf cube = read_NPY_tomog( "data/model.npy" );
+    vvvf data = get_filtered_datacube( cube, 0.25f, 5.25f ); 
+    // vvvf data = get_filtered_datacube( cube, 1.25f, 5.25f ); 
+    // vvvf data = get_filtered_datacube( cube, 1.5f, 3.25f ); 
+    // vvvf data = get_filtered_datacube( cube, 1.5f, 5.25f ); 
+    // vvvf data = get_filtered_datacube( cube, 2.0f, 5.25f ); 
 
     ///// Raylib Init /////////////////////////////////////////////////////
 
@@ -232,24 +270,26 @@ int main(){
 
     /// Create Camera ///
     Camera camera = Camera{
-        Vector3{  12.0,  15.0,  15.0 }, // Position
+        Vector3{  17.5,   0.0,   0.0 }, // Position
         Vector3{   0.0,   0.0,   0.0 }, // Target
         Vector3{   0.0,   0.0,   1.0 }, // Up
         45.0, // ---------------------- FOV_y
         0 // -------------------------- Projection mode
     };
 
-    vvvf data = read_NPY_tomog( "data/model.npy" );
-
-    // FIXME: GET FILTERED DATACUBE
-
     Color clrMin = ORANGE;
     clrMin.a = 25;
     Color clrMax = YELLOW;
+    float scale = 0.1f;
+    float theta = 0.0f;
+    float dTh   = 0.03125f;
 
     ////////// RENDER LOOP /////////////////////////////////////////////////////////////////////////
 
     while( !WindowShouldClose() ){
+
+        theta += dTh;
+        camera.position = Vector3{ 17.5f*cos(theta), 17.5f*sin(theta), 0.0f };
 
         /// Begin Drawing ///
         BeginDrawing();
@@ -258,8 +298,10 @@ int main(){
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
 
-        // FIXME: DRAW FILTERED DATACUBE
-        render_tomog_cube( data, 0.5f, 125.0f, 0.1f, clrMin, clrMax );
+        DrawSphere( Vector3Zero(), 32.5*scale, DARKBLUE );
+
+        // render_tomog_cube( cube, 0.5f, 125.0f, scale, clrMin, clrMax );
+        render_tomog_cube( data, 0.5f, 125.0f, scale, clrMin, clrMax );
 
         ///// END DRAWING /////////////////////////////////////////////////
 
