@@ -37,23 +37,24 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
                 * `[>]` Ability to rotate about an axis (translation axis)
             - `[Y]` Draw from root to leaves, 2023-09-06: These are the drawable parts of the EC L-system
             - `[ ]` Angular Towers
+                * `[ ]` Default drawable spheres for default nodes
+                * `[ ]` Test undrawn nodes by optionally drawing them
         * `[ ]` Large Blocks
         * `[ ]` Windows
             - `[ ]` Concrete awnings
         * `[ ]` Bridges
             - `[ ]` "False" loops (Touching but not closed on the tree)
         * `[ ]` Greebles
-            - `[ ]` Leaves only!
             - `[ ]` Dishes
             - `[ ]` Cell antennae
+            - `{ }` DLC "Wireframe"?
+            - `{ }` Scuptures?
     - `[ ]` Textures && Appearance: Only do enough to make it look good!
         * `[ ]` EC
         * `[ ]` Glider
         * `{ }` Bump mapping ???
     - `[ ]` Point Defence - Warning: Do not imply damage to public buildings
-        * `[ ]` Leaves only!
         * `[ ]` Friggin' laser beams
-        * `{ }` Flak?
         * `{ }` Missiles?
         * `{ }` Primary Weapon ??
             - `{ }` Dynamic lighting for primary weapon?

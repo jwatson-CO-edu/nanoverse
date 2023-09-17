@@ -14,7 +14,7 @@
 
 ////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
 
-
+// FIXME: MOVE THESE TO THE TOYBOX
 
 Matrix set_posn( const Matrix& xfrm, const Vector3& posn ){
     // Set the position components of the homogeneous coordinates
@@ -25,7 +25,7 @@ Matrix set_posn( const Matrix& xfrm, const Vector3& posn ){
     return rtnMatx;
 }
 
-Matrix rotate_RPY( const Matrix& xfrm, float r_, float p_, float y_ ){
+Matrix rotate_RPY_vehicle( const Matrix& xfrm, float r_, float p_, float y_ ){
     // Increment the world Roll, Pitch, Yaw of the model
     // NOTE: This is for airplanes that move forward in their own Z and have a wingspan across X
     return MatrixMultiply( 
@@ -129,13 +129,22 @@ typedef shared_ptr<L_Node> nodePtr;
 ///// Node ///////////////////////////////////////
 
 enum NodeType{
-    EMPTY, // Default node, not rendered
-    TOWER, // Defensive structure, capped on top and bottom by turrets
-    TURET, // Point defense
-    PIVOT, // Rotates subtree about local X
+    // Plain Nodes //
+    EMPTY, // [ ] Default node -or- surface connections, Not rendered
+    TOWER, // [ ] Defensive structure, Module capped on top and bottom by pivots for turrets
+    BLOCK, // [ ] Large body of classrooms and labs
+    BRIDG, // [ ] Walkway between modules
+    // Special Nodes / Leaves //
+    WNDOW, // [ ] Window, Always a leaf
+    CELLA, // [ ] Cellular antenna, Always a leaf
+    RADAR, // [ ] Antenna dish, Always a leaf
+    COLUM, // [ ] Support below a module (Allow space between stacked modules?)
+    DECOR, // [ ] Sculptures and decorations, Can only have its own type as children
+    // Active Nodes //
+    TURET, // [ ] Point defense (How to handle active tracking?)
+    WEPON, // [ ] Attacks player, Controlled by turret, Always a leaf
+    PIVOT, // [ ] Rotates subtree about local X (How to handle control by turret?)
 };
-
-
 
 class L_Node{ public:
     // Basis for a graphical Lindenmayer System
@@ -147,6 +156,7 @@ class L_Node{ public:
     vector<nodePtr> children; // Edges to children
     Matrix /*----*/ Trel; // --- Relative transform from the parent frame
     Matrix /*----*/ Tabs; // --- Absolute transform in the world frame
+    bool /*------*/ drawn; // -- Will this node be rendered?
     dynaPtr /*---*/ drawable; // `DynaMesh` that renders this node
 
     /// Constructor ///
@@ -156,6 +166,7 @@ class L_Node{ public:
         parent   = nullptr;
         Trel     = MatrixIdentity();
         Tabs     = MatrixIdentity();
+        drawn    = false;
         drawable = nullptr;
     }
 
@@ -177,7 +188,7 @@ class L_Node{ public:
 
     void draw(){
         // Draw this node and all nodes beyond it
-        if( drawable ){  
+        if( drawn ){  
             drawable->xfrm = Tabs;  
             drawable->draw();
         }
@@ -187,32 +198,69 @@ class L_Node{ public:
 
 ///// Factories //////////////////////////////////
 
+/*  +Z: Is always UP
+     ^
+     | ^ +Y: Positive lateral offset moves attachment point in this local direction
+     |/
+     *----> +X: Default growth direction, normal to parent module
+*/
+
 /*
+> Modules are the rendered bodies (`drawable`s) of nodes
+> Not all nodes have a module
 > All nodes are on the surfaces of modules
 > Modules do not need their own abstraction
 > A single module of the building is drawn by one node, but has many undrawn nodes as attachment points
 */
 
 nodePtr make_tower( nodePtr parent_,  float unit, 
-                    int distance, int length, int height, int depth, int yOffset ){
+                    int distance, int length, int height, int zOffset, int yOffset ){
     /* Towers always have a square `length` x `length` vertical cross section
        Non-zero `height` and `depth` towers are capped by regular and inverted turrets, respectively */
+
+    // Init
     nodePtr rtnNode{ new L_Node{} };
-    Vector3 dims = { length*unit, length*unit, (height+depth)*unit };
+    Vector3 dims = { length*unit, length*unit, height*unit };
+    // Distal side pose, default growth direction AND +Y side pose
     Basis   sideA;
     Matrix  matxA;
+    // Proximal side pose, facing parent AND -Y side pose
     Basis   sideB;
     Matrix  matxB;
 
     //// Build Internal Nodes ////
     // FIXME, START HERE: GRID THE SURFACE OF THE THE TOWER WITH NODES EXCEPT FOR THIS NODE
-    if( (yOffset > 0) && (yOffset < length) ){
-        sideA = Basis::origin();
-        sideB = Basis::from_Xb_and_Zb( Vector3{ -1.0, 0.0, 0.0 }, Vector3{ 0.0, 0.0, 1.0 } );
-        for( int i = 0; i < yOffset; ++i ){
-            // Build 
+    if( (yOffset < 0) || (yOffset > length) ){
+        cout << "Bad `yOffset` given, " << yOffset << " with length " << length << endl;
+        return rtnNode;
+    }
+    // Get prototype poses for two sides
+    // Distal side pose
+    sideA = Basis::origin();
+    matxA = sideA.get_homog();
+    // Proximal side pose
+    sideB = Basis::from_Xb_and_Zb( Vector3{ -1.0, 0.0, 0.0 }, Vector3{ 0.0, 0.0, 1.0 } );
+    matxB = sideB.get_homog();
+
+    // FIXME: THE Y OFFSET CAN BE HANDLED IN THE SAME OUTER LOOP, START COUNT NEGATIVE 
+    // FIXME: THE Z OFFSET CAN BE HANDLED IN THE SAME INNER LOOP, START COUNT NEGATIVE 
+
+    for( int i = -yOffset; i < length-yOffset; ++i ){
+        for( int j = -zOffset; j < height-zOffset; ++j ){
+            // Build distal side nodes, default growth direction
+            // Build proximal side nodes, facing parent
         }
     }
+
+    // Get prototype poses for two sides
+    //
+    // sideA = Basis::origin();
+    // matxA = sideA.get_homog();
+    // 
+    // sideB = Basis::from_Xb_and_Zb( Vector3{ -1.0, 0.0, 0.0 }, Vector3{ 0.0, 0.0, 1.0 } );
+    // matxB = sideB.get_homog();
+
+    // FIXME: NODES FOR +/-Y SIDES
 
     //// Build Render Geometry ////
     // FIXME: DRAW A BOX SUCH THAT THE NODES ARE ON THE SURFACE
@@ -294,18 +342,22 @@ int main(){
     lightShader.set_camera_posn( camera );
 
     /// Drawables ///
+    
     Cuboid cuboid{ 2.0f, 2.0f, 3.0f, BLUE  };
+    cuboid.set_shader( lightShader.shader );
+
     Wedge  wedge{  2.0f, 2.0f, 2.0f, GREEN };
     wedge.set_posn( Vector3{ 0.0f, 0.0f, 1.25f } );
-    cuboid.set_shader( lightShader.shader );
     wedge.set_shader( lightShader.shader );
 
     /// L-System ///
     L_Node root{};
+    root.drawn = true;
     root.drawable = dynaPtr( new Cuboid{ 2.0f, 2.0f, 3.0f, BLUE  } );
     root.drawable->set_shader( lightShader.shader );
 
     nodePtr top{ new L_Node{} };
+    top->drawn = true;
     top->drawable = dynaPtr( new Wedge{  2.0f, 2.0f, 2.0f, GREEN } );
     top->drawable->set_shader( lightShader.shader );
     top->Trel = set_posn( top->Trel, Vector3{ 0.0f, 0.0f, 1.25f } );
@@ -327,7 +379,7 @@ int main(){
         // cuboid.draw();
         // wedge.rotate_RPY( M_PI/60.0f, 0.0f, 0.0f ); // RPY seems out of order?
         // wedge.draw();
-        root.children[0]->Trel = rotate_RPY( root.children[0]->Trel, M_PI/60.0f, 0.0f, 0.0f );
+        root.children[0]->Trel = rotate_RPY_vehicle( root.children[0]->Trel, M_PI/60.0f, 0.0f, 0.0f );
         // root.update_poses( rotate_RPY( root.Tabs, M_PI/120.0f, M_PI/120.0f, M_PI/120.0f ) );
         root.update_poses( MatrixIdentity() );
         root.draw();
