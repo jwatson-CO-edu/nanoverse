@@ -68,6 +68,10 @@ Color uniform_random_color(){
 
 
 
+////////// HOMOGENEOUS COORDINATES /////////////////////////////////////////////////////////////////
+
+
+
 ////////// VECTOR MATH STRUCTS /////////////////////////////////////////////////////////////////////
 
 struct Basis{
@@ -111,6 +115,16 @@ struct Basis{
         rtnBasis.Yb = Vector3Transform( Vector3{0.0, 1.0, 0.0}, xform );
         rtnBasis.Zb = Vector3Transform( Vector3{0.0, 0.0, 1.0}, xform );
         rtnBasis.Pt = point;
+        return rtnBasis;
+    }
+
+    static Basis from_Xb_and_Zb( const Vector3& xb_, const Vector3& zb_ ){
+        // Get a basis at zero position from X-basis and Z-Basis
+        Basis rtnBasis;
+        rtnBasis.Yb = Vector3Normalize( Vector3CrossProduct( zb_, xb_ ) );
+        rtnBasis.Zb = Vector3Normalize( zb_ );
+        rtnBasis.orthonormalize();
+        rtnBasis.Pt = Vector3Zero();
         return rtnBasis;
     }
 
@@ -164,6 +178,36 @@ struct Basis{
         rtnBasis.Zb = Vector3( Zb );
         rtnBasis.Pt = Vector3( Pt );
         return rtnBasis;
+    }
+
+    /// Pose Math ///
+    /* xfrm = 
+    m0 m4 m8  m12
+    m1 m5 m9  m13
+    m2 m6 m10 m14
+    m3 m7 m11 m15
+    */
+
+    Matrix get_homog(){
+        Matrix rtnMatx = MatrixIdentity();
+        // X-Basis
+        rtnMatx.m0  = Xb.x;
+        rtnMatx.m1  = Xb.y;
+        rtnMatx.m2  = Xb.z;
+        // Y-Basis
+        rtnMatx.m4  = Yb.x;
+        rtnMatx.m5  = Yb.y;
+        rtnMatx.m6  = Yb.z;
+        // Z-Basis
+        rtnMatx.m8  = Zb.x;
+        rtnMatx.m9  = Zb.y;
+        rtnMatx.m10 = Zb.z;
+        // Position
+        rtnMatx.m12 = Pt.x;
+        rtnMatx.m13 = Pt.y;
+        rtnMatx.m14 = Pt.z;
+        // Return
+        return rtnMatx;
     }
 };
 typedef shared_ptr<Basis> basPtr; // 2023-06-17: For now assume that Bases are lightweight enough to pass by value

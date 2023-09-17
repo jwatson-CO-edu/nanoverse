@@ -14,6 +14,8 @@
 
 ////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
 
+
+
 Matrix set_posn( const Matrix& xfrm, const Vector3& posn ){
     // Set the position components of the homogeneous coordinates
     Matrix rtnMatx{ xfrm };
@@ -25,6 +27,7 @@ Matrix set_posn( const Matrix& xfrm, const Vector3& posn ){
 
 Matrix rotate_RPY( const Matrix& xfrm, float r_, float p_, float y_ ){
     // Increment the world Roll, Pitch, Yaw of the model
+    // NOTE: This is for airplanes that move forward in their own Z and have a wingspan across X
     return MatrixMultiply( 
         MatrixMultiply( MatrixMultiply( MatrixRotateY( y_ ), MatrixRotateX( p_ ) ), MatrixRotateZ( r_ ) ), 
         xfrm 
@@ -125,38 +128,23 @@ typedef shared_ptr<L_Node> nodePtr;
 
 ///// Node ///////////////////////////////////////
 
-class L_Rule{ public:
-    // Base class for L-System transformation rules
-    nodePtr node; // ------- Node to be transformed
-    virtual void run(){}; // Transformation strategy
-};
-typedef shared_ptr<L_Rule> rulePtr;
-
 enum NodeType{
-    EMPTY, // Default node, not rendered or updated
+    EMPTY, // Default node, not rendered
     TOWER, // Defensive structure, capped on top and bottom by turrets
     TURET, // Point defense
+    PIVOT, // Rotates subtree about local X
 };
 
-struct L_Port{
-    // Holds a potential attachment point where an edge may pass through in 3D space
-    Vector3 /*----*/ posn; // Position in the parent's frame
-    Vector3 /*----*/ norm; // Vector pointing away from the parent's rendered body
-    Vector3 /*----*/ upDr; // Global "up" vector, expressed in the parent's frame
-    vector<NodeType> spec; // Constraints on attachment type
-};
+
 
 class L_Node{ public:
     // Basis for a graphical Lindenmayer System
 
     /// Members ///
     NodeType /*--*/ type; // --- String designator governing rendering and rules
-    float /*-----*/ unitLen; //- Unit length [m] for generating geometry
-    vvf /*-------*/ params; // - Generic node info for sharing, TBD
-    vector<L_Port>  ports; // -- "Attachment points" potential edges may pass through
+    float /*-----*/ unit; //- Unit length [m] for generating geometry
     nodePtr /*---*/ parent; // - Edge from parent
     vector<nodePtr> children; // Edges to children
-    rulePtr /*---*/ rule; // --- Production rule for transforming the graph, FIXME: MANY INSTANCES OR ONE?
     Matrix /*----*/ Trel; // --- Relative transform from the parent frame
     Matrix /*----*/ Tabs; // --- Absolute transform in the world frame
     dynaPtr /*---*/ drawable; // `DynaMesh` that renders this node
@@ -166,7 +154,6 @@ class L_Node{ public:
         // Empty node
         type     = EMPTY;
         parent   = nullptr;
-        rule     = nullptr;
         Trel     = MatrixIdentity();
         Tabs     = MatrixIdentity();
         drawable = nullptr;
@@ -175,6 +162,7 @@ class L_Node{ public:
     /// Methods ///
 
     void add_child( nodePtr nuChild ){
+        // Create a connection between nodes
         nuChild->parent = nodePtr( this );
         children.push_back( nodePtr( nuChild ) );
     }
@@ -188,6 +176,7 @@ class L_Node{ public:
     }
 
     void draw(){
+        // Draw this node and all nodes beyond it
         if( drawable ){  
             drawable->xfrm = Tabs;  
             drawable->draw();
@@ -198,16 +187,36 @@ class L_Node{ public:
 
 ///// Factories //////////////////////////////////
 
-nodePtr make_tower( nodePtr parent_, L_Port attachment, float unit, uint distance, uint height, uint depth ){
-    /* Towers always have a square `unit` x `unit` vertical cross section
+/*
+> All nodes are on the surfaces of modules
+> Modules do not need their own abstraction
+> A single module of the building is drawn by one node, but has many undrawn nodes as attachment points
+*/
+
+nodePtr make_tower( nodePtr parent_,  float unit, 
+                    int distance, int length, int height, int depth, int yOffset ){
+    /* Towers always have a square `length` x `length` vertical cross section
        Non-zero `height` and `depth` towers are capped by regular and inverted turrets, respectively */
     nodePtr rtnNode{ new L_Node{} };
-    float   halfUnit = unit/2.0f;
-    Vector3 nucleus  = Vector3Add( attachment.posn, Vector3Scale( attachment.norm, distance*unit ) );
-    /* FIXME, START HERE: DO THE FOLLOWING 
-        - Calc the center and dimensions of the `Cuboid`
-        - Create `Cuboid`
-        - Generate ports */
+    Vector3 dims = { length*unit, length*unit, (height+depth)*unit };
+    Basis   sideA;
+    Matrix  matxA;
+    Basis   sideB;
+    Matrix  matxB;
+
+    //// Build Internal Nodes ////
+    // FIXME, START HERE: GRID THE SURFACE OF THE THE TOWER WITH NODES EXCEPT FOR THIS NODE
+    if( (yOffset > 0) && (yOffset < length) ){
+        sideA = Basis::origin();
+        sideB = Basis::from_Xb_and_Zb( Vector3{ -1.0, 0.0, 0.0 }, Vector3{ 0.0, 0.0, 1.0 } );
+        for( int i = 0; i < yOffset; ++i ){
+            // Build 
+        }
+    }
+
+    //// Build Render Geometry ////
+    // FIXME: DRAW A BOX SUCH THAT THE NODES ARE ON THE SURFACE
+
 }
 
 ////////// LIGHTING ////////////////////////////////////////////////////////////////////////////////
