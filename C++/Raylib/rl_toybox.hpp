@@ -350,6 +350,11 @@ class DynaMesh{ public:
 
     /// Constructors ///
 
+    DynaMesh(){
+        // Default Constructor, assumes no default geometry
+        xfrm = MatrixIdentity();
+    }
+
     DynaMesh( uint Ntri ){
         // Allocate memory and set default pose
         init_mesh_memory( Ntri );
@@ -433,7 +438,6 @@ class DynaMesh{ public:
         if( !upldModl )  remodel();
         modl.transform = xfrm;
         DrawModel( modl, get_posn(), 1.0f, WHITE );
-
     }
 
 };
