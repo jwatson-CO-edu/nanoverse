@@ -8,22 +8,11 @@
 
 /// Local ///
 #include "rl_toybox.hpp"
-#define RLIGHTS_IMPLEMENTATION
-#include "rlights.h"
 
 
 ////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
 
 // FIXME: MOVE THESE TO THE TOYBOX
-
-Matrix set_posn( const Matrix& xfrm, const Vector3& posn ){
-    // Set the position components of the homogeneous coordinates
-    Matrix rtnMatx{ xfrm };
-    rtnMatx.m12 = posn.x;
-    rtnMatx.m13 = posn.y;
-    rtnMatx.m14 = posn.z;
-    return rtnMatx;
-}
 
 Matrix rotate_RPY_vehicle( const Matrix& xfrm, float r_, float p_, float y_ ){
     // Increment the world Roll, Pitch, Yaw of the model

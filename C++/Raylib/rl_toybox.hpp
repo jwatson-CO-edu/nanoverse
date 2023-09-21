@@ -72,6 +72,15 @@ Color uniform_random_color(){
 
 ////////// HOMOGENEOUS COORDINATES /////////////////////////////////////////////////////////////////
 
+Matrix set_posn( const Matrix& xfrm, const Vector3& posn ){
+    // Set the position components of the homogeneous coordinates
+    Matrix rtnMatx{ xfrm };
+    rtnMatx.m12 = posn.x;
+    rtnMatx.m13 = posn.y;
+    rtnMatx.m14 = posn.z;
+    return rtnMatx;
+}
+
 
 
 ////////// VECTOR MATH STRUCTS /////////////////////////////////////////////////////////////////////
@@ -230,6 +239,8 @@ class DynaMesh{ public:
     vector<triPnts> nrms; // --- Normal vector for each facet
     vector<triClrs> clrs; // --- Vertex colors for each facet
     Matrix /*----*/ xfrm; // --- Pose in the parent frame
+    Matrix /*----*/ Trel; // --- Pose in the parent frame
+    Matrix /*----*/ Tcur; // --- Pose in the parent frame
     Mesh /*------*/ mesh; // --- Raylib mesh geometry
     bool /*------*/ upldMesh; // Has the `Mesh` been uploaded?
     Model /*-----*/ modl; // --- Model
@@ -357,6 +368,7 @@ class DynaMesh{ public:
     DynaMesh(){
         // Default Constructor, assumes no default geometry
         xfrm = MatrixIdentity();
+        Trel = MatrixIdentity();
     }
 
     DynaMesh( uint Ntri ){
@@ -419,6 +431,12 @@ class DynaMesh{ public:
             xfrm 
         );
 	}
+
+    void transform_from_parent( const Matrix& parentPose ){
+        xfrm = MatrixMultiply( MatrixMultiply( Tcur, Trel ), parentPose );
+        // xfrm = MatrixMultiply( MatrixMultiply( parentPose, Trel ), Tcur );
+        // xfrm = MatrixMultiply( parentPose, Trel );
+    }
 
     /// Appearance & Color ///
 
