@@ -19,6 +19,8 @@ using std::shared_ptr;
 #include <raylib.h>
 #include <raymath.h>
 #include <rlgl.h>
+#define RLIGHTS_IMPLEMENTATION
+#include "rlights.h"
 
 /// Local ///
 #include "utils.hpp"
@@ -222,17 +224,18 @@ class DynaMesh{ public:
     // 2023-08-15: This class REQUIRES that vertices, indices, normals, and colors ALL be defined
 
     /// Core Members ///
-    uint /*------*/ Ntri;
-    uint /*------*/ Nvtx;
-    vector<triPnts> tris; // Dynamic geometry, each array is a facet of 3x vertices
-    vector<triPnts> nrms; // Normal vector for each facet
-    vector<triClrs> clrs; // Vertex colors for each facet
-    Matrix /*----*/ xfrm; // Pose in the parent frame
-    Mesh /*------*/ mesh; // Raylib mesh geometry
-    bool /*------*/ upldMesh; // Has the mesh been uploaded?
-    Model /*-----*/ modl; // Model
-    bool /*------*/ upldModl; // Has the mesh been uploaded?
-    Shader /*----*/ shdr; // Shader
+    uint /*------*/ Ntri; // --- Number of triangles
+    uint /*------*/ Nvtx; // --- Number of vertices
+    vector<triPnts> tris; // --- Dynamic geometry, each array is a facet of 3x vertices
+    vector<triPnts> nrms; // --- Normal vector for each facet
+    vector<triClrs> clrs; // --- Vertex colors for each facet
+    Matrix /*----*/ xfrm; // --- Pose in the parent frame
+    Mesh /*------*/ mesh; // --- Raylib mesh geometry
+    bool /*------*/ upldMesh; // Has the `Mesh` been uploaded?
+    Model /*-----*/ modl; // --- Model
+    bool /*------*/ upldModl; // Has the `Model` been uploaded?
+    Shader /*----*/ shdr; // --- Shader
+    bool /*------*/ sharVrtx; // Flag: Do the triangles share vertices?
 
     /// Optional Members ///
     vvec3 vrts; // Vertex store for building `tris`
@@ -249,6 +252,7 @@ class DynaMesh{ public:
         // 1. Init mesh
         upldMesh = false;
         upldModl = false;
+        sharVrtx = false;
         mesh     = Mesh{};
 
         mesh.triangleCount = Ntri;
@@ -425,7 +429,7 @@ class DynaMesh{ public:
         // NOTE: This function assumes that `tris` has been populated!
         colr = color;
         clrs.clear();
-        for( size_t i = 0; i < tris.size(); ++i ){  clrs.push_back( {colr, colr, colr} );  }
+        for( size_t i = 0; i < Ntri; ++i ){  clrs.push_back( {colr, colr, colr} );  }
     }
 
     ///// Drawing Context Methods ////////////////
@@ -442,5 +446,50 @@ class DynaMesh{ public:
 
 };
 typedef shared_ptr<DynaMesh> dynaPtr;
+
+////////// LIGHTING ////////////////////////////////////////////////////////////////////////////////
+
+struct Lighting{
+    // Container struct for light(s) and associated shader
+
+    /// Members ///
+    Shader shader;
+    float  ambientColor[4];
+    int    ambientLoc;
+    Light  light;
+
+    /// Constructor ///
+    Lighting(){
+        // Load basic lighting shader
+        shader = LoadShader( TextFormat("shaders/lighting.vs") ,
+                             TextFormat("shaders/lighting.fs") );
+        // Get some required shader locations
+        shader.locs[ SHADER_LOC_VECTOR_VIEW ] = GetShaderLocation( shader, "viewPos" );
+        // Ambient light level (some basic lighting)
+        ambientColor[0] = 0.25f;
+        ambientColor[1] = 0.25f;
+        ambientColor[2] = 0.25f;
+        ambientColor[3] = 0.50f;
+        ambientLoc /**/ = GetShaderLocation( shader, "ambient" );
+        SetShaderValue( shader, ambientLoc, ambientColor, SHADER_UNIFORM_VEC4 );
+        // Using just 1 point lights
+        light = CreateLight(
+            LIGHT_POINT, 
+            Vector3{ 20.0, 20.0, 20.0 }, 
+            Vector3Zero(), 
+            Color{ 255, 255, 255, 125 }, 
+            shader
+        );
+    }
+
+    /// Methods ///
+
+    void update(){  UpdateLightValues( shader, light );  } // Update the light
+
+    void set_camera_posn( Camera& cam ){
+        // Tell the shader where the camera is
+        SetShaderValue( shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &cam.position.x, SHADER_UNIFORM_VEC3 );
+    }
+};
 
 #endif /* RL_TOYBOX_H */ 
