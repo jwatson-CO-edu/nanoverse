@@ -14,14 +14,7 @@
 
 // FIXME: MOVE THESE TO THE TOYBOX
 
-Matrix rotate_RPY_vehicle( const Matrix& xfrm, float r_, float p_, float y_ ){
-    // Increment the world Roll, Pitch, Yaw of the model
-    // NOTE: This is for airplanes that move forward in their own Z and have a wingspan across X
-    return MatrixMultiply( 
-        MatrixMultiply( MatrixMultiply( MatrixRotateY( y_ ), MatrixRotateX( p_ ) ), MatrixRotateZ( r_ ) ), 
-        xfrm 
-    );
-}
+
 
 
 ////////// DRAWABLE ////////////////////////////////////////////////////////////////////////////////

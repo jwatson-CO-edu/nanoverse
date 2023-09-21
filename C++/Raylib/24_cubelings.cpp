@@ -114,8 +114,17 @@ class Cylinder : public DynaMesh{ public:
     }
 };
 
+enum C_State{
+    TURN, // Change orientation
+    ZFLY,
+    REST,
+};
+
 class Cubeling{ public: 
     // Cubic creature with oscillating pegs on each face
+
+    /// Members ///
+
     Matrix /*----*/ xfrm;
     dynaPtr /*---*/ body;
     vector<dynaPtr> pegs;
@@ -123,10 +132,21 @@ class Cubeling{ public:
     float /*-----*/ t;
     float /*-----*/ f;
     float /*-----*/ A;
+    C_State /*---*/ state;
+    uint /*------*/ timer, tAccl;
+    float dR, dP, dY, dZ, ddZ, zMax;
     
+    /// Constructor ///
 
     Cubeling( float edgeLen, float pegDia, float pegLen, Color color ){
         // Create the parts of the creature and set poses
+
+        state = REST;
+        timer = 0;
+        zMax  = 0.0125f;
+        tAccl = 10;
+        ddZ   = zMax/(1.0f*tAccl);
+        dZ    = 0.0f; 
 
         Basis  relaB;
         Matrix relaM;
@@ -195,7 +215,7 @@ class Cubeling{ public:
             pegs[i]->Tcur = set_posn( MatrixIdentity(), posns[i%4] );
         }
 
-        // Face 5 //
+        // Face 6 //
         relaB = Basis::from_Xb_and_Zb( Vector3{1.0f,0.0f,0.0}, Vector3{0.0f,0.0f,-1.0} );
         relaM = relaB.get_homog();
         for( ubyte i = 20; i < 24; ++i ){
@@ -205,14 +225,64 @@ class Cubeling{ public:
         }
     }
 
+    /// Methods ///
+
     void set_shader( Shader shader ){
+        // Set the shader for all parts
         body->set_shader( shader );
         for( dynaPtr& peg : pegs ){
             peg->set_shader( shader );
         }
     }
 
+    void transition(){
+        // Update state
+        switch( state ){
+
+        case REST:
+            if( timer == 0 ){
+                state = TURN;
+                timer = 100;
+                dR    = randf( -M_PI, M_PI ) / (timer - 1.0f);
+                dP    = randf( -M_PI, M_PI ) / (timer - 1.0f);
+                dY    = randf( -M_PI, M_PI ) / (timer - 1.0f);
+            }else{
+                --timer;
+            }
+            break;
+
+        case TURN:
+            if( timer == 0 ){
+                state = ZFLY;
+                timer = 120;
+            }else{
+                --timer;
+                xfrm = rotate_RPY_vehicle( xfrm, dR, dP, dY );
+            }
+            break;
+
+        case ZFLY:
+            if( timer == 0 ){
+                state = REST;
+                timer = 30;
+            }else{
+                --timer;
+                if( dZ < zMax ) dZ += ddZ;
+                if( timer < tAccl ) dZ -= ddZ;
+                // xfrm = thrust_Z_vehicle( xfrm, dZ );
+                xfrm = translate( xfrm, Vector3{0.0,0.0,dZ} );
+            }
+            break;
+        
+        default:
+            cout << "BAD STATE" << endl;
+            break;
+        }
+    }
+
     void update(){
+        // Update poses for all parts
+        transition();
         body->xfrm = xfrm;
         t += 0.01;
         for( ubyte i = 0; i < 24; ++i ){
@@ -254,7 +324,7 @@ int main(){
 
     /// Create Camera ///
     Camera camera = Camera{
-        Vector3{   2.0,   2.0,   2.0 }, // Position
+        Vector3{  10.0,  10.0,  10.0 }, // Position
         Vector3{   0.0,   0.0,   0.0 }, // Target
         Vector3{   0.0,   0.0,   1.0 }, // Up
         45.0, // ---------------------- FOV_y

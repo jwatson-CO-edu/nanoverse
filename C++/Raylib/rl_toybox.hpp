@@ -81,6 +81,28 @@ Matrix set_posn( const Matrix& xfrm, const Vector3& posn ){
     return rtnMatx;
 }
 
+Matrix rotate_RPY_vehicle( const Matrix& xfrm, float r_, float p_, float y_ ){
+    // Increment the world Roll, Pitch, Yaw of the model
+    // NOTE: This is for airplanes that move forward in their own Z and have a wingspan across X
+    return MatrixMultiply( 
+        MatrixMultiply( MatrixMultiply( MatrixRotateY( y_ ), MatrixRotateX( p_ ) ), MatrixRotateZ( r_ ) ), 
+        xfrm 
+    );
+}
+
+Matrix translate( const Matrix& xfrm, const Vector3& delta ){
+        // Increment the position components of the homogeneous coordinates by the associated `delta` components
+    Matrix rtnMatx{ xfrm };
+    rtnMatx.m12 += delta.x;
+    rtnMatx.m13 += delta.y;
+    rtnMatx.m14 += delta.z;
+    return rtnMatx;
+}
+
+Matrix thrust_Z_vehicle( const Matrix& xfrm, float dZ ){
+    return translate( xfrm, Vector3Scale( Vector3Transform( Vector3{0.0,0.0,1.0}, xfrm ) , dZ ) );
+}
+
 
 
 ////////// VECTOR MATH STRUCTS /////////////////////////////////////////////////////////////////////
