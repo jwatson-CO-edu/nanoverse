@@ -235,48 +235,52 @@ class Cubeling{ public:
         }
     }
 
+    void set_position( const Vector3& posn ){
+        // Set the position of the `Cubeling`
+        xfrm = set_posn( xfrm, posn );
+    }
+
     void transition(){
         // Update state
         switch( state ){
+            case REST:
+                if( timer == 0 ){
+                    state = TURN;
+                    timer = 100;
+                    dR    = randf( -M_PI, M_PI ) / (timer - 1.0f);
+                    dP    = randf( -M_PI, M_PI ) / (timer - 1.0f);
+                    dY    = randf( -M_PI, M_PI ) / (timer - 1.0f);
+                }else{
+                    --timer;
+                }
+                break;
 
-        case REST:
-            if( timer == 0 ){
-                state = TURN;
-                timer = 100;
-                dR    = randf( -M_PI, M_PI ) / (timer - 1.0f);
-                dP    = randf( -M_PI, M_PI ) / (timer - 1.0f);
-                dY    = randf( -M_PI, M_PI ) / (timer - 1.0f);
-            }else{
-                --timer;
-            }
-            break;
+            case TURN:
+                if( timer == 0 ){
+                    state = ZFLY;
+                    timer = 120;
+                }else{
+                    --timer;
+                    xfrm = rotate_RPY_vehicle( xfrm, dR, dP, dY );
+                }
+                break;
 
-        case TURN:
-            if( timer == 0 ){
-                state = ZFLY;
-                timer = 120;
-            }else{
-                --timer;
-                xfrm = rotate_RPY_vehicle( xfrm, dR, dP, dY );
-            }
-            break;
-
-        case ZFLY:
-            if( timer == 0 ){
-                state = REST;
-                timer = 30;
-            }else{
-                --timer;
-                if( dZ < zMax ) dZ += ddZ;
-                if( timer < tAccl ) dZ -= ddZ;
-                // xfrm = thrust_Z_vehicle( xfrm, dZ );
-                xfrm = translate( xfrm, Vector3{0.0,0.0,dZ} );
-            }
-            break;
-        
-        default:
-            cout << "BAD STATE" << endl;
-            break;
+            case ZFLY:
+                if( timer == 0 ){
+                    state = REST;
+                    timer = 30;
+                }else{
+                    --timer;
+                    if( dZ < zMax ) dZ += ddZ;
+                    if( timer < tAccl ) dZ -= ddZ;
+                    xfrm = thrust_Z_vehicle( xfrm, dZ );
+                    // xfrm = translate( xfrm, Vector3{0.0,0.0,dZ} );
+                }
+                break;
+            
+            default:
+                cout << "BAD STATE" << endl;
+                break;
         }
     }
 
@@ -302,6 +306,7 @@ class Cubeling{ public:
         }
     }
 };
+typedef shared_ptr<Cubeling> cblnPtr;
 
 // FIXME: CREATE A POPULATION OF WANDERING CUBELINGS WITH SIMPLE BEHAVIOR AND DISPLAY 
 
@@ -343,6 +348,15 @@ int main(){
 
     Cubeling animal{ 1.0, 0.25, 0.5, DARKBLUE };
     animal.set_shader( lightShader.shader );
+
+    vector<cblnPtr> creatures;
+    cblnPtr nuCube;
+    for( uint i = 0; i < 100; ++i ){
+        nuCube = cblnPtr( new Cubeling{ 1.0, 0.25, 0.5, uniform_random_color() } );
+        nuCube->set_position( uniform_vector_noise( 5.0f ) );
+        nuCube->set_shader( lightShader.shader );
+        creatures.push_back( nuCube ); 
+    }
     
 
     ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
@@ -359,8 +373,13 @@ int main(){
         lightShader.update();
         // cube.draw();
         // cyl.draw();
-        animal.update();
-        animal.draw();
+        // animal.update();
+        // animal.draw();
+
+        for( cblnPtr& creature : creatures ){
+            creature->update();
+            creature->draw();
+        }
 
         ///// END DRAWING /////////////////////////////////////////////////
 

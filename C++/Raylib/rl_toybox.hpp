@@ -91,7 +91,7 @@ Matrix rotate_RPY_vehicle( const Matrix& xfrm, float r_, float p_, float y_ ){
 }
 
 Matrix translate( const Matrix& xfrm, const Vector3& delta ){
-        // Increment the position components of the homogeneous coordinates by the associated `delta` components
+    // Increment the position components of the homogeneous coordinates by the associated `delta` components
     Matrix rtnMatx{ xfrm };
     rtnMatx.m12 += delta.x;
     rtnMatx.m13 += delta.y;
@@ -100,7 +100,9 @@ Matrix translate( const Matrix& xfrm, const Vector3& delta ){
 }
 
 Matrix thrust_Z_vehicle( const Matrix& xfrm, float dZ ){
-    return translate( xfrm, Vector3Scale( Vector3Transform( Vector3{0.0,0.0,1.0}, xfrm ) , dZ ) );
+    // Move in the local Z direction by `dZ` 
+    Matrix R = set_posn( xfrm, Vector3Zero() );
+    return translate( xfrm, Vector3Scale( Vector3Transform( Vector3{0.0,0.0,1.0}, R ) , dZ ) );
 }
 
 
