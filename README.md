@@ -7,7 +7,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 ## Architecture 1: C++ & RayLib  (Dangerous!)
 * Purpose: Let yourself have some graphics, as a treat!  
 
-* `[>]` Raylib Lib Rebuild
+* `[Y]` Raylib Lib Rebuild, 2023-09-21: "Cubelings" run on this
     - Problem:  All the Raylib code is broken!
     - Solution: Restart from scratch!
         * Avoid **changing** the number of triangles across frames
@@ -16,14 +16,14 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
             - Zero-size
     - `[Y]` Simplest Cube, 2023-08-13: Back to basics! `Model` was an unneeded middleman!
     - `[Y]` Simplest Cube Jiggle, 2023-08-18: Identical behavior with new struct
-    - `[>]` Use "Shiny Boid Ribbons" as the basis of the new library
+    - `[Y]` Use "Shiny Boid Ribbons" as the basis of the new library, 2023-09-21: "Cubelings" run on this
         * `[Y]` `TestRibbon`, 2023-08-31: 1600 ribbons in a `vector` of `shared_ptr` without rampant mesh creation
         * `[Y]` Test removing `DynaMesh` member pointers one at a time in order to avoid double-indirection, 2023-09-01: Pointer tests PASSED!
         * `[Y]` Test C++ list comprehension of `vector` of `shared_ptr` with `shared_ptr<TestRibbon>&` elements, 2023-09-01: All `for` loops over `vector` of `shared_ptr` now use the comprehension. Left to cook for 11 minutes, no rampant copying with 1024 meshes! The only drop in framerate occurs when I view the window after hiding it
-        * `[>]` New Headers
-            - `[ ]` Confirm memory is behaving!
-            - `[ ]` New "utils.hpp"
-            - `[ ]` New "toybox.hpp"
+        * `[Y]` New Headers, 2023-09-21: "Cubelings" run on this
+            - `[Y]` Confirm memory is behaving!, 2023-09-21: "Cubelings" run on this
+            - `[Y]` New "utils.hpp", 2023-09-21: "Cubelings" run on this
+            - `[Y]` New "toybox.hpp", 2023-09-21: "Cubelings" run on this
 
 &nbsp;
 
