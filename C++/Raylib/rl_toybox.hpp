@@ -489,6 +489,107 @@ class DynaMesh{ public:
 };
 typedef shared_ptr<DynaMesh> dynaPtr;
 
+class Cube : public DynaMesh{ public:
+    // Simple Cube
+
+    /// Constructors ///
+
+    Cube( float sideLen, Color color ) : DynaMesh( 12 ){
+        // Build and save geo
+        // 0. Init
+        triPnts pushTri;
+        triClrs pushClr;
+        Vector3 norm;
+        vvec3   V;
+        float   halfLen = sideLen/2.0;
+
+        // 1. Establish vertices
+        V.push_back( Vector3{ -halfLen, -halfLen, -halfLen } );
+        V.push_back( Vector3{ -halfLen, -halfLen,  halfLen } );
+        V.push_back( Vector3{ -halfLen,  halfLen, -halfLen } );
+        V.push_back( Vector3{ -halfLen,  halfLen,  halfLen } );
+        V.push_back( Vector3{  halfLen, -halfLen, -halfLen } );
+        V.push_back( Vector3{  halfLen, -halfLen,  halfLen } );
+        V.push_back( Vector3{  halfLen,  halfLen, -halfLen } );
+        V.push_back( Vector3{  halfLen,  halfLen,  halfLen } );
+
+        // 2. Build tris
+        push_triangle_w_norms( { V[0], V[3], V[2] } );
+        push_triangle_w_norms( { V[0], V[1], V[3] } );
+        push_triangle_w_norms( { V[6], V[4], V[0] } );
+        push_triangle_w_norms( { V[6], V[0], V[2] } );
+        push_triangle_w_norms( { V[0], V[4], V[5] } );
+        push_triangle_w_norms( { V[0], V[5], V[1] } );
+        push_triangle_w_norms( { V[7], V[6], V[2] } );
+        push_triangle_w_norms( { V[7], V[2], V[3] } );
+        push_triangle_w_norms( { V[4], V[6], V[7] } );
+        push_triangle_w_norms( { V[4], V[7], V[5] } ); 
+        push_triangle_w_norms( { V[1], V[5], V[7] } );
+        push_triangle_w_norms( { V[1], V[7], V[3] } );
+
+        // 3. Set color
+        set_uniform_color( color );
+        load_mesh_buffers( true, true );
+    }
+};
+
+class Cylinder : public DynaMesh{ public:
+    // Simple Cylinder
+
+    /// Constructors ///
+
+    Cylinder( float radius, float length, Color color, uint segments = 16 ) : DynaMesh( segments*4 ){
+        // Build and save geo
+        
+        // 0. Init
+        triPnts pushTri;
+        triClrs pushClr;
+        Vector3 norm, p1, p2, p3, p4, n1, n2;
+        vvec3   V;
+        float   stepTurn = 2.0f*M_PI/(1.0f*segments);
+        float   theta;
+        float   halfLen = length/2.0;
+        Vector3 c1 = Vector3{ 0.0f, 0.0f,  halfLen };
+        Vector3 c2 = Vector3{ 0.0f, 0.0f, -halfLen };
+        uint    ip1;
+
+
+        // 1. Establish vertices
+        for( uint i = 1; i <= segments; ++i ){
+            theta = 1.0f * i * stepTurn;
+            V.push_back( Vector3{ radius*cos( theta ), radius*sin( theta ),  halfLen } );
+            V.push_back( Vector3{ radius*cos( theta ), radius*sin( theta ), -halfLen } );
+        }
+
+        // 2. Build tris
+        for( uint i = 0; i < segments; ++i ){
+            ip1 = (i+1)%segments;
+            p1 = V[i*2  ];  p3 = V[ip1*2  ];
+            p2 = V[i*2+1];  p4 = V[ip1*2+1];
+            n1 = Vector3Normalize( Vector3Subtract( p1, c1 ) );
+            n2 = Vector3Normalize( Vector3Subtract( p3, c1 ) );
+
+            tris.push_back( {p3, p1, p2} );
+            nrms.push_back( {n2, n1, n1} );
+            
+            tris.push_back( {p3, p2, p4} );
+            nrms.push_back( {n2, n1, n2} );
+
+            n1 = Vector3{ 0.0f, 0.0f,  1.0f };
+            tris.push_back( {p1, p3, c1} );
+            nrms.push_back( {n1, n1, n1} );
+
+            n2 = Vector3{ 0.0f, 0.0f, -1.0f };
+            tris.push_back( {p4, p2, c2} );
+            nrms.push_back( {n2, n2, n2} );
+        }
+
+        // 3. Set color
+        set_uniform_color( color );
+        load_mesh_buffers( true, true );
+    }
+};
+
 ////////// LIGHTING ////////////////////////////////////////////////////////////////////////////////
 
 struct Lighting{
