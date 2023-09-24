@@ -13,6 +13,14 @@
 
 ////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
 
+struct XY_Grid{
+    Vector3 cntr;
+    float   xLen;
+    float   yLen;
+    float   unit;
+    Color   colr;
+};  
+
 class CompositeModel{ public:
     // Contains multiple `DynaMesh` parts
 
