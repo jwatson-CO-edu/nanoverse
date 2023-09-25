@@ -13,8 +13,6 @@
 
 ////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
 
-
-
 enum C_State{
     TURN, // Change orientation
     ZFLY,
@@ -208,8 +206,6 @@ class Cubeling{ public:
     }
 };
 typedef shared_ptr<Cubeling> cblnPtr;
-
-// FIXME: CREATE A POPULATION OF WANDERING CUBELINGS WITH SIMPLE BEHAVIOR AND DISPLAY 
 
 
 
