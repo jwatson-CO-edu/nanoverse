@@ -1,4 +1,4 @@
-// g++ 12_synthwave-dream.cpp -std=c++17 -lraylib
+// g++ 12_synthwave-dream.cpp -std=c++17 -lraylib -o synthwave-dream.out
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 

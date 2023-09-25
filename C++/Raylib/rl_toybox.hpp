@@ -29,6 +29,7 @@ using std::shared_ptr;
 typedef array<Vector3,3> triPnts; // Vector info for One Triangle (Vertices,nrms) 
 typedef array<Color,3>   triClrs; // Color  info for One Triangle
 typedef vector<Vector3>  vvec3; // - Vector of 3D vectors
+typedef array<Vector3,2> segment; // Vector info for One Line Segment 
 #define VERTEX_BUFFER_IDX 0 // Vertex coord VBO
 #define NORMAL_BUFFER_IDX 2 // Normal vector VBO
 #define COLORS_BUFFER_IDX 3 // Vertex color VBO
@@ -495,7 +496,8 @@ class Cube : public DynaMesh{ public:
     /// Constructors ///
 
     Cube( float sideLen, Color color ) : DynaMesh( 12 ){
-        // Build and save geo
+        // Build and save geo, centered at {0,0,0}
+
         // 0. Init
         triPnts pushTri;
         triClrs pushClr;
@@ -512,6 +514,53 @@ class Cube : public DynaMesh{ public:
         V.push_back( Vector3{  halfLen, -halfLen,  halfLen } );
         V.push_back( Vector3{  halfLen,  halfLen, -halfLen } );
         V.push_back( Vector3{  halfLen,  halfLen,  halfLen } );
+
+        // 2. Build tris
+        push_triangle_w_norms( { V[0], V[3], V[2] } );
+        push_triangle_w_norms( { V[0], V[1], V[3] } );
+        push_triangle_w_norms( { V[6], V[4], V[0] } );
+        push_triangle_w_norms( { V[6], V[0], V[2] } );
+        push_triangle_w_norms( { V[0], V[4], V[5] } );
+        push_triangle_w_norms( { V[0], V[5], V[1] } );
+        push_triangle_w_norms( { V[7], V[6], V[2] } );
+        push_triangle_w_norms( { V[7], V[2], V[3] } );
+        push_triangle_w_norms( { V[4], V[6], V[7] } );
+        push_triangle_w_norms( { V[4], V[7], V[5] } ); 
+        push_triangle_w_norms( { V[1], V[5], V[7] } );
+        push_triangle_w_norms( { V[1], V[7], V[3] } );
+
+        // 3. Set color
+        set_uniform_color( color );
+        load_mesh_buffers( true, true );
+    }
+};
+
+class Cuboid : public DynaMesh{ public:
+    // Simple Rectangular Prism
+
+    /// Constructors ///
+
+    Cuboid( float xSide, float ySide, float zSide, Color color ) : DynaMesh( 12 ){
+        // Build and save geo, centered at {0,0,0}
+
+        // 0. Init
+        triPnts pushTri;
+        triClrs pushClr;
+        Vector3 norm;
+        vvec3   V;
+        float   halfX = xSide/2.0;
+        float   halfY = ySide/2.0;
+        float   halfZ = zSide/2.0;
+
+        // 1. Establish vertices
+        V.push_back( Vector3{ -halfX, -halfY, -halfZ } );
+        V.push_back( Vector3{ -halfX, -halfY,  halfZ } );
+        V.push_back( Vector3{ -halfX,  halfY, -halfZ } );
+        V.push_back( Vector3{ -halfX,  halfY,  halfZ } );
+        V.push_back( Vector3{  halfX, -halfY, -halfZ } );
+        V.push_back( Vector3{  halfX, -halfY,  halfZ } );
+        V.push_back( Vector3{  halfX,  halfY, -halfZ } );
+        V.push_back( Vector3{  halfX,  halfY,  halfZ } );
 
         // 2. Build tris
         push_triangle_w_norms( { V[0], V[3], V[2] } );

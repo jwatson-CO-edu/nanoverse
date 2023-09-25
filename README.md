@@ -7,13 +7,15 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 ## Architecture 1: C++ & RayLib  (Dangerous!)
 * Purpose: Let yourself have some graphics, as a treat!  
 
-* `[ ]` BoxKart
-    - `[ ]` Simple geometry
-    - `[ ]` Tank steering with gamepad
-    - `[ ]` Simple vehicle dynamics
+* `[>]` BoxKart
+    - `[>]` Simple geometry
+    - `[>]` Tank steering with gamepad
+        * `[Y]` Test IL gamepad, 2023-09-25: Tested Horipad for Switch, works!
+    - `[ ]` Planar vehicle dynamics
+    - `[ ]` Non-planar vehicle dynamics
     - `{ }` Jumping?
     - `[ ]` Simple world to drive in, maze?
-
+        * `[ ]` Collision with maze
 
 &nbsp;
 

@@ -1,4 +1,4 @@
-// g++ 25_box-cart.cpp -std=c++17 -lraylib -O3
+// g++ 25_box-cart.cpp -std=c++17 -lraylib -O3 -o boxcart.out
 // Recreate endearing block creatures from graphics class
 
 
@@ -80,13 +80,26 @@ struct XY_Grid{
     }
 };  
 
+////////// VEHICLES ////////////////////////////////////////////////////////////////////////////////
+
+
 class CompositeModel{ public:
     // Contains multiple `DynaMesh` parts
 
     /// Members ///
 
-    Matrix /*----*/ xfrm;
-    vector<dynaPtr> parts;
+    Matrix /*----*/ xfrm; // --- Pose of the entire model
+    vector<dynaPtr> parts; // -- Drawable components
+    vector<segment> lines; // -- Drawable line segments
+    Color /*-----*/ linColor; // Color of line segments
+
+    /// Constructor(s) ///
+
+    CompositeModel(){
+        // Default pose is the origin
+        xfrm     = MatrixIdentity();
+        linColor = RAYWHITE;
+    }
 
     /// Methods ///
 
@@ -109,6 +122,35 @@ class CompositeModel{ public:
         // Set the shader for all parts
         for( dynaPtr& part : parts ){  part->draw();  }
     }
+
+    size_t add_component( dynaPtr part ){
+        // Add a component and return the current part count
+        parts.push_back( part );
+        return parts.size();
+    }
+};
+
+
+class BoxKart : public CompositeModel {
+    // A funky little cart with Katamari steering and (very) simple dynamics
+    // Version 0.1: Planar movement only, 6 wheels, No slip, No air, Implied gravity only, No terrain/obstacle interaction
+    
+    /// Appearance ///
+    float xLen;
+    float yLen;
+    float zLen;
+    float wheelRad;
+
+    /// Control ///
+
+    /// Constructor(s) ///
+
+    // FIXME, START HERE: WRITE CONSTRUCTOR, DO NOT DRAW WHEEL FRAMES FOR NOW
+
+    BoxKart(  ) : CompositeModel() {
+        // Basic cart geometry
+
+    };
 };
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
@@ -121,7 +163,7 @@ int main(){
     rand_seed();
 
     /// Window Init ///
-    InitWindow( 900, 900, "Cubelings" );
+    InitWindow( 900, 900, "Box Cart, Ver. 0.1" );
     SetTargetFPS( 60 );
 
     ///// Create Objects //////////////////////////////////////////////////
