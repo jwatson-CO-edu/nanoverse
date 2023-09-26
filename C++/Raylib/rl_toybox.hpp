@@ -388,18 +388,24 @@ class DynaMesh{ public:
         cout << "." << flush;
     }
 
+    void init_pose(){
+        // Set all poses to origin pose
+        xfrm = MatrixIdentity();
+        Trel = MatrixIdentity();
+        Tcur = MatrixIdentity();
+    }
+
     /// Constructors ///
 
     DynaMesh(){
         // Default Constructor, assumes no default geometry
-        xfrm = MatrixIdentity();
-        Trel = MatrixIdentity();
+        init_pose();
     }
 
     DynaMesh( uint Ntri ){
         // Allocate memory and set default pose
         init_mesh_memory( Ntri );
-        xfrm = MatrixIdentity();
+        init_pose();
     }
 
     /// Geometry Methods ///
