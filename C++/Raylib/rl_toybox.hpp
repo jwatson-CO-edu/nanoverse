@@ -82,6 +82,11 @@ Matrix set_posn( const Matrix& xfrm, const Vector3& posn ){
     return rtnMatx;
 }
 
+Vector3 get_posn( const Matrix& xfrm ){
+    // Set the position components of the homogeneous coordinates
+    return Vector3{ xfrm.m12, xfrm.m13, xfrm.m14 };
+}
+
 Matrix rotate_RPY_vehicle( const Matrix& xfrm, float r_, float p_, float y_ ){
     // Increment the world Roll, Pitch, Yaw of the model
     // NOTE: This is for airplanes that move forward in their own Z and have a wingspan across X

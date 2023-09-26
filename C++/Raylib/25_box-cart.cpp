@@ -114,6 +114,11 @@ class CompositeModel{ public:
         xfrm = set_posn( xfrm, posn );
     }
 
+    Vector3 get_position(){
+        // Set the position of the `Cubeling`
+        return get_posn( xfrm );
+    }
+
     void set_part_poses(){
         // Set the shader for all parts
         for( dynaPtr& part : parts ){  part->transform_from_parent( xfrm );  }
@@ -248,6 +253,7 @@ int main(){
 
     BoxKart kart{ 3.0f, 2.0f, 1.0f, 0.5f, GREEN };
     kart.set_shader( lightShader.shader );
+    kart.set_position( Vector3{ 0.0, 0.0, 0.625 } );
 
     ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
 
