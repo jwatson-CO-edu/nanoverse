@@ -153,6 +153,8 @@ class BoxKart : public CompositeModel { public:
     float leftEffort;
     float rghtSteer;
     float rghtEffort;
+    float turnMax;
+    float driveMax;
 
     /// Constructor(s) ///
 
@@ -165,6 +167,9 @@ class BoxKart : public CompositeModel { public:
         zLen     = zLen_;
         wheelRad = wheelRad_;
         prtColor = bodyColor;
+
+        turnMax  = 1.5f * M_PI / 360.0f;
+        driveMax = 0.065;
 
         float axelZ = -1.0f * (zLen/2.0f + 1.5f*wheelRad);
         float axelY = yLen / 2.0f;
@@ -217,15 +222,21 @@ class BoxKart : public CompositeModel { public:
     }
 
     void move_forward( float dX ){
+        // Drive in the local +X direction
         xfrm = move_X_vehicle( xfrm, dX );
     }
 
-    void turn_left( float theta ){
+    void turn( float theta ){
+        // Positive turn about the local +Z
         xfrm = MatrixMultiply( MatrixRotateZ( theta ), xfrm );
     }
 
-    void turn_right( float theta ){
-        xfrm = MatrixMultiply( MatrixRotateZ( -theta ), xfrm );
+    void control_law( float leftStick, float rghtStick ){
+        // Adjust speed and orientation according to input
+        // This function assumes input is in [-1,+1] --is-> [Back,Front]
+        move_forward(  (leftStick + rghtStick)/2.0f * driveMax  );
+        turn( /*----*/ (leftStick - rghtStick)/2.0f * turnMax  );
+        set_part_poses();
     }
 
 };
@@ -277,10 +288,16 @@ int main(){
 
         lightShader.update();
 
-        kart.move_forward( 0.025 );
+        // gamepad input
+		if( IsGamepadAvailable(0) ){
+            kart.control_law(
+                GetGamepadAxisMovement( 0, GAMEPAD_AXIS_LEFT_Y ),
+                GetGamepadAxisMovement( 0, GAMEPAD_AXIS_RIGHT_Y )
+            );
+		}
 
         xyGrid.draw();
-        kart.set_part_poses();
+        // kart.set_part_poses();
         kart.draw();
         
 
