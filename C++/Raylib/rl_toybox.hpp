@@ -111,7 +111,11 @@ Matrix thrust_Z_vehicle( const Matrix& xfrm, float dZ ){
     return translate( xfrm, Vector3Scale( Vector3Transform( Vector3{0.0,0.0,1.0}, R ) , dZ ) );
 }
 
-
+Matrix move_X_vehicle( const Matrix& xfrm, float dX ){
+    // Move in the local X direction by `dX` 
+    Matrix R = set_posn( xfrm, Vector3Zero() );
+    return translate( xfrm, Vector3Scale( Vector3Transform( Vector3{1.0,0.0,0.0}, R ) , dX ) );
+}
 
 ////////// VECTOR MATH STRUCTS /////////////////////////////////////////////////////////////////////
 
@@ -495,7 +499,8 @@ class DynaMesh{ public:
         // Render the mesh
         if( !upldModl )  remodel();
         modl.transform = xfrm;
-        DrawModel( modl, get_posn(), 1.0f, WHITE );
+        // DrawModel( modl, get_posn(), 1.0f, WHITE );
+        DrawModel( modl, Vector3Zero(), 1.0f, WHITE );
     }
 
 };

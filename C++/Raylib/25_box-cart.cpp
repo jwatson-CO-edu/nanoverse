@@ -156,8 +156,6 @@ class BoxKart : public CompositeModel { public:
 
     /// Constructor(s) ///
 
-    // FIXME, START HERE: WRITE CONSTRUCTOR, DO NOT DRAW WHEEL FRAMES FOR NOW
-
     BoxKart( float xLen_, float yLen_, float zLen_, float wheelRad_, Color bodyColor = BLUE ) : CompositeModel() { 
         // Basic cart geometry
 
@@ -166,10 +164,9 @@ class BoxKart : public CompositeModel { public:
         yLen     = yLen_;
         zLen     = zLen_;
         wheelRad = wheelRad_;
-        // wheelHgt = wheelHgt_;
         prtColor = bodyColor;
 
-        float axelZ = -0.25f * (zLen/2.0f + 2.0f*wheelRad);
+        float axelZ = -1.0f * (zLen/2.0f + 1.5f*wheelRad);
         float axelY = yLen / 2.0f;
 
         // 2. Create body
@@ -182,7 +179,7 @@ class BoxKart : public CompositeModel { public:
         // Back Left
         nuPart = dynaPtr( new Cylinder{ wheelRad, wheelRad, prtColor } );
         nuPart->Trel = T;
-        nuPart->Tcur = set_posn( MatrixIdentity(), Vector3{ -xLen/4.0f, 0.0f, 0.0f } );
+        nuPart->Tcur = set_posn( MatrixIdentity(), Vector3{ -xLen/2.0f, 0.0f, 0.0f } );
         parts.push_back( nuPart );
 
         // Middle Left
@@ -194,7 +191,7 @@ class BoxKart : public CompositeModel { public:
         // Front Left
         nuPart = dynaPtr( new Cylinder{ wheelRad, wheelRad, prtColor } );
         nuPart->Trel = T;
-        nuPart->Tcur = set_posn( MatrixIdentity(), Vector3{ xLen/4.0f, 0.0f, 0.0f } );
+        nuPart->Tcur = set_posn( MatrixIdentity(), Vector3{ xLen/2.0f, 0.0f, 0.0f } );
         parts.push_back( nuPart );
 
         // 3. Create right wheels
@@ -203,7 +200,7 @@ class BoxKart : public CompositeModel { public:
         // Back Right
         nuPart = dynaPtr( new Cylinder{ wheelRad, wheelRad, prtColor } );
         nuPart->Trel = T;
-        nuPart->Tcur = set_posn( MatrixIdentity(), Vector3{ -xLen/4.0f, 0.0f, 0.0f } );
+        nuPart->Tcur = set_posn( MatrixIdentity(), Vector3{ -xLen/2.0f, 0.0f, 0.0f } );
         parts.push_back( nuPart );
 
         // Middle Right
@@ -215,10 +212,22 @@ class BoxKart : public CompositeModel { public:
         // Front Right
         nuPart = dynaPtr( new Cylinder{ wheelRad, wheelRad, prtColor } );
         nuPart->Trel = T;
-        nuPart->Tcur = set_posn( MatrixIdentity(), Vector3{ xLen/4.0f, 0.0f, 0.0f } );
+        nuPart->Tcur = set_posn( MatrixIdentity(), Vector3{ xLen/2.0f, 0.0f, 0.0f } );
         parts.push_back( nuPart );
+    }
 
-    };
+    void move_forward( float dX ){
+        xfrm = move_X_vehicle( xfrm, dX );
+    }
+
+    void turn_left( float theta ){
+        xfrm = MatrixMultiply( MatrixRotateZ( theta ), xfrm );
+    }
+
+    void turn_right( float theta ){
+        xfrm = MatrixMultiply( MatrixRotateZ( -theta ), xfrm );
+    }
+
 };
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
@@ -249,11 +258,11 @@ int main(){
     Lighting lightShader{};
     lightShader.set_camera_posn( camera );
 
-    XY_Grid xyGrid{ Vector3Zero(), 20.0f, 20.0f, 1.0f, RAYWHITE };
+    XY_Grid xyGrid{ Vector3Zero(), 75.0f, 75.0f, 1.0f, RAYWHITE };
 
     BoxKart kart{ 3.0f, 2.0f, 1.0f, 0.5f, GREEN };
     kart.set_shader( lightShader.shader );
-    kart.set_position( Vector3{ 0.0, 0.0, 0.625 } );
+    kart.set_position( Vector3{ -10.0, 0.0, 2.0 } );
 
     ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
 
@@ -268,9 +277,14 @@ int main(){
 
         lightShader.update();
 
+        kart.move_forward( 0.025 );
+
         xyGrid.draw();
         kart.set_part_poses();
         kart.draw();
+        
+
+        camera.target = kart.get_position();
 
         ///// END DRAWING /////////////////////////////////////////////////
 
