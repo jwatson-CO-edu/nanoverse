@@ -1,4 +1,4 @@
-// g++ 24_cubelings.cpp -std=c++17 -lraylib -O3
+// g++ 24_cubelings.cpp -std=c++17 -lraylib -O3 -o cubelings.out
 // Recreate endearing block creatures from graphics class
 
 
@@ -42,7 +42,7 @@ class Cubeling{ public:
 
         state = REST;
         timer = 0;
-        zMax  = 0.0125f;
+        zMax  = 0.025f;
         tAccl = 10;
         ddZ   = zMax/(1.0f*tAccl);
         dZ    = 0.0f; 
@@ -50,10 +50,10 @@ class Cubeling{ public:
         Basis  relaB;
         Matrix relaM;
         Matrix currM;
-        posns = { {-edgeLen/8.0f, -edgeLen/8.0f, edgeLen/4.0f} , 
-                  {-edgeLen/8.0f,  edgeLen/8.0f, edgeLen/4.0f} ,
-                  { edgeLen/8.0f, -edgeLen/8.0f, edgeLen/4.0f} ,
-                  { edgeLen/8.0f,  edgeLen/8.0f, edgeLen/4.0f} };
+        posns = { {-edgeLen/4.0f, -edgeLen/4.0f, edgeLen/2.0f} , 
+                  {-edgeLen/4.0f,  edgeLen/4.0f, edgeLen/2.0f} ,
+                  { edgeLen/4.0f, -edgeLen/4.0f, edgeLen/2.0f} ,
+                  { edgeLen/4.0f,  edgeLen/4.0f, edgeLen/2.0f} };
         
         // 1. Init geo
         body = dynaPtr( new Cube{ edgeLen, color } );
@@ -63,8 +63,8 @@ class Cubeling{ public:
 
         // 2. Init oscillations
         t = 0.0f;
-        f = 2.0f;
-        A = pegLen*0.9f/4.0f;
+        f = 4.0f;
+        A = pegLen*0.9f/2.0f;
 
         // 3. Init poses
         xfrm = MatrixIdentity();

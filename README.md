@@ -8,14 +8,21 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 * Purpose: Let yourself have some graphics, as a treat!  
 
 * `[>]` BoxKart
-    - `[>]` Simple geometry
-    - `[>]` Tank steering with gamepad
+    - `[Y]` Simple geometry, 2023-09-26: Fixed an error that caused all displacements to be double-counted
+    - `[Y]` Tank steering with gamepad, 2023-09-27: Got it on the first try!
         * `[Y]` Test IL gamepad, 2023-09-25: Tested Horipad for Switch, works!
-    - `[ ]` Planar vehicle dynamics
-    - `[ ]` Non-planar vehicle dynamics
-    - `{ }` Jumping?
-    - `[ ]` Simple world to drive in, maze?
-        * `[ ]` Collision with maze
+    - `[ ]` Add rotational distinction to wheels
+    - `[ ]` Rotate wheels according to control law
+    - WARNING: Approaching DANGEROUSLY close to a game engine!
+        * `[ ]` Actual Dynamics
+            - `[ ]` Planar vehicle dynamics
+            - `[ ]` Non-planar vehicle dynamics
+                * `{ }` Jumping?
+            - `[ ]` Bond Graph vehicle dynamics
+        * `[ ]` Minigame: Cubeling Attack!
+            - `[ ]` Cubelings track player and fire explosive pegs
+            - `[ ]` Moving player is safe because Cubelings cannot lead their shots
+            - `{ }` Obstacles with collision? (DANGER!)
 
 &nbsp;
 

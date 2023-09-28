@@ -1,4 +1,4 @@
-// g++ 25_box-cart.cpp -std=c++17 -lraylib -O3 -o boxkart.out
+// g++ 25_box-cart-01.cpp -std=c++17 -lraylib -O3 -o boxcart.out
 // Recreate endearing block creatures from graphics class
 
 
@@ -136,6 +136,20 @@ class CompositeModel{ public:
     }
 };
 
+void add_stripes_to_Cylinder( dynaPtr cylinder, Color color1, Color color2 ){
+    // Color rectangular faces with alternating colors
+    // NOTE: This function assumes that there is an even number of rectangles
+    Color iterColor;
+    cylinder->wipe_geo( false, true );
+    for( uint i = 0; i < (cylinder->Ntri)/4; ++i ){
+        if( (i%2)==0 ){  iterColor = color1;  }else{  iterColor = color2;  }
+        for( ubyte j = 0; j < 4; ++j ){
+            cylinder->clrs.push_back( {iterColor, iterColor, iterColor} );
+        }
+    }
+    cylinder->load_mesh_buffers( false, true );
+}
+
 
 class BoxKart : public CompositeModel { public:
     // A funky little cart with Katamari steering and (very) simple dynamics, +X is forward
@@ -161,63 +175,71 @@ class BoxKart : public CompositeModel { public:
     BoxKart( float xLen_, float yLen_, float zLen_, float wheelRad_, Color bodyColor = BLUE ) : CompositeModel() { 
         // Basic cart geometry
 
-        // 1. Set params
+        // 1. Set appearance params
         xLen     = xLen_;
         yLen     = yLen_;
         zLen     = zLen_;
         wheelRad = wheelRad_;
         prtColor = bodyColor;
 
+        float axelZ    = -1.0f * (zLen/2.0f + 1.5f*wheelRad);
+        float axelY    = yLen / 2.0f;
+        Color whlColor = GRAY;
+
+        // 2. Set control params
         turnMax  = 1.5f * M_PI / 360.0f;
         driveMax = 0.065;
 
-        float axelZ = -1.0f * (zLen/2.0f + 1.5f*wheelRad);
-        float axelY = yLen / 2.0f;
-
-        // 2. Create body
+        // 3. Create body
         dynaPtr nuPart = dynaPtr( new Cuboid{ xLen, yLen, zLen, prtColor } );
         parts.push_back( nuPart );
 
-        // 3. Create left wheels
+        // 4. Create left wheels
         Matrix T = set_posn( MatrixRotateX( M_PI/2.0f ), Vector3{ 0.0f, -axelY, axelZ } );
         
         // Back Left
-        nuPart = dynaPtr( new Cylinder{ wheelRad, wheelRad, prtColor } );
+        nuPart = dynaPtr( new Cylinder{ wheelRad, wheelRad, whlColor } );
         nuPart->Trel = T;
         nuPart->Tcur = set_posn( MatrixIdentity(), Vector3{ -xLen/2.0f, 0.0f, 0.0f } );
+        add_stripes_to_Cylinder( nuPart, GRAY, DARKGRAY );
         parts.push_back( nuPart );
 
         // Middle Left
-        nuPart = dynaPtr( new Cylinder{ wheelRad, wheelRad, prtColor } );
+        nuPart = dynaPtr( new Cylinder{ wheelRad, wheelRad, whlColor } );
         nuPart->Trel = T;
         nuPart->Tcur = set_posn( MatrixIdentity(), Vector3{ 0.0f, 0.0f, 0.0f } );
+        add_stripes_to_Cylinder( nuPart, GRAY, DARKGRAY );
         parts.push_back( nuPart );
 
         // Front Left
-        nuPart = dynaPtr( new Cylinder{ wheelRad, wheelRad, prtColor } );
+        nuPart = dynaPtr( new Cylinder{ wheelRad, wheelRad, whlColor } );
         nuPart->Trel = T;
         nuPart->Tcur = set_posn( MatrixIdentity(), Vector3{ xLen/2.0f, 0.0f, 0.0f } );
+        add_stripes_to_Cylinder( nuPart, GRAY, DARKGRAY );
         parts.push_back( nuPart );
 
-        // 3. Create right wheels
+        // 5. Create right wheels
         T = set_posn( MatrixRotateX( -M_PI/2.0f ), Vector3{ 0.0f, axelY, axelZ } );
         
         // Back Right
-        nuPart = dynaPtr( new Cylinder{ wheelRad, wheelRad, prtColor } );
+        nuPart = dynaPtr( new Cylinder{ wheelRad, wheelRad, whlColor } );
         nuPart->Trel = T;
         nuPart->Tcur = set_posn( MatrixIdentity(), Vector3{ -xLen/2.0f, 0.0f, 0.0f } );
+        add_stripes_to_Cylinder( nuPart, GRAY, DARKGRAY );
         parts.push_back( nuPart );
 
         // Middle Right
-        nuPart = dynaPtr( new Cylinder{ wheelRad, wheelRad, prtColor } );
+        nuPart = dynaPtr( new Cylinder{ wheelRad, wheelRad, whlColor } );
         nuPart->Trel = T;
         nuPart->Tcur = set_posn( MatrixIdentity(), Vector3{ 0.0f, 0.0f, 0.0f } );
+        add_stripes_to_Cylinder( nuPart, GRAY, DARKGRAY );
         parts.push_back( nuPart );
 
         // Front Right
-        nuPart = dynaPtr( new Cylinder{ wheelRad, wheelRad, prtColor } );
+        nuPart = dynaPtr( new Cylinder{ wheelRad, wheelRad, whlColor } );
         nuPart->Trel = T;
         nuPart->Tcur = set_posn( MatrixIdentity(), Vector3{ xLen/2.0f, 0.0f, 0.0f } );
+        add_stripes_to_Cylinder( nuPart, GRAY, DARKGRAY );
         parts.push_back( nuPart );
     }
 
@@ -234,8 +256,18 @@ class BoxKart : public CompositeModel { public:
     void control_law( float leftStick, float rghtStick ){
         // Adjust speed and orientation according to input
         // This function assumes input is in [-1,+1] --is-> [Back,Front]
+        float rotTheta;
         move_forward(  (leftStick + rghtStick)/2.0f * driveMax  );
         turn( /*----*/ (leftStick - rghtStick)/2.0f * turnMax  );
+
+        for( ubyte i = 1; i < 4; ++i ){
+            parts[i]->Tcur = MatrixMultiply( MatrixRotateZ( -leftStick * driveMax / (1.0f * wheelRad * M_PI) ), parts[i]->Tcur );
+        }
+
+        for( ubyte i = 4; i < 7; ++i ){
+            parts[i]->Tcur = MatrixMultiply( MatrixRotateZ( rghtStick * driveMax / (1.0f * wheelRad * M_PI) ), parts[i]->Tcur );
+        }
+
         set_part_poses();
     }
 
@@ -294,7 +326,9 @@ int main(){
                 GetGamepadAxisMovement( 0, GAMEPAD_AXIS_LEFT_Y ),
                 GetGamepadAxisMovement( 0, GAMEPAD_AXIS_RIGHT_Y )
             );
-		}
+		}else{
+            kart.control_law( 0.0f, 0.0f );
+        }
 
         xyGrid.draw();
         // kart.set_part_poses();
