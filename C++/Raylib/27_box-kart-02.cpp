@@ -1,5 +1,5 @@
-// g++ 25_box-cart-01.cpp -std=c++17 -lraylib -O3 -o boxcart.out
-// Tank steering as a concept just feels good!
+// g++ 27_box-kart-02.cpp -std=c++17 -lraylib -O3 -o boxkart.out
+// Arcade kart with Katamari steering
 
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
@@ -8,6 +8,16 @@
 
 /// Local ///
 #include "rl_toybox.hpp" // Also includes "utils.cpp"
+
+
+
+////////// UTILITY FUNCTIONS ///////////////////////////////////////////////////////////////////////
+
+template <typename T> T sgn(T val){
+    // Return the sign of the number, or zero for zero magnitude
+    // Original Author: Stef, https://stackoverflow.com/a/4609795
+    return (T) ((T(0) < val) - (val < T(0)));
+}
 
 
 
@@ -161,6 +171,8 @@ class BoxKart : public CompositeModel { public:
     float zLen;
     float wheelRad;
     float wheelHgt;
+    float leftWhlTheta;
+    float rghtWhlTheta;
 
     /// Control ///
     float leftSteer;
@@ -253,19 +265,52 @@ class BoxKart : public CompositeModel { public:
         xfrm = MatrixMultiply( MatrixRotateZ( theta ), xfrm );
     }
 
-    void control_law( float leftStick, float rghtStick ){
-        // Adjust speed and orientation according to input
+    void control_law( float leftStickX, float leftStickY, float rghtStickX, float rghtStickY ){
+        // Adjust speed and orientation of kart and wheels according to input
         // This function assumes input is in [-1,+1] --is-> [Back,Front]
         float rotTheta;
-        move_forward(  (leftStick + rghtStick)/2.0f * driveMax  );
-        turn( /*----*/ (leftStick - rghtStick)/2.0f * turnMax   );
 
-        for( ubyte i = 1; i < 4; ++i ){
-            parts[i]->Tcur = MatrixMultiply( MatrixRotateZ( -leftStick * driveMax / (1.0f * wheelRad * M_PI) ), parts[i]->Tcur );
+        float axelZ    = -1.0f * (zLen/2.0f + 1.5f*wheelRad);
+        float axelY    = yLen / 2.0f;
+        float axelX    = xLen / 2.0f;
+
+        float leftMag   = sqrtf( leftStickX*leftStickX + leftStickY*leftStickY );
+        float leftTheta = atan2f( leftStickX, leftStickY );
+        if( abs( leftTheta ) > (M_PI/2.0f) ){  
+            leftMag *= 1.0f;
+            leftTheta -= sgn( leftTheta ) * M_PI/2.0f;
         }
 
+        float rghtMag   = sqrtf( rghtStickX*rghtStickX + rghtStickY*rghtStickY );
+        float rghtTheta = atan2f( rghtStickX, rghtStickY );
+        if( abs( rghtTheta ) > (M_PI/2.0f) ){  
+            rghtMag *= 1.0f;  
+            rghtTheta -= sgn( rghtTheta ) * M_PI/2.0f;
+        }
+
+        move_forward(  (leftStickY + rghtStickY)/2.0f * driveMax  );
+        turn( /*----*/ (leftStickY - rghtStickY)/2.0f * turnMax   );
+
+        // Set poses for Left Wheels
+        for( ubyte i = 1; i < 4; ++i ){
+            parts[i]->Trel = set_posn( MatrixRotateX( -M_PI/2.0f ), Vector3{ (i*1.0f-2.0f)*axelX, -axelY, axelZ } );
+            // parts[i]->Trel = MatrixMultiply(
+            //     MatrixRotateZ( leftTheta ),
+            //     set_posn( MatrixRotateX( -M_PI/2.0f ), Vector3{ (i*1.0f-2.0f)*axelX, -axelY, axelZ } )
+            //     // MatrixRotateZ( leftTheta )
+            // );
+            parts[i]->Tcur = MatrixMultiply( MatrixRotateZ( -leftStickY * driveMax / (1.0f * wheelRad * M_PI) ), parts[i]->Tcur );
+        }
+
+        // Set poses for Right Wheels
         for( ubyte i = 4; i < 7; ++i ){
-            parts[i]->Tcur = MatrixMultiply( MatrixRotateZ( rghtStick * driveMax / (1.0f * wheelRad * M_PI) ), parts[i]->Tcur );
+            parts[i]->Trel = set_posn( MatrixRotateX( -M_PI/2.0f ), Vector3{ (i*1.0f-5.0f)*axelX, axelY, axelZ } );
+            // parts[i]->Trel = MatrixMultiply(
+            //     MatrixRotateZ( rghtTheta ),
+            //     set_posn( MatrixRotateX( -M_PI/2.0f ), Vector3{ (i*1.0f-5.0f)*axelX, axelY, axelZ } )
+            //     // MatrixRotateZ( rghtTheta )
+            // );
+            parts[i]->Tcur = MatrixMultiply( MatrixRotateZ( rghtStickY * driveMax / (1.0f * wheelRad * M_PI) ), parts[i]->Tcur );
         }
 
         set_part_poses();
@@ -323,11 +368,13 @@ int main(){
         // gamepad input
 		if( IsGamepadAvailable(0) ){
             kart.control_law(
+                GetGamepadAxisMovement( 0, GAMEPAD_AXIS_LEFT_X ),
                 GetGamepadAxisMovement( 0, GAMEPAD_AXIS_LEFT_Y ),
+                GetGamepadAxisMovement( 0, GAMEPAD_AXIS_RIGHT_X ),
                 GetGamepadAxisMovement( 0, GAMEPAD_AXIS_RIGHT_Y )
             );
 		}else{
-            kart.control_law( 0.0f, 0.0f );
+            kart.control_law( 0.0f, 0.0f, 0.0f, 0.0f );
         }
 
         xyGrid.draw();

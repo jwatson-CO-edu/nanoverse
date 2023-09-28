@@ -16,19 +16,19 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     - `[ ]` Katamari driving
         * `[ ]` Wheels point in stick directions
         * `[ ]` Calculate resultants for translation and rotation, One side can drag the other at half speed 
+    - `[ ]` Behind & above 3P camera
     - WARNING: Approaching DANGEROUSLY close to a game engine!
         * `[ ]` Minigame: Cubeling Attack!
             - `[ ]` Cubelings track player and fire explosive pegs
             - `[ ]` Moving player is safe because Cubelings cannot lead their shots
             - `{ }` Obstacles with collision? (DANGER!)
         * `[ ]` Actual Dynamics
-            - `[ ]` Planar vehicle dynamics
+            - `[ ]` Planar vehicle dynamics with momentum and sliding friction
+                * `{ }` Energy-conserving?
             - `[ ]` Non-planar vehicle dynamics
+                * `[ ]` Generate uneven terrain (Revive from Synthwave Dream?)
                 * `{ }` Jumping?
-            - `[ ]` Bond Graph vehicle dynamics
-                * `[ ]` Implement paper structs 
-                * `[ ]` Implement paper example 
-                * `{ }` Animated 3D bond graph? 
+            
 
 &nbsp;
 
@@ -43,6 +43,10 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         * `[ ]` Flow arrows
             - `[ ]` Spin velocity proportional to flow
         * `[ ]` System var trace emanating from node?
+    - `[ ]` Bond Graph vehicle dynamics
+        * `[ ]` Implement paper structs 
+        * `[ ]` Implement paper example 
+        * `{ }` Animated 3D bond graph? 
 
 &nbsp;
 
