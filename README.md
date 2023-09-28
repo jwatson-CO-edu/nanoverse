@@ -11,18 +11,50 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     - `[Y]` Simple geometry, 2023-09-26: Fixed an error that caused all displacements to be double-counted
     - `[Y]` Tank steering with gamepad, 2023-09-27: Got it on the first try!
         * `[Y]` Test IL gamepad, 2023-09-25: Tested Horipad for Switch, works!
-    - `[ ]` Add rotational distinction to wheels
-    - `[ ]` Rotate wheels according to control law
+    - `[Y]` Add rotational distinction to wheels, 2023-09-27: Wheels roll convincingly
+    - `[Y]` Rotate wheels according to control law, 2023-09-27: Wheels roll convincingly
+    - `[ ]` Katamari driving
+        * `[ ]` Wheels point in stick directions
+        * `[ ]` Calculate resultants for translation and rotation, One side can drag the other at half speed 
     - WARNING: Approaching DANGEROUSLY close to a game engine!
+        * `[ ]` Minigame: Cubeling Attack!
+            - `[ ]` Cubelings track player and fire explosive pegs
+            - `[ ]` Moving player is safe because Cubelings cannot lead their shots
+            - `{ }` Obstacles with collision? (DANGER!)
         * `[ ]` Actual Dynamics
             - `[ ]` Planar vehicle dynamics
             - `[ ]` Non-planar vehicle dynamics
                 * `{ }` Jumping?
             - `[ ]` Bond Graph vehicle dynamics
-        * `[ ]` Minigame: Cubeling Attack!
-            - `[ ]` Cubelings track player and fire explosive pegs
-            - `[ ]` Moving player is safe because Cubelings cannot lead their shots
-            - `{ }` Obstacles with collision? (DANGER!)
+                * `[ ]` Implement paper structs 
+                * `[ ]` Implement paper example 
+                * `{ }` Animated 3D bond graph? 
+
+&nbsp;
+
+* `[ ]` Animated Bond Graphs
+    - `[ ]` Model 
+        * `[ ]` Major components
+        * `[ ]` Construct simple example
+        * `[ ]` Infer causality / flow
+        * `[ ]` Obtain example solution
+    - `[ ]` Visualize
+        * `[ ]` Labeled Nodes
+        * `[ ]` Flow arrows
+            - `[ ]` Spin velocity proportional to flow
+        * `[ ]` System var trace emanating from node?
+
+&nbsp;
+
+* `[ ]` Alchemal Holographic Star Map (in the style of SW Ahsoka end titles)
+    - `[ ]` Generate orbital planes and star systems
+    - `[ ]` Generate orbits
+    - `[ ]` Line shader
+        * `[ ]` Shiny and Handmade, Ancient
+    - `{ }` Animated?
+    - `{ }` Runic labels?
+    
+
 
 &nbsp;
 

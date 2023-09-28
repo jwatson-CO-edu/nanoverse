@@ -258,7 +258,7 @@ class BoxKart : public CompositeModel { public:
         // This function assumes input is in [-1,+1] --is-> [Back,Front]
         float rotTheta;
         move_forward(  (leftStick + rghtStick)/2.0f * driveMax  );
-        turn( /*----*/ (leftStick - rghtStick)/2.0f * turnMax  );
+        turn( /*----*/ (leftStick - rghtStick)/2.0f * turnMax   );
 
         for( ubyte i = 1; i < 4; ++i ){
             parts[i]->Tcur = MatrixMultiply( MatrixRotateZ( -leftStick * driveMax / (1.0f * wheelRad * M_PI) ), parts[i]->Tcur );
