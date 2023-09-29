@@ -123,7 +123,14 @@ struct Edge_BG{
     float   f2;
 };
 
-
+nodePtr make_1_junction( string name_ = "1-Junction" ){
+    // Return a blank 1-Junction
+    nodePtr rtnPtr = nodePtr( new Node_BG{} );
+    rtnPtr->type    = JUNCTN_0;
+    rtnPtr->name    = name_;
+    rtnPtr->portLim = 0;
+    return rtnPtr;
+}
 
 ////////// BOND GRAPH VISUALIZATION ////////////////////////////////////////////////////////////////
 
