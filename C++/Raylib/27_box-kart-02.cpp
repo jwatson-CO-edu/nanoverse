@@ -175,10 +175,10 @@ class BoxKart : public CompositeModel { public:
     float rghtWhlTheta;
 
     /// Control ///
-    float leftSteer;
-    float leftEffort;
-    float rghtSteer;
-    float rghtEffort;
+    // float leftSteer;
+    // float leftEffort;
+    // float rghtSteer;
+    // float rghtEffort;
     float turnMax;
     float driveMax;
 
@@ -193,6 +193,9 @@ class BoxKart : public CompositeModel { public:
         zLen     = zLen_;
         wheelRad = wheelRad_;
         prtColor = bodyColor;
+        
+        leftWhlTheta = 0.0f;
+        rghtWhlTheta = 0.0f;
 
         float axelZ    = -1.0f * (zLen/2.0f + 1.5f*wheelRad);
         float axelY    = yLen / 2.0f;
@@ -270,47 +273,46 @@ class BoxKart : public CompositeModel { public:
         // This function assumes input is in [-1,+1] --is-> [Back,Front]
         float rotTheta;
 
-        float axelZ    = -1.0f * (zLen/2.0f + 1.5f*wheelRad);
-        float axelY    = yLen / 2.0f;
-        float axelX    = xLen / 2.0f;
+        float axelZ = -1.0f * (zLen/2.0f + 1.5f*wheelRad);
+        float axelY = yLen / 2.0f;
+        float axelX = xLen / 2.0f;
 
         float leftMag   = sqrtf( leftStickX*leftStickX + leftStickY*leftStickY );
         float leftTheta = atan2f( leftStickX, leftStickY );
-        if( abs( leftTheta ) > (M_PI/2.0f) ){  
-            leftMag *= 1.0f;
-            leftTheta -= sgn( leftTheta ) * M_PI/2.0f;
-        }
 
         float rghtMag   = sqrtf( rghtStickX*rghtStickX + rghtStickY*rghtStickY );
         float rghtTheta = atan2f( rghtStickX, rghtStickY );
-        if( abs( rghtTheta ) > (M_PI/2.0f) ){  
-            rghtMag *= 1.0f;  
-            rghtTheta -= sgn( rghtTheta ) * M_PI/2.0f;
-        }
+
+        cout << "Left Theta: " << leftTheta << ", Right Theta: " << rghtTheta << endl;
 
         move_forward(  (leftStickY + rghtStickY)/2.0f * driveMax  );
         turn( /*----*/ (leftStickY - rghtStickY)/2.0f * turnMax   );
 
+        if( abs( leftTheta ) < (M_PI/2.0f) ){
+            leftWhlTheta -=  leftStickY * driveMax / (1.0f * wheelRad * M_PI);
+            // leftTheta += (M_PI/2.0f) * sgn( leftTheta );
+        }else{
+            leftWhlTheta +=  leftStickY * driveMax / (1.0f * wheelRad * M_PI);
+        }  
+
+        
+        if( abs( rghtTheta ) < (M_PI/2.0f) ){
+            rghtWhlTheta -=  rghtStickY * driveMax / (1.0f * wheelRad * M_PI);
+            // rghtTheta += (M_PI/2.0f) * sgn( rghtTheta );
+        }else{
+            rghtWhlTheta +=  rghtStickY * driveMax / (1.0f * wheelRad * M_PI);
+        }  
+
         // Set poses for Left Wheels
         for( ubyte i = 1; i < 4; ++i ){
-            parts[i]->Trel = set_posn( MatrixRotateX( -M_PI/2.0f ), Vector3{ (i*1.0f-2.0f)*axelX, -axelY, axelZ } );
-            // parts[i]->Trel = MatrixMultiply(
-            //     MatrixRotateZ( leftTheta ),
-            //     set_posn( MatrixRotateX( -M_PI/2.0f ), Vector3{ (i*1.0f-2.0f)*axelX, -axelY, axelZ } )
-            //     // MatrixRotateZ( leftTheta )
-            // );
-            parts[i]->Tcur = MatrixMultiply( MatrixRotateZ( -leftStickY * driveMax / (1.0f * wheelRad * M_PI) ), parts[i]->Tcur );
+            parts[i]->Trel = set_posn( MatrixRotateX( M_PI/2.0f ), Vector3{ (i*1.0f-2.0f)*axelX, -axelY, axelZ } );
+            parts[i]->Tcur = MatrixMultiply( MatrixRotateZ( leftWhlTheta ), MatrixRotateY( leftTheta ) );
         }
 
         // Set poses for Right Wheels
         for( ubyte i = 4; i < 7; ++i ){
-            parts[i]->Trel = set_posn( MatrixRotateX( -M_PI/2.0f ), Vector3{ (i*1.0f-5.0f)*axelX, axelY, axelZ } );
-            // parts[i]->Trel = MatrixMultiply(
-            //     MatrixRotateZ( rghtTheta ),
-            //     set_posn( MatrixRotateX( -M_PI/2.0f ), Vector3{ (i*1.0f-5.0f)*axelX, axelY, axelZ } )
-            //     // MatrixRotateZ( rghtTheta )
-            // );
-            parts[i]->Tcur = MatrixMultiply( MatrixRotateZ( rghtStickY * driveMax / (1.0f * wheelRad * M_PI) ), parts[i]->Tcur );
+            parts[i]->Trel = set_posn( MatrixRotateX( M_PI/2.0f ), Vector3{ (i*1.0f-5.0f)*axelX, axelY, axelZ } );
+            parts[i]->Tcur = MatrixMultiply( MatrixRotateZ( rghtWhlTheta ), MatrixRotateY( rghtTheta ) );
         }
 
         set_part_poses();
@@ -328,7 +330,7 @@ int main(){
     rand_seed();
 
     /// Window Init ///
-    InitWindow( 900, 900, "Box Cart, Ver. 0.1" );
+    InitWindow( 900, 900, "Box Cart, Ver. 0.2" );
     SetTargetFPS( 60 );
 
     ///// Create Objects //////////////////////////////////////////////////
