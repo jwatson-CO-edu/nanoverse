@@ -13,15 +13,17 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         * `[Y]` Test IL gamepad, 2023-09-25: Tested Horipad for Switch, works!
     - `[Y]` Add rotational distinction to wheels, 2023-09-27: Wheels roll convincingly
     - `[Y]` Rotate wheels according to control law, 2023-09-27: Wheels roll convincingly
-    - `[ ]` Katamari driving
-        * `[ ]` Wheels point in stick directions
-        * `[ ]` Calculate resultants for translation and rotation, One side can drag the other at half speed 
-    - `[ ]` Behind & above 3P camera
+    - `[>]` Katamari driving
+        * `[Y]` Wheels point in stick directions, 2023-09-30: Circled the Square, Fixed some orientation errors
+        * `[Y]` Calculate input components from sticks, 2023-09-30: Circled the Square
+        * `[>]` Calculate resultant displacement & orientation, One side can drag the other at half speed 
+    - `[ ]` Behind & above 3P camera, Allows for seeing ahead and above
     - WARNING: Approaching DANGEROUSLY close to a game engine!
         * `[ ]` Minigame: Cubeling Attack!
             - `[ ]` Cubelings track player and fire explosive pegs
             - `[ ]` Moving player is safe because Cubelings cannot lead their shots
             - `{ }` Obstacles with collision? (DANGER!)
+            - `{ }` Threat radar?
         * `[ ]` Actual Dynamics
             - `[ ]` Planar vehicle dynamics with momentum and sliding friction
                 * `{ }` Energy-conserving?
@@ -29,21 +31,24 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
                 * `[ ]` Generate uneven terrain (Revive from Synthwave Dream?)
                 * `{ }` Jumping?
             
-
 &nbsp;
 
-* `[ ]` Animated Bond Graphs
-    - `[ ]` Model 
-        * `[ ]` Major components
-        * `[ ]` Construct simple example
+* `[>]` Animated Bond Graphs
+    - `[>]` Model 
+        * `[>]` Major components
+        * `[>]` Construct simple example
+            - `[>]` Implement Section 3, Slide 13+, One step at a time
         * `[ ]` Infer causality / flow
         * `[ ]` Obtain example solution
-    - `[ ]` Visualize
-        * `[ ]` Labeled Nodes
+    - `[>]` Visualize
+        * `[>]` Labeled Nodes
+            - `[>]` 1-Junction
+            - `[ ]` 0-Junction
         * `[ ]` Flow arrows
-            - `[ ]` Spin velocity proportional to flow
+            - `[ ]` Animation proportional to flow
         * `[ ]` System var trace emanating from node?
-    - `[ ]` Bond Graph vehicle dynamics
+    - `[ ]` Bond Graph vehicle dynamics  
+    WARNING: Approaching DANGEROUSLY close to a game engine!
         * `[ ]` Implement paper structs 
         * `[ ]` Implement paper example 
         * `{ }` Animated 3D bond graph? 

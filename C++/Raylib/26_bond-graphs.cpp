@@ -17,8 +17,9 @@ typedef array<float,2> eff_flo;
 
 ///// Forward Declarations ///////////////////////
 
-class  Node_BG;  typedef shared_ptr<Node_BG> nodePtr;
-struct Edge_BG;  typedef shared_ptr<Edge_BG> edgePtr;
+class  Node_BG;    typedef shared_ptr<Node_BG>   nodePtr;
+struct Edge_BG;    typedef shared_ptr<Edge_BG>   edgePtr;
+class  Render_BG;  typedef shared_ptr<Render_BG> rndrPtr;
 
 ///// 1-Port Node Laws ///////////////////////////
 
@@ -90,6 +91,7 @@ class Node_BG{ public:
     vector<Flow_Dir> flowsDirs; // Direction of each flow (Not used?)
     ubyte /*------*/ portLim; // - Limit on number of ports, (0 = no limit)
     lawNodPtr /*--*/ consLaw; // - Constitutive Law
+    rndrPtr /*----*/ painter; // - Rendering strategy 
 
     // Energy Content //
     float  e; // effort
@@ -129,8 +131,59 @@ nodePtr make_1_junction( string name_ = "1-Junction" ){
     rtnPtr->type    = JUNCTN_0;
     rtnPtr->name    = name_;
     rtnPtr->portLim = 0;
+    // FIXME: ADD RENDERING STRAT FOR THIS TYPE
     return rtnPtr;
 }
 
 ////////// BOND GRAPH VISUALIZATION ////////////////////////////////////////////////////////////////
 
+class Render_BG{ public:
+    // Base class for Bond Graph component rendering strategy
+
+    /// Members ///
+
+    Vector2 posn; // Position on the screen
+    float   size; // Diameter
+    string  symb; // Identifying symbol
+    string  text; // Flavor text and/or label
+
+    /// Constructor(s) ///
+    Render_BG( Vector2 posn_, float size_, string symb_, string text_ = "" ){
+        posn = posn_;
+        size = size_;
+        symb = symb_;
+        text = text_;
+    }
+
+    virtual void draw(){  DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, RED );  }
+};
+
+class Draw0Junc : public Render_BG { public:
+    /// Constructor(s) ///
+    Draw0Junc( Vector2 posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "0", text_ ){}
+
+    void draw(){  
+        DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, LIGHTGRAY );  
+        DrawText( symb.c_str(), (int) posn.x, (int) posn.y, 20, BLACK );
+        DrawText( text.c_str(), (int) posn.x, (int) posn.y+20, 20, BLACK );
+    }
+};
+
+class Draw1Junc : public Render_BG { public:
+    /// Constructor(s) ///
+    Draw1Junc( Vector2 posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "1", text_ ){}
+
+    void draw(){  
+        DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, LIGHTGRAY );  
+        DrawText( symb.c_str(), (int) posn.x, (int) posn.y, 20, BLACK );
+        DrawText( text.c_str(), (int) posn.x, (int) posn.y+20, 20, BLACK );
+    }
+};
+
+
+////////// RACK AND PINION EXAMPLE /////////////////////////////////////////////////////////////////
+
+// FIXME: Implement Section 3, Slide 13+
+
+nodePtr omega1 = nodePtr( make_1_junction( "omega_1"    ) );
+nodePtr veloc1 = nodePtr( make_1_junction( "velocity_1" ) );
