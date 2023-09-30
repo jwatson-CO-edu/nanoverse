@@ -160,6 +160,28 @@ void add_stripes_to_Cylinder( dynaPtr cylinder, Color color1, Color color2 ){
     cylinder->load_mesh_buffers( false, true );
 }
 
+float dist_to_square_edge( float angle_rad, float halfLen = 1.0f ){
+    // Return the distance from the center of the square (with lengths `halfLen*2`) to the edge pointed to by `angle_rad`
+    float angle = abs( fmod( angle_rad, M_PI ) );
+    float x, y;
+    if( angle <= (M_PI/4.0f) ){
+        x = halfLen;
+        y = x * tan( angle );
+    }else if( angle <= (M_PI/2.0f) ){
+        angle = (M_PI/2.0f) - angle;
+        y     = halfLen;
+        x     = y * tan( angle );
+    }else if( angle <= (3.0f*M_PI/4.0f) ){
+        angle -= M_PI/2.0f; 
+        y     = halfLen;
+        x     = y * tan( angle );
+    }else{
+        angle = M_PI - angle;
+        x     = halfLen;
+        y     = x * tan( angle );
+    }
+    return sqrtf( x*x + y*y );
+}
 
 class BoxKart : public CompositeModel { public:
     // A funky little cart with Katamari steering and (very) simple dynamics, +X is forward
@@ -277,13 +299,18 @@ class BoxKart : public CompositeModel { public:
         float axelY = yLen / 2.0f;
         float axelX = xLen / 2.0f;
 
-        float leftMag   = sqrtf( leftStickX*leftStickX + leftStickY*leftStickY );
+        // Circle the Square: Treat the thumbsticks as though their output is confined to a unit circle
+
         float leftTheta = atan2f( leftStickX, leftStickY );
+        float leftMag   = sqrtf( leftStickX*leftStickX + leftStickY*leftStickY ) / dist_to_square_edge( leftTheta );
 
-        float rghtMag   = sqrtf( rghtStickX*rghtStickX + rghtStickY*rghtStickY );
         float rghtTheta = atan2f( rghtStickX, rghtStickY );
+        float rghtMag   = sqrtf( rghtStickX*rghtStickX + rghtStickY*rghtStickY ) / dist_to_square_edge( rghtTheta );
 
-        cout << "Left Theta: " << leftTheta << ", Right Theta: " << rghtTheta << endl;
+        cout << "Left Theta: ___ " << leftTheta << ", Right Theta: ___ " << rghtTheta << endl;
+        cout << "Left Magnitude: " << leftMag   << ", Right Magnitude: " << rghtMag << endl;
+        // cout << "Left Stick: "    << leftStickX << ", " << leftStickY 
+        //      << ", Right Stick: " << rghtStickX << ", " << rghtStickY << endl;
 
         move_forward(  (leftStickY + rghtStickY)/2.0f * driveMax  );
         turn( /*----*/ (leftStickY - rghtStickY)/2.0f * turnMax   );
@@ -380,7 +407,6 @@ int main(){
         }
 
         xyGrid.draw();
-        // kart.set_part_poses();
         kart.draw();
         
 
