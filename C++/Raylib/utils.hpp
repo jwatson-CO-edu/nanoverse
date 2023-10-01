@@ -9,7 +9,7 @@
 #include <stdlib.h>  // srand, rand
 #include <time.h>
 #include <iostream>
-using std::cout, std::endl, std::flush;
+using std::cout, std::endl, std::ostream, std::flush;
 #include <string>
 using std::string;
 #include <cmath>

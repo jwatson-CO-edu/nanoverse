@@ -19,7 +19,37 @@ template <typename T> T sgn(T val){
     return (T) ((T(0) < val) - (val < T(0)));
 }
 
+float Vector2CrossProduct( const Vector2& op1, const Vector2& op2 ){
+    // Return the magnitude of the cross product of two 2D vectors
+    return ( op1.x * op2.y - op1.y * op2.x );
+}
 
+Matrix translate_XY( const Matrix& xfrm, const Vector2& trns ){
+    // Move the pose within the local XY plane
+    return translate( xfrm, Vector3Add(
+        Vector3Transform( {trns.x, 0.0f  , 0.0f}, xfrm ),
+        Vector3Transform( {0.0f  , trns.y, 0.0f}, xfrm )
+    ) );
+}
+
+ostream& operator<<( ostream& os , const Vector3& vec ) { 
+    // ostream '<<' operator for Raylib Color
+    // NOTE: This function assumes that the ostream '<<' operator for T has already been defined
+    os << "{X: "  << ((float) vec.x);
+    os << ", Y: " << ((float) vec.y);
+    os << ", Z: " << ((float) vec.z);
+    os << "}";
+    return os; // You must return a reference to the stream!
+}
+
+ostream& operator<<( ostream& os , const Vector2& vec ) { 
+    // ostream '<<' operator for Raylib Color
+    // NOTE: This function assumes that the ostream '<<' operator for T has already been defined
+    os << "{X: "  << ((float) vec.x);
+    os << ", Y: " << ((float) vec.y);
+    os << "}";
+    return os; // You must return a reference to the stream!
+}
 
 ////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
 
@@ -164,13 +194,19 @@ float dist_to_square_edge( float angle_rad, float halfLen = 1.0f ){
     // Return the distance from the center of the square (with lengths `halfLen*2`) to the edge pointed to by `angle_rad`
     float angle = abs( fmod( angle_rad, M_PI ) );
     float x, y;
-    if( angle <= (M_PI/4.0f) ){
+    if( (angle == 0.0) || (angle == M_PI) ){
+        x = halfLen;
+        y = 0.0f;
+    }else if( angle <= (M_PI/4.0f) ){
         x = halfLen;
         y = x * tan( angle );
-    }else if( angle <= (M_PI/2.0f) ){
+    }else if( angle < (M_PI/2.0f) ){
         angle = (M_PI/2.0f) - angle;
         y     = halfLen;
         x     = y * tan( angle );
+    }else if( angle == (M_PI/2.0f) ){
+        y     = halfLen;
+        x     = 0.0f;
     }else if( angle <= (3.0f*M_PI/4.0f) ){
         angle -= M_PI/2.0f; 
         y     = halfLen;
@@ -285,6 +321,11 @@ class BoxKart : public CompositeModel { public:
         xfrm = move_X_vehicle( xfrm, dX );
     }
 
+    void move_XY( const Vector2& trns ){
+        // Drive in the XY plane direction
+        if( Vector2LengthSqr( trns ) > 0.0f )  xfrm = translate_XY( xfrm, trns );
+    }
+
     void turn( float theta ){
         // Positive turn about the local +Z
         xfrm = MatrixMultiply( MatrixRotateZ( theta ), xfrm );
@@ -301,33 +342,51 @@ class BoxKart : public CompositeModel { public:
 
         // Circle the Square: Treat the thumbsticks as though their output is confined to a unit circle
 
-        float leftTheta = atan2f( leftStickX, leftStickY );
-        float leftMag   = sqrtf( leftStickX*leftStickX + leftStickY*leftStickY ) / dist_to_square_edge( leftTheta );
+        float   leftTheta = atan2f( leftStickX, leftStickY );
+        float   leftMag   = sqrtf( leftStickX*leftStickX + leftStickY*leftStickY ) / dist_to_square_edge( leftTheta );
+        Vector2 leftVec   = { leftMag * cos( leftTheta ), leftMag * sin( leftTheta ) };
 
-        float rghtTheta = atan2f( rghtStickX, rghtStickY );
-        float rghtMag   = sqrtf( rghtStickX*rghtStickX + rghtStickY*rghtStickY ) / dist_to_square_edge( rghtTheta );
+        float   rghtTheta = atan2f( rghtStickX, rghtStickY );
+        float   rghtMag   = sqrtf( rghtStickX*rghtStickX + rghtStickY*rghtStickY ) / dist_to_square_edge( rghtTheta );
+        Vector2 rghtVec   = { rghtMag * cos( rghtTheta ), rghtMag * sin( rghtTheta ) };
 
-        cout << "Left Theta: ___ " << leftTheta << ", Right Theta: ___ " << rghtTheta << endl;
-        cout << "Left Magnitude: " << leftMag   << ", Right Magnitude: " << rghtMag << endl;
+        Vector2 result  = Vector2Scale( Vector2Add( leftVec, rghtVec ), 0.5 );
+        Vector2 resMove = Vector2Scale( result, driveMax );
+        float   resTurn = (Vector2CrossProduct( leftVec, {0.0f, -1.0f} ) + Vector2CrossProduct( rghtVec, {0.0f, 1.0f} )) 
+                          * 0.5 * driveMax;
+        
+        // move_forward(  (leftStickY + rghtStickY)/2.0f * driveMax  );
+        // turn( /*----*/ (leftStickY - rghtStickY)/2.0f * turnMax   );
+
+        move_XY( resMove );
+        turn(    resTurn );
+
+        cout << resMove << ", " << resTurn << ", " << get_posn( xfrm ) << endl;
+        // cout << get_posn( xfrm ) << endl;
+        // cout << "Left Theta: ___ " << leftTheta << ", Right Theta: ___ " << rghtTheta << endl;
+        // cout << "Left Magnitude: " << leftMag   << ", Right Magnitude: " << rghtMag << endl;
         // cout << "Left Stick: "    << leftStickX << ", " << leftStickY 
         //      << ", Right Stick: " << rghtStickX << ", " << rghtStickY << endl;
 
-        move_forward(  (leftStickY + rghtStickY)/2.0f * driveMax  );
-        turn( /*----*/ (leftStickY - rghtStickY)/2.0f * turnMax   );
+        
 
         if( abs( leftTheta ) < (M_PI/2.0f) ){
-            leftWhlTheta -=  leftStickY * driveMax / (1.0f * wheelRad * M_PI);
+            // leftWhlTheta -=  leftStickY * driveMax / (1.0f * wheelRad * M_PI);
+            leftWhlTheta -=  leftMag * driveMax / (1.0f * wheelRad * M_PI);
             // leftTheta += (M_PI/2.0f) * sgn( leftTheta );
         }else{
-            leftWhlTheta +=  leftStickY * driveMax / (1.0f * wheelRad * M_PI);
+            // leftWhlTheta +=  leftStickY * driveMax / (1.0f * wheelRad * M_PI);
+            leftWhlTheta +=  leftMag * driveMax / (1.0f * wheelRad * M_PI);
         }  
 
         
         if( abs( rghtTheta ) < (M_PI/2.0f) ){
-            rghtWhlTheta -=  rghtStickY * driveMax / (1.0f * wheelRad * M_PI);
+            // rghtWhlTheta -=  rghtStickY * driveMax / (1.0f * wheelRad * M_PI);
+            rghtWhlTheta -=  rghtMag * driveMax / (1.0f * wheelRad * M_PI);
             // rghtTheta += (M_PI/2.0f) * sgn( rghtTheta );
         }else{
-            rghtWhlTheta +=  rghtStickY * driveMax / (1.0f * wheelRad * M_PI);
+            // rghtWhlTheta +=  rghtStickY * driveMax / (1.0f * wheelRad * M_PI);
+            rghtWhlTheta +=  rghtMag * driveMax / (1.0f * wheelRad * M_PI);
         }  
 
         // Set poses for Left Wheels
