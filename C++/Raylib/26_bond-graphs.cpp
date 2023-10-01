@@ -1,4 +1,4 @@
-// g++ 24_cubelings.cpp -std=c++17 -lraylib -O3
+// g++ 26_bond-graphs.cpp -std=c++17 -lraylib -O3 -o bondGraphs.out
 // Recreate endearing block creatures from graphics class
 
 
@@ -13,6 +13,61 @@
 typedef array<float,2> eff_flo;
 
 
+////////// BOND GRAPH VISUALIZATION ////////////////////////////////////////////////////////////////
+const int _FONT_SIZE = 20; 
+
+class Render_BG{ public:
+    // Base class for Bond Graph component rendering strategy
+
+    /// Members ///
+
+    Vector2 posn; // Position on the screen
+    float   size; // Diameter
+    string  symb; // Identifying symbol
+    string  text; // Flavor text and/or label
+
+    /// Constructor(s) ///
+    Render_BG( Vector2 posn_, float size_, string symb_, string text_ = "" ){
+        posn = posn_;
+        size = size_;
+        symb = symb_;
+        text = text_;
+    }
+
+    virtual void draw(){  DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, RED );  }
+};
+
+class Draw0Junc : public Render_BG { public:
+    /// Constructor(s) ///
+    Draw0Junc( Vector2 posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "0", text_ ){}
+
+    void draw(){  
+        DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, LIGHTGRAY );  
+        DrawText( symb.c_str(), (int) posn.x, (int) posn.y, 20, BLACK );
+        DrawText( text.c_str(), (int) posn.x, (int) posn.y+20, 20, BLACK );
+    }
+};
+
+class Draw1Junc : public Render_BG { public:
+    /// Constructor(s) ///
+    Draw1Junc( Vector2 posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "1", text_ ){}
+
+    void draw(){  
+        DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, LIGHTGRAY );  
+        DrawText( symb.c_str(), 
+                  (int) posn.x - MeasureText( symb.c_str(), _FONT_SIZE)/2, 
+                  (int) posn.y - _FONT_SIZE/2, 
+                  _FONT_SIZE, 
+                  BLACK );
+        DrawText( text.c_str(), 
+                  (int) posn.x - MeasureText( text.c_str(), _FONT_SIZE)/2, 
+                  (int) posn.y + _FONT_SIZE, 
+                  _FONT_SIZE, 
+                  BLACK );
+    }
+};
+
+
 ////////// BOND GRAPH COMPONENTS ///////////////////////////////////////////////////////////////////
 
 ///// Forward Declarations ///////////////////////
@@ -20,40 +75,7 @@ typedef array<float,2> eff_flo;
 class  Node_BG;    typedef shared_ptr<Node_BG>   nodePtr;
 struct Edge_BG;    typedef shared_ptr<Edge_BG>   edgePtr;
 class  Render_BG;  typedef shared_ptr<Render_BG> rndrPtr;
-
-///// 1-Port Node Laws ///////////////////////////
-
-eff_flo error_energy(){  return {nanf(""), nanf("")};  }
-
-class Law_Node{ public:
-    // Base class for all node Constitutive Laws
-    virtual eff_flo operator()( nodePtr node ){  return error_energy();  }
-}; 
-typedef shared_ptr<Law_Node> lawNodPtr;
-
-class Inertia_Law : public Law_Node{ public:
-    // Inertias store kinetic energy as a function of momentum
-    eff_flo operator()( nodePtr node ){  return {
-    /* e = */ (node->I)*node->df, 
-    /* f = */ (1.0f/node->I)*node->p 
-    };  }
-};
-
-class Capacitor_Law : public Law_Node{ public:
-    // Capacitors store potential energy as a function of displacement
-    eff_flo operator()( nodePtr node ){  return {
-    /* e = */ (1.0f/node->C)*node->q, 
-    /* f = */ (node->C)*node->de, 
-    };  }
-};
-
-class Resistor_Law : public Law_Node{ public:
-    // A resistors is a loss mechanism that dissipates energy
-    eff_flo operator()( nodePtr node ){  return {
-    /* e = */ (node->R)*(node->f), 
-    /* f = */ (1.0f/node->R)*node->e
-    };  }
-};
+class  Law_Node;   typedef shared_ptr<Law_Node>  lawNodPtr;
 
 ///// Nodes //////////////////////////////////////
 
@@ -109,6 +131,11 @@ class Node_BG{ public:
     float q; // displacement
 
     // 2-Port Nodes //
+
+    void draw(){
+        // If the rendering strat exists, Then run it!
+        if( painter ){  painter->draw();  }
+    }
 };
 
 struct Edge_BG{
@@ -135,55 +162,91 @@ nodePtr make_1_junction( string name_ = "1-Junction" ){
     return rtnPtr;
 }
 
-////////// BOND GRAPH VISUALIZATION ////////////////////////////////////////////////////////////////
+///// 1-Port Node Laws ///////////////////////////
 
-class Render_BG{ public:
-    // Base class for Bond Graph component rendering strategy
+eff_flo error_energy(){  return {nanf(""), nanf("")};  }
 
-    /// Members ///
+class Law_Node{ public:
+    // Base class for all node Constitutive Laws
+    virtual eff_flo operator()( nodePtr node ){  return error_energy();  }
+}; 
 
-    Vector2 posn; // Position on the screen
-    float   size; // Diameter
-    string  symb; // Identifying symbol
-    string  text; // Flavor text and/or label
-
-    /// Constructor(s) ///
-    Render_BG( Vector2 posn_, float size_, string symb_, string text_ = "" ){
-        posn = posn_;
-        size = size_;
-        symb = symb_;
-        text = text_;
-    }
-
-    virtual void draw(){  DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, RED );  }
+class Inertia_Law : public Law_Node{ public:
+    // Inertias store kinetic energy as a function of momentum
+    eff_flo operator()( nodePtr node ){  return {
+    /* e = */ (node->I)*node->df, 
+    /* f = */ (1.0f/node->I)*node->p 
+    };  }
 };
 
-class Draw0Junc : public Render_BG { public:
-    /// Constructor(s) ///
-    Draw0Junc( Vector2 posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "0", text_ ){}
-
-    void draw(){  
-        DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, LIGHTGRAY );  
-        DrawText( symb.c_str(), (int) posn.x, (int) posn.y, 20, BLACK );
-        DrawText( text.c_str(), (int) posn.x, (int) posn.y+20, 20, BLACK );
-    }
+class Capacitor_Law : public Law_Node{ public:
+    // Capacitors store potential energy as a function of displacement
+    eff_flo operator()( nodePtr node ){  return {
+    /* e = */ (1.0f/node->C)*node->q, 
+    /* f = */ (node->C)*node->de, 
+    };  }
 };
 
-class Draw1Junc : public Render_BG { public:
-    /// Constructor(s) ///
-    Draw1Junc( Vector2 posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "1", text_ ){}
-
-    void draw(){  
-        DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, LIGHTGRAY );  
-        DrawText( symb.c_str(), (int) posn.x, (int) posn.y, 20, BLACK );
-        DrawText( text.c_str(), (int) posn.x, (int) posn.y+20, 20, BLACK );
-    }
+class Resistor_Law : public Law_Node{ public:
+    // A resistors is a loss mechanism that dissipates energy
+    eff_flo operator()( nodePtr node ){  return {
+    /* e = */ (node->R)*(node->f), 
+    /* f = */ (1.0f/node->R)*node->e
+    };  }
 };
+
+
 
 
 ////////// RACK AND PINION EXAMPLE /////////////////////////////////////////////////////////////////
 
 // FIXME: Implement Section 3, Slide 13+
 
-nodePtr omega1 = nodePtr( make_1_junction( "omega_1"    ) );
-nodePtr veloc1 = nodePtr( make_1_junction( "velocity_1" ) );
+int main(){
+
+    ///// Raylib Init /////////////////////////////////////////////////////
+
+    /// RNG Init ///
+    rand_seed();
+
+    /// Window Init ///
+    InitWindow( 900, 900, "Bond Graphs, Ver. 0.1" );
+    SetTargetFPS( 60 );
+
+    ///// Create Objects //////////////////////////////////////////////////
+
+    Camera2D camera{};
+    camera.target   = {0,0};
+    camera.offset   = {450,450};
+    camera.zoom     = 1.0;
+    camera.rotation = 0.0;
+
+    nodePtr omega1 = make_1_junction( "omega_1" );
+    omega1->painter = rndrPtr( new Draw1Junc( {0, 0}, 30, "omega_1" ) );
+
+    nodePtr veloc1 = make_1_junction( "velocity_1" );
+    veloc1->painter = rndrPtr( new Draw1Junc( {200, 0}, 30, "velocity_1" ) );
+
+    ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
+
+    while( !WindowShouldClose() ){
+
+        /// Begin Drawing ///
+        BeginDrawing();
+        BeginMode2D( camera );
+        ClearBackground( RAYWHITE );
+
+        ///// DRAW LOOP ///////////////////////////////////////////////////
+
+        omega1->draw();
+        veloc1->draw();
+
+        ///// END DRAWING /////////////////////////////////////////////////
+
+        /// End Drawing ///
+        EndMode2D();
+        EndDrawing();
+    }
+
+    return 0;
+}
