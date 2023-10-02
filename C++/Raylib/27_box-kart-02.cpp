@@ -26,6 +26,9 @@ float Vector2CrossProduct( const Vector2& op1, const Vector2& op2 ){
 
 Matrix translate_XY( const Matrix& xfrm, const Vector2& trns ){
     // Move the pose within the local XY plane
+
+    // FIXME: NEED TO ROUND THE TINY VALUES TO ZERO
+
     return translate( xfrm, Vector3Add(
         Vector3Transform( {trns.x, 0.0f  , 0.0f}, xfrm ),
         Vector3Transform( {0.0f  , trns.y, 0.0f}, xfrm )
@@ -233,10 +236,6 @@ class BoxKart : public CompositeModel { public:
     float rghtWhlTheta;
 
     /// Control ///
-    // float leftSteer;
-    // float leftEffort;
-    // float rghtSteer;
-    // float rghtEffort;
     float turnMax;
     float driveMax;
 
@@ -353,7 +352,7 @@ class BoxKart : public CompositeModel { public:
         Vector2 result  = Vector2Scale( Vector2Add( leftVec, rghtVec ), 0.5 );
         Vector2 resMove = Vector2Scale( result, driveMax );
         float   resTurn = (Vector2CrossProduct( leftVec, {0.0f, -1.0f} ) + Vector2CrossProduct( rghtVec, {0.0f, 1.0f} )) 
-                          * 0.5 * driveMax;
+                          * 0.5 * turnMax;
         
         // move_forward(  (leftStickY + rghtStickY)/2.0f * driveMax  );
         // turn( /*----*/ (leftStickY - rghtStickY)/2.0f * turnMax   );
@@ -361,10 +360,14 @@ class BoxKart : public CompositeModel { public:
         move_XY( resMove );
         turn(    resTurn );
 
-        cout << resMove << ", " << resTurn << ", " << get_posn( xfrm ) << endl;
+        // cout << "Resultant: " << result << endl;
+        cout << "Displacement: " << resMove << ", Position: " << get_posn( xfrm ) << endl;
+        // cout << dist_to_square_edge( leftTheta ) << ", " << dist_to_square_edge( rghtTheta ) << endl;
+        // cout << resMove << ", " << resTurn << ", " << get_posn( xfrm ) << endl;
         // cout << get_posn( xfrm ) << endl;
         // cout << "Left Theta: ___ " << leftTheta << ", Right Theta: ___ " << rghtTheta << endl;
         // cout << "Left Magnitude: " << leftMag   << ", Right Magnitude: " << rghtMag << endl;
+        // cout << "Left Vector: " << leftVec << ", Right Vector: " << rghtVec << endl;
         // cout << "Left Stick: "    << leftStickX << ", " << leftStickY 
         //      << ", Right Stick: " << rghtStickX << ", " << rghtStickY << endl;
 
