@@ -1,4 +1,4 @@
-// g++ 20_ribbon-rebuild.cpp -std=c++17 -lraylib -O3
+// g++ 20_ribbon-rebuild.cpp -std=c++17 -lraylib -O3 -o ribbonShiny.out
 // Re-implement Boid Ribbons **without** constantly creating meshes!
 // 2023-08-14: Do not break into smaller files until everything works
 

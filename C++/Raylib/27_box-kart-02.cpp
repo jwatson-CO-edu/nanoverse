@@ -24,15 +24,24 @@ float Vector2CrossProduct( const Vector2& op1, const Vector2& op2 ){
     return ( op1.x * op2.y - op1.y * op2.x );
 }
 
+float round_to_N_places( float x, uint N ){
+    // Round the float `x` to `N` decimal places
+    // Adapted From: Prashant Bade, https://stackoverflow.com/a/66930362
+    float factor = powf( 10.0f, 1.0f*N );
+    return roundf( x * factor ) / factor;
+}
+
 Matrix translate_XY( const Matrix& xfrm, const Vector2& trns ){
     // Move the pose within the local XY plane
-
-    // FIXME: NEED TO ROUND THE TINY VALUES TO ZERO
-
-    return translate( xfrm, Vector3Add(
-        Vector3Transform( {trns.x, 0.0f  , 0.0f}, xfrm ),
-        Vector3Transform( {0.0f  , trns.y, 0.0f}, xfrm )
-    ) );
+    float x = round_to_N_places( trns.x, 4 );
+    float y = round_to_N_places( trns.y, 4 );
+    if( (x > 0.0) || (x > 0.0) )
+        return translate( xfrm, Vector3Add(
+            Vector3Transform( {   x, 0.0f, 0.0f}, xfrm ),
+            Vector3Transform( {0.0f,    y, 0.0f}, xfrm )
+        ) );
+    else
+        return Matrix{ xfrm };
 }
 
 ostream& operator<<( ostream& os , const Vector3& vec ) { 
