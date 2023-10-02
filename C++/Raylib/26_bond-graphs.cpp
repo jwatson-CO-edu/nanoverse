@@ -15,6 +15,7 @@ typedef array<float,2> eff_flo;
 
 ////////// BOND GRAPH VISUALIZATION ////////////////////////////////////////////////////////////////
 const int _FONT_SIZE = 20; 
+const int _NODE_SIZE = 30; 
 
 class Render_BG{ public:
     // Base class for Bond Graph component rendering strategy
@@ -34,26 +35,8 @@ class Render_BG{ public:
         text = text_;
     }
 
-    virtual void draw(){  DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, RED );  }
-};
-
-class Draw0Junc : public Render_BG { public:
-    /// Constructor(s) ///
-    Draw0Junc( Vector2 posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "0", text_ ){}
-
-    void draw(){  
-        DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, LIGHTGRAY );  
-        DrawText( symb.c_str(), (int) posn.x, (int) posn.y, 20, BLACK );
-        DrawText( text.c_str(), (int) posn.x, (int) posn.y+20, 20, BLACK );
-    }
-};
-
-class Draw1Junc : public Render_BG { public:
-    /// Constructor(s) ///
-    Draw1Junc( Vector2 posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "1", text_ ){}
-
-    void draw(){  
-        DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, LIGHTGRAY );  
+    virtual void draw_text(){
+        // Draw the text associated with this node
         DrawText( symb.c_str(), 
                   (int) posn.x - MeasureText( symb.c_str(), _FONT_SIZE)/2, 
                   (int) posn.y - _FONT_SIZE/2, 
@@ -64,6 +47,38 @@ class Draw1Junc : public Render_BG { public:
                   (int) posn.y + _FONT_SIZE, 
                   _FONT_SIZE, 
                   BLACK );
+    }
+
+    virtual void draw(){  DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, RED );  }
+};
+
+class Draw0Junc : public Render_BG { public:
+    /// Constructor(s) ///
+    Draw0Junc( Vector2 posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "0", text_ ){}
+
+    void draw(){  
+        DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, LIGHTGRAY );  
+        draw_text();
+    }
+};
+
+class Draw1Junc : public Render_BG { public:
+    /// Constructor(s) ///
+    Draw1Junc( Vector2 posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "1", text_ ){}
+
+    void draw(){  
+        DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, LIGHTGRAY );  
+        draw_text();
+    }
+};
+
+class DrawXformer : public Render_BG { public:
+    /// Constructor(s) ///
+    DrawXformer( Vector2 posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "TF", text_ ){}
+
+    void draw(){  
+        DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, YELLOW );  
+        draw_text();
     }
 };
 
@@ -138,27 +153,44 @@ class Node_BG{ public:
     }
 };
 
-struct Edge_BG{
+class Edge_BG{ public:
     // A pipe for effort and flow
 
     /// End 1 ///
-    nodePtr end1;
-    float   e1;
-    float   f1;
+    nodePtr  end1;
+    Flow_Dir dir1;
+    float    e1;
+    float    f1;
 
     /// End 2 ///
-    nodePtr end2;
-    float   e2;
-    float   f2;
+    nodePtr  end2;
+    Flow_Dir dir1;
+    float    e2;
+    float    f2;
 };
 
-nodePtr make_1_junction( string name_ = "1-Junction" ){
+edgePtr make_edge( nodePtr src, nodePtr dst ){
+    // Connect nodes with an edge and return a pointer to the edge
+    // FIXME, START HERE: CLARIFY ABSTRACTION, ASSIGN RENDER STRAT, AND RETURN POINTER
+}
+
+nodePtr make_1_junction( const Vector2& location, string name_ = "1-Junction" ){
     // Return a blank 1-Junction
     nodePtr rtnPtr = nodePtr( new Node_BG{} );
     rtnPtr->type    = JUNCTN_0;
     rtnPtr->name    = name_;
     rtnPtr->portLim = 0;
-    // FIXME: ADD RENDERING STRAT FOR THIS TYPE
+    rtnPtr->painter = rndrPtr( new Draw1Junc( location, _NODE_SIZE, name_ ) );
+    return rtnPtr;
+}
+
+nodePtr make_transformer( const Vector2& location, string name_ = "Transformer" ){
+    // Return a blank 1-Junction
+    nodePtr rtnPtr = nodePtr( new Node_BG{} );
+    rtnPtr->type    = XFORMER;
+    rtnPtr->name    = name_;
+    rtnPtr->portLim = 2;
+    rtnPtr->painter = rndrPtr( new DrawXformer( location, _NODE_SIZE*1.25f, name_ ) );
     return rtnPtr;
 }
 
@@ -199,8 +231,7 @@ class Resistor_Law : public Law_Node{ public:
 
 
 ////////// RACK AND PINION EXAMPLE /////////////////////////////////////////////////////////////////
-
-// FIXME: Implement Section 3, Slide 13+
+// Section 3, Slide 13+
 
 int main(){
 
@@ -221,11 +252,9 @@ int main(){
     camera.zoom     = 1.0;
     camera.rotation = 0.0;
 
-    nodePtr omega1 = make_1_junction( "omega_1" );
-    omega1->painter = rndrPtr( new Draw1Junc( {0, 0}, 30, "omega_1" ) );
-
-    nodePtr veloc1 = make_1_junction( "velocity_1" );
-    veloc1->painter = rndrPtr( new Draw1Junc( {200, 0}, 30, "velocity_1" ) );
+    nodePtr omega1 = make_1_junction(  {-200, 0}, "omega_1"    );
+    nodePtr veloc1 = make_1_junction(  { 200, 0}, "velocity_1" );
+    nodePtr xformr = make_transformer( {   0, 0}, "v_1 = r * om_1" );
 
     ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
 
@@ -240,6 +269,7 @@ int main(){
 
         omega1->draw();
         veloc1->draw();
+        xformr->draw();
 
         ///// END DRAWING /////////////////////////////////////////////////
 
