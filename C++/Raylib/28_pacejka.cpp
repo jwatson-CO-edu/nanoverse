@@ -1,5 +1,5 @@
-// g++ 27_box-kart-02.cpp -std=c++17 -lraylib -O3 -o boxkart.out
-// Arcade kart with Katamari steering
+// g++ 28_pacejka.cpp -std=c++17 -lraylib -O3 -o boxkart.out
+// Implement the simplest tire slip model
 
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
@@ -11,182 +11,53 @@
 
 
 
-////////// UTILITY FUNCTIONS ///////////////////////////////////////////////////////////////////////
+////////// DYNAMICS ////////////////////////////////////////////////////////////////////////////////
 
-template <typename T> T sgn(T val){
-    // Return the sign of the number, or zero for zero magnitude
-    // Original Author: Stef, https://stackoverflow.com/a/4609795
-    return (T) ((T(0) < val) - (val < T(0)));
-}
+struct PacejkaWheel{
+    // Simplest frictional wheel model
+    // https://www.edy.es/dev/docs/pacejka-94-parameters-explained-a-comprehensive-guide/
 
-float Vector2CrossProduct( const Vector2& op1, const Vector2& op2 ){
-    // Return the magnitude of the cross product of two 2D vectors
-    return ( op1.x * op2.y - op1.y * op2.x );
-}
+    ///// Longitudinal Force //////////////////////////////////////////////
 
-float round_to_N_places( float x, uint N ){
-    // Round the float `x` to `N` decimal places
-    // Adapted From: Prashant Bade, https://stackoverflow.com/a/66930362
-    float factor = powf( 10.0f, 1.0f*N );
-    return roundf( x * factor ) / factor;
-}
+    float b00; // Shape factor 		1.4 .. 1.8 	1.5
+    float b01; // Load influence on longitudinal friction coefficient (*1000) 	1/kN 	-80 .. +80 	0
+    float b02; // Longitudinal friction coefficient (*1000) 		900 .. 1700 	1100
+    float b03; // Curvature factor of stiffness/load 	N/%/kN^2 	-20 .. +20 	0
+    float b04; // Change of stiffness with slip 	N/% 	100 .. 500 	300
+    float b05; // Change of progressivity of stiffness/load 	1/kN 	-1 .. +1 	0
+    float b06; // Curvature change with load^2 		-0.1 .. +0.1 	0
+    float b07; // Curvature change with load 		-1 .. +1 	0
+    float b08; // Curvature factor 		-20 .. +1 	-2
+    float b09; // Load influence on horizontal shift 	%/kN 	-1 .. +1 	0
+    float b10; // Horizontal shift 	% 	-5 .. +5 	0
+    float b11; // Vertical shift 	N 	-100 .. +100 	0
+    float b12; // Vertical shift at load = 0 	N 	-10 .. +10 	0
+    float b13; // Curvature shift
 
-Matrix translate_XY( const Matrix& xfrm, const Vector2& trns ){
-    // Move the pose within the local XY plane
-    float x = round_to_N_places( trns.x, 4 );
-    float y = round_to_N_places( trns.y, 4 );
-    Vector3 Xlocal = Vector3Transform( { 1.0f, 0.0f, 0.0f}, set_posn( xfrm, Vector3Zero() ) ); 
-    Vector3 Ylocal = Vector3Transform( { 0.0f, 1.0f, 0.0f}, set_posn( xfrm, Vector3Zero() ) ); 
-    // cout << "X Move: "
-    return translate( xfrm, Vector3Add(
-        Vector3Scale( Xlocal, x ),
-        Vector3Scale( Ylocal, y )
-    ) );
-}
+    ///// Lateral Force ///////////////////////////////////////////////////
+    
+    float a00; // Shape factor 		1.2 .. 18 	1.4
+    float a01; // Load influence on lateral friction coefficient (*1000) 	1/kN 	-80 .. +80 	0
+    float a02; // Lateral friction coefficient (*1000) 		900 .. 1700 	1100
+    float a03; // Change of stiffness with slip 	N/deg 	500 .. 2000 	1100
+    float a04; // Change of progressivity of stiffness / load 	1/kN 	0 .. 50 	10
+    float a05; // Camber influence on stiffness 	%/deg/100 	-0.1 .. +0.1 	0
+    float a06; // Curvature change with load 		-2 .. +2 	0
+    float a07; // Curvature factor 		-20 .. +1 	-2
+    float a08; // Load influence on horizontal shift 	deg/kN 	-1 .. +1 	0
+    float a09; // Horizontal shift at load = 0 and camber = 0 	deg 	-1 .. +1 	0
+    float a10; // Camber influence on horizontal shift 	deg/deg 	-0.1 .. +0.1 	0
+    float a11; // Vertical shift 	N 	-200 .. +200 	0
+    float a12; // Vertical shift at load = 0 	N 	-10 .. +10 	0
+    float a13; // Camber influence on vertical shift, load dependent 	N/deg/kN 	-10 .. +10 	0
+    float a14; // Camber influence on vertical shift 	N/deg 	-15 .. +15 	0
+    float a15; // Camber influence on lateral friction coefficient 	1/deg 	-0.01 .. +0.01 	0
+    float a16; // Curvature change with camber 		-0.1 .. +0.1 	0
+    float a17; // Curvature shift 		-1 .. +1 	0
+};
 
-ostream& operator<<( ostream& os , const Vector3& vec ) { 
-    // ostream '<<' operator for Raylib Color
-    // NOTE: This function assumes that the ostream '<<' operator for T has already been defined
-    os << "{X: "  << ((float) vec.x);
-    os << ", Y: " << ((float) vec.y);
-    os << ", Z: " << ((float) vec.z);
-    os << "}";
-    return os; // You must return a reference to the stream!
-}
-
-ostream& operator<<( ostream& os , const Vector2& vec ) { 
-    // ostream '<<' operator for Raylib Color
-    // NOTE: This function assumes that the ostream '<<' operator for T has already been defined
-    os << "{X: "  << ((float) vec.x);
-    os << ", Y: " << ((float) vec.y);
-    os << "}";
-    return os; // You must return a reference to the stream!
-}
-
-////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
-
-struct XY_Grid{
-    // Simplest X-Y grid with regular spacing
-
-    /// Members ///
-    Vector3 cntr;
-    float   xLen;
-    float   yLen;
-    float   unit;
-    Color   colr;
-
-    /// Construction Constants ///
-    float xMin;
-    float xMax;
-    float yMin;
-    float yMax;
-
-    /// Constructor(s) ///
-
-    XY_Grid( const Vector3& cntr_, float xLen_, float yLen_, float unit_, Color colr_ ){
-        // Set vars for drawing
-        cntr = cntr_;
-        xLen = xLen_;
-        yLen = yLen_;
-        unit = unit_;
-        colr = colr_;
-        xMin = cntr.x - xLen/2.0f;
-        xMax = cntr.x + xLen/2.0f;
-        yMin = cntr.y - yLen/2.0f;
-        yMax = cntr.y + yLen/2.0f;
-    }
-
-    /// Methods ///
-
-    void draw(){
-        // Draw the grid using lines
-        float   X = unit;
-        float   Y = unit;
-        rlBegin( RL_LINES );
-
-        rlColor4ub( colr.r, colr.g, colr.b, colr.a );
-
-        rlVertex3f( cntr.x, yMin, cntr.z );
-        rlVertex3f( cntr.x, yMax, cntr.z );
-
-        while( (cntr.x + X) <= xMax ){
-            rlVertex3f( cntr.x + X, yMin, cntr.z );
-            rlVertex3f( cntr.x + X, yMax, cntr.z );
-            rlVertex3f( cntr.x - X, yMin, cntr.z );
-            rlVertex3f( cntr.x - X, yMax, cntr.z );
-            X += unit;
-        }
-
-        rlVertex3f( xMin, cntr.y, cntr.z );
-        rlVertex3f( xMax, cntr.y, cntr.z );
-
-        while( (cntr.y + Y) <= yMax ){
-            rlVertex3f( xMin, cntr.y + Y, cntr.z );
-            rlVertex3f( xMax, cntr.y + Y, cntr.z );
-            rlVertex3f( xMin, cntr.y - Y, cntr.z );
-            rlVertex3f( xMax, cntr.y - Y, cntr.z );
-            Y += unit;
-        }
-
-        rlEnd();
-    }
-};  
 
 ////////// VEHICLES ////////////////////////////////////////////////////////////////////////////////
-
-
-class CompositeModel{ public:
-    // Contains multiple `DynaMesh` parts
-
-    /// Members ///
-
-    Matrix /*----*/ xfrm; // --- Pose of the entire model
-    vector<dynaPtr> parts; // -- Drawable components
-    Color /*-----*/ prtColor; // Main color of meshes
-    // vector<segment> lines; // -- Drawable line segments
-    // Color /*-----*/ linColor; // Color of line segments
-
-    /// Constructor(s) ///
-
-    CompositeModel(){
-        // Default pose is the origin
-        xfrm     = MatrixIdentity();
-        prtColor = BLUE;
-    }
-
-    /// Methods ///
-
-    void set_shader( Shader shader ){
-        // Set the shader for all parts
-        for( dynaPtr& part : parts ){  part->set_shader( shader );  }
-    }
-
-    void set_position( const Vector3& posn ){
-        // Set the position of the `Cubeling`
-        xfrm = set_posn( xfrm, posn );
-    }
-
-    Vector3 get_position(){
-        // Set the position of the `Cubeling`
-        return get_posn( xfrm );
-    }
-
-    void set_part_poses(){
-        // Set the shader for all parts
-        for( dynaPtr& part : parts ){  part->transform_from_parent( xfrm );  }
-    }
-
-    void draw(){
-        // Set the shader for all parts
-        for( dynaPtr& part : parts ){  part->draw();  }
-    }
-
-    size_t add_component( dynaPtr part ){
-        // Add a component and return the current part count
-        parts.push_back( part );
-        return parts.size();
-    }
-};
 
 void add_stripes_to_Cylinder( dynaPtr cylinder, Color color1, Color color2 ){
     // Color rectangular faces with alternating colors

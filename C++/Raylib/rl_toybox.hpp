@@ -69,7 +69,10 @@ Color uniform_random_color(){
     return Color{ rand_ubyte(), rand_ubyte(), rand_ubyte(), 255 };
 }
 
-
+float Vector2CrossProduct( const Vector2& op1, const Vector2& op2 ){
+    // Return the magnitude of the cross product of two 2D vectors
+    return ( op1.x * op2.y - op1.y * op2.x );
+}
 
 ////////// HOMOGENEOUS COORDINATES /////////////////////////////////////////////////////////////////
 
@@ -115,6 +118,19 @@ Matrix move_X_vehicle( const Matrix& xfrm, float dX ){
     // Move in the local X direction by `dX` 
     Matrix R = set_posn( xfrm, Vector3Zero() );
     return translate( xfrm, Vector3Scale( Vector3Transform( Vector3{1.0,0.0,0.0}, R ) , dX ) );
+}
+
+Matrix translate_XY( const Matrix& xfrm, const Vector2& trns ){
+    // Move the pose within the local XY plane
+    float x = round_to_N_places( trns.x, 4 );
+    float y = round_to_N_places( trns.y, 4 );
+    Vector3 Xlocal = Vector3Transform( { 1.0f, 0.0f, 0.0f}, set_posn( xfrm, Vector3Zero() ) ); 
+    Vector3 Ylocal = Vector3Transform( { 0.0f, 1.0f, 0.0f}, set_posn( xfrm, Vector3Zero() ) ); 
+    // cout << "X Move: "
+    return translate( xfrm, Vector3Add(
+        Vector3Scale( Xlocal, x ),
+        Vector3Scale( Ylocal, y )
+    ) );
 }
 
 ////////// VECTOR MATH STRUCTS /////////////////////////////////////////////////////////////////////
@@ -259,7 +275,78 @@ typedef shared_ptr<Basis> basPtr; // 2023-06-17: For now assume that Bases are l
 
 
 
-////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
+////////// BASIC TOYS //////////////////////////////////////////////////////////////////////////////
+
+struct XY_Grid{
+    // Simplest X-Y grid with regular spacing
+
+    /// Members ///
+    Vector3 cntr;
+    float   xLen;
+    float   yLen;
+    float   unit;
+    Color   colr;
+
+    /// Construction Constants ///
+    float xMin;
+    float xMax;
+    float yMin;
+    float yMax;
+
+    /// Constructor(s) ///
+
+    XY_Grid( const Vector3& cntr_, float xLen_, float yLen_, float unit_, Color colr_ ){
+        // Set vars for drawing
+        cntr = cntr_;
+        xLen = xLen_;
+        yLen = yLen_;
+        unit = unit_;
+        colr = colr_;
+        xMin = cntr.x - xLen/2.0f;
+        xMax = cntr.x + xLen/2.0f;
+        yMin = cntr.y - yLen/2.0f;
+        yMax = cntr.y + yLen/2.0f;
+    }
+
+    /// Methods ///
+
+    void draw(){
+        // Draw the grid using lines
+        float   X = unit;
+        float   Y = unit;
+        rlBegin( RL_LINES );
+
+        rlColor4ub( colr.r, colr.g, colr.b, colr.a );
+
+        rlVertex3f( cntr.x, yMin, cntr.z );
+        rlVertex3f( cntr.x, yMax, cntr.z );
+
+        while( (cntr.x + X) <= xMax ){
+            rlVertex3f( cntr.x + X, yMin, cntr.z );
+            rlVertex3f( cntr.x + X, yMax, cntr.z );
+            rlVertex3f( cntr.x - X, yMin, cntr.z );
+            rlVertex3f( cntr.x - X, yMax, cntr.z );
+            X += unit;
+        }
+
+        rlVertex3f( xMin, cntr.y, cntr.z );
+        rlVertex3f( xMax, cntr.y, cntr.z );
+
+        while( (cntr.y + Y) <= yMax ){
+            rlVertex3f( xMin, cntr.y + Y, cntr.z );
+            rlVertex3f( xMax, cntr.y + Y, cntr.z );
+            rlVertex3f( xMin, cntr.y - Y, cntr.z );
+            rlVertex3f( xMax, cntr.y - Y, cntr.z );
+            Y += unit;
+        }
+
+        rlEnd();
+    }
+};  
+
+
+
+////////// MESH TOYS ///////////////////////////////////////////////////////////////////////////////
 
 class DynaMesh{ public:
     // Straightforward container for a `Mesh` with changing geometry
@@ -655,6 +742,65 @@ class Cylinder : public DynaMesh{ public:
     }
 };
 
+
+
+////////// COMPLEX MESH TOYS ///////////////////////////////////////////////////////////////////////
+
+class CompositeModel{ public:
+    // Contains multiple `DynaMesh` parts
+
+    /// Members ///
+
+    Matrix /*----*/ xfrm; // --- Pose of the entire model
+    vector<dynaPtr> parts; // -- Drawable components
+    Color /*-----*/ prtColor; // Main color of meshes
+    // vector<segment> lines; // -- Drawable line segments
+    // Color /*-----*/ linColor; // Color of line segments
+
+    /// Constructor(s) ///
+
+    CompositeModel(){
+        // Default pose is the origin
+        xfrm     = MatrixIdentity();
+        prtColor = BLUE;
+    }
+
+    /// Methods ///
+
+    void set_shader( Shader shader ){
+        // Set the shader for all parts
+        for( dynaPtr& part : parts ){  part->set_shader( shader );  }
+    }
+
+    void set_position( const Vector3& posn ){
+        // Set the position of the `Cubeling`
+        xfrm = set_posn( xfrm, posn );
+    }
+
+    Vector3 get_position(){
+        // Set the position of the `Cubeling`
+        return get_posn( xfrm );
+    }
+
+    void set_part_poses(){
+        // Set the shader for all parts
+        for( dynaPtr& part : parts ){  part->transform_from_parent( xfrm );  }
+    }
+
+    void draw(){
+        // Set the shader for all parts
+        for( dynaPtr& part : parts ){  part->draw();  }
+    }
+
+    size_t add_component( dynaPtr part ){
+        // Add a component and return the current part count
+        parts.push_back( part );
+        return parts.size();
+    }
+};
+
+
+
 ////////// LIGHTING ////////////////////////////////////////////////////////////////////////////////
 
 struct Lighting{
@@ -699,5 +845,28 @@ struct Lighting{
         SetShaderValue( shader, shader.locs[SHADER_LOC_VECTOR_VIEW], &cam.position.x, SHADER_UNIFORM_VEC3 );
     }
 };
+
+
+
+////////// PRINTING FUNCTIONS //////////////////////////////////////////////////////////////////////
+
+ostream& operator<<( ostream& os , const Vector3& vec ) { 
+    // ostream '<<' operator for Raylib Color
+    // NOTE: This function assumes that the ostream '<<' operator for T has already been defined
+    os << "{X: "  << ((float) vec.x);
+    os << ", Y: " << ((float) vec.y);
+    os << ", Z: " << ((float) vec.z);
+    os << "}";
+    return os; // You must return a reference to the stream!
+}
+
+ostream& operator<<( ostream& os , const Vector2& vec ) { 
+    // ostream '<<' operator for Raylib Color
+    // NOTE: This function assumes that the ostream '<<' operator for T has already been defined
+    os << "{X: "  << ((float) vec.x);
+    os << ", Y: " << ((float) vec.y);
+    os << "}";
+    return os; // You must return a reference to the stream!
+}
 
 #endif /* RL_TOYBOX_H */ 

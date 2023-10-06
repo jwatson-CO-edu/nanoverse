@@ -46,4 +46,21 @@ ubyte rand_ubyte(){
 
 void rand_seed(){  srand( time(NULL) );  } // Seed RNG with unpredictable time-based seed
 
+
+
+////////// MATHEMATICS /////////////////////////////////////////////////////////////////////////////
+
+template <typename T> T sgn(T val){
+    // Return the sign of the number, or zero for zero magnitude
+    // Original Author: Stef, https://stackoverflow.com/a/4609795
+    return (T) ((T(0) < val) - (val < T(0)));
+}
+
+float round_to_N_places( float x, uint N ){
+    // Round the float `x` to `N` decimal places
+    // Adapted From: Prashant Bade, https://stackoverflow.com/a/66930362
+    float factor = powf( 10.0f, 1.0f*N );
+    return roundf( x * factor ) / factor;
+}
+
 #endif /* UTILS_H */
