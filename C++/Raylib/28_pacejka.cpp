@@ -33,6 +33,7 @@ struct PacejkaWheel{
     float b11; // Vertical shift 	N 	-100 .. +100 	0
     float b12; // Vertical shift at load = 0 	N 	-10 .. +10 	0
     float b13; // Curvature shift
+    float slip; // Slip ratio as a percentage
 
     ///// Lateral Force ///////////////////////////////////////////////////
     
@@ -54,6 +55,20 @@ struct PacejkaWheel{
     float a15; // Camber influence on lateral friction coefficient 	1/deg 	-0.01 .. +0.01 	0
     float a16; // Curvature change with camber 		-0.1 .. +0.1 	0
     float a17; // Curvature shift 		-1 .. +1 	0
+
+    ///// Calculations ////////////////////////////////////////////////////
+
+    float F_longitudinal( float Fz ){
+        float C   = b00;
+        float D   = Fz * (b01 * Fz + b02);
+        float BCD = (b03*Fz*Fz + b04*Fz) * expf(-b05 * Fz);
+        float B   = BCD / (C * D);
+        float H   = b09*Fz + b10;
+        float V   = b11*Fz + b12;
+        float E   = (b06*Fz*Fz + b07*Fz + b08) * (1 - b13*sgn(slip + H));
+        float Bx1 = B * (slip + H);
+        return D * sinf(C * atanf(Bx1 - E * (Bx1 - atanf(Bx1)))) + V;
+    }
 };
 
 
