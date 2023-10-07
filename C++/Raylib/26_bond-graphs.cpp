@@ -20,20 +20,37 @@ const int _NODE_SIZE = 30;
 class Render_BG{ public:
     // Base class for Bond Graph component rendering strategy
 
-    /// Members ///
+    /// Node Members ///
 
     Vector2 posn; // Position on the screen
     float   size; // Diameter
     string  symb; // Identifying symbol
     string  text; // Flavor text and/or label
 
+    /// Edge Members ///
+
+    Vector2 aBgn;
+    Vector2 aEnd;
+    Vector2 barb;
+
     /// Constructor(s) ///
-    Render_BG( Vector2 posn_, float size_, string symb_, string text_ = "" ){
+
+    Render_BG( const Vector2& posn_, float size_, string symb_, string text_ = "" ){
+        // Node painter base params
         posn = posn_;
         size = size_;
         symb = symb_;
         text = text_;
     }
+
+    Render_BG( const Vector2& aBgn_, const Vector2& aEnd_, const Vector2& barb_ ){
+        // Edge painter base params
+        aBgn = aBgn_;
+        aEnd = aEnd_;
+        barb = barb_;
+    }
+
+    /// Methods ///
 
     virtual void draw_text(){
         // Draw the text associated with this node
@@ -54,7 +71,7 @@ class Render_BG{ public:
 
 class Draw0Junc : public Render_BG { public:
     /// Constructor(s) ///
-    Draw0Junc( Vector2 posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "0", text_ ){}
+    Draw0Junc( const Vector2& posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "0", text_ ){}
 
     void draw(){  
         DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, LIGHTGRAY );  
@@ -64,7 +81,7 @@ class Draw0Junc : public Render_BG { public:
 
 class Draw1Junc : public Render_BG { public:
     /// Constructor(s) ///
-    Draw1Junc( Vector2 posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "1", text_ ){}
+    Draw1Junc( const Vector2& posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "1", text_ ){}
 
     void draw(){  
         DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, LIGHTGRAY );  
@@ -74,7 +91,7 @@ class Draw1Junc : public Render_BG { public:
 
 class DrawXformer : public Render_BG { public:
     /// Constructor(s) ///
-    DrawXformer( Vector2 posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "TF", text_ ){}
+    DrawXformer( const Vector2& posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "TF", text_ ){}
 
     void draw(){  
         DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, YELLOW );  
@@ -125,7 +142,7 @@ class Node_BG{ public:
     Node_Type /*--*/ type; // ---- Type of node
     string /*-----*/ name; // ---- Node label
     vector<edgePtr>  ports; // --- 1, 2, or N
-    vector<Flow_Dir> flowsDirs; // Direction of each flow (Not used?)
+    vector<Flow_Dir> flowDirs; //- Direction of each flow (Not used?)
     ubyte /*------*/ portLim; // - Limit on number of ports, (0 = no limit)
     lawNodPtr /*--*/ consLaw; // - Constitutive Law
     rndrPtr /*----*/ painter; // - Rendering strategy 
@@ -147,9 +164,25 @@ class Node_BG{ public:
 
     // 2-Port Nodes //
 
+    /// Methods ///
+
+    void connect_edge( edgePtr edge, Flow_Dir dir ){
+        ports.push_back( edge );
+        flowDirs.push_back( dir );
+    }
+
     void draw(){
         // If the rendering strat exists, Then run it!
         if( painter ){  painter->draw();  }
+    }
+};
+
+class DrawEdgeBasic : public Render_BG { public:
+    DrawEdgeBasic( const Vector2& bgn, const Vector2& end, const Vector2& brb ) : Render_BG( bgn, end, brb ){}
+
+    void draw(){
+        DrawLineEx( aBgn, aEnd, 4, BLACK );
+        DrawLineEx( aEnd, barb, 4, BLACK );
     }
 };
 
@@ -164,14 +197,38 @@ class Edge_BG{ public:
 
     /// End 2 ///
     nodePtr  end2;
-    Flow_Dir dir1;
+    Flow_Dir dir2;
     float    e2;
     float    f2;
+
+    /// Common ///
+    rndrPtr painter; // - Rendering strategy 
+
+    /// Methods ///
+
+    void draw(){
+        // If the rendering strat exists, Then run it!
+        if( painter ){  painter->draw();  }
+    }
 };
 
 edgePtr make_edge( nodePtr src, nodePtr dst ){
     // Connect nodes with an edge and return a pointer to the edge
-    // FIXME, START HERE: CLARIFY ABSTRACTION, ASSIGN RENDER STRAT, AND RETURN POINTER
+    Vector2 cntrSrc = src->painter->posn;
+    Vector2 cntrDst = dst->painter->posn;
+    Vector2 directn = Vector2Normalize( Vector2Subtract( cntrDst, cntrSrc ) );
+    Vector2 crossDr = {directn.y, directn.x};
+    Vector2 bgnSorc = Vector2Add( cntrSrc, Vector2Scale( directn, _NODE_SIZE * 1.25 ) );
+    Vector2 endDest = Vector2Subtract( cntrDst, Vector2Scale( directn, _NODE_SIZE * 1.25 ) );
+    Vector2 barbDst = Vector2Add(  Vector2Subtract( endDest, Vector2Scale( directn, _NODE_SIZE*0.75 ) ),
+                                   Vector2Scale( crossDr, _NODE_SIZE*0.75 )  );
+    edgePtr rtnPtr = edgePtr( new Edge_BG{} );
+    rtnPtr->end1 = src;
+    src->connect_edge( rtnPtr, OUTPUT );
+    rtnPtr->end2 = dst;
+    dst->connect_edge( rtnPtr, INPUT );
+    rtnPtr->painter = rndrPtr( new DrawEdgeBasic{ bgnSorc, endDest, barbDst } );
+    return rtnPtr;
 }
 
 nodePtr make_1_junction( const Vector2& location, string name_ = "1-Junction" ){
@@ -252,9 +309,12 @@ int main(){
     camera.zoom     = 1.0;
     camera.rotation = 0.0;
 
-    nodePtr omega1 = make_1_junction(  {-200, 0}, "omega_1"    );
-    nodePtr veloc1 = make_1_junction(  { 200, 0}, "velocity_1" );
-    nodePtr xformr = make_transformer( {   0, 0}, "v_1 = r * om_1" );
+    nodePtr /*---*/ omega1 = make_1_junction(  {-200, 0}, "omega_1"    );
+    nodePtr /*---*/ veloc1 = make_1_junction(  { 200, 0}, "velocity_1" );
+    nodePtr /*---*/ xformr = make_transformer( {   0, 0}, "v_1 = r * om_1" );
+    vector<edgePtr> edges;
+    edges.push_back( make_edge( omega1, xformr ) );
+    edges.push_back( make_edge( xformr, veloc1 ) );
 
     ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
 
@@ -270,6 +330,7 @@ int main(){
         omega1->draw();
         veloc1->draw();
         xformr->draw();
+        for( edgePtr& edge : edges ){  edge->draw();  }
 
         ///// END DRAWING /////////////////////////////////////////////////
 
