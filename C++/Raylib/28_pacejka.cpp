@@ -19,55 +19,83 @@ struct PacejkaWheel{
 
     ///// Longitudinal Force //////////////////////////////////////////////
 
-    float b00; // Shape factor 		1.4 .. 1.8 	1.5
-    float b01; // Load influence on longitudinal friction coefficient (*1000) 	1/kN 	-80 .. +80 	0
-    float b02; // Longitudinal friction coefficient (*1000) 		900 .. 1700 	1100
-    float b03; // Curvature factor of stiffness/load 	N/%/kN^2 	-20 .. +20 	0
-    float b04; // Change of stiffness with slip 	N/% 	100 .. 500 	300
-    float b05; // Change of progressivity of stiffness/load 	1/kN 	-1 .. +1 	0
-    float b06; // Curvature change with load^2 		-0.1 .. +0.1 	0
-    float b07; // Curvature change with load 		-1 .. +1 	0
-    float b08; // Curvature factor 		-20 .. +1 	-2
-    float b09; // Load influence on horizontal shift 	%/kN 	-1 .. +1 	0
-    float b10; // Horizontal shift 	% 	-5 .. +5 	0
-    float b11; // Vertical shift 	N 	-100 .. +100 	0
-    float b12; // Vertical shift at load = 0 	N 	-10 .. +10 	0
-    float b13; // Curvature shift
-    float slip; // Slip ratio as a percentage
+    float b00; // Shape factor ___________________________________________________________ 1.4 ... 1.8   1.5
+    float b01; // Load influence on longitudinal friction coefficient (*1000)  1/kN ____ -80 ... +80     0
+    float b02; // Longitudinal friction coefficient (*1000) ____________________________ 900 .. 1700  1100
+    float b03; // Curvature factor of stiffness/load _________________________ N/%/kN^2  -20 ... +20     0
+    float b04; // Change of stiffness with slip ______________________________ N/% _____ 100 ... 500   300
+    float b05; // Change of progressivity of stiffness/load __________________ 1/kN _____ -1 .... +1     0
+    float b06; // Curvature change with load^2 __________________________________________ -0.1 .. +0.1   0
+    float b07; // Curvature change with load ____________________________________________ -1 .... +1     0
+    float b08; // Curvature factor _____________________________________________________ -20 .... +1    -2
+    float b09; // Load influence on horizontal shift _________________________ %/kN _____ -1 .... +1     0
+    float b10; // Horizontal shift ___________________________________________ % ________ -5 .... +5     0
+    float b11; // Vertical shift _____________________________________________ N ______ -100 .. +100     0
+    float b12; // Vertical shift at load = 0 _________________________________ N _______ -10 ... +10     0
+    float b13; // Curvature shift _______________________________________________________ -1 .... +1     0
+    float slipRatio; // Slip ratio as a percentage
 
     ///// Lateral Force ///////////////////////////////////////////////////
     
-    float a00; // Shape factor 		1.2 .. 18 	1.4
-    float a01; // Load influence on lateral friction coefficient (*1000) 	1/kN 	-80 .. +80 	0
-    float a02; // Lateral friction coefficient (*1000) 		900 .. 1700 	1100
-    float a03; // Change of stiffness with slip 	N/deg 	500 .. 2000 	1100
-    float a04; // Change of progressivity of stiffness / load 	1/kN 	0 .. 50 	10
-    float a05; // Camber influence on stiffness 	%/deg/100 	-0.1 .. +0.1 	0
-    float a06; // Curvature change with load 		-2 .. +2 	0
-    float a07; // Curvature factor 		-20 .. +1 	-2
-    float a08; // Load influence on horizontal shift 	deg/kN 	-1 .. +1 	0
-    float a09; // Horizontal shift at load = 0 and camber = 0 	deg 	-1 .. +1 	0
-    float a10; // Camber influence on horizontal shift 	deg/deg 	-0.1 .. +0.1 	0
-    float a11; // Vertical shift 	N 	-200 .. +200 	0
-    float a12; // Vertical shift at load = 0 	N 	-10 .. +10 	0
-    float a13; // Camber influence on vertical shift, load dependent 	N/deg/kN 	-10 .. +10 	0
-    float a14; // Camber influence on vertical shift 	N/deg 	-15 .. +15 	0
-    float a15; // Camber influence on lateral friction coefficient 	1/deg 	-0.01 .. +0.01 	0
-    float a16; // Curvature change with camber 		-0.1 .. +0.1 	0
-    float a17; // Curvature shift 		-1 .. +1 	0
+    float a00; // Shape factor ________________________________________________________ 1.2 ... 18     1.4
+    float a01; // Load influence on lateral friction coefficient (*1000)  1/kN ______ -80 .... +80     0
+    float a02; // Lateral friction coefficient (*1000) ______________________________ 900 ... 1700  1100
+    float a03; // Change of stiffness with slip _________________________ N/deg _____ 500 ... 2000  1100
+    float a04; // Change of progressivity of stiffness / load ___________ 1/kN ________ 0 ..... 50    10
+    float a05; // Camber influence on stiffness _________________________ %/deg/100 __ -0.1 ... +0.1   0
+    float a06; // Curvature change with load _________________________________________ -2 ..... +2     0
+    float a07; // Curvature factor __________________________________________________ -20 ..... +1    -2
+    float a08; // Load influence on horizontal shift ____________________ deg/kN _____ -1 ..... +1     0
+    float a09; // Horizontal shift at load = 0 and camber = 0 ___________ deg ________ -1 ..... +1     0
+    float a10; // Camber influence on horizontal shift __________________ deg/deg ____ -0.1 ... +0.1   0
+    float a11; // Vertical shift ________________________________________ N ________ -200 ... +200     0
+    float a12; // Vertical shift at load = 0 ____________________________ N _________ -10 .... +10     0
+    float a13; // Camber influence on vertical shift, load dependent ____ N/deg/kN __ -10 .... +10     0
+    float a14; // Camber influence on vertical shift ____________________ N/deg _____ -15 .... +15     0
+    float a15; // Camber influence on lateral friction coefficient ______ 1/deg ______ -0.01 .. +0.01  0
+    float a16; // Curvature change with camber _______________________________________ -0.1 ... +0.1   0
+    float a17; // Curvature shift ____________________________________________________ -1 ..... +1     0
+    float slipAngle; // slip angle in degrees
+    float gamma; // camber angle in degrees
+
+    ///// Simplified (Magic) Parameters ///////////////////////////////////
+    //                      Range       Dry tarmac  Wet tarmac  Snow  Ice
+    float B; // Stiffness __ 4 .. 12 __ 10 ________ 12 ________ 5 ___ 4
+    float C; // Shape ______ 1 ... 2 ___ 1.9 _______ 2.3 ______ 2 ___ 2
+    float D; // Peak _______ 0.1 - 1.9 _ 1 _________ 0.82 _____ 0.3 _ 0.1
+    float E; // Curvature  -10 ... 1 ___ 0.97 ______ 1 ________ 1 ___ 1
 
     ///// Calculations ////////////////////////////////////////////////////
 
     float F_longitudinal( float Fz ){
+        // Force in the direction of rolling
         float C   = b00;
         float D   = Fz * (b01 * Fz + b02);
         float BCD = (b03*Fz*Fz + b04*Fz) * expf(-b05 * Fz);
         float B   = BCD / (C * D);
         float H   = b09*Fz + b10;
         float V   = b11*Fz + b12;
-        float E   = (b06*Fz*Fz + b07*Fz + b08) * (1 - b13*sgn(slip + H));
-        float Bx1 = B * (slip + H);
+        float E   = (b06*Fz*Fz + b07*Fz + b08) * (1 - b13*sgn(slipRatio + H));
+        float Bx1 = B * (slipRatio + H);
         return D * sinf(C * atanf(Bx1 - E * (Bx1 - atanf(Bx1)))) + V;
+    }
+
+    float F_lateral( float Fz ){
+        // Force along the axle axis
+        float C   = a00;
+        float D   = Fz * (a01*Fz + a02) * (1 - a15*gamma*gamma);
+        float BCD = a03 * sinf( atanf(Fz / a04) * 2) * (1 - a05*abs( gamma ));
+        float B   = BCD / (C * D);
+        float H   = a08*Fz + a09 + a10*gamma;
+        float E   = (a06*Fz + a07) * (1 - (a16*gamma + a17) * sgn(slipAngle + H));
+        float V   = a11*Fz + a12 + (a13*Fz + a14)*gamma*Fz;
+        float Bx1 = B * (slipAngle + H);
+        return D * sinf(C * atanf(Bx1 - E * (Bx1 - atanf(Bx1)))) + V;
+    }
+
+    float F_simple( float Fz ){
+        // Force in the direction of rolling
+        return Fz * D * sinf( C * atanf( B * slipRatio - E * (B * slipRatio - atanf(B * slipRatio))));
     }
 };
 
