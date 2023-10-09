@@ -94,6 +94,46 @@ class DrawXformer : public Render_BG { public:
     DrawXformer( const Vector2& posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "TF", text_ ){}
 
     void draw(){  
+        DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, BEIGE );  
+        draw_text();
+    }
+};
+
+class DrawInertia : public Render_BG { public:
+    /// Constructor(s) ///
+    DrawInertia( const Vector2& posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "I", text_ ){}
+
+    void draw(){  
+        DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, GREEN );  
+        draw_text();
+    }
+};
+
+class DrawCapacitor : public Render_BG { public:
+    /// Constructor(s) ///
+    DrawCapacitor( const Vector2& posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "C", text_ ){}
+
+    void draw(){  
+        DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, SKYBLUE );  
+        draw_text();
+    }
+};
+
+class DrawResistor : public Render_BG { public:
+    /// Constructor(s) ///
+    DrawResistor( const Vector2& posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "R", text_ ){}
+
+    void draw(){  
+        DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, MAGENTA );  
+        draw_text();
+    }
+};
+
+class DrawEffortSource : public Render_BG { public:
+    /// Constructor(s) ///
+    DrawEffortSource( const Vector2& posn_, float size_, string text_ = "" ) : Render_BG( posn_, size_, "Se", text_ ){}
+
+    void draw(){  
         DrawCircle( (int) posn.x, (int) posn.y, size/2.0f, YELLOW );  
         draw_text();
     }
@@ -217,7 +257,10 @@ edgePtr make_edge( nodePtr src, nodePtr dst ){
     Vector2 cntrSrc = src->painter->posn;
     Vector2 cntrDst = dst->painter->posn;
     Vector2 directn = Vector2Normalize( Vector2Subtract( cntrDst, cntrSrc ) );
-    Vector2 crossDr = {directn.y, directn.x};
+    float   angle   = atan2f( directn.y, directn.x );
+    float   rottn   = 3.0f*M_PI/4.0f;
+    if( randf() < 0.5 )  rottn *= -1.0f;
+    Vector2 crossDr = { cosf( angle + rottn ), sinf( angle + rottn ) };
     Vector2 bgnSorc = Vector2Add( cntrSrc, Vector2Scale( directn, _NODE_SIZE * 1.25 ) );
     Vector2 endDest = Vector2Subtract( cntrDst, Vector2Scale( directn, _NODE_SIZE * 1.25 ) );
     Vector2 barbDst = Vector2Add(  Vector2Subtract( endDest, Vector2Scale( directn, _NODE_SIZE*0.75 ) ),
@@ -242,12 +285,52 @@ nodePtr make_1_junction( const Vector2& location, string name_ = "1-Junction" ){
 }
 
 nodePtr make_transformer( const Vector2& location, string name_ = "Transformer" ){
-    // Return a blank 1-Junction
+    // Return a blank Transformer
     nodePtr rtnPtr = nodePtr( new Node_BG{} );
     rtnPtr->type    = XFORMER;
     rtnPtr->name    = name_;
     rtnPtr->portLim = 2;
     rtnPtr->painter = rndrPtr( new DrawXformer( location, _NODE_SIZE*1.25f, name_ ) );
+    return rtnPtr;
+}
+
+nodePtr make_inertia( const Vector2& location, string name_ = "Inertia" ){
+    // Return a blank 1-Junction
+    nodePtr rtnPtr = nodePtr( new Node_BG{} );
+    rtnPtr->type    = INERTIA;
+    rtnPtr->name    = name_;
+    rtnPtr->portLim = 1;
+    rtnPtr->painter = rndrPtr( new DrawInertia( location, _NODE_SIZE, name_ ) );
+    return rtnPtr;
+}
+
+nodePtr make_capacitor( const Vector2& location, string name_ = "Capacitor" ){
+    // Return a blank 1-Junction
+    nodePtr rtnPtr = nodePtr( new Node_BG{} );
+    rtnPtr->type    = CAPACITR;
+    rtnPtr->name    = name_;
+    rtnPtr->portLim = 1;
+    rtnPtr->painter = rndrPtr( new DrawCapacitor( location, _NODE_SIZE, name_ ) );
+    return rtnPtr;
+}
+
+nodePtr make_resistor( const Vector2& location, string name_ = "Resistor" ){
+    // Return a blank 1-Junction
+    nodePtr rtnPtr = nodePtr( new Node_BG{} );
+    rtnPtr->type    = RESISTOR;
+    rtnPtr->name    = name_;
+    rtnPtr->portLim = 1;
+    rtnPtr->painter = rndrPtr( new DrawResistor( location, _NODE_SIZE, name_ ) );
+    return rtnPtr;
+}
+
+nodePtr make_effort_source( const Vector2& location, string name_ = "Source_e" ){
+    // Return a blank Transformer
+    nodePtr rtnPtr = nodePtr( new Node_BG{} );
+    rtnPtr->type    = SRC_EFRT;
+    rtnPtr->name    = name_;
+    rtnPtr->portLim = 1;
+    rtnPtr->painter = rndrPtr( new DrawEffortSource( location, _NODE_SIZE*1.25f, name_ ) );
     return rtnPtr;
 }
 
@@ -309,12 +392,24 @@ int main(){
     camera.zoom     = 1.0;
     camera.rotation = 0.0;
 
-    nodePtr /*---*/ omega1 = make_1_junction(  {-200, 0}, "omega_1"    );
-    nodePtr /*---*/ veloc1 = make_1_junction(  { 200, 0}, "velocity_1" );
-    nodePtr /*---*/ xformr = make_transformer( {   0, 0}, "v_1 = r * om_1" );
+    nodePtr /*---*/ source = make_effort_source( {-400,   0}, "tau_in(t)" );
+    nodePtr /*---*/ omega1 = make_1_junction(    {-200,   0}, "omega_1"    );
+    nodePtr /*---*/ veloc1 = make_1_junction(    { 200,   0}, "velocity_1" );
+    nodePtr /*---*/ xformr = make_transformer(   {   0,   0}, "v_1 = r * om_1" );
+    nodePtr /*---*/ inertJ = make_inertia(       {-200, 200}, "J" );
+    nodePtr /*---*/ inertM = make_inertia(       { 400,   0}, "m" );
+    nodePtr /*---*/ capctr = make_capacitor(     { 200, 200}, "1/k" );
+    nodePtr /*---*/ resstr = make_resistor(      { 400, 200}, "b" );
+    nodePtr /*---*/ resTau = make_resistor(      {-400, 200}, "b_tau" );
     vector<edgePtr> edges;
+    edges.push_back( make_edge( source, omega1 ) );
     edges.push_back( make_edge( omega1, xformr ) );
     edges.push_back( make_edge( xformr, veloc1 ) );
+    edges.push_back( make_edge( omega1, inertJ ) );
+    edges.push_back( make_edge( omega1, resTau ) );
+    edges.push_back( make_edge( veloc1, inertM ) );
+    edges.push_back( make_edge( veloc1, capctr ) );
+    edges.push_back( make_edge( veloc1, resstr ) );
 
     ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
 
@@ -330,6 +425,12 @@ int main(){
         omega1->draw();
         veloc1->draw();
         xformr->draw();
+        inertJ->draw();
+        inertM->draw();
+        capctr->draw();
+        resstr->draw();
+        resTau->draw();
+        source->draw();
         for( edgePtr& edge : edges ){  edge->draw();  }
 
         ///// END DRAWING /////////////////////////////////////////////////
