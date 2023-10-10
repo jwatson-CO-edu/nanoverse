@@ -77,5 +77,23 @@
         * Resistors can determine flow from an applied effort 
 
 ## Assigning Causality
+Starting with a simplified bond graph system model, assign causality to each element
 
-1. Starting with a simplified bond graph system model, assign causality to each element
+1. Pick a source and assign its required causality 
+    - Follow through with any implicated restricted causal assignments (i.e. at 0‐jct., 1‐jct., TF, GY), extending these through the bond graph as far as possible
+    - Repeat for all unassigned sources
+
+1. Pick an energy‐storage element (I or C) and assign integral (i.e. preferred) causality
+    - Follow through with any implicated restricted causal assignments (i.e. at 0‐jct., 1‐jct., TF, GY), extending these through the bond graph as far as possible
+    - Repeat for all unassigned energy‐storage elements
+
+1. If not done: Pick an unassigned resistor, and arbitrarily assign causality
+    - Follow through with any implicated restricted causal assignments (i.e. at 0‐jct., 1‐jct., TF, GY), extending these through the bond graph as far as possible
+    - Repeat for all unassigned resistors
+
+* Possible Outcomes:
+    1. All energy‐storage elements in integral causality (All causality assigned following step 2)
+    1. Causality assignment completed by arbitrarily assigning causality of some R‐elements
+    (Indicates the presence of algebraic loops or resistor fields)
+    1. Some energy‐storage elements forced into derivative causality in step 2
+    1. Combination of 2 and 3, algebraic loops and derivative causality
