@@ -1,4 +1,4 @@
-// g++ 26_bond-graphs.cpp -std=c++17 -lraylib -O3 -o bondGraphs.out
+// g++ 29_bond-causality.cpp -std=c++17 -lraylib -O3 -o bondCausal.out
 // Recreate endearing block creatures from graphics class
 
 
@@ -152,6 +152,7 @@ class  Node_BG;    typedef shared_ptr<Node_BG>   nodePtr;
 struct Edge_BG;    typedef shared_ptr<Edge_BG>   edgePtr;
 class  Render_BG;  typedef shared_ptr<Render_BG> rndrPtr;
 class  Law_Node;   typedef shared_ptr<Law_Node>  lawNodPtr;
+struct Plug_BG;    typedef shared_ptr<Plug_BG>   plugPtr;
 
 ///// Nodes //////////////////////////////////////
 
@@ -177,6 +178,7 @@ enum Node_Type{
 enum Flow_Dir{
     INPUT,
     OUTPUT,
+    ZERO
 };
 
 enum Causality{
@@ -236,6 +238,60 @@ class DrawEdgeBasic : public Render_BG { public:
     }
 };
 
+
+
+struct Plug_BG{
+    // A edge plug is connected to a node port
+
+    /// Members ///
+    nodePtr   node;
+    Flow_Dir  drct;
+    Causality caus;
+    float     efrt;
+    float     flow;
+    plugPtr   othr;
+
+    /// Constructor(s) ///
+
+    Plug_BG(){
+        node = nullptr;
+        drct = ZERO;
+        efrt = 0.0f;
+        flow = 0.0f;
+        othr = nullptr;
+    }
+
+    Plug_BG( nodePtr node_ ){
+        node = node_;
+        drct = ZERO;
+        efrt = 0.0f;
+        flow = 0.0f;
+        othr = nullptr;
+    }
+
+    /// Methods ///
+
+    bool set_causal(){
+        // Set this end causal and the other end driven
+        caus = CAUSAL;
+        if( othr ){
+            othr->caus = DRIVEN;
+            return true;
+        }
+        return false;
+    }
+
+    bool set_driven(){
+        // Set this end driven and the other end causal 
+        caus = DRIVEN;
+        if( othr ){
+            othr->caus = CAUSAL;
+            return true;
+        }
+        return false;
+    }
+};
+
 class Edge_BG{ public:
     // A pipe for effort and flow
 
@@ -244,18 +300,10 @@ class Edge_BG{ public:
     uint    ID;
 
     /// End 1 ///
-    nodePtr   end1;
-    Flow_Dir  dir1;
-    Causality cau1;
-    float     e1;
-    float     f1;
+    plugPtr end1;
 
     /// End 2 ///
-    nodePtr   end2;
-    Flow_Dir  dir2;
-    Causality cau2;
-    float     e2;
-    float     f2;
+    plugPtr end2;
 
     /// Methods ///
 
@@ -282,18 +330,30 @@ edgePtr make_edge( nodePtr src, nodePtr dst ){
     // FIXME: DRAW CAUSALITY BAR
 
     edgePtr rtnPtr = edgePtr( new Edge_BG{} );
-    rtnPtr->end1 = src;
-    src->connect_edge( rtnPtr, OUTPUT );
-    rtnPtr->end2 = dst;
-    dst->connect_edge( rtnPtr, INPUT );
+    rtnPtr->end1 = plugPtr{ new Plug_BG{ src } };
+    src->connect_edge( rtnPtr, ZERO );
+    rtnPtr->end2 = plugPtr{ new Plug_BG{ dst } };
+    rtnPtr->end1->othr = plugPtr{ rtnPtr->end2 };
+    rtnPtr->end2->othr = plugPtr{ rtnPtr->end1 };
+    dst->connect_edge( rtnPtr, ZERO );
     rtnPtr->painter = rndrPtr( new DrawEdgeBasic{ bgnSorc, endDest, barbDst } );
+    return rtnPtr;
+}
+
+nodePtr make_0_junction( const Vector2& location, string name_ = "0-Junction" ){
+    // Return a blank 1-Junction
+    nodePtr rtnPtr = nodePtr( new Node_BG{} );
+    rtnPtr->type    = JUNCTN_0;
+    rtnPtr->name    = name_;
+    rtnPtr->portLim = 0;
+    rtnPtr->painter = rndrPtr( new Draw0Junc( location, _NODE_SIZE, name_ ) );
     return rtnPtr;
 }
 
 nodePtr make_1_junction( const Vector2& location, string name_ = "1-Junction" ){
     // Return a blank 1-Junction
     nodePtr rtnPtr = nodePtr( new Node_BG{} );
-    rtnPtr->type    = JUNCTN_0;
+    rtnPtr->type    = JUNCTN_1;
     rtnPtr->name    = name_;
     rtnPtr->portLim = 0;
     rtnPtr->painter = rndrPtr( new Draw1Junc( location, _NODE_SIZE, name_ ) );
@@ -406,6 +466,19 @@ class BondGraph{ public:
         nodes[ name_ ] = node_;
     }
 
+    bool add_edge( string key1, string key2 ){
+        // Add a new edge to the system
+        // NOTE: This function assumes that the nodes already exist in the system
+        if(nodes.count( key1 ) && nodes.count( key1 )){
+            edges.push_back( make_edge( nodes[ key1 ], nodes[ key2 ] ) );
+            return true;
+        }else{
+            cout << "WARN: One of " << key1 << " " << nodes.count( key1 ) << " or " 
+                                    << key2 << " " << nodes.count( key2 ) << " NOT FOUND!" << endl;
+            return false;
+        }
+    }
+
     void draw(){
         // Draw all nodes and edges that have a rendering strategy assigned
         for( pair<string,nodePtr> elem : nodes ){  elem.second->draw();  }
@@ -415,8 +488,8 @@ class BondGraph{ public:
 };
 
 
-////////// RACK AND PINION EXAMPLE /////////////////////////////////////////////////////////////////
-// Section 3, Slide 13+
+////////// 2-MASS SPRING/DAMPER EXAMPLE ////////////////////////////////////////////////////////////
+// Section 3, Slide 12, 
 
 int main(){
 
@@ -426,7 +499,7 @@ int main(){
     rand_seed();
 
     /// Window Init ///
-    InitWindow( 900, 900, "Bond Graphs, Ver. 0.1" );
+    InitWindow( 900, 900, "Bond Graphs, Ver. 0.2" );
     SetTargetFPS( 60 );
 
     ///// Create Objects //////////////////////////////////////////////////
@@ -437,28 +510,22 @@ int main(){
     camera.zoom     = 1.0;
     camera.rotation = 0.0;
 
-    // map<>
+    BondGraph bg{};
 
-    nodePtr /*---*/ source = make_effort_source( {-400,   0}, "tau_in(t)" );
-    nodePtr /*---*/ omega1 = make_1_junction(    {-200,   0}, "omega_1"    );
-    nodePtr /*---*/ veloc1 = make_1_junction(    { 200,   0}, "velocity_1" );
-    nodePtr /*---*/ xformr = make_transformer(   {   0,   0}, "v_1 = r * om_1" );
-    nodePtr /*---*/ inertJ = make_inertia(       {-200, 200}, "J" );
-    nodePtr /*---*/ inertM = make_inertia(       { 400,   0}, "m" );
-    nodePtr /*---*/ capctr = make_capacitor(     { 200, 200}, "1/k" );
-    nodePtr /*---*/ resstr = make_resistor(      { 400, 200}, "b" );
-    nodePtr /*---*/ resTau = make_resistor(      {-400, 200}, "b_tau" );
+    bg.add_node( "Se:Force", make_effort_source( {-400,   0}, "F(t)"  ) );
+    bg.add_node( "Se:m1g",   make_effort_source( {-200,-200}, "m_1*g" ) );
+    bg.add_node( "I:m1",     make_inertia(       {-200, 200}, "m_1"   ) );
+    bg.add_node( "1:v1",     make_1_junction(    {-200,   0}, "v_1"   ) );
+    bg.add_node( "0:mid",    make_0_junction(    {   0,   0}, ""      ) );
+    bg.add_node( "C:1/k1",   make_capacitor(     {   0,-200}, "1/k_1" ) );
+    bg.add_node( "1:v2",     make_1_junction(    { 200,   0}, "v_2"   ) );
+    bg.add_node( "Se:m2g",   make_effort_source( { 200,-200}, "m_2*g" ) );
+    bg.add_node( "C:1/k2",   make_capacitor(     { 400,-200}, "1/k_2" ) );
+    bg.add_node( "I:m2",     make_inertia(       { 400,   0}, "m_2"   ) );
+    bg.add_node( "R:b",      make_resistor(      { 200, 200}, "b"     ) );
 
 
-    vector<edgePtr> edges;
-    edges.push_back( make_edge( source, omega1 ) );
-    edges.push_back( make_edge( omega1, xformr ) );
-    edges.push_back( make_edge( xformr, veloc1 ) );
-    edges.push_back( make_edge( omega1, inertJ ) );
-    edges.push_back( make_edge( omega1, resTau ) );
-    edges.push_back( make_edge( veloc1, inertM ) );
-    edges.push_back( make_edge( veloc1, capctr ) );
-    edges.push_back( make_edge( veloc1, resstr ) );
+
 
     ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
 
@@ -471,16 +538,7 @@ int main(){
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
 
-        omega1->draw();
-        veloc1->draw();
-        xformr->draw();
-        inertJ->draw();
-        inertM->draw();
-        capctr->draw();
-        resstr->draw();
-        resTau->draw();
-        source->draw();
-        for( edgePtr& edge : edges ){  edge->draw();  }
+        bg.draw();
 
         ///// END DRAWING /////////////////////////////////////////////////
 
