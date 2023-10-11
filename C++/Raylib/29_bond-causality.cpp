@@ -512,6 +512,7 @@ int main(){
 
     BondGraph bg{};
 
+    // Add Nodes //
     bg.add_node( "Se:Force", make_effort_source( {-400,   0}, "F(t)"  ) );
     bg.add_node( "Se:m1g",   make_effort_source( {-200,-200}, "m_1*g" ) );
     bg.add_node( "I:m1",     make_inertia(       {-200, 200}, "m_1"   ) );
@@ -524,7 +525,17 @@ int main(){
     bg.add_node( "I:m2",     make_inertia(       { 400,   0}, "m_2"   ) );
     bg.add_node( "R:b",      make_resistor(      { 200, 200}, "b"     ) );
 
-
+    // Add Edges //
+    bg.add_edge( "Se:Force", "1:v1"   );
+    bg.add_edge( "1:v1"    , "Se:m1g" );
+    bg.add_edge( "1:v1"    , "I:m1"   );
+    bg.add_edge( "1:v1"    , "0:mid"  );
+    bg.add_edge( "0:mid"   , "1:v2"   );
+    bg.add_edge( "0:mid"   , "C:1/k1" );
+    bg.add_edge( "1:v2"    , "Se:m2g" );
+    bg.add_edge( "1:v2"    , "I:m2"   );
+    bg.add_edge( "1:v2"    , "R:b"    );
+    bg.add_edge( "1:v2"    , "C:1/k2" );
 
     ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
 
