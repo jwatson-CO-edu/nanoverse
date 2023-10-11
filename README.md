@@ -34,11 +34,13 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 &nbsp;
 
 * `[>]` Animated Bond Graphs
-    - `[>]` Model 
-        * `[>]` Major components
-        * `[>]` Construct simple example
-            - `[>]` Implement Section 3, Slide 13+, One step at a time
-        * `[ ]` Infer causality / flow
+    - `[>]` Render 
+        * `[Y]` Major components - 2023-10-10: Render strats for all major components
+        * `[Y]` Construct simple example - 2023-10-10: Render strats for all major components
+            - `[Y]` Implement Section 3, Slide 13+, One step at a time - 2023-10-10: Render strats for all major components
+    - `[>]` Solve 
+        * `[>]` Infer causality / flow
+            - `[ ]` Render causality 
         * `[ ]` Obtain example solution
     - `[>]` Visualize
         * `[>]` Labeled Nodes
@@ -55,12 +57,26 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 
 &nbsp;
 
-* `[ ]` Alchemal Holographic Star Map (in the style of SW Ahsoka end titles)
+* `[>]` Animated, Alchemal Holographic Star Map (in the style of SW Ahsoka end titles)
+    - `[>]` Revive Icosahedron class
+        * `[ ]` Test Icos
+    - `[ ]` Sphere class (stellated Icos)
+        * `[ ]` Test Sphere
     - `[ ]` Generate orbital planes and star systems
-    - `[ ]` Generate orbits
-    - `[ ]` Line shader
+        * `[ ]` Generate elliptical orbits, Perturb out of orbital plane
+            - `[ ]` Small chance of highly elliptical
+        * `[ ]` Small chance of retrograde revolution
+        * `[ ]` Small chance of retrograde orbit
+        * `[ ]` Small chance of highly obtuse orbital plane
+    - `[ ]` Star-lanes
+        * `[ ]` Grow at speed the eye can track without being lethargic
+        * `[ ]` Camera tracks
+            - `[ ]` Camera selects one to follow, though multiple will grow
+    - `[ ]` Shiny shader
         * `[ ]` Shiny and Handmade, Ancient
-    - `{ }` Animated?
+        * `[ ]` Bump map?
+        * `[ ]` Shade planets
+        * `[ ]` Shade orbits
     - `{ }` Runic labels?
     
 
