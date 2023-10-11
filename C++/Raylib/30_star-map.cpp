@@ -97,5 +97,64 @@ class Icosahedron : public DynaMesh { public:
     }
 
     void update(){  rotate_RPY( rolVel, ptcVel, yawVel );  } // Rotate
-
 };
+
+
+
+////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
+
+int main(){
+
+    ///// Raylib Init /////////////////////////////////////////////////////
+
+    /// RNG Init ///
+    rand_seed();
+
+    /// Window Init ///
+    InitWindow( 900, 900, "Ancient Star Map" );
+    SetTargetFPS( 60 );
+
+    ///// Create Objects //////////////////////////////////////////////////
+
+    /// Create Camera ///
+    Camera camera = Camera{
+        Vector3{  10.0,  10.0,  10.0 }, // Position
+        Vector3{   0.0,   0.0,   0.0 }, // Target
+        Vector3{   0.0,   0.0,   1.0 }, // Up
+        45.0, // ---------------------- FOV_y
+        0 // -------------------------- Projection mode
+    };
+
+    /// Lighting ///
+    Lighting lightShader{};
+    lightShader.set_camera_posn( camera );
+
+    /// Components ///
+    Icosahedron icos{ 5.0f, Vector3Zero(), GREEN };
+    icos.set_shader( lightShader.shader );
+
+    ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
+
+    while( !WindowShouldClose() ){
+
+        /// Begin Drawing ///
+        BeginDrawing();
+        BeginMode3D( camera );
+        ClearBackground( BLACK );
+
+        ///// DRAW LOOP ///////////////////////////////////////////////////
+
+        lightShader.update();
+
+        icos.update();
+        icos.draw();
+
+        ///// END DRAWING /////////////////////////////////////////////////
+
+        /// End Drawing ///
+        EndMode3D();
+        EndDrawing();
+    }
+
+    return 0;
+}
