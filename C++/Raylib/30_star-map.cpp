@@ -100,6 +100,48 @@ class Icosahedron : public DynaMesh { public:
 };
 
 
+class EllipticalTorusXY : public DynaMesh { public:
+    // Generate an elliptical torus in the XY plane, Can be rotated
+    EllipticalTorusXY( float a, float b, float dia, uint rotationRes, uint revolveRes, Color color = BLUE ) : DynaMesh( rotationRes * revolveRes * 2 ) {
+        Vector3 circCntr_i, circCntr_ip1, axis_i, axis_ip1;
+        Vector3 rad_i, rad_ip1;
+        Vector3 p1, p2, p3, p4, n1, n2, n3, n4;
+        float theta   = 0.0f, phi;
+        float rotStep = (2.0f * M_PI) / (1.0f * rotationRes);
+        float revStep = (2.0f * M_PI) / (1.0f * revolveRes );
+        for( uint i = 0; i < rotationRes; ++i ){
+            circCntr_i   = {a*cosf(theta)        , b*sinf(theta)        , 0.0f};
+            circCntr_ip1 = {a*cosf(theta+rotStep), b*sinf(theta+rotStep), 0.0f};
+            axis_i /*-*/ = Vector3CrossProduct( Vector3{0.0f,0.0f,-1.0f}, circCntr_i   );
+            axis_ip1     = Vector3CrossProduct( Vector3{0.0f,0.0f,-1.0f}, circCntr_ip1 );
+            phi /*----*/ = 0.0f;
+            rad_i   = Vector3Scale( Vector3Normalize( circCntr_i   ), dia/2.0f );
+            rad_ip1 = Vector3Scale( Vector3Normalize( circCntr_ip1 ), dia/2.0f );
+            for( uint j = 0; j < revolveRes; ++j ){
+                p1 = Vector3Add( circCntr_i  , Vector3RotateByAxisAngle( rad_i  , axis_i  , phi         ) );
+                p2 = Vector3Add( circCntr_ip1, Vector3RotateByAxisAngle( rad_ip1, axis_ip1, phi         ) );
+                p3 = Vector3Add( circCntr_i  , Vector3RotateByAxisAngle( rad_i  , axis_i  , phi+revStep ) );
+                p4 = Vector3Add( circCntr_ip1, Vector3RotateByAxisAngle( rad_ip1, axis_ip1, phi+revStep ) );
+                n1 = Vector3Normalize( Vector3Subtract( p1, circCntr_i   ) );
+                n2 = Vector3Normalize( Vector3Subtract( p2, circCntr_ip1 ) );
+                n3 = Vector3Normalize( Vector3Subtract( p3, circCntr_i   ) );
+                n4 = Vector3Normalize( Vector3Subtract( p4, circCntr_ip1 ) );
+
+                tris.push_back( {p3, p1, p2} );
+                nrms.push_back( {n3, n1, n2} );
+                
+                tris.push_back( {p3, p2, p4} );
+                nrms.push_back( {n3, n2, n4} );
+
+                phi += revStep;
+            }
+            theta += rotStep;
+        }
+        // 3. Set color
+        set_uniform_color( color );
+        load_mesh_buffers( true, true );
+    }
+};
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
