@@ -754,8 +754,6 @@ class CompositeModel{ public:
     Matrix /*----*/ xfrm; // --- Pose of the entire model
     vector<dynaPtr> parts; // -- Drawable components
     Color /*-----*/ prtColor; // Main color of meshes
-    // vector<segment> lines; // -- Drawable line segments
-    // Color /*-----*/ linColor; // Color of line segments
 
     /// Constructor(s) ///
 

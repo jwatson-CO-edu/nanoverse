@@ -103,20 +103,25 @@ class Icosahedron : public DynaMesh { public:
 class EllipticalTorusXY : public DynaMesh { public:
     // Generate an elliptical torus in the XY plane, Can be rotated
     EllipticalTorusXY( float a, float b, float dia, uint rotationRes, uint revolveRes, Color color = BLUE ) : DynaMesh( rotationRes * revolveRes * 2 ) {
+
         Vector3 circCntr_i, circCntr_ip1, axis_i, axis_ip1;
         Vector3 rad_i, rad_ip1;
         Vector3 p1, p2, p3, p4, n1, n2, n3, n4;
+
         float theta   = 0.0f, phi;
         float rotStep = (2.0f * M_PI) / (1.0f * rotationRes);
         float revStep = (2.0f * M_PI) / (1.0f * revolveRes );
+
         for( uint i = 0; i < rotationRes; ++i ){
+
             circCntr_i   = {a*cosf(theta)        , b*sinf(theta)        , 0.0f};
             circCntr_ip1 = {a*cosf(theta+rotStep), b*sinf(theta+rotStep), 0.0f};
             axis_i /*-*/ = Vector3CrossProduct( Vector3{0.0f,0.0f,-1.0f}, circCntr_i   );
             axis_ip1     = Vector3CrossProduct( Vector3{0.0f,0.0f,-1.0f}, circCntr_ip1 );
             phi /*----*/ = 0.0f;
-            rad_i   = Vector3Scale( Vector3Normalize( circCntr_i   ), dia/2.0f );
-            rad_ip1 = Vector3Scale( Vector3Normalize( circCntr_ip1 ), dia/2.0f );
+            rad_i /*--*/ = Vector3Scale( Vector3Normalize( circCntr_i   ), dia/2.0f );
+            rad_ip1 /**/ = Vector3Scale( Vector3Normalize( circCntr_ip1 ), dia/2.0f );
+
             for( uint j = 0; j < revolveRes; ++j ){
                 p1 = Vector3Add( circCntr_i  , Vector3RotateByAxisAngle( rad_i  , axis_i  , phi         ) );
                 p2 = Vector3Add( circCntr_ip1, Vector3RotateByAxisAngle( rad_ip1, axis_ip1, phi         ) );
@@ -143,6 +148,22 @@ class EllipticalTorusXY : public DynaMesh { public:
     }
 };
 
+struct PlanetOrbitMap{
+    float theta;
+    float angStep;
+    uint  planDex;
+    float a;
+    float b;
+};
+
+class StarSystemMap : public CompositeModel {
+    // Fanciful 3D representation of a star system
+
+    /// Members ///
+    Vector3 orbitNormal;
+    ubyte   N_planets;
+};
+
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
 int main(){
@@ -160,7 +181,7 @@ int main(){
 
     /// Create Camera ///
     Camera camera = Camera{
-        Vector3{  10.0,  10.0,  10.0 }, // Position
+        Vector3{   0.5,   0.5,  25.0 }, // Position
         Vector3{   0.0,   0.0,   0.0 }, // Target
         Vector3{   0.0,   0.0,   1.0 }, // Up
         45.0, // ---------------------- FOV_y
@@ -174,6 +195,9 @@ int main(){
     /// Components ///
     Icosahedron icos{ 5.0f, Vector3Zero(), GREEN };
     icos.set_shader( lightShader.shader );
+
+    EllipticalTorusXY ellipse{ 6, 8, 1.00, 50, 6, GREEN };
+    ellipse.set_shader( lightShader.shader );
 
     ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
 
@@ -190,6 +214,7 @@ int main(){
 
         icos.update();
         icos.draw();
+        ellipse.draw();
 
         ///// END DRAWING /////////////////////////////////////////////////
 
