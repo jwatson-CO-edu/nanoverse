@@ -119,7 +119,8 @@ class Sphere : public DynaMesh { public:
 
     vvec3 V;
 
-    Sphere( float rad , const Vector3& cntr, ubyte div = 3, Color color = BLUE ) : DynaMesh( 20 * div*(div+1)/2 ) {
+    Sphere( float rad , const Vector3& cntr, ubyte div = 3, Color color = BLUE ) : 
+            DynaMesh( 20 * (div*(div+1)/2 + (div-1)*(div)/2) ) {
         Icosahedron icos{ rad, cntr };
         Vector3 v0, v1, v2, xTri, yTri, temp, vA, vB, vC, nA, nB, nC;
         for( triPnts& tri : icos.tris ){
@@ -261,7 +262,7 @@ int main(){
     Icosahedron icos{ 5.0f, Vector3Zero(), GREEN };
     icos.set_shader( lightShader.shader );
 
-    Sphere sphr{ 5.0f, Vector3Zero(), 4, GREEN };
+    Sphere sphr{ 5.0f, Vector3Zero(), 8, GREEN };
     sphr.set_shader( lightShader.shader );
 
     EllipticalTorusXY ellipse{ 6, 8, 1.00, 50, 6, GREEN };
