@@ -117,8 +117,6 @@ class Icosahedron : public DynaMesh { public:
 class Sphere : public DynaMesh { public:
     // A sphere constructed from a subdivided icosahedron in order to create facets of near-equal area (Good for sims?) 
 
-    vvec3 V;
-
     Sphere( float rad , const Vector3& cntr, ubyte div = 3, Color color = BLUE ) : 
             DynaMesh( 20 * (div*(div+1)/2 + (div-1)*(div)/2) ) {
         Icosahedron icos{ rad, cntr };
@@ -139,8 +137,8 @@ class Sphere : public DynaMesh { public:
                     vA = Vector3Scale( nA, rad );
                     vB = Vector3Scale( nB, rad );
                     vC = Vector3Scale( nC, rad );
-                    tris.push_back( flip_tri_outward( {vA, vB, vC} ) );
-                    nrms.push_back( flip_tri_outward( {nA, nB, nC} ) );
+                    tris.push_back( {vA, vB, vC} );
+                    nrms.push_back( {nA, nB, nC} );
                 }
                 for( ubyte j = row - 1 ; j > 0 ; j-- ){ // Construct the anti-v0-pointing tris
                     vA = Vector3Add( v0, vec3d_from_arbitrary_2D_basis( (float) (j  ), (float) (row-1-j  ), xTri, yTri ) );
@@ -152,8 +150,8 @@ class Sphere : public DynaMesh { public:
                     vA = Vector3Scale( nA, rad );
                     vB = Vector3Scale( nB, rad );
                     vC = Vector3Scale( nC, rad );
-                    tris.push_back( flip_tri_outward( {vA, vB, vC} ) );
-                    nrms.push_back( flip_tri_outward( {nA, nB, nC} ) );
+                    tris.push_back( {vA, vB, vC} );
+                    nrms.push_back( {nA, nB, nC} );
                 }
             }
         }
