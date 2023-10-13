@@ -58,26 +58,33 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 &nbsp;
 
 * `[>]` Animated, Alchemal Holographic Star Map (in the style of SW Ahsoka end titles)
-    - `[>]` Revive Icosahedron class
-        * `[ ]` Test Icos
-    - `[ ]` Sphere class (stellated Icos)
+    - `[Y]` Revive Icosahedron class, 2023-10-13: Icos and ellipse implemented and drawn
+        * `[Y]` Test Icos, 2023-10-13: Icos and ellipse implemented and drawn
+    - `[>]` Revive Sphere class (subdivided icos, MS project)
         * `[ ]` Test Sphere
-    - `[ ]` Generate orbital planes and star systems
-        * `[ ]` Generate elliptical orbits, Perturb out of orbital plane
+    - `[>]` Generate star systems with orbital planes 
+        * `[>]` Generate elliptical orbits, Perturb out of orbital plane
+            - `[Y]` Elliptical torus to represent orbital paths, 2023-10-13: Icos and ellipse implemented and drawn
             - `[ ]` Small chance of highly elliptical
         * `[ ]` Small chance of retrograde revolution
         * `[ ]` Small chance of retrograde orbit
         * `[ ]` Small chance of highly obtuse orbital plane
+        * `[ ]` Stars are pictogram billboards
     - `[ ]` Star-lanes
+        * `[ ]` Investigate Bezier curves between planets
         * `[ ]` Grow at speed the eye can track without being lethargic
         * `[ ]` Camera tracks
             - `[ ]` Camera selects one to follow, though multiple will grow
+    - `[ ]` Shader Example: https://www.youtube.com/watch?v=f4s1h2YETNY
+        * `[ ]` Q: How to store state in shaders?
     - `[ ]` Shiny shader
         * `[ ]` Shiny and Handmade, Ancient
-        * `[ ]` Bump map?
+            - `[ ]` Generate brush stroke textures
+            - `[ ]` Generate normal maps
         * `[ ]` Shade planets
         * `[ ]` Shade orbits
-    - `{ }` Runic labels?
+    - `{ }` Runic labels? Source for glyphs?
+    - `{ }` Interstellar material? Moving along a flow field?
     
 
 
@@ -198,8 +205,8 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 &nbsp;  
 
 ## Architecture 2: Frames for Fun  (Highly Dangerous!)
-* Purpose: Digital sculpture platform with a dash of simulation
-* Be careful with your time
+* Purpose: Digital sculptures with a dash of simulation
+* **Be careful with your time!**
 
 * `[ ]` N-body simulation, orbiting spheres
 * `[ ]` L-system tree

@@ -11,6 +11,20 @@
 
 
 
+////////// HELPERS /////////////////////////////////////////////////////////////////////////////////
+
+Vector3 vec3d_from_arbitrary_2D_basis( float x, float y, const Vector3& xBasis, const Vector3& yBasis ){
+    // Return a coordinate in an arbitrary (non-orthoginal) 2D basis nested within a 3D frame
+    // DO NOT normalize the basis vectors , see below!
+	return Vector3Add(  Vector3Scale( xBasis, x ),  Vector3Scale( yBasis, y )  ); 
+}
+
+triPnts flip_tri_outward( const triPnts& tri ){
+    // Point the triangle normal away from the origin
+    if( Vector3DotProduct( normal_of_tiangle( tri ), tri[0] ) > 0.0f )  return tri;
+    return {tri[0], tri[2], tri[1]};
+}
+
 ////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
 
 class Icosahedron : public DynaMesh { public:
@@ -43,7 +57,7 @@ class Icosahedron : public DynaMesh { public:
         // ~ Geometry Pre-Computation ~
         set_posn( cntr );
         radius = rad;
-        colr   = color;
+        // colr   = color;
         a /**/ = ( radius / ratio ) * 0.5;
         b /**/ = ( radius / ratio ) / ( 2.0f * phi );
 
@@ -92,11 +106,61 @@ class Icosahedron : public DynaMesh { public:
         push_triangle_w_norms( {V[10], V[ 8], V[ 4]} );
 
         // 3. Set color
-        set_uniform_color( colr );
+        set_uniform_color( color );
         load_mesh_buffers( true, true );
     }
 
     void update(){  rotate_RPY( rolVel, ptcVel, yawVel );  } // Rotate
+};
+
+
+class Sphere : public DynaMesh { public:
+    // A sphere constructed from a subdivided icosahedron in order to create facets of near-equal area (Good for sims?) 
+
+    vvec3 V;
+
+    Sphere( float rad , const Vector3& cntr, ubyte div = 3, Color color = BLUE ) : DynaMesh( 20 * div*(div+1)/2 ) {
+        Icosahedron icos{ rad, cntr };
+        Vector3 v0, v1, v2, xTri, yTri, temp, vA, vB, vC, nA, nB, nC;
+        for( triPnts& tri : icos.tris ){
+            v0 = tri[0];  v1 = tri[1];  v2 = tri[2];
+            xTri = Vector3Scale( Vector3Subtract( v1, v0 ), 1.0f/div );
+            yTri = Vector3Scale( Vector3Subtract( v2, v0 ), 1.0f/div );
+
+            for( ubyte row = 1; row <= div; ++row ){
+                for( ubyte j = row ; j > 0 ; j-- ){ // Construct the v0-pointing tris
+                    vA = Vector3Add( v0, vec3d_from_arbitrary_2D_basis( (float) (j  ), (float) (row-j  ), xTri, yTri ) );
+                    vB = Vector3Add( v0, vec3d_from_arbitrary_2D_basis( (float) (j-1), (float) (row-j+1), xTri, yTri ) );
+                    vC = Vector3Add( v0, vec3d_from_arbitrary_2D_basis( (float) (j-1), (float) (row-j  ), xTri, yTri ) );
+                    nA = Vector3Normalize( vA );
+                    nB = Vector3Normalize( vB );
+                    nC = Vector3Normalize( vC );
+                    vA = Vector3Scale( nA, rad );
+                    vB = Vector3Scale( nB, rad );
+                    vC = Vector3Scale( nC, rad );
+                    tris.push_back( flip_tri_outward( {vA, vB, vC} ) );
+                    nrms.push_back( flip_tri_outward( {nA, nB, nC} ) );
+                }
+                for( ubyte j = row - 1 ; j > 0 ; j-- ){ // Construct the anti-v0-pointing tris
+                    vA = Vector3Add( v0, vec3d_from_arbitrary_2D_basis( (float) (j  ), (float) (row-1-j  ), xTri, yTri ) );
+                    vB = Vector3Add( v0, vec3d_from_arbitrary_2D_basis( (float) (j  ), (float) (row-1-j+1), xTri, yTri ) );
+                    vC = Vector3Add( v0, vec3d_from_arbitrary_2D_basis( (float) (j-1), (float) (row-1-j+1), xTri, yTri ) );
+                    nA = Vector3Normalize( vA );
+                    nB = Vector3Normalize( vB );
+                    nC = Vector3Normalize( vC );
+                    vA = Vector3Scale( nA, rad );
+                    vB = Vector3Scale( nB, rad );
+                    vC = Vector3Scale( nC, rad );
+                    tris.push_back( flip_tri_outward( {vA, vB, vC} ) );
+                    nrms.push_back( flip_tri_outward( {nA, nB, nC} ) );
+                }
+            }
+        }
+
+        // 3. Set color
+        set_uniform_color( color );
+        load_mesh_buffers( true, true );
+    }
 };
 
 
@@ -176,6 +240,7 @@ int main(){
     /// Window Init ///
     InitWindow( 900, 900, "Ancient Star Map" );
     SetTargetFPS( 60 );
+    // rlDisableBackfaceCulling();
 
     ///// Create Objects //////////////////////////////////////////////////
 
@@ -196,6 +261,9 @@ int main(){
     Icosahedron icos{ 5.0f, Vector3Zero(), GREEN };
     icos.set_shader( lightShader.shader );
 
+    Sphere sphr{ 5.0f, Vector3Zero(), 4, GREEN };
+    sphr.set_shader( lightShader.shader );
+
     EllipticalTorusXY ellipse{ 6, 8, 1.00, 50, 6, GREEN };
     ellipse.set_shader( lightShader.shader );
 
@@ -212,8 +280,8 @@ int main(){
 
         lightShader.update();
 
-        icos.update();
-        icos.draw();
+        // icos.update();
+        sphr.draw();
         ellipse.draw();
 
         ///// END DRAWING /////////////////////////////////////////////////
