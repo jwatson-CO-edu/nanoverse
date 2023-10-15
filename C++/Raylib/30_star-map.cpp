@@ -1,5 +1,5 @@
 // g++ 30_star-map.cpp -std=c++17 -lraylib -O3 -o starMap.out
-// Animated star-map with bump-maps, Inspired by the Ahsoka end-credits sequence
+// Animated star-map with normal maps, Inspired by the Ahsoka end-credits sequence
 
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
@@ -23,6 +23,40 @@ triPnts flip_tri_outward( const triPnts& tri ){
     // Point the triangle normal away from the origin
     if( Vector3DotProduct( normal_of_tiangle( tri ), tri[0] ) > 0.0f )  return tri;
     return {tri[0], tri[2], tri[1]};
+}
+
+float vsnf( float angle ){  return 1.0f - cosf( angle );  } // Versine, float version
+    
+
+Matrix MatrixRotateAxisAngle( const Vector3& axis, float angle_rad ){
+    // Return a homogeneous transform that is a rotation by `angle_rad` about the `axis`
+    Matrix rtnMtx = MatrixIdentity();
+    /* m0 m4 m8  m12
+       m1 m5 m9  m13
+       m2 m6 m10 m14
+       m3 m7 m11 m15 */
+    // 1. Calc components
+    Vector3 axis_ = Vector3Normalize( axis );
+    float   k1    = axis_.x;
+    float   k2    = axis_.y;
+    float   k3    = axis_.z;
+    float   vTh   = vsnf( angle_rad );
+    float   cTh   = cosf( angle_rad );
+    float   sTh   = sinf( angle_rad );
+    // 2. X-basis
+    rtnMtx.m0 = k1*k1*vTh + cTh;
+    rtnMtx.m1 = k2*k1*vTh + k3*sTh;
+    rtnMtx.m2 = k3*k1*vTh - k2*sTh;
+    // 3. Y-basis
+    rtnMtx.m4 = k1*k2*vTh - k3*sTh;
+    rtnMtx.m5 = k2*k2*vTh + cTh;
+    rtnMtx.m6 = k3*k2*vTh + k1*sTh;
+    // 4. Z-basis
+    rtnMtx.m8  = k1*k3*vTh + k2*sTh;
+    rtnMtx.m9  = k2*k3*vTh - k1*sTh;
+    rtnMtx.m10 = k3*k3*vTh + cTh;
+    // N. Return
+    return rtnMtx;
 }
 
 ////////// TOYS ////////////////////////////////////////////////////////////////////////////////////
@@ -52,7 +86,7 @@ class Icosahedron : public DynaMesh { public:
 
     Icosahedron( float rad , const Vector3& cntr, Color color = BLUE, bool active = true ) : DynaMesh( 20 ){
         // Compute the vertices and faces
-        // NOTE: This is a building block for the stellated sphere
+        // NOTE: This is a building block for the subdivided sphere
 
         // ~ Geometry Pre-Computation ~
         set_posn( cntr );
@@ -119,6 +153,7 @@ class Sphere : public DynaMesh { public:
 
     Sphere( float rad , const Vector3& cntr, ubyte div = 3, Color color = BLUE ) : 
             DynaMesh( 20 * (div*(div+1)/2 + (div-1)*(div)/2) ) {
+        // Compute the vertices and faces
         Icosahedron icos{ rad, cntr };
         Vector3 v0, v1, v2, xTri, yTri, temp, vA, vB, vC, nA, nB, nC;
         for( triPnts& tri : icos.tris ){
@@ -166,7 +201,7 @@ class Sphere : public DynaMesh { public:
 class EllipticalTorusXY : public DynaMesh { public:
     // Generate an elliptical torus in the XY plane, Can be rotated
     EllipticalTorusXY( float a, float b, float dia, uint rotationRes, uint revolveRes, Color color = BLUE ) : DynaMesh( rotationRes * revolveRes * 2 ) {
-
+        // Compute the vertices and faces
         Vector3 circCntr_i, circCntr_ip1, axis_i, axis_ip1;
         Vector3 rad_i, rad_ip1;
         Vector3 p1, p2, p3, p4, n1, n2, n3, n4;
@@ -186,6 +221,7 @@ class EllipticalTorusXY : public DynaMesh { public:
             rad_ip1 /**/ = Vector3Scale( Vector3Normalize( circCntr_ip1 ), dia/2.0f );
 
             for( uint j = 0; j < revolveRes; ++j ){
+
                 p1 = Vector3Add( circCntr_i  , Vector3RotateByAxisAngle( rad_i  , axis_i  , phi         ) );
                 p2 = Vector3Add( circCntr_ip1, Vector3RotateByAxisAngle( rad_ip1, axis_ip1, phi         ) );
                 p3 = Vector3Add( circCntr_i  , Vector3RotateByAxisAngle( rad_i  , axis_i  , phi+revStep ) );
@@ -212,19 +248,83 @@ class EllipticalTorusXY : public DynaMesh { public:
 };
 
 struct PlanetOrbitMap{
-    float theta;
-    float angStep;
-    uint  planDex;
-    float a;
-    float b;
+    // State for one planet and its orbit
+
+    /// System Info ///
+    uint planDex; // Inex of the planet in the star system
+
+    /// Orbit Info ///
+    float   theta; // --- Progress of planet along its orbit
+    float   rotStep; // - Angular step of orbit
+    Vector3 orbitNorm; // Normal of orbital plane
+    float   ZrotOrbit; // Rotation of orbit about its normal
+    float   a; // ------- Axis 1 of orbit ellipse
+    float   b; // ------- Axis 2 of orbit ellipse
+    float   f; // ------- Distance from center to each focus
+
+    /// Revolution Info ///
+    float   phi; // ------- Revolution angle of planet
+    float   revStep; // --- Angular step of revolution
+    Vector3 revolNormal; // Revolution axis of the planet
+
 };
 
-class StarSystemMap : public CompositeModel {
+class StarSystemMap : public CompositeModel { public:
     // Fanciful 3D representation of a star system
 
     /// Members ///
-    Vector3 orbitNormal;
-    ubyte   N_planets;
+    ubyte /*------------*/ N_planets; // Number of planets in this star system
+    vector<PlanetOrbitMap> orbits; // -- State for each planet's orbit
+    float /*------------*/ pathDia;
+
+    /// Constructor(s) ///
+    StarSystemMap(){
+        // Default constructor
+        N_planets = 0;
+        pathDia   = 0.25;
+    }
+
+    /// Methods ///
+
+    void add_planet( float planetRad, const Vector3& planetAxis, float initPhi,
+                     float orbitAxis1Len, float orbitAxis2Len, const Vector3& orbitNorm, float orbitZrot, float initTheta ){
+        // 0. Increment planets
+        N_planets++;
+
+        // 1. Create state
+        PlanetOrbitMap orbit{};
+        Vector3 /*--*/ orbtCntr;
+        orbit.theta     = initTheta;
+        orbit.a /*---*/ = orbitAxis1Len;
+        orbit.b /*---*/ = orbitAxis2Len;
+        orbit.f /*---*/ = sqrtf( abs( orbit.a*orbit.a - orbit.b*orbit.b ) );
+        orbit.orbitNorm = orbitNorm;
+        orbit.ZrotOrbit = orbitZrot;
+        // Set the focus
+        if( orbit.a > orbit.b )  orbtCntr = {-orbit.f, 0.0f, 0.0f};  else  orbtCntr = {0.0f, -orbit.f, 0.0f};
+        // Set the frame
+        Matrix orbitXform = set_posn(
+            MatrixMultiply(
+                MatrixRotateAxisAngle(
+                    Vector3Normalize( Vector3CrossProduct( Vector3{0.0f, 0.0f, 1.0f}, orbit.orbitNorm ) ),
+                    Vector3Angle( Vector3{0.0f, 0.0f, 1.0f}, orbit.orbitNorm )
+                ),
+                MatrixRotateZ( orbit.ZrotOrbit )
+            ),
+            orbtCntr
+        );
+        
+        
+        
+
+        // 2. Create planet
+        Vector3 initPosn = Vector3Zero();
+        dynaPtr planet   = dynaPtr( new Sphere{ planetRad, initPosn, 5, GOLD } );
+
+        // 3. Create orbit
+        dynaPtr path = dynaPtr( new EllipticalTorusXY{ orbitAxis1Len, orbitAxis2Len, pathDia, 50, 10, GOLD } );
+    }
+
 };
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
@@ -260,10 +360,10 @@ int main(){
     Icosahedron icos{ 5.0f, Vector3Zero(), GREEN };
     icos.set_shader( lightShader.shader );
 
-    Sphere sphr{ 5.0f, Vector3Zero(), 8, GREEN };
+    Sphere sphr{ 5.0f, Vector3Zero(), 8, GOLD };
     sphr.set_shader( lightShader.shader );
 
-    EllipticalTorusXY ellipse{ 6, 8, 1.00, 50, 6, GREEN };
+    EllipticalTorusXY ellipse{ 6, 8, 1.00, 50, 6, GOLD };
     ellipse.set_shader( lightShader.shader );
 
     ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
