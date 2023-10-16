@@ -249,24 +249,51 @@ class EllipticalTorusXY : public DynaMesh { public:
 
 struct PlanetOrbitMap{
     // State for one planet and its orbit
+    // NOTE: Gyroscopic procession not currently modeled!
 
     /// System Info ///
     uint planDex; // Inex of the planet in the star system
 
     /// Orbit Info ///
-    float   theta; // --- Progress of planet along its orbit
-    float   rotStep; // - Angular step of orbit
-    Vector3 orbitNorm; // Normal of orbital plane
-    float   ZrotOrbit; // Rotation of orbit about its normal
-    float   a; // ------- Axis 1 of orbit ellipse
-    float   b; // ------- Axis 2 of orbit ellipse
-    float   f; // ------- Distance from center to each focus
+    float   theta; // ---- Progress of planet along its orbit
+    float   rotStep; // -- Angular step of orbit
+    Vector3 orbitNorm; //- Normal of orbital plane
+    float   ZrotOrbit; //- Rotation of orbit about its normal
+    float   a; // -------- Axis 1 of orbit ellipse
+    float   b; // -------- Axis 2 of orbit ellipse
+    float   f; // -------- Distance from center to each focus
+    Vector3 orbitFocus; // Displacement from ellipse center to orbit center
 
     /// Revolution Info ///
-    float   phi; // ------- Revolution angle of planet
-    float   revStep; // --- Angular step of revolution
-    Vector3 revolNormal; // Revolution axis of the planet
+    float   phi; // ----- Revolution angle of planet
+    float   revStep; // - Angular step of revolution
+    Vector3 revolNorm; // Revolution axis of the planet
 
+    Vector3 get_current_posn(){
+        // Get the planet's position from the current `theta`
+        // return Vector3Subtract( Vector3{a*cosf(theta), b*sinf(theta), 0.0f}, orbitFocus );
+        return Vector3{a*cosf(theta), b*sinf(theta), 0.0f};
+    }
+
+    Matrix get_current_pose(){
+        // Get the planet's pose from the current `theta` and `phi`
+        return set_posn(
+            MatrixMultiply(
+                MatrixRotateAxisAngle(
+                    Vector3Normalize( Vector3CrossProduct( Vector3{0.0f, 0.0f, 1.0f}, revolNorm ) ),
+                    Vector3Angle( Vector3{0.0f, 0.0f, 1.0f}, revolNorm )
+                ),
+                MatrixRotateZ( phi )
+            ),
+            get_current_posn()
+        );
+    }
+
+    void update(){
+        // Update the rotation and revolution of the planet
+        theta += rotStep;
+        phi   += revStep;
+    }
 };
 
 class StarSystemMap : public CompositeModel { public:
@@ -293,15 +320,18 @@ class StarSystemMap : public CompositeModel { public:
 
         // 1. Create state
         PlanetOrbitMap orbit{};
-        Vector3 /*--*/ orbtCntr;
+        // Vector3 /*--*/ orbtCntr;
         orbit.theta     = initTheta;
         orbit.a /*---*/ = orbitAxis1Len;
         orbit.b /*---*/ = orbitAxis2Len;
         orbit.f /*---*/ = sqrtf( abs( orbit.a*orbit.a - orbit.b*orbit.b ) );
         orbit.orbitNorm = orbitNorm;
         orbit.ZrotOrbit = orbitZrot;
+        orbit.rotStep   = M_PI / 180.f;
+        orbit.revStep   = M_PI / 180.f;
         // Set the focus
-        if( orbit.a > orbit.b )  orbtCntr = {-orbit.f, 0.0f, 0.0f};  else  orbtCntr = {0.0f, -orbit.f, 0.0f};
+        // if( orbit.a > orbit.b )  orbit.orbitFocus = {-orbit.f, 0.0f, 0.0f};  else  orbit.orbitFocus = {0.0f, -orbit.f, 0.0f};
+        if( orbit.a > orbit.b )  orbit.orbitFocus = {orbit.f, 0.0f, 0.0f};  else  orbit.orbitFocus = {0.0f, orbit.f, 0.0f};
         // Set the frame
         Matrix orbitXform = set_posn(
             MatrixMultiply(
@@ -311,18 +341,35 @@ class StarSystemMap : public CompositeModel { public:
                 ),
                 MatrixRotateZ( orbit.ZrotOrbit )
             ),
-            orbtCntr
+            orbit.orbitFocus
+            // Vector3Scale( orbit.orbitFocus, -1.0 )
+            // Vector3Zero()
         );
         
-        
-        
-
         // 2. Create planet
         Vector3 initPosn = Vector3Zero();
         dynaPtr planet   = dynaPtr( new Sphere{ planetRad, initPosn, 5, GOLD } );
+        planet->Trel = orbitXform;
+        planet->Tcur = orbit.get_current_pose();
+        orbit.planDex = parts.size();
+        add_component( planet );
 
         // 3. Create orbit
         dynaPtr path = dynaPtr( new EllipticalTorusXY{ orbitAxis1Len, orbitAxis2Len, pathDia, 50, 10, GOLD } );
+        path->Trel = orbitXform;
+        path->Tcur = MatrixIdentity();
+        add_component( path );
+
+        // 4. Save orbit state
+        orbits.push_back( orbit );
+    }
+
+    void update(){
+        for( PlanetOrbitMap& orbit : orbits ){
+            orbit.update();
+            parts[ orbit.planDex ]->Tcur = orbit.get_current_pose();
+        }
+        set_part_poses();
     }
 
 };
@@ -366,6 +413,10 @@ int main(){
     EllipticalTorusXY ellipse{ 6, 8, 1.00, 50, 6, GOLD };
     ellipse.set_shader( lightShader.shader );
 
+    StarSystemMap map{};
+    map.add_planet( 1.0, Vector3{0.0,0.0,1.0}, 0.0, 5.0, 5.0, Vector3{0.0,0.0,1.0}, 0.0, 0.0 );
+    map.set_shader( lightShader.shader );
+
     ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
 
     while( !WindowShouldClose() ){
@@ -380,8 +431,10 @@ int main(){
         lightShader.update();
 
         // icos.update();
-        sphr.draw();
-        ellipse.draw();
+        // sphr.draw();
+        // ellipse.draw();
+        map.update();
+        map.draw();
 
         ///// END DRAWING /////////////////////////////////////////////////
 
