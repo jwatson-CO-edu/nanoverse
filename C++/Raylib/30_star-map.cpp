@@ -325,28 +325,29 @@ class StarSystemMap : public CompositeModel { public:
         orbit.a /*---*/ = orbitAxis1Len;
         orbit.b /*---*/ = orbitAxis2Len;
         orbit.f /*---*/ = sqrtf( abs( orbit.a*orbit.a - orbit.b*orbit.b ) );
-        orbit.orbitNorm = orbitNorm;
+        orbit.orbitNorm = Vector3Normalize( orbitNorm  );
+        orbit.revolNorm = Vector3Normalize( planetAxis );
         orbit.ZrotOrbit = orbitZrot;
         orbit.rotStep   = M_PI / 180.f;
         orbit.revStep   = M_PI / 180.f;
-        // Set the focus
-        // if( orbit.a > orbit.b )  orbit.orbitFocus = {-orbit.f, 0.0f, 0.0f};  else  orbit.orbitFocus = {0.0f, -orbit.f, 0.0f};
+        
+        // 2. Set the focus
         if( orbit.a > orbit.b )  orbit.orbitFocus = {orbit.f, 0.0f, 0.0f};  else  orbit.orbitFocus = {0.0f, orbit.f, 0.0f};
-        // Set the frame
-        Matrix orbitXform = set_posn(
+        
+        // 3. Set the frame
+        Matrix orbitDisp  = set_posn( MatrixIdentity(), orbit.orbitFocus );
+        Matrix orbitXform = MatrixMultiply(
+            orbitDisp,
             MatrixMultiply(
                 MatrixRotateAxisAngle(
                     Vector3Normalize( Vector3CrossProduct( Vector3{0.0f, 0.0f, 1.0f}, orbit.orbitNorm ) ),
                     Vector3Angle( Vector3{0.0f, 0.0f, 1.0f}, orbit.orbitNorm )
                 ),
                 MatrixRotateZ( orbit.ZrotOrbit )
-            ),
-            orbit.orbitFocus
-            // Vector3Scale( orbit.orbitFocus, -1.0 )
-            // Vector3Zero()
+            )
         );
         
-        // 2. Create planet
+        // 4. Create planet
         Vector3 initPosn = Vector3Zero();
         dynaPtr planet   = dynaPtr( new Sphere{ planetRad, initPosn, 5, GOLD } );
         planet->Trel = orbitXform;
@@ -354,17 +355,18 @@ class StarSystemMap : public CompositeModel { public:
         orbit.planDex = parts.size();
         add_component( planet );
 
-        // 3. Create orbit
+        // 5. Create orbit
         dynaPtr path = dynaPtr( new EllipticalTorusXY{ orbitAxis1Len, orbitAxis2Len, pathDia, 50, 10, GOLD } );
         path->Trel = orbitXform;
         path->Tcur = MatrixIdentity();
         add_component( path );
 
-        // 4. Save orbit state
+        // 5. Save orbit state
         orbits.push_back( orbit );
     }
 
     void update(){
+        // Advance the planet in its orbit
         for( PlanetOrbitMap& orbit : orbits ){
             orbit.update();
             parts[ orbit.planDex ]->Tcur = orbit.get_current_pose();
@@ -391,12 +393,16 @@ int main(){
     ///// Create Objects //////////////////////////////////////////////////
 
     /// Create Camera ///
-    Camera camera = Camera{
-        Vector3{   0.5,   0.5,  25.0 }, // Position
-        Vector3{   0.0,   0.0,   0.0 }, // Target
-        Vector3{   0.0,   0.0,   1.0 }, // Up
-        45.0, // ---------------------- FOV_y
-        0 // -------------------------- Projection mode
+    Vector3 camAxis = Vector3Normalize( {0.25, 0.0, 1.0} );
+    Vector3 camStik{ 25.0f, 0.0f, 0.0f };
+    float   camAngl = 0.0f;
+    float   camStep = M_PI / 720.0f;
+    Camera  camera  = Camera{
+        camStik, // -------------- Position
+        Vector3{0.0, 0.0, 0.0}, // Target
+        camAxis, // -------------- Up
+        45.0, // ----------------- FOV_y
+        0 // --------------------- Projection mode
     };
 
     /// Lighting ///
@@ -414,12 +420,16 @@ int main(){
     ellipse.set_shader( lightShader.shader );
 
     StarSystemMap map{};
-    map.add_planet( 1.0, Vector3{0.0,0.0,1.0}, 0.0, 5.0, 5.0, Vector3{0.0,0.0,1.0}, 0.0, 0.0 );
+    map.add_planet( 0.65, Vector3{0.0,0.0,1.0}, 0.0, 5.0, 5.0, Vector3{0.0 ,0.0 ,1.0}, 0.0, 0.0 );
+    map.add_planet( 1.20, Vector3{0.0,0.0,1.0}, 0.0, 6.0, 7.0, Vector3{0.0 ,0.25,1.0}, 0.5, 1.2 );
+    map.add_planet( 1.05, Vector3{0.0,0.0,1.0}, 0.0, 8.0, 9.0, Vector3{0.15,0.00,1.0}, 2.0, 2.4 );
     map.set_shader( lightShader.shader );
 
     ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
 
     while( !WindowShouldClose() ){
+
+        
 
         /// Begin Drawing ///
         BeginDrawing();
@@ -427,6 +437,9 @@ int main(){
         ClearBackground( BLACK );
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
+
+        camAngl += camStep;
+        camera.position = Vector3RotateByAxisAngle( camStik, camAxis, camAngl );
 
         lightShader.update();
 
