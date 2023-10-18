@@ -247,6 +247,10 @@ class EllipticalTorusXY : public DynaMesh { public:
     }
 };
 
+
+
+////////// STAR SYSTEM MAP /////////////////////////////////////////////////////////////////////////
+
 struct PlanetOrbitMap{
     // State for one planet and its orbit
     // NOTE: Gyroscopic procession not currently modeled!
@@ -296,6 +300,44 @@ struct PlanetOrbitMap{
     }
 };
 
+struct SunGlyph{
+    // 2D Billboard of a star, because you typically cannot visit them
+
+    /// Members ///
+
+    Texture2D glyph;
+    Vector3   posn;
+    Image*    img;
+
+    /// Constructor(s) ///
+
+    SunGlyph(){
+        posn = Vector3Zero();
+        int discDia = 50;
+        img = new Image{};
+        img->height = 2 * discDia;
+        img->width  = 2 * discDia;
+        ImageDrawCircle( img, discDia, discDia, discDia/2, YELLOW );
+        glyph = LoadTextureFromImage( *img );
+    }
+
+    SunGlyph( int discDia, const Vector3& location ){
+        posn = location;
+        img = new Image{};
+        img->height = 2 * discDia;
+        img->width  = 2 * discDia;
+        ImageDrawCircle( img, discDia, discDia, discDia/2, YELLOW );
+        glyph = LoadTextureFromImage( *img );
+    }
+
+    /// Methods ///
+
+    void draw( Camera camera ){
+        // glyph = LoadTextureFromImage( *img );
+        DrawBillboard( camera, glyph, posn, 2.0f, WHITE ); 
+    }
+};
+
 class StarSystemMap : public CompositeModel { public:
     // Fanciful 3D representation of a star system
 
@@ -303,12 +345,14 @@ class StarSystemMap : public CompositeModel { public:
     ubyte /*------------*/ N_planets; // Number of planets in this star system
     vector<PlanetOrbitMap> orbits; // -- State for each planet's orbit
     float /*------------*/ pathDia;
+    SunGlyph /*---------*/ star;
 
     /// Constructor(s) ///
     StarSystemMap(){
         // Default constructor
         N_planets = 0;
         pathDia   = 0.25;
+        star /**/ = SunGlyph{ 500, Vector3Zero() };
     }
 
     /// Methods ///
@@ -320,7 +364,6 @@ class StarSystemMap : public CompositeModel { public:
 
         // 1. Create state
         PlanetOrbitMap orbit{};
-        // Vector3 /*--*/ orbtCntr;
         orbit.theta     = initTheta;
         orbit.a /*---*/ = orbitAxis1Len;
         orbit.b /*---*/ = orbitAxis2Len;
@@ -374,6 +417,10 @@ class StarSystemMap : public CompositeModel { public:
         set_part_poses();
     }
 
+    void draw_glyphs( Camera camera ){
+        star.draw( camera );
+    }
+
 };
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
@@ -410,14 +457,14 @@ int main(){
     lightShader.set_camera_posn( camera );
 
     /// Components ///
-    Icosahedron icos{ 5.0f, Vector3Zero(), GREEN };
-    icos.set_shader( lightShader.shader );
+    // Icosahedron icos{ 5.0f, Vector3Zero(), GREEN };
+    // icos.set_shader( lightShader.shader );
 
-    Sphere sphr{ 5.0f, Vector3Zero(), 8, GOLD };
-    sphr.set_shader( lightShader.shader );
+    // Sphere sphr{ 5.0f, Vector3Zero(), 8, GOLD };
+    // sphr.set_shader( lightShader.shader );
 
-    EllipticalTorusXY ellipse{ 6, 8, 1.00, 50, 6, GOLD };
-    ellipse.set_shader( lightShader.shader );
+    // EllipticalTorusXY ellipse{ 6, 8, 1.00, 50, 6, GOLD };
+    // ellipse.set_shader( lightShader.shader );
 
     StarSystemMap map{};
     map.add_planet( 0.65, Vector3{0.0,0.0,1.0}, 0.0, 5.0, 5.0, Vector3{0.0 ,0.0 ,1.0}, 0.0, 0.0 );
@@ -429,24 +476,22 @@ int main(){
 
     while( !WindowShouldClose() ){
 
-        
-
         /// Begin Drawing ///
         BeginDrawing();
-        BeginMode3D( camera );
         ClearBackground( BLACK );
+        BeginMode3D( camera );
+        
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
 
         camAngl += camStep;
         camera.position = Vector3RotateByAxisAngle( camStik, camAxis, camAngl );
+        lightShader.set_camera_posn( camera );
 
         lightShader.update();
 
-        // icos.update();
-        // sphr.draw();
-        // ellipse.draw();
         map.update();
+        map.draw_glyphs( camera );
         map.draw();
 
         ///// END DRAWING /////////////////////////////////////////////////

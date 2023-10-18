@@ -71,7 +71,6 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         * `[ ]` Small chance of highly obtuse orbital plane
         * `[ ]` Stars are pictogram billboards
     - `[ ]` Star-lanes
-        * `[ ]` Investigate Bezier curves between planets
         * `[ ]` Grow at speed the eye can track without being lethargic
         * `[ ]` Camera tracks
             - `[ ]` Camera selects one to follow, though multiple will grow
