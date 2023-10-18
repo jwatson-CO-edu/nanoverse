@@ -304,37 +304,69 @@ struct SunGlyph{
     // 2D Billboard of a star, because you typically cannot visit them
 
     /// Members ///
-
+    // 2D State
+    int   discDia;
+    int   miniRad;
+    float scale;
+    float theta;
+    float stepTh;
+    // 3D State
+    Vector3 posn;
+    Vector3 up;
+    // Texture
+    Image     img;
+    Rectangle source;
     Texture2D glyph;
-    Vector3   posn;
-    Image*    img;
+    
+    /// Drawing ///
+
+    void update_texture(){
+        // Step the animated texture representing the star
+        theta += stepTh;
+        // Wipe image
+        ImageClearBackground( &img, {0,0,0,0});
+        // Draw disc
+        ImageDrawCircle( &img, discDia, discDia, (int)(1.2f*discDia/2), BLACK  );
+        ImageDrawCircle( &img, discDia, discDia, discDia/2            , YELLOW );
+        // Draw rays
+        for( ubyte i = 0; i < 4; ++i ){
+            for( ubyte j = 0; j < 4; ++j ){
+                
+            }
+        }
+    }
 
     /// Constructor(s) ///
 
     SunGlyph(){
-        posn = Vector3Zero();
-        int discDia = 50;
-        img = new Image{};
-        img->height = 2 * discDia;
-        img->width  = 2 * discDia;
-        ImageDrawCircle( img, discDia, discDia, discDia/2, YELLOW );
-        glyph = LoadTextureFromImage( *img );
+        discDia = 50;
+        miniRad = (int)(discDia/8.0f);
+        img = GenImageColor( 2 * discDia, 2 * discDia, {0,0,0,0});
+        ImageDrawCircle( &img, discDia, discDia, (int)(1.2f*discDia/2), BLACK  );
+        ImageDrawCircle( &img, discDia, discDia, discDia/2            , YELLOW );
+        glyph  = LoadTextureFromImage( img );
+        source = { 0.0f, 0.0f, (float)glyph.width, (float)glyph.height };
+        posn   = Vector3Zero();
+        up     = Vector3{0,0,1};
     }
 
-    SunGlyph( int discDia, const Vector3& location ){
-        posn = location;
-        img = new Image{};
-        img->height = 2 * discDia;
-        img->width  = 2 * discDia;
-        ImageDrawCircle( img, discDia, discDia, discDia/2, YELLOW );
-        glyph = LoadTextureFromImage( *img );
+    SunGlyph( int discDia, const Vector3& location, const Vector3& upVec ){
+        miniRad = (int)(discDia/8.0f);
+        img = GenImageColor( 2 * discDia, 2 * discDia, {0,0,0,0});
+        ImageDrawCircle( &img, discDia, discDia, (int)(1.2f*discDia/2), BLACK  );
+        ImageDrawCircle( &img, discDia, discDia, discDia/2            , YELLOW );
+        glyph  = LoadTextureFromImage( img );
+        source = { 0.0f, 0.0f, (float)glyph.width, (float)glyph.height };
+        posn   = location;
+        up     = upVec;
     }
 
     /// Methods ///
 
     void draw( Camera camera ){
         // glyph = LoadTextureFromImage( *img );
-        DrawBillboard( camera, glyph, posn, 2.0f, WHITE ); 
+        // DrawBillboard( camera, glyph, posn, 2.0f, WHITE ); 
+        DrawBillboardPro( camera, glyph, source, posn, camera.up, (Vector2) {3.0f, 3.0f}, (Vector2) {0.0f, 0.0f}, 0.0f, WHITE );
     }
 };
 
@@ -352,13 +384,13 @@ class StarSystemMap : public CompositeModel { public:
         // Default constructor
         N_planets = 0;
         pathDia   = 0.25;
-        star /**/ = SunGlyph{ 500, Vector3Zero() };
+        star /**/ = SunGlyph{ 500, Vector3Zero(), {0,0,1} };
     }
 
     /// Methods ///
 
     void add_planet( float planetRad, const Vector3& planetAxis, float initPhi,
-                     float orbitAxis1Len, float orbitAxis2Len, const Vector3& orbitNorm, float orbitZrot, float initTheta ){
+                     float orbitAxis1Len, float orbitAxis2Len, const Vector3& orbitNorm, float orbitZrot, float initTheta, float thetaStep ){
         // 0. Increment planets
         N_planets++;
 
@@ -371,7 +403,7 @@ class StarSystemMap : public CompositeModel { public:
         orbit.orbitNorm = Vector3Normalize( orbitNorm  );
         orbit.revolNorm = Vector3Normalize( planetAxis );
         orbit.ZrotOrbit = orbitZrot;
-        orbit.rotStep   = M_PI / 180.f;
+        orbit.rotStep   = thetaStep;
         orbit.revStep   = M_PI / 180.f;
         
         // 2. Set the focus
@@ -467,9 +499,9 @@ int main(){
     // ellipse.set_shader( lightShader.shader );
 
     StarSystemMap map{};
-    map.add_planet( 0.65, Vector3{0.0,0.0,1.0}, 0.0, 5.0, 5.0, Vector3{0.0 ,0.0 ,1.0}, 0.0, 0.0 );
-    map.add_planet( 1.20, Vector3{0.0,0.0,1.0}, 0.0, 6.0, 7.0, Vector3{0.0 ,0.25,1.0}, 0.5, 1.2 );
-    map.add_planet( 1.05, Vector3{0.0,0.0,1.0}, 0.0, 8.0, 9.0, Vector3{0.15,0.00,1.0}, 2.0, 2.4 );
+    map.add_planet( 0.65, Vector3{0.0,0.0,1.0}, 0.0, 5.0,  5.0, Vector3{0.0 ,0.0 ,1.0}, 0.0, 0.0     , M_PI/180.f );
+    map.add_planet( 1.20, Vector3{0.0,0.0,1.0}, 0.0, 7.0,  8.0, Vector3{0.0 ,0.25,1.0}, 1.5, M_PI/2.0, M_PI/300.f );
+    map.add_planet( 1.05, Vector3{0.0,0.0,1.0}, 0.0, 9.0, 13.0, Vector3{0.15,0.00,1.0}, 3.0, M_PI    , M_PI/420.f );
     map.set_shader( lightShader.shader );
 
     ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
