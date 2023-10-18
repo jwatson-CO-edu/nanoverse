@@ -382,7 +382,7 @@ struct SunGlyph{
     void draw( Camera camera ){
         // glyph = LoadTextureFromImage( *img );
         // DrawBillboard( camera, glyph, posn, 2.0f, WHITE ); 
-        update_texture();
+        // update_texture();
         DrawBillboardPro( camera, glyph, source, posn, camera.up, (Vector2) {3.0f, 3.0f}, (Vector2) {0.0f, 0.0f}, 0.0f, WHITE );
     }
 };
@@ -400,7 +400,7 @@ class StarSystemMap : public CompositeModel { public:
     StarSystemMap(){
         // Default constructor
         N_planets = 0;
-        pathDia   = 0.25;
+        pathDia   = 0.15;
         star /**/ = SunGlyph{ 500, Vector3Zero(), {0,0,1} };
     }
 
@@ -448,7 +448,7 @@ class StarSystemMap : public CompositeModel { public:
         add_component( planet );
 
         // 5. Create orbit
-        dynaPtr path = dynaPtr( new EllipticalTorusXY{ orbitAxis1Len, orbitAxis2Len, pathDia, 50, 10, GOLD } );
+        dynaPtr path = dynaPtr( new EllipticalTorusXY{ orbitAxis1Len, orbitAxis2Len, pathDia, 50, 6, GOLD } );
         path->Trel = orbitXform;
         path->Tcur = MatrixIdentity();
         add_component( path );
@@ -503,22 +503,14 @@ int main(){
 
     /// Lighting ///
     Lighting lightShader{};
+    lightShader.light.position = Vector3Zero(); // FIXME: WRITE LITE POSN SETTER
     lightShader.set_camera_posn( camera );
 
     /// Components ///
-    // Icosahedron icos{ 5.0f, Vector3Zero(), GREEN };
-    // icos.set_shader( lightShader.shader );
-
-    // Sphere sphr{ 5.0f, Vector3Zero(), 8, GOLD };
-    // sphr.set_shader( lightShader.shader );
-
-    // EllipticalTorusXY ellipse{ 6, 8, 1.00, 50, 6, GOLD };
-    // ellipse.set_shader( lightShader.shader );
-
     StarSystemMap map{};
-    map.add_planet( 0.65, Vector3{0.0,0.0,1.0}, 0.0, 5.0,  5.0, Vector3{0.0 ,0.0 ,1.0}, 0.0, 0.0     , M_PI/180.f );
-    map.add_planet( 1.20, Vector3{0.0,0.0,1.0}, 0.0, 7.0,  8.0, Vector3{0.0 ,0.25,1.0}, 1.5, M_PI/2.0, M_PI/300.f );
-    map.add_planet( 1.05, Vector3{0.0,0.0,1.0}, 0.0, 9.0, 13.0, Vector3{0.15,0.00,1.0}, 3.0, M_PI    , M_PI/420.f );
+    map.add_planet( 0.40, Vector3{0.0,0.0,1.0}, 0.0, 5.0,  5.0, Vector3{0.0 ,0.0 ,1.0}, 0.0, 0.0     , M_PI/180.f );
+    map.add_planet( 0.80, Vector3{0.0,0.0,1.0}, 0.0, 7.0,  8.0, Vector3{0.0 ,0.25,1.0}, 1.5, M_PI/2.0, M_PI/300.f );
+    map.add_planet( 0.70, Vector3{0.0,0.0,1.0}, 0.0, 9.0, 13.0, Vector3{0.15,0.00,1.0}, 3.0, M_PI    , M_PI/420.f );
     map.set_shader( lightShader.shader );
 
     ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
