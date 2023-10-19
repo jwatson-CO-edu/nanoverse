@@ -314,9 +314,8 @@ struct SunGlyph{
     Vector3 posn;
     Vector3 up;
     // Texture
-    Image     img;
-    Rectangle source;
-    Texture2D glyph;
+    Rectangle /*-*/ source;
+    RenderTexture2D glyph;
     
     /// Drawing ///
 
@@ -324,28 +323,32 @@ struct SunGlyph{
         // Step the animated texture representing the star
         theta += stepTh;
         float theta_i = theta;
-        // Wipe image
-        ImageClearBackground( &img, {0,0,0,0});
-        // Draw disc
-        ImageDrawCircle( &img, discDia, discDia, (int)(1.2f*discDia/2), BLACK  );
-        ImageDrawCircle( &img, discDia, discDia, discDia/2            , YELLOW );
-        // Draw rays
-        int rad_j = miniRad;
-        int x, y, hyp;
-        for( ubyte i = 0; i < 4; ++i ){
-            rad_j = miniRad;
-            hyp    = (int)(discDia/2 + rad_j*1.2f);
-            for( ubyte j = 0; j < 4; ++j ){
-                x = (int)( hyp * cosf( theta_i ) );
-                y = (int)( hyp * sinf( theta_i ) );
-                ImageDrawCircle( &img, x, y, (int)(1.2f*rad_j), BLACK  );
-                ImageDrawCircle( &img, x, y, rad_j            , YELLOW );
-                rad_j = (int)( rad_j*0.75 );
-                hyp   += (int)( rad_j*1.2f );
+
+        // FIXME: I UNSTACKED THE MODES, BUT THERE IS STILL A PROBLEM WITH THE TEXTURE UPDATE
+        
+        BeginTextureMode( glyph );
+            // Wipe image
+            // ClearBackground( {0,0,0,0} );
+            DrawCircle( discDia, discDia, (int)(1.2f*discDia/2), BLACK  );
+            DrawCircle( discDia, discDia, discDia/2            , YELLOW );
+            // Draw rays
+            int rad_j = miniRad;
+            int x, y, hyp;
+            for( ubyte i = 0; i < 4; ++i ){
+                rad_j = miniRad;
+                hyp    = (int)(discDia/2 + rad_j*1.2f);
+                for( ubyte j = 0; j < 4; ++j ){
+                    x = discDia + (int)( hyp * cosf( theta_i ) );
+                    y = discDia + (int)( hyp * sinf( theta_i ) );
+                    DrawCircle( x, y, (int)(1.2f*rad_j), BLACK  );
+                    DrawCircle( x, y, rad_j            , YELLOW );
+                    rad_j = (int)( rad_j*0.75 );
+                    hyp   += (int)( rad_j*1.2f );
+                }
+                theta_i += M_PI / 2.0;
             }
-            theta_i += M_PI / 2.0;
-        }
-        UpdateTextureRec( glyph, source, &(img.data));
+        EndTextureMode();
+        // UpdateTextureRec( glyph, source, &(img.data));
     }
 
     /// Constructor(s) ///
@@ -355,11 +358,13 @@ struct SunGlyph{
         theta   = 0.0f;
         stepTh  = M_PI/420.0f;
         miniRad = (int)(discDia/8.0f);
-        img = GenImageColor( 2 * discDia, 2 * discDia, {0,0,0,0});
-        ImageDrawCircle( &img, discDia, discDia, (int)(1.2f*discDia/2), BLACK  );
-        ImageDrawCircle( &img, discDia, discDia, discDia/2            , YELLOW );
-        glyph  = LoadTextureFromImage( img );
-        source = { 0.0f, 0.0f, (float)glyph.width, (float)glyph.height };
+        glyph   = LoadRenderTexture( 2*discDia, 2*discDia );
+        BeginTextureMode( glyph );
+            DrawCircle( discDia, discDia, (int)(1.2f*discDia/2), BLACK  );
+            DrawCircle( discDia, discDia, discDia/2            , YELLOW );
+        EndTextureMode();
+        // glyph  = LoadTextureFromImage( img );
+        source = { 0.0f, 0.0f, (float)glyph.texture.width, (float)glyph.texture.height };
         posn   = Vector3Zero();
         up     = Vector3{0,0,1};
     }
@@ -368,11 +373,13 @@ struct SunGlyph{
         theta   = 0.0f;
         stepTh  = M_PI/420.0f;
         miniRad = (int)(discDia/8.0f);
-        img = GenImageColor( 2 * discDia, 2 * discDia, {0,0,0,0});
-        ImageDrawCircle( &img, discDia, discDia, (int)(1.2f*discDia/2), BLACK  );
-        ImageDrawCircle( &img, discDia, discDia, discDia/2            , YELLOW );
-        glyph  = LoadTextureFromImage( img );
-        source = { 0.0f, 0.0f, (float)glyph.width, (float)glyph.height };
+        glyph   = LoadRenderTexture( 2*discDia, 2*discDia );
+        BeginTextureMode( glyph );
+            DrawCircle( discDia, discDia, (int)(1.2f*discDia/2), BLACK  );
+            DrawCircle( discDia, discDia, discDia/2            , YELLOW );
+        EndTextureMode();
+        // glyph  = LoadTextureFromImage( img );
+        source = { 0.0f, 0.0f, (float)glyph.texture.width, (float)glyph.texture.height };
         posn   = location;
         up     = upVec;
     }
@@ -383,7 +390,7 @@ struct SunGlyph{
         // glyph = LoadTextureFromImage( *img );
         // DrawBillboard( camera, glyph, posn, 2.0f, WHITE ); 
         // update_texture();
-        DrawBillboardPro( camera, glyph, source, posn, camera.up, (Vector2) {3.0f, 3.0f}, (Vector2) {0.0f, 0.0f}, 0.0f, WHITE );
+        DrawBillboardPro( camera, glyph.texture, source, posn, camera.up, (Vector2) {3.0f, 3.0f}, (Vector2) {0.0f, 0.0f}, 0.0f, WHITE );
     }
 };
 
@@ -516,6 +523,8 @@ int main(){
     ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
 
     while( !WindowShouldClose() ){
+
+        map.star.update_texture();
 
         /// Begin Drawing ///
         BeginDrawing();
