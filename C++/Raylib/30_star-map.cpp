@@ -334,19 +334,29 @@ struct SunGlyph{
             // Draw rays
             int rad_j = miniRad;
             int x, y, hyp;
-            for( ubyte i = 0; i < 4; ++i ){
-                rad_j = miniRad;
-                hyp    = (int)(discDia/2 + rad_j*1.2f);
-                for( ubyte j = 0; j < 4; ++j ){
-                    x = discDia + (int)( hyp * cosf( theta_i ) );
-                    y = discDia + (int)( hyp * sinf( theta_i ) );
-                    DrawCircle( x, y, (int)(1.2f*rad_j), BLACK  );
-                    DrawCircle( x, y, rad_j            , YELLOW );
-                    rad_j = (int)( rad_j*0.75 );
-                    hyp   += (int)( rad_j*1.2f );
-                }
-                theta_i += M_PI / 2.0;
-            }
+
+            x = discDia + (int)( hyp * cosf( theta_i ) );
+            y = discDia + (int)( hyp * sinf( theta_i ) );
+
+            cout << discDia << ", " << x << ", " << y << endl;
+
+            // 1912701264, 1912701264, 1912701264
+            // FIXME: SOMETHING GOT COPIED!
+
+
+            // for( ubyte i = 0; i < 4; ++i ){
+            //     rad_j = miniRad;
+            //     hyp    = (int)(discDia/2 + rad_j*1.2f);
+            //     for( ubyte j = 0; j < 4; ++j ){
+            //         x = discDia + (int)( hyp * cosf( theta_i ) );
+            //         y = discDia + (int)( hyp * sinf( theta_i ) );
+            //         DrawCircle( x, y, (int)(1.2f*rad_j), BLACK  );
+            //         DrawCircle( x, y, rad_j            , YELLOW );
+            //         rad_j = (int)( rad_j*0.75 );
+            //         hyp   += (int)( rad_j*1.2f );
+            //     }
+            //     theta_i += M_PI / 2.0;
+            // }
         EndTextureMode();
         // UpdateTextureRec( glyph, source, &(img.data));
     }
