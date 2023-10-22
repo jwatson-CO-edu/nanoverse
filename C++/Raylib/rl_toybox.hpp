@@ -10,8 +10,6 @@
 using std::array;
 #include <vector>
 using std::vector;
-#include <algorithm>
-using std::clamp, std::min;
 #include <memory>
 using std::shared_ptr;
 
@@ -771,12 +769,17 @@ class CompositeModel{ public:
     }
 
     void set_position( const Vector3& posn ){
-        // Set the position of the `Cubeling`
+        // Set the position of the model
         xfrm = set_posn( xfrm, posn );
     }
 
+    void set_pose( const Matrix& pose ){
+        // Set the pose of the model
+        xfrm = pose;
+    }
+
     Vector3 get_position(){
-        // Set the position of the `Cubeling`
+        // Get the position of the model
         return get_posn( xfrm );
     }
 

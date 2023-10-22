@@ -324,41 +324,31 @@ struct SunGlyph{
         theta += stepTh;
         float theta_i = theta;
 
-        // FIXME: I UNSTACKED THE MODES, BUT THERE IS STILL A PROBLEM WITH THE TEXTURE UPDATE
-        
         BeginTextureMode( glyph );
-            // Wipe image
-            // ClearBackground( {0,0,0,0} );
-            DrawCircle( discDia, discDia, (int)(1.2f*discDia/2), BLACK  );
-            DrawCircle( discDia, discDia, discDia/2            , YELLOW );
+
+            // Wipe image && Draw Disc
+            ClearBackground( {0,0,0,0} );
+            DrawCircle( (int)(1.5*discDia), (int)(1.5*discDia), (int)(1.2f*discDia/2), BLACK  );
+            DrawCircle( (int)(1.5*discDia), (int)(1.5*discDia), discDia/2            , YELLOW );
+
             // Draw rays
             int rad_j = miniRad;
             int x, y, hyp;
 
-            x = discDia + (int)( hyp * cosf( theta_i ) );
-            y = discDia + (int)( hyp * sinf( theta_i ) );
-
-            cout << discDia << ", " << x << ", " << y << endl;
-
-            // 1912701264, 1912701264, 1912701264
-            // FIXME: SOMETHING GOT COPIED!
-
-
-            // for( ubyte i = 0; i < 4; ++i ){
-            //     rad_j = miniRad;
-            //     hyp    = (int)(discDia/2 + rad_j*1.2f);
-            //     for( ubyte j = 0; j < 4; ++j ){
-            //         x = discDia + (int)( hyp * cosf( theta_i ) );
-            //         y = discDia + (int)( hyp * sinf( theta_i ) );
-            //         DrawCircle( x, y, (int)(1.2f*rad_j), BLACK  );
-            //         DrawCircle( x, y, rad_j            , YELLOW );
-            //         rad_j = (int)( rad_j*0.75 );
-            //         hyp   += (int)( rad_j*1.2f );
-            //     }
-            //     theta_i += M_PI / 2.0;
-            // }
+            for( ubyte i = 0; i < 6; ++i ){
+                rad_j = miniRad;
+                hyp    = (int)(discDia/2 + rad_j*3);
+                for( ubyte j = 0; j < 3; ++j ){
+                    x = (int)(1.5*discDia) + (int)( hyp * cosf( theta_i ) );
+                    y = (int)(1.5*discDia) + (int)( hyp * sinf( theta_i ) );
+                    DrawCircle( x, y, (int)(1.2f*rad_j), BLACK  );
+                    DrawCircle( x, y, rad_j            , YELLOW );
+                    rad_j = (int)( rad_j*0.75 );
+                    hyp   += (int)( rad_j*3 );
+                }
+                theta_i += M_PI / 3.0;
+            }
         EndTextureMode();
-        // UpdateTextureRec( glyph, source, &(img.data));
     }
 
     /// Constructor(s) ///
@@ -368,39 +358,36 @@ struct SunGlyph{
         theta   = 0.0f;
         stepTh  = M_PI/420.0f;
         miniRad = (int)(discDia/8.0f);
-        glyph   = LoadRenderTexture( 2*discDia, 2*discDia );
+        glyph   = LoadRenderTexture( 3*discDia, 3*discDia );
         BeginTextureMode( glyph );
-            DrawCircle( discDia, discDia, (int)(1.2f*discDia/2), BLACK  );
-            DrawCircle( discDia, discDia, discDia/2            , YELLOW );
+            DrawCircle( (int)(1.5*discDia), (int)(1.5*discDia), (int)(1.2f*discDia/2), BLACK  );
+            DrawCircle( (int)(1.5*discDia), (int)(1.5*discDia), discDia/2            , YELLOW );
         EndTextureMode();
-        // glyph  = LoadTextureFromImage( img );
         source = { 0.0f, 0.0f, (float)glyph.texture.width, (float)glyph.texture.height };
         posn   = Vector3Zero();
         up     = Vector3{0,0,1};
     }
 
-    SunGlyph( int discDia, const Vector3& location, const Vector3& upVec ){
+    SunGlyph( int discDia_, const Vector3& location ){
+        discDia = discDia_; 
         theta   = 0.0f;
         stepTh  = M_PI/420.0f;
         miniRad = (int)(discDia/8.0f);
-        glyph   = LoadRenderTexture( 2*discDia, 2*discDia );
+        glyph   = LoadRenderTexture( 3*discDia, 3*discDia );
         BeginTextureMode( glyph );
-            DrawCircle( discDia, discDia, (int)(1.2f*discDia/2), BLACK  );
-            DrawCircle( discDia, discDia, discDia/2            , YELLOW );
+            DrawCircle( (int)(1.5*discDia), (int)(1.5*discDia), (int)(1.2f*discDia/2), BLACK  );
+            DrawCircle( (int)(1.5*discDia), (int)(1.5*discDia), discDia/2            , YELLOW );
         EndTextureMode();
-        // glyph  = LoadTextureFromImage( img );
         source = { 0.0f, 0.0f, (float)glyph.texture.width, (float)glyph.texture.height };
         posn   = location;
-        up     = upVec;
     }
 
     /// Methods ///
 
     void draw( Camera camera ){
-        // glyph = LoadTextureFromImage( *img );
-        // DrawBillboard( camera, glyph, posn, 2.0f, WHITE ); 
-        // update_texture();
-        DrawBillboardPro( camera, glyph.texture, source, posn, camera.up, (Vector2) {3.0f, 3.0f}, (Vector2) {0.0f, 0.0f}, 0.0f, WHITE );
+        // Draw one frame of the animated star texture
+        DrawBillboardPro( camera, glyph.texture, source, posn, camera.up, 
+                          (Vector2) {3.0f, 3.0f}, (Vector2) {0.0f, 0.0f}, 0.0f, WHITE );
     }
 };
 
@@ -414,17 +401,27 @@ class StarSystemMap : public CompositeModel { public:
     SunGlyph /*---------*/ star;
 
     /// Constructor(s) ///
+
     StarSystemMap(){
         // Default constructor
         N_planets = 0;
         pathDia   = 0.15;
-        star /**/ = SunGlyph{ 500, Vector3Zero(), {0,0,1} };
+        star /**/ = SunGlyph{ 500, Vector3Zero() };
+    }
+
+    StarSystemMap( const Matrix& pose ){
+        // Default constructor
+        set_pose( pose );
+        N_planets = 0;
+        pathDia   = 0.15;
+        star /**/ = SunGlyph{ 500, Vector3Zero() };
     }
 
     /// Methods ///
 
     void add_planet( float planetRad, const Vector3& planetAxis, float initPhi,
-                     float orbitAxis1Len, float orbitAxis2Len, const Vector3& orbitNorm, float orbitZrot, float initTheta, float thetaStep ){
+                     float orbitAxis1Len, float orbitAxis2Len, const Vector3& orbitNorm, float orbitZrot, float initTheta, 
+                     float thetaStep ){
         // 0. Increment planets
         N_planets++;
 
@@ -474,8 +471,37 @@ class StarSystemMap : public CompositeModel { public:
         orbits.push_back( orbit );
     }
 
+    void generate_system( ubyte maxPlanets = 12 ){
+        ubyte   Ngen = min( maxPlanets, (ubyte)(randi(1, 6) + randi(1, 6)) ); // Roll 2d6 = Number of planets to generate
+        float   radMax = 0.0f;
+        float   a, b, planRad, orbZrot, bgnTh, stepTh;
+        Vector3 orbNorm;
+        for( ubyte i = 0; i < Ngen; ++i ){
+            // 1. Generate orbit
+            orbZrot = randf( 0.0f, 2.0f*M_PI );
+            bgnTh   = randf( 0.0f, 2.0f*M_PI );
+            a /*-*/ = radMax + randf( 2.0f, 4.0f );
+            b /*-*/ = radMax + randf( 2.0f, 4.0f );
+            radMax  = max( a, b );
+            // Small chance of highly eccentric
+            if( rand_ubyte() <= 2 ){  b += randf( 2.0f, 4.0f );  }
+            orbNorm = Vector3Normalize( uniform_vector_noise( {0,0,1}, 0.1f ) );
+            // Small chance of highly obtuse orbital plane
+            if( rand_ubyte() <= 2 ){  orbNorm = Vector3Normalize( uniform_vector_noise( orbNorm, 2.0f ) );  }
+            stepTh = M_PI/( 60.f + 120.0f*i + randf( 0.0f, 120.0f ) );
+            // Small chance of retrograde orbit
+            if( rand_ubyte() <= 2 ){  stepTh *= -1.0f;  }
+            // 2. Generate planet
+            planRad = randf( 0.3f, 0.3f+1.5f*randf()*(i+1.0f)/(Ngen*1.0f)  );
+            // 3. Instantiate Planet
+            add_planet( planRad, Vector3{0,0,1}, 0.0f,
+                        a, b, orbNorm, orbZrot, bgnTh, 
+                        stepTh );
+        }
+    }
+
     void update(){
-        // Advance the planet in its orbit
+        // Advance each planet in its orbit
         for( PlanetOrbitMap& orbit : orbits ){
             orbit.update();
             parts[ orbit.planDex ]->Tcur = orbit.get_current_pose();
@@ -484,7 +510,19 @@ class StarSystemMap : public CompositeModel { public:
     }
 
     void draw_glyphs( Camera camera ){
+        // Draw flat UI elements, including the star
         star.draw( camera );
+    }
+
+    float get_greatest_radius(){
+        // Get the furthest extent of any orbit in any direction
+        float radMax = -1e6;
+        float rad_i;
+        for( PlanetOrbitMap& orbit : orbits ){
+            rad_i = sqrtf( orbit.a*orbit.a + orbit.b*orbit.b );
+            if( rad_i > radMax )  radMax = rad_i;
+        }
+        return radMax;
     }
 
 };
@@ -499,7 +537,7 @@ int main(){
     rand_seed();
 
     /// Window Init ///
-    InitWindow( 900, 900, "Ancient Star Map" );
+    InitWindow( 1200, 900, "Ancient Star Map" );
     SetTargetFPS( 60 );
     // rlDisableBackfaceCulling();
 
@@ -525,9 +563,10 @@ int main(){
 
     /// Components ///
     StarSystemMap map{};
-    map.add_planet( 0.40, Vector3{0.0,0.0,1.0}, 0.0, 5.0,  5.0, Vector3{0.0 ,0.0 ,1.0}, 0.0, 0.0     , M_PI/180.f );
-    map.add_planet( 0.80, Vector3{0.0,0.0,1.0}, 0.0, 7.0,  8.0, Vector3{0.0 ,0.25,1.0}, 1.5, M_PI/2.0, M_PI/300.f );
-    map.add_planet( 0.70, Vector3{0.0,0.0,1.0}, 0.0, 9.0, 13.0, Vector3{0.15,0.00,1.0}, 3.0, M_PI    , M_PI/420.f );
+    map.generate_system();
+    // map.add_planet( 0.40, Vector3{0.0,0.0,1.0}, 0.0, 3.0,  3.0, Vector3{0.0 ,0.0 ,1.0}, 0.0, 0.0     , M_PI/180.f );
+    // map.add_planet( 0.80, Vector3{0.0,0.0,1.0}, 0.0, 7.0,  8.0, Vector3{0.0 ,0.25,1.0}, 1.5, M_PI/2.0, M_PI/300.f );
+    // map.add_planet( 0.70, Vector3{0.0,0.0,1.0}, 0.0, 9.0, 13.0, Vector3{0.15,0.00,1.0}, 3.0, M_PI    , M_PI/420.f );
     map.set_shader( lightShader.shader );
 
     ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////

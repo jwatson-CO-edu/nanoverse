@@ -13,6 +13,8 @@ using std::cout, std::endl, std::ostream, std::flush;
 #include <string>
 using std::string;
 #include <cmath>
+#include <algorithm>
+using std::clamp, std::min, std::max, std::min;
 
 ///// Aliases ////////////////////////////////////
 typedef unsigned char /*---*/ ubyte;

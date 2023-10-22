@@ -60,16 +60,16 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 * `[>]` Animated, Alchemal Holographic Star Map (in the style of SW Ahsoka end titles)
     - `[Y]` Revive Icosahedron class, 2023-10-13: Icos and ellipse implemented and drawn
         * `[Y]` Test Icos, 2023-10-13: Icos and ellipse implemented and drawn
-    - `[>]` Revive Sphere class (subdivided icos, MS project)
-        * `[ ]` Test Sphere
+    - `[Y]` Revive Sphere class (subdivided icos, MS project), 2023-10-22: Picturesque system map
+        * `[Y]` Test Sphere, 2023-10-22: Picturesque system map
     - `[>]` Generate star systems with orbital planes 
-        * `[>]` Generate elliptical orbits, Perturb out of orbital plane
+        * `[Y]` Generate elliptical orbits, Perturb out of orbital plane, 2023-10-22: Picturesque system map
             - `[Y]` Elliptical torus to represent orbital paths, 2023-10-13: Icos and ellipse implemented and drawn
-            - `[ ]` Small chance of highly elliptical
+            - `[Y]` Small chance of highly eccentric, 2023-10-22: Picturesque system map
         * `[ ]` Small chance of retrograde revolution
-        * `[ ]` Small chance of retrograde orbit
-        * `[ ]` Small chance of highly obtuse orbital plane
-        * `[ ]` Stars are pictogram billboards
+        * `[Y]` Small chance of retrograde orbit, 2023-10-22: Picturesque system map
+        * `[Y]` Small chance of highly obtuse orbital plane, 2023-10-22: Picturesque system map
+        * `[Y]` Stars are pictogram billboards, 2023-10-22: Picturesque system map
     - `[ ]` Star-lanes
         * `[ ]` Grow at speed the eye can track without being lethargic
         * `[ ]` Camera tracks
