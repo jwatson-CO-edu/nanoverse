@@ -72,6 +72,10 @@ float Vector2CrossProduct( const Vector2& op1, const Vector2& op2 ){
     return ( op1.x * op2.y - op1.y * op2.x );
 }
 
+Vector3 Vector3Error(){  return Vector3{ nanf(""), nanf(""), nanf("") };  } // Return a vector signifying an error
+
+bool p_vec3_err( const Vector3& q ){  return ( isnanf( q.x ) || isnanf( q.y ) || isnanf( q.z ) );  } // Return true for any elem NaN
+
 ////////// HOMOGENEOUS COORDINATES /////////////////////////////////////////////////////////////////
 
 Matrix set_posn( const Matrix& xfrm, const Vector3& posn ){

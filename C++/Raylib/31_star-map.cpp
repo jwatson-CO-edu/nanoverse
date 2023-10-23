@@ -256,7 +256,8 @@ struct PlanetOrbitMap{
     // NOTE: Gyroscopic procession not currently modeled!
 
     /// System Info ///
-    uint planDex; // Inex of the planet in the star system
+    uint  planDex; // Inex of the planet in the star system
+    ulong ts = 0;
 
     /// Orbit Info ///
     float   theta; // ---- Progress of planet along its orbit
@@ -275,8 +276,12 @@ struct PlanetOrbitMap{
 
     Vector3 get_current_posn(){
         // Get the planet's position from the current `theta`
-        // return Vector3Subtract( Vector3{a*cosf(theta), b*sinf(theta), 0.0f}, orbitFocus );
         return Vector3{a*cosf(theta), b*sinf(theta), 0.0f};
+    }
+
+    Vector3 get_posn( float theta_ ){
+        // Get the planet's position from the given `theta_`
+        return Vector3{a*cosf(theta_), b*sinf(theta_), 0.0f};
     }
 
     Matrix get_current_pose(){
@@ -297,6 +302,7 @@ struct PlanetOrbitMap{
         // Update the rotation and revolution of the planet
         theta += rotStep;
         phi   += revStep;
+        ++ts;
     }
 };
 
@@ -399,6 +405,7 @@ class StarSystemMap : public CompositeModel { public:
     vector<PlanetOrbitMap> orbits; // -- State for each planet's orbit
     float /*------------*/ pathDia;
     SunGlyph /*---------*/ star;
+    ulong /*------------*/ ts;
 
     /// Constructor(s) ///
 
@@ -407,6 +414,7 @@ class StarSystemMap : public CompositeModel { public:
         N_planets = 0;
         pathDia   = 0.15;
         star /**/ = SunGlyph{ 500, Vector3Zero() };
+        ts /*--*/ = 0;
     }
 
     StarSystemMap( const Matrix& pose ){
@@ -507,6 +515,7 @@ class StarSystemMap : public CompositeModel { public:
             parts[ orbit.planDex ]->Tcur = orbit.get_current_pose();
         }
         set_part_poses();
+        ++ts;
     }
 
     void draw_glyphs( Camera camera ){
@@ -525,6 +534,96 @@ class StarSystemMap : public CompositeModel { public:
         return radMax;
     }
 
+    Vector3 get_i_position( ubyte i, float theta_ ){
+        // Get the position of planet `i` at angular position `theta_` 
+        if( i < N_planets ){
+            // FIXME, START HERE: GET THE ABSOLUTE POSITION OF THE PLANET AT THE ANGLE
+        }
+        return Vector3Error();
+    }
+
+    Vector3 get_closest_point( ubyte i, const Vector3& query ){
+        // Get the point on the orbit closest to the `query` in the world frame 
+
+    }
+
+};
+
+
+
+////////// PATH / ROUTING //////////////////////////////////////////////////////////////////////////
+
+struct Path{
+    // One edge of a map, Represents a trip between two planets
+    Vector3 bgnVec;
+    Vector3 endVec;
+    Vector3 cursor;
+    ulong   bgnTs;
+    ulong   endTs;
+    float   dStep;
+};  
+
+////////// CAMERA //////////////////////////////////////////////////////////////////////////////////
+
+class DragOffsetThirdP_Camera : public Camera3D{ public:
+	// Aircraft drags the camera like in games
+
+	Vector3 trgtCenter; //- Position of the target
+	Vector3 dragCenter; //- "Weight" being "drug" by the target
+	float   offset_d; // -- Desired camera offset in meters
+    Vector3 absDragOfst; // Offset vector from the drag point
+    Vector3 absTrgtOfst; // Offset vector from the look point
+
+    static constexpr float dDrawMin = RL_CULL_DISTANCE_NEAR;
+    static constexpr float dDrawMax = RL_CULL_DISTANCE_FAR;
+
+    DragOffsetThirdP_Camera( float desiredOffset_m, const Vector3& dragOffsetAbs, const Vector3& targetOffsetAbs ) : Camera3D(){
+        // Set follower params 
+        trgtCenter  = Vector3Zero(); 
+        dragCenter  = Vector3Zero(); 
+		offset_d    = desiredOffset_m;
+        absDragOfst = dragOffsetAbs;
+        absTrgtOfst = targetOffsetAbs;
+        // Set inherited params
+        position   = Vector3Add( dragCenter, absDragOfst );
+        target     = Vector3Add( trgtCenter, absTrgtOfst );
+        up /*---*/ = Vector3{ 0.0, 0.0, 1.0 };
+        fovy /*-*/ = 45.0f;
+        projection = 0;
+    }
+
+    void update_target_position( Vector3 tCenter ){  trgtCenter = tCenter;  } // Point the camera (without offset)
+
+    void advance_camera(){
+		// Move the camera after all the target updates are in
+        Vector3 trgtDiff = Vector3Subtract( dragCenter, trgtCenter );
+        float   sepDist  = min( Vector3Length( trgtDiff ), offset_d );
+		Vector3 dragVec  = Vector3Scale(  Vector3Normalize( trgtDiff ), sepDist  );
+		dragCenter = Vector3Add( trgtCenter, dragVec );
+        // Set the offset positions
+		target   = Vector3Add( trgtCenter, absTrgtOfst );
+        position = Vector3Add( dragCenter, absDragOfst );
+
+	}
+
+    bool inside_FOV( const Vector3& pnt ) const{
+        // Return true if the ray from the camera to the `pnt` is within the FOV (conservative)
+        Vector3 vLook = Vector3Subtract( target, position );
+        Vector3 vRayP = Vector3Subtract( pnt   , position );
+        if( Vector3Angle( vLook, vRayP ) * RAD2DEG <= fovy )  
+            return true;
+        else
+            return false;
+    }
+
+    float signed_distance_to_drawn_sphere( const Vector3& pnt ) const{
+        // Signed distance to a sphere that has the max draw distance as a radius
+        if( inside_FOV( pnt ) ){
+            return Vector3Distance( pnt, position ) - dDrawMax;
+        }else{
+            return nanf("");
+        }
+    }
 };
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
