@@ -544,7 +544,7 @@ class StarSystemMap : public CompositeModel { public:
 
     Vector3 get_closest_point( ubyte i, const Vector3& query ){
         // Get the point on the orbit closest to the `query` in the world frame 
-
+        // FIXME: GET THE CLOSEST POINT AND THE SOONEST TIMESTEP THE PLANET WILL BE THERE
     }
 
 };
@@ -555,12 +555,12 @@ class StarSystemMap : public CompositeModel { public:
 
 struct Path{
     // One edge of a map, Represents a trip between two planets
-    Vector3 bgnVec;
-    Vector3 endVec;
-    Vector3 cursor;
-    ulong   bgnTs;
-    ulong   endTs;
-    float   dStep;
+    Vector3 bgnVec; // Beginning of 3D path
+    Vector3 endVec; // End of 3D path
+    Vector3 cursor; // Current point along the path
+    ulong   bgnTs; //- Global timestep of journey beginning
+    ulong   endTs; //- Global timestep of journey end
+    float   dStep; //- Linear distance traveled per timestep
 };  
 
 ////////// CAMERA //////////////////////////////////////////////////////////////////////////////////
