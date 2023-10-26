@@ -390,7 +390,7 @@ struct SunGlyph{
 
     /// Methods ///
 
-    void draw( Camera camera ){
+    void draw( const Camera3D& camera ){
         // Draw one frame of the animated star texture
         DrawBillboardPro( camera, glyph.texture, source, posn, camera.up, 
                           (Vector2) {3.0f, 3.0f}, (Vector2) {0.0f, 0.0f}, 0.0f, WHITE );
@@ -518,7 +518,7 @@ class StarSystemMap : public CompositeModel { public:
         ++ts;
     }
 
-    void draw_glyphs( Camera camera ){
+    void draw_glyphs( const Camera3D& camera ){
         // Draw flat UI elements, including the star
         star.draw( camera );
     }
@@ -636,8 +636,6 @@ class DragOffsetThirdP_Camera : public Camera3D{ public:
         projection = 0;
     }
 
-    void update_target_position( Vector3 tCenter ){  trgtCenter = tCenter;  } // Point the camera (without offset)
-
     void advance_camera(){
 		// Move the camera after all the target updates are in
         Vector3 trgtDiff = Vector3Subtract( dragCenter, trgtCenter );
@@ -648,6 +646,12 @@ class DragOffsetThirdP_Camera : public Camera3D{ public:
 		target   = Vector3Add( trgtCenter, absTrgtOfst );
         position = Vector3Add( dragCenter, absDragOfst );
 	}
+
+    void update_target_position( Vector3 tCenter ){  
+        // Point the camera (without offset)
+        trgtCenter = tCenter;  
+        advance_camera();
+    } 
 
     bool inside_FOV( const Vector3& pnt ) const{
         // Return true if the ray from the camera to the `pnt` is within the FOV (conservative)
@@ -686,11 +690,14 @@ int main(){
     ///// Create Objects //////////////////////////////////////////////////
     
     Vector3 posn1{0,0,0};
-    Vector3 posn2{20.0f, 0.0f, 0.0f};
+    Vector3 posn2{100.0f, 0.0f, 0.0f};
 
     /// Create Camera ///
     DragOffsetThirdP_Camera camera = DragOffsetThirdP_Camera{ 10.0f, Vector3{0,0,5}, Vector3{0,0,2} };
+    camera.position = Vector3{50,50,50};
     Path path{ posn1, posn2 };
+    path.set_speed( 0.06125f );
+    camera.update_target_position( path.cursor );
 
     /// Lighting ///
     Lighting lightShader{};
@@ -712,6 +719,8 @@ int main(){
 
         sys1.star.update_texture();
         sys2.star.update_texture();
+        path.update();
+        camera.update_target_position( path.cursor );
 
         /// Begin Drawing ///
         BeginDrawing();
@@ -723,6 +732,8 @@ int main(){
 
         // camAngl += camStep;
         // camera.position = Vector3RotateByAxisAngle( camStik, camAxis, camAngl );
+        
+
         lightShader.set_camera_posn( camera );
 
         lightShader.update();
