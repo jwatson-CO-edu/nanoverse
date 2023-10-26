@@ -403,9 +403,9 @@ class StarSystemMap : public CompositeModel { public:
     /// Members ///
     ubyte /*------------*/ N_planets; // Number of planets in this star system
     vector<PlanetOrbitMap> orbits; // -- State for each planet's orbit
-    float /*------------*/ pathDia;
-    SunGlyph /*---------*/ star;
-    ulong /*------------*/ ts;
+    float /*------------*/ pathDia; // - Diameter of the elliptical torus visually representing the orbit
+    SunGlyph /*---------*/ star; // ---- Animated texture of a star UI element
+    ulong /*------------*/ ts; // ------ Current timestep of this system (Should be same as global ...)
 
     /// Constructor(s) ///
 
@@ -537,7 +537,7 @@ class StarSystemMap : public CompositeModel { public:
     Vector3 get_i_position( ubyte i, float theta_ ){
         // Get the position of planet `i` at angular position `theta_` 
         if( i < N_planets ){
-            // FIXME, START HERE: GET THE ABSOLUTE POSITION OF THE PLANET AT THE ANGLE
+            // parts[ orbits[i].planDex ]
         }
         return Vector3Error();
     }
@@ -545,6 +545,10 @@ class StarSystemMap : public CompositeModel { public:
     Vector3 get_closest_point( ubyte i, const Vector3& query ){
         // Get the point on the orbit closest to the `query` in the world frame 
         // FIXME: GET THE CLOSEST POINT AND THE SOONEST TIMESTEP THE PLANET WILL BE THERE
+        if( i < N_planets ){
+            // parts[ orbits[i].planDex ]
+        }
+        return Vector3Error();
     }
 
 };
@@ -555,12 +559,52 @@ class StarSystemMap : public CompositeModel { public:
 
 struct Path{
     // One edge of a map, Represents a trip between two planets
+
+    /// Members ///
+
     Vector3 bgnVec; // Beginning of 3D path
     Vector3 endVec; // End of 3D path
     Vector3 cursor; // Current point along the path
+    Vector3 dirVec; // Normalized direction of the path
     ulong   bgnTs; //- Global timestep of journey beginning
     ulong   endTs; //- Global timestep of journey end
     float   dStep; //- Linear distance traveled per timestep
+    Vector3 vStep; //- Linear offset   accrued  per timestep
+
+    /// Constructor(s) ///
+
+    Path( const Vector3& beginVec, const Vector3& endVec_, ulong beginTs = 0 ){
+        bgnVec = beginVec; // Beginning of 3D path
+        endVec = endVec_; // End of 3D path
+        dirVec = Vector3Normalize( Vector3Subtract( endVec, bgnVec ) );
+        cursor = beginVec; // Current point along the path
+        bgnTs  = beginTs; //- Global timestep of journey beginning
+    }
+
+    /// Methods ///
+
+    void set_speed( float distPerTs ){
+        // Set params for a given linear per-frame speed
+        float dTotl = Vector3Distance( bgnVec, endVec );
+        /*-*/ dStep = distPerTs;
+        /*-*/ vStep = Vector3Scale( dirVec, dStep );
+        ulong Nstep = (ulong) ceilf( dTotl / dStep );
+        /*-*/ endTs = bgnTs + Nstep;
+    }
+
+    Vector3 update(){
+        // Set the cursor for the next frame && Return the current position along the path
+        float dRemSqr = Vector3DistanceSqr( cursor, endVec );
+        // If there is path remaining, then update the cursor
+        if( dRemSqr > 0.0f ){
+            if( dRemSqr > (dStep*dStep) )
+                cursor = Vector3Add( cursor, vStep );
+            else  
+                cursor = endVec;
+        } // Else no update
+        // Return the current position along the path
+        return cursor;
+    }
 };  
 
 ////////// CAMERA //////////////////////////////////////////////////////////////////////////////////
@@ -603,7 +647,6 @@ class DragOffsetThirdP_Camera : public Camera3D{ public:
         // Set the offset positions
 		target   = Vector3Add( trgtCenter, absTrgtOfst );
         position = Vector3Add( dragCenter, absDragOfst );
-
 	}
 
     bool inside_FOV( const Vector3& pnt ) const{
@@ -641,19 +684,13 @@ int main(){
     // rlDisableBackfaceCulling();
 
     ///// Create Objects //////////////////////////////////////////////////
+    
+    Vector3 posn1{0,0,0};
+    Vector3 posn2{20.0f, 0.0f, 0.0f};
 
     /// Create Camera ///
-    Vector3 camAxis = Vector3Normalize( {0.25, 0.0, 1.0} );
-    Vector3 camStik{ 25.0f, 0.0f, 0.0f };
-    float   camAngl = 0.0f;
-    float   camStep = M_PI / 720.0f;
-    Camera  camera  = Camera{
-        camStik, // -------------- Position
-        Vector3{0.0, 0.0, 0.0}, // Target
-        camAxis, // -------------- Up
-        45.0, // ----------------- FOV_y
-        0 // --------------------- Projection mode
-    };
+    DragOffsetThirdP_Camera camera = DragOffsetThirdP_Camera{ 10.0f, Vector3{0,0,5}, Vector3{0,0,2} };
+    Path path{ posn1, posn2 };
 
     /// Lighting ///
     Lighting lightShader{};
@@ -661,15 +698,20 @@ int main(){
     lightShader.set_camera_posn( camera );
 
     /// Components ///
-    StarSystemMap map{};
-    map.generate_system();
-    map.set_shader( lightShader.shader );
+    StarSystemMap sys1{ set_posn( MatrixIdentity(), posn1 ) };
+    sys1.generate_system();
+    sys1.set_shader( lightShader.shader );
+
+    StarSystemMap sys2{ set_posn( MatrixIdentity(), posn2 ) };
+    sys2.generate_system();
+    sys2.set_shader( lightShader.shader );
 
     ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
 
     while( !WindowShouldClose() ){
 
-        map.star.update_texture();
+        sys1.star.update_texture();
+        sys2.star.update_texture();
 
         /// Begin Drawing ///
         BeginDrawing();
@@ -679,15 +721,20 @@ int main(){
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
 
-        camAngl += camStep;
-        camera.position = Vector3RotateByAxisAngle( camStik, camAxis, camAngl );
+        // camAngl += camStep;
+        // camera.position = Vector3RotateByAxisAngle( camStik, camAxis, camAngl );
         lightShader.set_camera_posn( camera );
 
         lightShader.update();
 
-        map.update();
-        map.draw_glyphs( camera );
-        map.draw();
+        sys1.update();
+        sys1.draw_glyphs( camera );
+        sys1.draw();
+
+        sys2.update();
+        sys2.draw_glyphs( camera );
+        sys2.draw();
+
 
         ///// END DRAWING /////////////////////////////////////////////////
 

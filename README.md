@@ -18,7 +18,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         * `[Y]` Calculate input components from sticks, 2023-09-30: Circled the Square
         * `[>]` Calculate resultant displacement & orientation, One side can drag the other at half speed 
     - `[ ]` Behind & above 3P camera, Allows for seeing ahead and above
-    - WARNING: Approaching DANGEROUSLY close to a game engine!
+    - `{ }` EXTRAS, WARNING: Approaching DANGEROUSLY close to a game engine!
         * `[ ]` Minigame: Cubeling Attack!
             - `[ ]` Cubelings track player and fire explosive pegs
             - `[ ]` Moving player is safe because Cubelings cannot lead their shots
@@ -57,35 +57,34 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 
 &nbsp;
 
-* `[>]` Animated, Alchemal Holographic Star Map (in the style of SW Ahsoka end titles)
+* `[>]` Animated, Alchemal, Holographic Star Map (in the style of SW Ahsoka end titles)
     - `[Y]` Revive Icosahedron class, 2023-10-13: Icos and ellipse implemented and drawn
         * `[Y]` Test Icos, 2023-10-13: Icos and ellipse implemented and drawn
     - `[Y]` Revive Sphere class (subdivided icos, MS project), 2023-10-22: Picturesque system map
         * `[Y]` Test Sphere, 2023-10-22: Picturesque system map
-    - `[>]` Generate star systems with orbital planes 
+    - `[Y]` Generate star systems with orbital planes, 2023-10-22: Picturesque system map 
         * `[Y]` Generate elliptical orbits, Perturb out of orbital plane, 2023-10-22: Picturesque system map
             - `[Y]` Elliptical torus to represent orbital paths, 2023-10-13: Icos and ellipse implemented and drawn
             - `[Y]` Small chance of highly eccentric, 2023-10-22: Picturesque system map
-        * `[ ]` Small chance of retrograde revolution
+        * `[Y]` Small chance of retrograde revolution, 2023-10-22: Picturesque system map
         * `[Y]` Small chance of retrograde orbit, 2023-10-22: Picturesque system map
         * `[Y]` Small chance of highly obtuse orbital plane, 2023-10-22: Picturesque system map
         * `[Y]` Stars are pictogram billboards, 2023-10-22: Picturesque system map
-    - `[ ]` Star-lanes
-        * `[ ]` Grow at speed the eye can track without being lethargic
-        * `[ ]` Camera tracks
+    - `[>]` Star-lanes
+        * `[>]` Test an invisible path between 2 stars, Tune speed, Tune drag camera
+            - `[>]` Grow at speed the eye can track without being lethargic
+        * `[ ]` Branching paths
             - `[ ]` Camera selects one to follow, though multiple will grow
+            - `{ }` Only the followed path branches or grows? When does the map become too busy?
     - `[ ]` Shader Example: https://www.youtube.com/watch?v=f4s1h2YETNY
         * `[ ]` Q: How to store state in shaders?
     - `[ ]` Shiny shader
         * `[ ]` Shiny and Handmade, Ancient
-            - `[ ]` Generate brush stroke textures
-            - `[ ]` Generate normal maps
+            - `[ ]` Generate brushed-brass normal maps
         * `[ ]` Shade planets
         * `[ ]` Shade orbits
     - `{ }` Runic labels? Source for glyphs?
     - `{ }` Interstellar material? Moving along a flow field?
-    
-
 
 &nbsp;
 
@@ -132,6 +131,12 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         * `{ }` Release from carrier
         * `{ }` Win/Lose conditions w/ Game Over screen(s)
     - `[ ]` Video -or- animated GIF output --to-> IG
+
+&nbsp;
+
+* `[ ]` ???
+* `[ ]` ???
+* `[ ]` ???
 
 &nbsp;
 
@@ -225,6 +230,8 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 ## Architecture 3: Let's Code (Applied) Physics  (Absurdly Dangerous!)
 ### DO NOT ATTEMPT WITHOUT AN ESTABLISHED CAREER!
 * Purpose: Daydream itch
+
+* `[ ]` 3D version of the NES/arcade game "Rampart"
 
 * `[ ]` Investigate compute shaders
     - `[ ]` Decide which is { faster to run, easier to write }
