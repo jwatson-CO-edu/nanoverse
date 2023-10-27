@@ -390,9 +390,10 @@ struct SunGlyph{
 
     /// Methods ///
 
-    void draw( const Camera3D& camera ){
+    void draw( const Camera& camera ){
         // Draw one frame of the animated star texture
-        DrawBillboardPro( camera, glyph.texture, source, posn, camera.up, 
+        Matrix matView = rlGetMatrixModelview();
+        DrawBillboardPro( camera, glyph.texture, source, posn, Vector3{ matView.m1, matView.m5, matView.m9 }, 
                           (Vector2) {3.0f, 3.0f}, (Vector2) {0.0f, 0.0f}, 0.0f, WHITE );
     }
 };
@@ -422,7 +423,7 @@ class StarSystemMap : public CompositeModel { public:
         set_pose( pose );
         N_planets = 0;
         pathDia   = 0.15;
-        star /**/ = SunGlyph{ 500, Vector3Zero() };
+        star /**/ = SunGlyph{ 500, get_posn( pose ) };
     }
 
     /// Methods ///
@@ -518,7 +519,7 @@ class StarSystemMap : public CompositeModel { public:
         ++ts;
     }
 
-    void draw_glyphs( const Camera3D& camera ){
+    void draw_glyphs( const Camera& camera ){
         // Draw flat UI elements, including the star
         star.draw( camera );
     }
@@ -694,7 +695,7 @@ int main(){
 
     /// Create Camera ///
     DragOffsetThirdP_Camera camera = DragOffsetThirdP_Camera{ 10.0f, Vector3{0,0,5}, Vector3{0,0,2} };
-    camera.position = Vector3{50,50,50};
+    camera.dragCenter = Vector3{50,50,50};
     Path path{ posn1, posn2 };
     path.set_speed( 0.06125f );
     camera.update_target_position( path.cursor );
