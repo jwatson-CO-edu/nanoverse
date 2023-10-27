@@ -74,6 +74,16 @@ float Vector2CrossProduct( const Vector2& op1, const Vector2& op2 ){
 
 Vector3 Vector3Error(){  return Vector3{ nanf(""), nanf(""), nanf("") };  } // Return a vector signifying an error
 
+Matrix MatrixError(){
+    // Return a `Matrix` signifying an error
+    Matrix rtnMatx = MatrixIdentity();
+    rtnMatx.m0  = nanf("");
+    rtnMatx.m5  = nanf("");
+    rtnMatx.m10 = nanf("");
+    rtnMatx.m15 = nanf("");
+    return rtnMatx;
+}
+
 bool p_vec3_err( const Vector3& q ){  return ( isnanf( q.x ) || isnanf( q.y ) || isnanf( q.z ) );  } // Return true for any elem NaN
 
 ////////// HOMOGENEOUS COORDINATES /////////////////////////////////////////////////////////////////
@@ -562,9 +572,8 @@ class DynaMesh{ public:
 	}
 
     void transform_from_parent( const Matrix& parentPose ){
+        // Set the absolute pose from the chain of relative poses under the parent
         xfrm = MatrixMultiply( MatrixMultiply( Tcur, Trel ), parentPose );
-        // xfrm = MatrixMultiply( MatrixMultiply( parentPose, Trel ), Tcur );
-        // xfrm = MatrixMultiply( parentPose, Trel );
     }
 
     /// Appearance & Color ///
@@ -790,6 +799,15 @@ class CompositeModel{ public:
     void set_part_poses(){
         // Set the shader for all parts
         for( dynaPtr& part : parts ){  part->transform_from_parent( xfrm );  }
+    }
+
+    Matrix set_part_pose( ulong i ){
+        // Set the shader for all parts
+        if( i < parts.size() ){  
+            parts[i]->transform_from_parent( xfrm );  
+            return parts[i]->xfrm;
+        }
+        return MatrixError();
     }
 
     void draw(){

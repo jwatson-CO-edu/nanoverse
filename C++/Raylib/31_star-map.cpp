@@ -298,6 +298,20 @@ struct PlanetOrbitMap{
         );
     }
 
+    Matrix get_pose( float theta_ ){
+        // Get the planet's pose from the current `theta_` and `phi`
+        return set_posn(
+            MatrixMultiply(
+                MatrixRotateAxisAngle(
+                    Vector3Normalize( Vector3CrossProduct( Vector3{0.0f, 0.0f, 1.0f}, revolNorm ) ),
+                    Vector3Angle( Vector3{0.0f, 0.0f, 1.0f}, revolNorm )
+                ),
+                MatrixRotateZ( phi )
+            ),
+            get_posn( theta_ )
+        );
+    }
+
     void update(){
         // Update the rotation and revolution of the planet
         theta += rotStep;
@@ -398,6 +412,13 @@ struct SunGlyph{
     }
 };
 
+struct OrbitSchedule{
+    // A point along an orbit and when the planet will get there
+    Vector3 absPnt; // A point of interest along an orbit
+    ulong   nextTs; // The number of timesteps until arrival at the point
+    ulong   period; // The length of one orbit in timesteps
+};
+
 class StarSystemMap : public CompositeModel { public:
     // Fanciful 3D representation of a star system
 
@@ -424,6 +445,7 @@ class StarSystemMap : public CompositeModel { public:
         N_planets = 0;
         pathDia   = 0.15;
         star /**/ = SunGlyph{ 500, get_posn( pose ) };
+        ts /*--*/ = 0;
     }
 
     /// Methods ///
@@ -536,22 +558,24 @@ class StarSystemMap : public CompositeModel { public:
     }
 
     Vector3 get_i_position( ubyte i, float theta_ ){
-        // Get the position of planet `i` at angular position `theta_` 
+        // Get the absolute position of planet `i` at angular position `theta_` 
         if( i < N_planets ){
-            // parts[ orbits[i].planDex ]
+            parts[ orbits[i].planDex ]->Tcur = orbits[i].get_pose( theta_ );
+            return get_posn( set_part_pose( orbits[i].planDex ) );
         }
         return Vector3Error();
     }
 
-    Vector3 get_closest_point( ubyte i, const Vector3& query ){
+    OrbitSchedule get_closest_point( ubyte i, const Vector3& query ){
         // Get the point on the orbit closest to the `query` in the world frame 
+
         // FIXME: GET THE CLOSEST POINT AND THE SOONEST TIMESTEP THE PLANET WILL BE THERE
+        
         if( i < N_planets ){
-            // parts[ orbits[i].planDex ]
+            
         }
         return Vector3Error();
     }
-
 };
 
 
@@ -605,6 +629,12 @@ struct Path{
         } // Else no update
         // Return the current position along the path
         return cursor;
+    }
+
+    void draw(){
+        // Render the path
+        // 2023-10-27: Draw in the simplest way until you are ready to render for realsies
+        DrawLine3D( bgnVec, cursor, GOLD );
     }
 };  
 
@@ -718,6 +748,7 @@ int main(){
 
     while( !WindowShouldClose() ){
 
+        /// Updates *outside* the 3D context ///
         sys1.star.update_texture();
         sys2.star.update_texture();
         path.update();
@@ -731,13 +762,11 @@ int main(){
 
         ///// DRAW LOOP ///////////////////////////////////////////////////
 
-        // camAngl += camStep;
-        // camera.position = Vector3RotateByAxisAngle( camStik, camAxis, camAngl );
-        
-
         lightShader.set_camera_posn( camera );
 
         lightShader.update();
+
+        path.draw();
 
         sys1.update();
         sys1.draw_glyphs( camera );
@@ -748,7 +777,7 @@ int main(){
         sys2.draw();
 
 
-        ///// END DRAWING /////////////////////////////////////////////////
+        ///// END LOOP ////////////////////////////////////////////////////
 
         /// End Drawing ///
         EndMode3D();
