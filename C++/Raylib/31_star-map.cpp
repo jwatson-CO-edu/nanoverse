@@ -559,8 +559,22 @@ class StarSystemMap : public CompositeModel { public:
 
     Vector3 get_i_position( ubyte i, float theta_ ){
         // Get the absolute position of planet `i` at angular position `theta_` 
+        float   oldTheta;
+        Vector3 rtnVec;
         if( i < N_planets ){
+            oldTheta = orbits[i].theta;
             parts[ orbits[i].planDex ]->Tcur = orbits[i].get_pose( theta_ );
+            rtnVec = get_posn( set_part_pose( orbits[i].planDex ) );
+            parts[ orbits[i].planDex ]->Tcur = orbits[i].get_pose( oldTheta );
+            return rtnVec;
+        }
+        return Vector3Error();
+    }
+
+    Vector3 get_i_position( ubyte i ){
+        // Get the absolute position of planet `i` at angular position `theta_` 
+        if( i < N_planets ){
+            parts[ orbits[i].planDex ]->Tcur = orbits[i].get_current_pose();
             return get_posn( set_part_pose( orbits[i].planDex ) );
         }
         return Vector3Error();
@@ -568,16 +582,40 @@ class StarSystemMap : public CompositeModel { public:
 
     OrbitSchedule get_closest_point( ubyte i, const Vector3& query ){
         // Get the point on the orbit closest to the `query` in the world frame 
+        OrbitSchedule rtnSched{};
+        rtnSched.absPnt = Vector3Error();
+        rtnSched.nextTs = 0;
+        rtnSched.period = 0;
 
-        // FIXME: GET THE CLOSEST POINT AND THE SOONEST TIMESTEP THE PLANET WILL BE THERE
+        float   oldTheta;
+        float   stepTh;
+        float   distSqr;
+        float   dSqrMin = 1e9;
+        float   delta   =   0.0f;
+        ulong   tDiff   = 0;
+        Vector3 posn_i;
         
         if( i < N_planets ){
-            
+            oldTheta /*--*/ = orbits[i].theta;
+            stepTh /*----*/ = orbits[i].rotStep;
+            rtnSched.period = (ulong) ceilf( 2.0f*M_PI/stepTh );
+            while( delta <= (2.0f*M_PI) ){
+                posn_i  = get_i_position( i, oldTheta+delta );
+                distSqr = Vector3DistanceSqr( posn_i, query );
+                if( distSqr < dSqrMin ){
+                    dSqrMin /*---*/ = distSqr;
+                    rtnSched.absPnt = posn_i;
+                    rtnSched.nextTs = orbits[i].ts + tDiff;
+                }
+                delta += stepTh;
+                ++tDiff;
+            }
         }
-        return Vector3Error();
+
+        return rtnSched;
     }
 };
-
+typedef shared_ptr<StarSystemMap> ptrSysMap;
 
 
 ////////// PATH / ROUTING //////////////////////////////////////////////////////////////////////////
@@ -637,6 +675,15 @@ struct Path{
         DrawLine3D( bgnVec, cursor, GOLD );
     }
 };  
+
+Path chart_course_between_planets( ptrSysMap sys1, ulong i, ptrSysMap sys2, ulong j, float targetSpeed ){
+    // Get a path between the present position of the start and the closest position of the destination
+    Vector3 /*-*/ bgnPoint = sys1->get_i_position(i);
+    OrbitSchedule sched    = sys2->get_closest_point( j, bgnPoint );
+    // FIXME, START HERE: CHOOSE THE POINT IN THE FUTURE CLOSEST TO THE TARGET SPEED
+}
+
+
 
 ////////// CAMERA //////////////////////////////////////////////////////////////////////////////////
 
