@@ -678,8 +678,24 @@ struct Path{
 
 Path chart_course_between_planets( ptrSysMap sys1, ulong i, ptrSysMap sys2, ulong j, float targetSpeed ){
     // Get a path between the present position of the start and the closest position of the destination
-    Vector3 /*-*/ bgnPoint = sys1->get_i_position(i);
-    OrbitSchedule sched    = sys2->get_closest_point( j, bgnPoint );
+    Vector3 /*-*/ bgnPoint  = sys1->get_i_position(i);
+    OrbitSchedule sched     = sys2->get_closest_point( j, bgnPoint );
+    float /*---*/ dist /**/ = Vector3Distance( bgnPoint, sched.absPnt );
+    float /*---*/ leastDiff = 1e6;
+    ulong /*---*/ k /*---*/ = 0;
+    float /*---*/ speed_k   = 1e3;
+    float /*---*/ diff_k    = 1e3;
+    Path /*----*/ rtnPath{ bgnPoint, sched.absPnt };
+    
+    while( diff_k < leastDiff ){
+
+        leastDiff = diff_k;
+        rtnPath.set_speed( speed_k );
+        
+        speed_k   = dist / (1.0f * (sched.nextTs - sys2->ts + k*sched.period));
+        diff_k    = abs( speed_k - targetSpeed );
+        ++k;
+    }
     // FIXME, START HERE: CHOOSE THE POINT IN THE FUTURE CLOSEST TO THE TARGET SPEED
 }
 
