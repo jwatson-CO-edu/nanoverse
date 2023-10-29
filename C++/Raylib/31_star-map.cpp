@@ -615,7 +615,7 @@ class StarSystemMap : public CompositeModel { public:
         return rtnSched;
     }
 };
-typedef shared_ptr<StarSystemMap> ptrSysMap;
+typedef shared_ptr<StarSystemMap> sysMapPtr;
 
 
 ////////// PATH / ROUTING //////////////////////////////////////////////////////////////////////////
@@ -677,7 +677,7 @@ struct Path{
 };  
 typedef shared_ptr<Path> pathPtr;
 
-pathPtr chart_course_between_planets( ptrSysMap sys1, ulong i, ptrSysMap sys2, ulong j, float targetSpeed ){
+pathPtr chart_course_between_planets( sysMapPtr sys1, ulong i, sysMapPtr sys2, ulong j, float targetSpeed ){
     // Get a path between the present position of the start and the closest position of the destination
 
     // 1. Set up source and destination, Set up search
