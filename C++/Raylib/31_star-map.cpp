@@ -675,9 +675,12 @@ struct Path{
         DrawLine3D( bgnVec, cursor, GOLD );
     }
 };  
+typedef shared_ptr<Path> pathPtr;
 
-Path chart_course_between_planets( ptrSysMap sys1, ulong i, ptrSysMap sys2, ulong j, float targetSpeed ){
+pathPtr chart_course_between_planets( ptrSysMap sys1, ulong i, ptrSysMap sys2, ulong j, float targetSpeed ){
     // Get a path between the present position of the start and the closest position of the destination
+
+    // 1. Set up source and destination, Set up search
     Vector3 /*-*/ bgnPoint  = sys1->get_i_position(i);
     OrbitSchedule sched     = sys2->get_closest_point( j, bgnPoint );
     float /*---*/ dist /**/ = Vector3Distance( bgnPoint, sched.absPnt );
@@ -685,18 +688,22 @@ Path chart_course_between_planets( ptrSysMap sys1, ulong i, ptrSysMap sys2, ulon
     ulong /*---*/ k /*---*/ = 0;
     float /*---*/ speed_k   = 1e3;
     float /*---*/ diff_k    = 1e3;
-    Path /*----*/ rtnPath{ bgnPoint, sched.absPnt };
+    pathPtr /*-*/ rtnPath = pathPtr( new Path{ bgnPoint, sched.absPnt, sys1->ts } );
     
+    // 2. Search periods
     while( diff_k < leastDiff ){
-
+        // Update best speed
         leastDiff = diff_k;
-        rtnPath.set_speed( speed_k );
-        
+        rtnPath->set_speed( speed_k );
+        // Find next arrival speed
         speed_k   = dist / (1.0f * (sched.nextTs - sys2->ts + k*sched.period));
         diff_k    = abs( speed_k - targetSpeed );
+        // Increment
         ++k;
     }
-    // FIXME, START HERE: CHOOSE THE POINT IN THE FUTURE CLOSEST TO THE TARGET SPEED
+
+    // N. Return path
+    return rtnPath;
 }
 
 
@@ -732,10 +739,10 @@ class DragOffsetThirdP_Camera : public Camera3D{ public:
 
     void advance_camera(){
 		// Move the camera after all the target updates are in
-        Vector3 trgtDiff = Vector3Subtract( dragCenter, trgtCenter );
-        float   sepDist  = min( Vector3Length( trgtDiff ), offset_d );
-		Vector3 dragVec  = Vector3Scale(  Vector3Normalize( trgtDiff ), sepDist  );
-		dragCenter = Vector3Add( trgtCenter, dragVec );
+        Vector3 trgtDiff   = Vector3Subtract( dragCenter, trgtCenter );
+        float   sepDist    = min( Vector3Length( trgtDiff ), offset_d );
+		Vector3 dragVec    = Vector3Scale(  Vector3Normalize( trgtDiff ), sepDist  );
+		/*---*/ dragCenter = Vector3Add( trgtCenter, dragVec );
         // Set the offset positions
 		target   = Vector3Add( trgtCenter, absTrgtOfst );
         position = Vector3Add( dragCenter, absDragOfst );
@@ -760,7 +767,7 @@ class DragOffsetThirdP_Camera : public Camera3D{ public:
     float signed_distance_to_drawn_sphere( const Vector3& pnt ) const{
         // Signed distance to a sphere that has the max draw distance as a radius
         if( inside_FOV( pnt ) ){
-            return Vector3Distance( pnt, position ) - dDrawMax;
+            return (Vector3Distance( pnt, position ) - dDrawMax);
         }else{
             return nanf("");
         }
@@ -806,6 +813,9 @@ int main(){
     StarSystemMap sys2{ set_posn( MatrixIdentity(), posn2 ) };
     sys2.generate_system();
     sys2.set_shader( lightShader.shader );
+
+    vector<pathPtr> mapPaths;
+    ubyte /*-----*/ Npaths = 0;
 
     ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
 
