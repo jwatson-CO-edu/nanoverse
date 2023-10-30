@@ -849,6 +849,10 @@ int main(){
         sys2.draw_glyphs( camera );
         sys2.draw();
 
+        for( pathPtr& path : mapPaths ){  
+            path->update();
+            path->draw();
+        }
 
         ///// END LOOP ////////////////////////////////////////////////////
 
