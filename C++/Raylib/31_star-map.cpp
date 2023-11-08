@@ -633,15 +633,17 @@ struct Path{
     ulong   endTs; //- Global timestep of journey end
     float   dStep; //- Linear distance traveled per timestep
     Vector3 vStep; //- Linear offset   accrued  per timestep
+    bool    cmplt; //- Flag: Have we finished traversing the path?
 
     /// Constructor(s) ///
 
     Path( const Vector3& beginVec, const Vector3& endVec_, ulong beginTs = 0 ){
         bgnVec = beginVec; // Beginning of 3D path
-        endVec = endVec_; // End of 3D path
+        endVec = endVec_; //- End of 3D path
         dirVec = Vector3Normalize( Vector3Subtract( endVec, bgnVec ) );
         cursor = beginVec; // Current point along the path
         bgnTs  = beginTs; //- Global timestep of journey beginning
+        cmplt  = false; //--- Flag: Have we finished traversing the path?
     }
 
     /// Methods ///
@@ -662,9 +664,11 @@ struct Path{
         if( dRemSqr > 0.0f ){
             if( dRemSqr > (dStep*dStep) )
                 cursor = Vector3Add( cursor, vStep );
-            else  
-                cursor = endVec;
-        } // Else no update
+            else{  
+                cursor = endVec;  
+                cmplt  = true;
+            }
+        }else{  cmplt = true;  } // Else no update
         // Return the current position along the path
         return cursor;
     }
@@ -792,13 +796,15 @@ int main(){
     
     Vector3 posn1{0,0,0};
     Vector3 posn2{100.0f, 0.0f, 0.0f};
+    Vector3 posn3 = uniform_vector_noise( posn1, 5.0 );
+    bool    p_sys1 = false;
 
     /// Create Camera ///
     DragOffsetThirdP_Camera camera = DragOffsetThirdP_Camera{ 10.0f, Vector3{0,0,5}, Vector3{0,0,2} };
     camera.dragCenter = Vector3{50,50,50};
-    Path path{ posn1, posn2 };
-    path.set_speed( 0.06125f );
-    camera.update_target_position( path.cursor );
+    // Path path{ posn1, posn2 };
+    // path.set_speed( 0.06125f );
+    // camera.update_target_position( posn3 );
 
     /// Lighting ///
     Lighting lightShader{};
@@ -816,16 +822,29 @@ int main(){
 
     vector<pathPtr> mapPaths;
     ubyte /*-----*/ Npaths = 0;
+    Vector3 /*---*/ camLook = posn3;
 
     ///////// RENDER LOOP //////////////////////////////////////////////////////////////////////////
 
     while( !WindowShouldClose() ){
 
+        /// Update Pathing ///
+        if( (mapPaths.size() == 0) || (mapPaths.back()->cmplt) ){
+            if( !p_sys1 ){
+
+            }else{
+
+            }
+        }
+
+
+        camera.update_target_position( path.cursor );
+
         /// Updates *outside* the 3D context ///
         sys1.star.update_texture();
         sys2.star.update_texture();
-        path.update();
-        camera.update_target_position( path.cursor );
+    
+        
 
         /// Begin Drawing ///
         BeginDrawing();
