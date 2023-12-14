@@ -1,4 +1,4 @@
-// g++ 18-1_memory-ops.cpp -std=c++17 -lraylib
+// g++ 18-1_memory-ops.cpp -std=c++17 -lraylib -o ribbinsFinal.out
 // Re-implement Boid Ribbons **without** `Model`s!
 // 2023-08-14: Do not break into smaller files until everything works
 

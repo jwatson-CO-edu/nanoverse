@@ -1,4 +1,4 @@
-// g++ 18_shiny-ribbons.cpp -std=c++17 -lraylib
+// g++ 18_shiny-ribbons.cpp -std=c++17 -lraylib -o shinyRibbons.out
 // Re-implement Boid Ribbons **without** `Model`s!
 // 2023-08-14: Do not break into smaller files until everything works
 
