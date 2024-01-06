@@ -33,6 +33,8 @@ typedef array<Vector3,2> segment; // Vector info for One Line Segment
 #define COLORS_BUFFER_IDX 3 // Vertex color VBO
 #define INDEXF_BUFFER_IDX 6 // Indices of facet vertices VBO
 
+
+
 ////////// VECTOR OPERATIONS ///////////////////////////////////////////////////////////////////////
 
 
@@ -85,6 +87,52 @@ Matrix MatrixError(){
 }
 
 bool p_vec3_err( const Vector3& q ){  return ( isnanf( q.x ) || isnanf( q.y ) || isnanf( q.z ) );  } // Return true for any elem NaN
+
+Vector3 vec3d_from_arbitrary_2D_basis( float x, float y, const Vector3& xBasis, const Vector3& yBasis ){
+    // Return a coordinate in an arbitrary (non-orthoginal) 2D basis nested within a 3D frame
+    // DO NOT normalize the basis vectors , see below!
+	return Vector3Add(  Vector3Scale( xBasis, x ),  Vector3Scale( yBasis, y )  ); 
+}
+
+triPnts flip_tri_outward( const triPnts& tri ){
+    // Point the triangle normal away from the origin
+    if( Vector3DotProduct( normal_of_tiangle( tri ), tri[0] ) > 0.0f )  return tri;
+    return {tri[0], tri[2], tri[1]};
+}
+
+
+    
+
+Matrix MatrixRotateAxisAngle( const Vector3& axis, float angle_rad ){
+    // Return a homogeneous transform that is a rotation by `angle_rad` about the `axis`
+    Matrix rtnMtx = MatrixIdentity();
+    /* m0 m4 m8  m12
+       m1 m5 m9  m13
+       m2 m6 m10 m14
+       m3 m7 m11 m15 */
+    // 1. Calc components
+    Vector3 axis_ = Vector3Normalize( axis );
+    float   k1    = axis_.x;
+    float   k2    = axis_.y;
+    float   k3    = axis_.z;
+    float   vTh   = vsnf( angle_rad );
+    float   cTh   = cosf( angle_rad );
+    float   sTh   = sinf( angle_rad );
+    // 2. X-basis
+    rtnMtx.m0 = k1*k1*vTh + cTh;
+    rtnMtx.m1 = k2*k1*vTh + k3*sTh;
+    rtnMtx.m2 = k3*k1*vTh - k2*sTh;
+    // 3. Y-basis
+    rtnMtx.m4 = k1*k2*vTh - k3*sTh;
+    rtnMtx.m5 = k2*k2*vTh + cTh;
+    rtnMtx.m6 = k3*k2*vTh + k1*sTh;
+    // 4. Z-basis
+    rtnMtx.m8  = k1*k3*vTh + k2*sTh;
+    rtnMtx.m9  = k2*k3*vTh - k1*sTh;
+    rtnMtx.m10 = k3*k3*vTh + cTh;
+    // N. Return
+    return rtnMtx;
+}
 
 ////////// HOMOGENEOUS COORDINATES /////////////////////////////////////////////////////////////////
 

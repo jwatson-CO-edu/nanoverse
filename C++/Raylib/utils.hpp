@@ -65,4 +65,6 @@ float round_to_N_places( float x, uint N ){
     return roundf( x * factor ) / factor;
 }
 
+float vsnf( float angle ){  return 1.0f - cosf( angle );  } // Versine, float version
+
 #endif /* UTILS_H */
