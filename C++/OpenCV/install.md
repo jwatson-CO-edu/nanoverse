@@ -3,3 +3,4 @@
 1. `mkdir -p build && cd build`
 1. `cmake  ../opencv-4.x`
 1. `cmake --build .`
+1. `sudo make install`

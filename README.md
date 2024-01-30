@@ -7,6 +7,17 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 ## Architecture 1: C++ & RayLib  (Dangerous!)
 * Purpose: Let yourself have some graphics, as a treat!  
 
+&nbsp;
+
+* `[>]` Virtual Sculpture Garden
+    - `[>]` Structure from Motion (SfM) [Tutorial](https://imkaywu.github.io/tutorials/sfm/)
+    - `[ ]` Point cloud of one sculpture
+    - `[ ]` Add texture one sculpture 
+    - `[ ]` Export sculptures
+    - `[ ]` Walk-thru
+
+&nbsp;
+
 * `[>]` BoxKart
     - `[Y]` Simple geometry, 2023-09-26: Fixed an error that caused all displacements to be double-counted
     - `[Y]` Tank steering with gamepad, 2023-09-27: Got it on the first try!
@@ -31,29 +42,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
                 * `[ ]` Generate uneven terrain (Revive from Synthwave Dream?)
                 * `{ }` Jumping?
             
-&nbsp;
 
-* `[>]` Animated Bond Graphs
-    - `[>]` Render 
-        * `[Y]` Major components - 2023-10-10: Render strats for all major components
-        * `[Y]` Construct simple example - 2023-10-10: Render strats for all major components
-            - `[Y]` Implement Section 3, Slide 13+, One step at a time - 2023-10-10: Render strats for all major components
-    - `[>]` Solve 
-        * `[>]` Infer causality / flow
-            - `[ ]` Render causality 
-        * `[ ]` Obtain example solution
-    - `[>]` Visualize
-        * `[>]` Labeled Nodes
-            - `[>]` 1-Junction
-            - `[ ]` 0-Junction
-        * `[ ]` Flow arrows
-            - `[ ]` Animation proportional to flow
-        * `[ ]` System var trace emanating from node?
-    - `[ ]` Bond Graph vehicle dynamics  
-    WARNING: Approaching DANGEROUSLY close to a game engine!
-        * `[ ]` Implement paper structs 
-        * `[ ]` Implement paper example 
-        * `{ }` Animated 3D bond graph? 
 
 &nbsp;
 
@@ -140,6 +129,8 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 
 &nbsp;
 
+### Suspended
+
 * `[P]` Solar Tomography Visualization `[PAUSED]`
     - `[Y]` Parse NPY datacube, 2023-09-13: Read into vector of vector of vector of floats!
     - `[Y]` Visualize raw data as points. Display magnitude with color and opacity, 2023-09-15: Fixed an obvious mistake and data looks sensible now, dots (mini line segments) produce an unappealing moire pattern
@@ -176,6 +167,30 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         * `[ ]` Write a shader that implies finer structure/texture than the data cube provides
         * `[ ]` Animate!
             - `[ ]` Try to avoid "jittery" textures
+
+&nbsp;
+
+* `[P]` Animated Bond Graphs `[PAUSED]`
+    - `[Y]` Render 
+        * `[Y]` Major components - 2023-10-10: Render strats for all major components
+        * `[Y]` Construct simple example - 2023-10-10: Render strats for all major components
+            - `[Y]` Implement Section 3, Slide 13+, One step at a time - 2023-10-10: Render strats for all major components
+    - `[P]` Solve 
+        * `[P]` Infer causality / flow
+            - `[ ]` Render causality 
+        * `[ ]` Obtain example solution
+    - `[P]` Visualize
+        * `[P]` Labeled Nodes
+            - `[P]` 1-Junction
+            - `[ ]` 0-Junction
+        * `[ ]` Flow arrows
+            - `[ ]` Animation proportional to flow
+        * `[ ]` System var trace emanating from node?
+    - `[ ]` Bond Graph vehicle dynamics  
+    WARNING: Approaching DANGEROUSLY close to a game engine!
+        * `[ ]` Implement paper structs 
+        * `[ ]` Implement paper example 
+        * `{ }` Animated 3D bond graph? 
 
 &nbsp;  
 
