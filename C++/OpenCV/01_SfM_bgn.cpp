@@ -59,12 +59,12 @@ using std::vector;
 #include <string>
 using std::string;
 #include <filesystem>
-using std::filesystem;
+using std::filesystem::directory_iterator;
 #include <iostream>
 using std::cout, std::endl, std::flush;
 
 /// Special ///
-#include <opencv2/opencv.hpp>
+// #include <opencv2/opencv.hpp>
 
 ////////// UTILITY FUNCTIONS ///////////////////////////////////////////////////////////////////////
 
@@ -74,9 +74,9 @@ vector<string> list_files_at_path( string path, bool prepend = false ){
     string /*---*/ path_i;
     for (const auto & entry : directory_iterator( path ) ){  
         if( prepend )
-            path_i = path + "/" + entry.path();
+            path_i = path + "/" + entry.path().string();
         else
-            path_i = entry.path();
+            path_i = entry.path().string();
         rtnNams.push_back( path_i );  
     }
     return rtnNams;
@@ -85,31 +85,32 @@ vector<string> list_files_at_path( string path, bool prepend = false ){
 
 
 ////////// GLOBALS /////////////////////////////////////////////////////////////////////////////////
-string _IMG_PATH = "";
+string _IMG_PATH = "data/SfM/00_sculpture";
 
 
 
 ////////// IMAGE PROCESSING ////////////////////////////////////////////////////////////////////////
 
 
-vector<Mat> fetch_images_at_path( string path ){
-    vector<string> fNames = list_files_at_path( path, true );
-    uint /*-----*/ Nimg   = fNames.size();
-    vector<Mat>  images;
-    for( string fName : fNames ){
-        images.push_back( imread( fName, IMREAD_COLOR ) );
-        cout << fName << endl;
-    }
-    cout << endl << "Got " << images.size() << " images!" << endl;
-    return images;
-}
+// vector<Mat> fetch_images_at_path( string path ){
+//     vector<string> fNames = list_files_at_path( path, true );
+//     uint /*-----*/ Nimg   = fNames.size();
+//     vector<Mat>  images;
+//     for( string fName : fNames ){
+//         images.push_back( imread( fName, IMREAD_COLOR ) );
+//         cout << fName << endl;
+//     }
+//     cout << endl << "Got " << images.size() << " images!" << endl;
+//     return images;
+// }
 
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 int main(){
 
-    fetch_images_at_path( _IMG_PATH );
+    vector<string> fNames = list_files_at_path( _IMG_PATH, false );
+    for( string fName : fNames ) cout << fName << endl;
 
     return 0;
 }

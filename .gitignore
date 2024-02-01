@@ -13,6 +13,7 @@ d/raylib/*/*.app
 d/raylib/*/*.so*
 
 C++/OpenGL/*/cpp_helpers 
+C++/OpenCV/data/*
 
 *.out
 */*.out

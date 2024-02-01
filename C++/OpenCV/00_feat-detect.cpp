@@ -1,7 +1,7 @@
 // https://docs.opencv.org/3.4/d7/d66/tutorial_feature_detection.html
 
 #include <iostream>
-#include "opencv2/core.hpp"
+#include "opencv4/opencv2/core.hpp"
 #ifdef HAVE_OPENCV_XFEATURES2D
 #include "opencv2/highgui.hpp"
 #include "opencv2/features2d.hpp"
