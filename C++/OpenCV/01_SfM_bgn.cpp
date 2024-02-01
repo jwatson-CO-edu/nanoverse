@@ -1,3 +1,5 @@
+// g++ 00
+
 ////////// DEV PLAN & NOTES ////////////////////////////////////////////////////////////////////////
 /*
 ##### Sources #####
@@ -109,7 +111,7 @@ string _IMG_PATH = "data/SfM/00_sculpture";
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 int main(){
 
-    vector<string> fNames = list_files_at_path( _IMG_PATH, false );
+    vector<string> fNames = list_files_at_path( _IMG_PATH );
     for( string fName : fNames ) cout << fName << endl;
 
     return 0;
