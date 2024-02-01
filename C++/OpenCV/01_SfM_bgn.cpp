@@ -1,4 +1,4 @@
-// g++ 00
+// g++ 01_SfM_bgn.cpp -std=c++17 -o load_images.out
 
 ////////// DEV PLAN & NOTES ////////////////////////////////////////////////////////////////////////
 /*
@@ -9,6 +9,7 @@
 ##### DEV PLAN #####
 [ ] Load images in a dir
 [ ] 00 SURF Example
+[ ] ORB Example
 [ ] Compute ORB features for one image
 [ ] Basic SfM Tutorial: https://imkaywu.github.io/tutorials/sfm/
     [ ] Compute ORB for all images
