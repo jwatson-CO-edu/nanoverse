@@ -1,3 +1,5 @@
+// g++ 01_SfM_bgn.cpp -std=c++17 -o load-img.out `pkg-config --cflags --libs opencv4`
+// g++ 01_SfM_bgn.cpp -std=c++17 -I /usr/local/include/opencv4/ -o load_images.out `pkg-config --cflags --libs opencv4`
 // g++ 01_SfM_bgn.cpp -std=c++17 -o load_images.out
 
 ////////// DEV PLAN & NOTES ////////////////////////////////////////////////////////////////////////
@@ -7,14 +9,15 @@
 
 
 ##### DEV PLAN #####
-[ ] Load images in a dir
-[ ] 00 SURF Example
+[Y] Load images in a dir, 2024-02-02: Req'd `pkg-config`
+[Y] 00 SURF Example, 2024-02-02: Finally, Finally, Finally
 [ ] ORB Example
 [ ] Compute ORB features for one image
 [ ] Basic SfM Tutorial: https://imkaywu.github.io/tutorials/sfm/
     [ ] Compute ORB for all images
     [ ] Feature matching
-        [ ] Match features between each pair of images in the input image set
+        [ ] Match features between each pair of images in the input image set,
+            https://docs.opencv.org/3.4/d5/d6f/tutorial_feature_flann_matcher.html
             [ ] Brute force
             [ ] Approximate nearest neighbour library, such as FLANN, ANN, Nanoflann
         [ ] Bi-directional verification
@@ -67,7 +70,8 @@ using std::filesystem::directory_iterator;
 using std::cout, std::endl, std::flush;
 
 /// Special ///
-// #include <opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
+using cv::Mat, cv::imread, cv::IMREAD_COLOR;
 
 ////////// UTILITY FUNCTIONS ///////////////////////////////////////////////////////////////////////
 
@@ -95,17 +99,20 @@ string _IMG_PATH = "data/SfM/00_sculpture";
 ////////// IMAGE PROCESSING ////////////////////////////////////////////////////////////////////////
 
 
-// vector<Mat> fetch_images_at_path( string path ){
-//     vector<string> fNames = list_files_at_path( path, true );
-//     uint /*-----*/ Nimg   = fNames.size();
-//     vector<Mat>  images;
-//     for( string fName : fNames ){
-//         images.push_back( imread( fName, IMREAD_COLOR ) );
-//         cout << fName << endl;
-//     }
-//     cout << endl << "Got " << images.size() << " images!" << endl;
-//     return images;
-// }
+vector<Mat> fetch_images_at_path( string path, uint limit = 0 ){
+    vector<string> fNames = list_files_at_path( path, true );
+    uint /*-----*/ Nimg   = fNames.size();
+    vector<Mat>    images;
+    uint /*-----*/ i = 0;
+    for( string fName : fNames ){
+        if( (limit > 0) && (i > (limit-1)) ) break;
+        images.push_back( imread( fName, IMREAD_COLOR ) );
+        cout << "Loaded: " << fName << endl;
+        i++;
+    }
+    cout << endl << "Got " << images.size() << " images!" << endl;
+    return images;
+}
 
 
 
@@ -114,6 +121,7 @@ int main(){
 
     vector<string> fNames = list_files_at_path( _IMG_PATH );
     for( string fName : fNames ) cout << fName << endl;
-
+    cout << endl;
+    vector<Mat> images = fetch_images_at_path( _IMG_PATH, 10 );
     return 0;
 }
