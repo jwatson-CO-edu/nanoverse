@@ -11,8 +11,7 @@
 ##### DEV PLAN #####
 [Y] Load images in a dir, 2024-02-02: Req'd `pkg-config`
 [Y] 00 SURF Example, 2024-02-02: Finally, Finally, Finally
-[ ] ORB Example
-[ ] Compute ORB features for one image
+[>] ORB Example, Compute ORB features for one image
 [ ] Basic SfM Tutorial: https://imkaywu.github.io/tutorials/sfm/
     [ ] Compute ORB for all images
     [ ] Feature matching
@@ -68,10 +67,26 @@ using std::string;
 using std::filesystem::directory_iterator;
 #include <iostream>
 using std::cout, std::endl, std::flush;
+#include <memory>
+using std::shared_ptr;
 
 /// Special ///
 #include <opencv2/opencv.hpp>
-using cv::Mat, cv::imread, cv::IMREAD_COLOR;
+#include "opencv2/core.hpp"
+using cv::CommandLineParser;
+#include <opencv2/core/utility.hpp>
+using cv::Mat, cv::String;
+#include <opencv2/imgcodecs.hpp>
+using cv::imread, cv::IMREAD_COLOR, cv::IMREAD_GRAYSCALE;
+#include "opencv2/highgui.hpp"
+using namespace cv::samples;
+using cv::waitKey;
+#include "opencv2/features2d.hpp"
+using cv::Ptr, cv::KeyPoint;
+#include "opencv2/xfeatures2d.hpp"
+using cv::xfeatures2d::ORB;
+
+
 
 ////////// UTILITY FUNCTIONS ///////////////////////////////////////////////////////////////////////
 
@@ -100,6 +115,7 @@ string _IMG_PATH = "data/SfM/00_sculpture";
 
 
 vector<Mat> fetch_images_at_path( string path, uint limit = 0 ){
+    // Load all the images found at a path
     vector<string> fNames = list_files_at_path( path, true );
     uint /*-----*/ Nimg   = fNames.size();
     vector<Mat>    images;
@@ -113,6 +129,37 @@ vector<Mat> fetch_images_at_path( string path, uint limit = 0 ){
     cout << endl << "Got " << images.size() << " images!" << endl;
     return images;
 }
+
+vector<vector<KeyPoint>> calc_keypoints_from_images( const vector<Mat>& images ){
+    // Caclulate keypoints for every image in the input vector
+    vector<vector<KeyPoint>> rtnKps;
+    vector<KeyPoint> /*---*/ kp;
+    Ptr<FeatureDetector>     detector = ORB::create();
+    for( Mat& image : images ){
+        detector->detect( image, kp );
+        rtnKps.push_back( kp );
+    }
+    return rtnKps;
+}
+
+////////// KEYPOINT DETECTION & CORRELATION ////////////////////////////////////////////////////////
+
+class CamShot{ public:
+    // Represents an image and all of the information inferred from that image
+    
+    /// Members ///
+    Mat /*--------*/ img;
+    vector<KeyPoint> kps;
+    // FIXME: ESTIMATED POSE
+
+    /// Constructors ///
+    CamShot( const Mat& image, const vector<KeyPoint>& keypoints ){
+        img = Mat( image );
+        kps = keypoints;
+        // FIXME: INIT ESTIMATED POSE
+    };
+};
+typedef shared_ptr<CamShot> shotPtr;
 
 
 

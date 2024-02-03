@@ -17,37 +17,44 @@ using cv::waitKey;
 #include "opencv2/features2d.hpp"
 using cv::Ptr, cv::KeyPoint;
 #include "opencv2/xfeatures2d.hpp"
-using cv::xfeatures2d::SURF;
-
-
-
+using cv::xfeatures2d::ORB;
 
 
 int main( int argc, char* argv[] ){
 
     // -- Step -1: Init
-    CommandLineParser parser( argc, argv, "{@input | box.png | input image}" );
-    Mat /*---------*/ src = imread( findFile( parser.get<String>( "@input" ) ), IMREAD_GRAYSCALE );
+    CommandLineParser parser( argc, argv, "{@input1||}{@input2||}" );
+    Mat /*---------*/ src1 = imread( findFile( parser.get<String>( "@input1" ) ), IMREAD_GRAYSCALE );
+    Mat /*---------*/ src2 = imread( findFile( parser.get<String>( "@input2" ) ), IMREAD_GRAYSCALE );
 
     // -- Step 0: Check image non-empty
-    if ( src.empty() ){
-        cout << "Could not open or find the image!\n" << endl;
+    if ( src1.empty() || src2.empty() ){
+        cout << "Could not open or find the images!\n" << endl;
+        cout << parser.get<String>( "@input1" ) << endl;
+        cout << parser.get<String>( "@input2" ) << endl;
         cout << "Usage: " << argv[0] << " <Input image>" << endl;
         return -1;
     }
 
     // -- Step 1: Detect the keypoints using SURF Detector
-    int /*-------------*/ minHessian = 400;
-    Ptr<SURF> /*-------*/ detector   = SURF::create( minHessian );
-    std::vector<KeyPoint> keypoints;
-    detector->detect( src, keypoints );
+    // int /*-------------*/ minHessian = 400;
+    // Ptr<SURF> /*-------*/ detector   = SURF::create( minHessian );
+    Ptr<FeatureDetector>  detector = ORB::create();
+    std::vector<KeyPoint> keypoints1;
+    std::vector<KeyPoint> keypoints2;
+    detector->detect( src1, keypoints1 );
+    detector->detect( src2, keypoints2 );
 
     // -- Step 2: Draw keypoints
-    Mat img_keypoints;
-    drawKeypoints( src, keypoints, img_keypoints );
+    Mat img_keypoints1;
+    Mat img_keypoints2;
+    drawKeypoints( src1, keypoints1, img_keypoints1 );
+    drawKeypoints( src2, keypoints2, img_keypoints2 );
 
     // -- Step 3: Show detected (drawn) keypoints
-    imshow("SURF Keypoints", img_keypoints );
+    imshow("SURF Keypoints 1", img_keypoints1 );
+    waitKey();
+    imshow("SURF Keypoints 2", img_keypoints2 );
     waitKey();
     
     return 0;
