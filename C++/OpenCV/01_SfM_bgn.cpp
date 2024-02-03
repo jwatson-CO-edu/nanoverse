@@ -12,8 +12,8 @@
 [Y] Load images in a dir, 2024-02-02: Req'd `pkg-config`
 [Y] 00 SURF Example, 2024-02-02: Finally, Finally, Finally
 [>] ORB Example, Compute ORB features for one image
-[ ] Basic SfM Tutorial: https://imkaywu.github.io/tutorials/sfm/
-    [ ] Compute ORB for all images
+[>] Basic SfM Tutorial: https://imkaywu.github.io/tutorials/sfm/
+    [>] Compute ORB for all images
     [ ] Feature matching
         [ ] Match features between each pair of images in the input image set,
             https://docs.opencv.org/3.4/d5/d6f/tutorial_feature_flann_matcher.html
