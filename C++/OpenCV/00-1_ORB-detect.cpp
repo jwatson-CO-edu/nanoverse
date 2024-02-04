@@ -1,4 +1,5 @@
-// cls && g++ 00_feat-detect.cpp `pkg-config --cflags --libs opencv4` -std=c++17 -lopencv_xfeatures2d -I /usr/local/include/opencv4/
+// cls && g++ 00-1_ORB-detect.cpp `pkg-config --cflags --libs opencv4` -std=c++17 -lopencv_xfeatures2d -I /usr/local/include/opencv4/
+// 
 
 // https://docs.opencv.org/3.4/d7/d66/tutorial_feature_detection.html
 
@@ -10,14 +11,14 @@ using std::cout, std::endl;
 using cv::Mat, cv::String;
 using cv::CommandLineParser;
 #include <opencv2/imgcodecs.hpp>
-using cv::imread, cv::IMREAD_GRAYSCALE;
+using cv::imread, cv::IMREAD_GRAYSCALE, cv::IMREAD_COLOR;
 #include "opencv2/highgui.hpp"
 using namespace cv::samples;
 using cv::waitKey;
 #include "opencv2/features2d.hpp"
-using cv::Ptr, cv::KeyPoint;
+using cv::Ptr, cv::KeyPoint, cv::FeatureDetector;
 #include "opencv2/xfeatures2d.hpp"
-using cv::xfeatures2d::ORB;
+using cv::ORB;
 
 
 int main( int argc, char* argv[] ){
@@ -39,7 +40,7 @@ int main( int argc, char* argv[] ){
     // -- Step 1: Detect the keypoints using SURF Detector
     // int /*-------------*/ minHessian = 400;
     // Ptr<SURF> /*-------*/ detector   = SURF::create( minHessian );
-    Ptr<FeatureDetector>  detector = ORB::create();
+    Ptr<FeatureDetector>  detector = ORB::create( 1000000 ); //,cv::ORB::FAST_SCORE);
     std::vector<KeyPoint> keypoints1;
     std::vector<KeyPoint> keypoints2;
     detector->detect( src1, keypoints1 );
