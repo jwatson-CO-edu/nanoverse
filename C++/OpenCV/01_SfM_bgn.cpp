@@ -1,6 +1,4 @@
-// g++ 01_SfM_bgn.cpp -std=c++17 -o load-img.out `pkg-config --cflags --libs opencv4`
-// g++ 01_SfM_bgn.cpp -std=c++17 -I /usr/local/include/opencv4/ -o load_images.out `pkg-config --cflags --libs opencv4`
-// g++ 01_SfM_bgn.cpp -std=c++17 -o load_images.out
+// g++ 01_SfM_bgn.cpp `pkg-config --cflags --libs opencv4` -std=c++17 -lopencv_xfeatures2d -I /usr/local/include/opencv4/ -o load-img.out
 
 ////////// DEV PLAN & NOTES ////////////////////////////////////////////////////////////////////////
 /*
@@ -13,11 +11,11 @@
 [Y] 00 SURF Example, 2024-02-02: Finally, Finally, Finally
 [>] ORB Example, Compute ORB features for one image
 [>] Basic SfM Tutorial: https://imkaywu.github.io/tutorials/sfm/
-    [>] Compute ORB for all images
-    [ ] Feature matching
-        [ ] Match features between each pair of images in the input image set,
+    [Y] Compute ORB for all images, 2024-02-02: Easy!
+    [>] Feature matching
+        [>] Match features between each pair of images in the input image set,
             https://docs.opencv.org/3.4/d5/d6f/tutorial_feature_flann_matcher.html
-            [ ] Brute force
+            [>] Brute force
             [ ] Approximate nearest neighbour library, such as FLANN, ANN, Nanoflann
         [ ] Bi-directional verification
     [ ] Relative pose estimation
@@ -82,23 +80,20 @@ using cv::imread, cv::IMREAD_COLOR, cv::IMREAD_GRAYSCALE;
 using namespace cv::samples;
 using cv::waitKey;
 #include "opencv2/features2d.hpp"
-using cv::Ptr, cv::KeyPoint;
+using cv::Ptr, cv::KeyPoint, cv::FeatureDetector;
 #include "opencv2/xfeatures2d.hpp"
-using cv::xfeatures2d::ORB;
+using cv::ORB;
 
 
 
 ////////// UTILITY FUNCTIONS ///////////////////////////////////////////////////////////////////////
 
-vector<string> list_files_at_path( string path, bool prepend = false ){
+vector<string> list_files_at_path( string path ){
     // List all the files found at a path
     vector<string> rtnNams;
     string /*---*/ path_i;
     for (const auto & entry : directory_iterator( path ) ){  
-        if( prepend )
-            path_i = path + "/" + entry.path().string();
-        else
-            path_i = entry.path().string();
+        path_i = entry.path().string();
         rtnNams.push_back( path_i );  
     }
     return rtnNams;
@@ -116,14 +111,16 @@ string _IMG_PATH = "data/SfM/00_sculpture";
 
 vector<Mat> fetch_images_at_path( string path, uint limit = 0 ){
     // Load all the images found at a path
-    vector<string> fNames = list_files_at_path( path, true );
+    vector<string> fNames = list_files_at_path( path );
     uint /*-----*/ Nimg   = fNames.size();
+    Mat /*------*/ img;  
     vector<Mat>    images;
     uint /*-----*/ i = 0;
     for( string fName : fNames ){
         if( (limit > 0) && (i > (limit-1)) ) break;
-        images.push_back( imread( fName, IMREAD_COLOR ) );
-        cout << "Loaded: " << fName << endl;
+        img = imread( fName, IMREAD_GRAYSCALE );
+        images.push_back( img );
+        cout << "Loaded: " << fName << ", Bytes: " << (img.total() * img.elemSize()) << endl;
         i++;
     }
     cout << endl << "Got " << images.size() << " images!" << endl;
@@ -134,11 +131,14 @@ vector<vector<KeyPoint>> calc_keypoints_from_images( const vector<Mat>& images )
     // Caclulate keypoints for every image in the input vector
     vector<vector<KeyPoint>> rtnKps;
     vector<KeyPoint> /*---*/ kp;
-    Ptr<FeatureDetector>     detector = ORB::create();
-    for( Mat& image : images ){
+    Ptr<FeatureDetector>     detector = ORB::create( 5000 );
+    cout << "\t";
+    for( const Mat& image : images ){
         detector->detect( image, kp );
         rtnKps.push_back( kp );
+        cout << "." << flush;
     }
+    cout << endl;
     return rtnKps;
 }
 
@@ -148,20 +148,33 @@ class CamShot{ public:
     // Represents an image and all of the information inferred from that image
     
     /// Members ///
-    Mat /*--------*/ img;
-    vector<KeyPoint> kps;
+    string /*-----*/ path;
+    Mat /*--------*/ imag;
+    vector<KeyPoint> kpts;
     // FIXME: ESTIMATED POSE
 
     /// Constructors ///
-    CamShot( const Mat& image, const vector<KeyPoint>& keypoints ){
-        img = Mat( image );
-        kps = keypoints;
+    CamShot( string fPath, const Mat& image, const vector<KeyPoint>& keypoints ){
+        path = fPath;
+        imag = Mat( image );
+        kpts = keypoints;
         // FIXME: INIT ESTIMATED POSE
     };
 };
 typedef shared_ptr<CamShot> shotPtr;
 
-
+vector<shotPtr> shots_from_images( const vector<string>& paths, const vector<Mat>& images ){
+    // Construct a camera shot object for every photo in the vector
+    vector<shotPtr> /*----*/ rtnShots;
+    cout << "About to get keypoints ... " << flush;
+    vector<vector<KeyPoint>> kps = calc_keypoints_from_images( images );
+    cout << "Obtained!" << endl;
+    size_t /*-------------*/ N   = images.size();
+    for( size_t i = 0; i < N; ++i ){
+        rtnShots.push_back( shotPtr( new CamShot( paths[i], images[i], kps[i] ) ) );
+    }
+    return rtnShots;
+}
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 int main(){
@@ -169,6 +182,12 @@ int main(){
     vector<string> fNames = list_files_at_path( _IMG_PATH );
     for( string fName : fNames ) cout << fName << endl;
     cout << endl;
-    vector<Mat> images = fetch_images_at_path( _IMG_PATH, 10 );
+    vector<Mat> images = fetch_images_at_path( _IMG_PATH );
+    cout << endl;
+    vector<shotPtr> shots = shots_from_images( fNames, images );
+    cout << endl;
+    for( shotPtr& shot : shots ){
+        cout << shot->path << ", KP: " << shot->kpts.size() << endl;
+    }
     return 0;
 }
