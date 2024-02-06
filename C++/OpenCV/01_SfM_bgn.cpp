@@ -178,23 +178,39 @@ struct KpMatch{
     size_t prevDex;
     size_t nextDex;
     float  diff;
+
+    bool p_has_i( size_t i ){  return ((prevDex==i)||(nextDex==i));  } // Does this involve index `i`?
 };
 
 class ShotPair{ public:
     // Represents correspondences between two `CamShot`s
-    shotPtr /*---------------*/ prev = nullptr;
-    shotPtr /*---------------*/ next = nullptr;
+
+    /// Members ///
+    shotPtr /*---*/ prev = nullptr;
+    shotPtr /*---*/ next = nullptr;
     vector<KpMatch> matches;
-    KeyPoint kp_p, kp_n;
+
+    /// Constructor(s) ///
+
+    ShotPair( shotPtr& p, shotPtr& n ){
+        prev = shotPtr( p );
+        next = shotPtr( n );
+    }
+
+    /// Methods ///
 
     void brute_force_match(){
         // Linear search for best matches, O(n^2)
-        size_t iM = 0, jM = 0;
-        size_t Np = prev->kpts.size();
-        size_t Nn = next->kpts.size();
-        float  dMin, d;
+        KeyPoint kp_p, kp_n;
+        size_t   iM = 0, jM = 0;
+        size_t   Np = prev->kpts.size();
+        size_t   Nn = next->kpts.size();
+        float    dMin, d;
+        size_t   div = 1000;
 
         matches.clear();
+
+        cout << "Brute Force Keypoint Matching ";
 
         for( size_t ip = 0; ip < Np; ++ip ){
             dMin = 1e9;
@@ -209,8 +225,13 @@ class ShotPair{ public:
                 }
             }
             matches.push_back( KpMatch{iM,jM,dMin} );
+            if( (ip%div) == 0 ) cout << "." << flush;
         }
+        cout << endl;
         // FIXME: MAKE MATCHES UNIQUE (KEEP BEST EDGE OUT OF ONE-TO-MANY GRAPHS)
+        for( size_t ip = 0; ip < Np; ++ip ){
+
+        }
     }
 };
 
