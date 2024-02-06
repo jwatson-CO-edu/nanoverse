@@ -1,4 +1,4 @@
-// cls && g++ 00-1_ORB-detect.cpp `pkg-config --cflags --libs opencv4` -std=c++17 -lopencv_xfeatures2d -I /usr/local/include/opencv4/
+// cls && g++ 00-1_ORB-detect.cpp `pkg-config --cflags --libs opencv4` -std=c++17 -lopencv_xfeatures2d -I /usr/local/include/opencv4/ -o ORB-demo.out
 // 
 
 // https://docs.opencv.org/3.4/d7/d66/tutorial_feature_detection.html

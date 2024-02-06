@@ -67,6 +67,10 @@ using std::filesystem::directory_iterator;
 using std::cout, std::endl, std::flush;
 #include <memory>
 using std::shared_ptr;
+#include <map>
+using std::pair;
+#include <cmath>
+using std::abs;
 
 /// Special ///
 #include <opencv2/opencv.hpp>
@@ -80,9 +84,9 @@ using cv::imread, cv::IMREAD_COLOR, cv::IMREAD_GRAYSCALE;
 using namespace cv::samples;
 using cv::waitKey;
 #include "opencv2/features2d.hpp"
-using cv::Ptr, cv::KeyPoint, cv::FeatureDetector;
+using cv::Ptr, cv::KeyPoint, cv::Point, cv::FeatureDetector;
 #include "opencv2/xfeatures2d.hpp"
-using cv::ORB;
+using cv::ORB, cv::normL2Sqr;
 
 
 
@@ -127,11 +131,11 @@ vector<Mat> fetch_images_at_path( string path, uint limit = 0 ){
     return images;
 }
 
-vector<vector<KeyPoint>> calc_keypoints_from_images( const vector<Mat>& images ){
+vector<vector<KeyPoint>> calc_ORB_keypoints_from_images( const vector<Mat>& images, ulong N = 10000 ){
     // Caclulate keypoints for every image in the input vector
     vector<vector<KeyPoint>> rtnKps;
     vector<KeyPoint> /*---*/ kp;
-    Ptr<FeatureDetector>     detector = ORB::create( 5000 );
+    Ptr<FeatureDetector>     detector = ORB::create( N );
     cout << "\t";
     for( const Mat& image : images ){
         detector->detect( image, kp );
@@ -143,6 +147,7 @@ vector<vector<KeyPoint>> calc_keypoints_from_images( const vector<Mat>& images )
 }
 
 ////////// KEYPOINT DETECTION & CORRELATION ////////////////////////////////////////////////////////
+
 
 class CamShot{ public:
     // Represents an image and all of the information inferred from that image
@@ -163,11 +168,58 @@ class CamShot{ public:
 };
 typedef shared_ptr<CamShot> shotPtr;
 
+float keypoint_diff_mag( const KeyPoint& a, const KeyPoint& b ){
+    // Calculate keypoint difference as the angle diff scaled by fraction of overlapping area
+    return KeyPoint::overlap( a, b ) * abs( a.angle - b.angle );
+}
+
+struct KpMatch{
+    // Matching keypoints for use in `ShotPair`
+    size_t prevDex;
+    size_t nextDex;
+    float  diff;
+};
+
+class ShotPair{ public:
+    // Represents correspondences between two `CamShot`s
+    shotPtr /*---------------*/ prev = nullptr;
+    shotPtr /*---------------*/ next = nullptr;
+    vector<KpMatch> matches;
+    KeyPoint kp_p, kp_n;
+
+    void brute_force_match(){
+        // Linear search for best matches, O(n^2)
+        size_t iM = 0, jM = 0;
+        size_t Np = prev->kpts.size();
+        size_t Nn = next->kpts.size();
+        float  dMin, d;
+
+        matches.clear();
+
+        for( size_t ip = 0; ip < Np; ++ip ){
+            dMin = 1e9;
+            kp_p = prev->kpts[ip];
+            for( size_t jn = 0; jn < Nn; ++jn ){
+                kp_n = next->kpts[jn];
+                d    = keypoint_diff_mag( kp_p, kp_n );
+                if( d < dMin ){
+                    dMin = d;
+                    iM   = ip;
+                    jM   = jn;
+                }
+            }
+            matches.push_back( KpMatch{iM,jM,dMin} );
+        }
+        // FIXME: MAKE MATCHES UNIQUE (KEEP BEST EDGE OUT OF ONE-TO-MANY GRAPHS)
+    }
+};
+
+
 vector<shotPtr> shots_from_images( const vector<string>& paths, const vector<Mat>& images ){
     // Construct a camera shot object for every photo in the vector
     vector<shotPtr> /*----*/ rtnShots;
     cout << "About to get keypoints ... " << flush;
-    vector<vector<KeyPoint>> kps = calc_keypoints_from_images( images );
+    vector<vector<KeyPoint>> kps = calc_ORB_keypoints_from_images( images );
     cout << "Obtained!" << endl;
     size_t /*-------------*/ N   = images.size();
     for( size_t i = 0; i < N; ++i ){

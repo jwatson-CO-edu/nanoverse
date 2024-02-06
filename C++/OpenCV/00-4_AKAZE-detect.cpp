@@ -1,4 +1,4 @@
-// cls && g++ 00-4_AKAZE-detect.cpp utils.cpp `pkg-config --cflags --libs opencv4` -std=c++17 -lopencv_xfeatures2d -I /usr/local/include/opencv4/
+// cls && g++ 00-4_AKAZE-detect.cpp utils.cpp `pkg-config --cflags --libs opencv4` -std=c++17 -lopencv_xfeatures2d -I /usr/local/include/opencv4/ -o AKAZE-demo.out
 
 /**
  * @file test_akaze_features_port.cpp
