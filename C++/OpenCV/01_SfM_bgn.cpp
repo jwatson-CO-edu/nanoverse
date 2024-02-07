@@ -88,6 +88,8 @@ using cv::Ptr, cv::KeyPoint, cv::Point, cv::FeatureDetector;
 #include "opencv2/xfeatures2d.hpp"
 using cv::ORB, cv::normL2Sqr;
 
+/// Local ///
+#include "helpers.hpp"
 
 
 ////////// UTILITY FUNCTIONS ///////////////////////////////////////////////////////////////////////
@@ -168,19 +170,31 @@ class CamShot{ public:
 };
 typedef shared_ptr<CamShot> shotPtr;
 
-float keypoint_diff_mag( const KeyPoint& a, const KeyPoint& b ){
+float keypoint_diff_mag( const KeyPoint& a, const KeyPoint& b, float areaFactor = 50.0f, float angleFactor = 50.0f/M_PI ){
     // Calculate keypoint difference as the angle diff scaled by fraction of overlapping area
-    return KeyPoint::overlap( a, b ) * abs( a.angle - b.angle );
+    //     <Fraction of non-overlapping area>*<constant> + <Angle difference>*<constant>
+    return (1.0f - KeyPoint::overlap( a, b ))*areaFactor + abs( a.angle - b.angle )*angleFactor;
 }
+
+size_t N_KM = 0;
 
 struct KpMatch{
     // Matching keypoints for use in `ShotPair`
+    size_t ID;
     size_t prevDex;
     size_t nextDex;
     float  diff;
 
-    bool p_has_i( size_t i ){  return ((prevDex==i)||(nextDex==i));  } // Does this involve index `i`?
+    KpMatch( size_t prevDex_, size_t nextDex_, float diff_ ){
+        ++N_KM;
+        ID = N_KM;
+        prevDex = prevDex_;
+        nextDex = nextDex_;
+        diff    = diff_;
+    }
 };
+
+
 
 class ShotPair{ public:
     // Represents correspondences between two `CamShot`s
@@ -201,14 +215,17 @@ class ShotPair{ public:
 
     void brute_force_match(){
         // Linear search for best matches, O(n^2)
-        KeyPoint kp_p, kp_n;
-        size_t   iM = 0, jM = 0;
-        size_t   Np = prev->kpts.size();
-        size_t   Nn = next->kpts.size();
-        float    dMin, d;
-        size_t   div = 1000;
+        KeyPoint /*--*/ kp_p, kp_n;
+        size_t /*----*/ iM = 0, jM = 0;
+        size_t /*----*/ Np = prev->kpts.size();
+        size_t /*----*/ Nn = next->kpts.size();
+        float /*-----*/ dMin, d;
+        size_t /*----*/ div = 1000;
 
-        matches.clear();
+        // TBD: Eliminate one-to-many matches?
+        // vector<KpMatch> candidates;
+        // vector<size_t>  delVec;
+        // bool /*------*/ oneID = false;
 
         cout << "Brute Force Keypoint Matching ";
 
@@ -228,10 +245,8 @@ class ShotPair{ public:
             if( (ip%div) == 0 ) cout << "." << flush;
         }
         cout << endl;
-        // FIXME: MAKE MATCHES UNIQUE (KEEP BEST EDGE OUT OF ONE-TO-MANY GRAPHS)
-        for( size_t ip = 0; ip < Np; ++ip ){
-
-        }
+        
+        // 2024-02-07: For now, allow one-to-many matching and assume the best matches will win ...
     }
 };
 
