@@ -286,13 +286,17 @@ class ShotPair{ public:
         }
         cout << " Complete! Filter for mutual matches " << flush;
 
+        // 2024-02-07: For now, allow one-to-many matching and assume the best matches will win ...
+        // FIXME: CHECK IF BI-DIRECTIONAL VERIFICATION ELIMINATES ONE-TO-MANY CORRESPONDENCE!
+
         std::sort( PtoN.begin(), PtoN.end(), [](KpMatch &a, KpMatch &b){ return a.diff < b.diff; });
         std::sort( NtoP.begin(), NtoP.end(), [](KpMatch &a, KpMatch &b){ return a.diff < b.diff; });
 
         size_t K = min( min( topK, PtoN.size() ), NtoP.size() );
         
-        /* To make the matching results more robust, a bi-directional verification is performed, which requires that 
-           matches in each direction need to be among the top K matching points of one another. */
+        /* To make the matching results more robust, a bi-directional verification is performed, 
+           which requires that matches in each direction need to be among the top K matching points 
+           of one another. */
         for( size_t i = 0; i < K; ++i ){
             for( size_t j = 0; j < K; ++j ){
                 if( PtoN[i].p_same_indices( NtoP[j] ) ){
@@ -303,10 +307,6 @@ class ShotPair{ public:
             }
         }
         cout << " Complete!" << endl;
-        
-            
-        
-        // 2024-02-07: For now, allow one-to-many matching and assume the best matches will win ...
     }
 
     void report_matches( size_t limit = 0 ){
