@@ -22,6 +22,22 @@
                 5321 matched keypoint pairs for two images with 50000 features each.
             [ ] Approximate nearest neighbour
     [>] Relative pose estimation
+        * Extrinsic and Intrinsic: 
+            - The extrinsic parameters of a camera depend on its location and orientation and have nothing to do with 
+              its internal parameters such as focal length, the field of view, etc. 
+            - The intrinsic parameters of a camera depend on how it captures the images. 
+              Parameters such as focal length, aperture, field-of-view, resolution, etc 
+              govern the intrinsic matrix of a camera model.
+        * K: Instrinsic Matrix, from calibration
+        * F: Fundamental Matrix, 7DOF
+            - The Fundamental matrix can be estimated using the 7-point algorithm + RANSAC
+             
+        * E: Essential Matrix, E = (K^T)FK
+        * The fundamental matrix F is a generalization of the essential matrix E
+        * One way to get a 3D position from a pair of matching points from two images is to take the fundamental matrix, 
+          compute the essential matrix, and then to get the rotation and translation between the cameras from the 
+          essential matrix. This, of course, assumes that you know the intrinsics of your camera. 
+          Also, this would give you up-to-scale reconstruction, with the translation being a unit vector.
         [ ] For each pair of images with sufficient number of matches, compute relative pose
             * 2024-02-08: For now, assume that pictures with consecutive alpha filenames are related by virtue
                           of being taken in burst fashion while orbiting the subject. Close the loop. No search needed.
