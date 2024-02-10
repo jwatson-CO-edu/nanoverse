@@ -31,7 +31,6 @@
         * K: Instrinsic Matrix, from calibration
         * F: Fundamental Matrix, 7DOF
             - The Fundamental matrix can be estimated using the 7-point algorithm + RANSAC
-             
         * E: Essential Matrix, E = (K^T)FK
         * The fundamental matrix F is a generalization of the essential matrix E
         * One way to get a 3D position from a pair of matching points from two images is to take the fundamental matrix, 
@@ -108,6 +107,8 @@ using cv::waitKey;
 using cv::Ptr, cv::KeyPoint, cv::Point, cv::FeatureDetector;
 #include "opencv2/xfeatures2d.hpp"
 using cv::ORB, cv::normL2Sqr;
+#include "opencv2/core/types.hpp"
+using cv::Scalar;
 
 /// Local ///
 #include "helpers.hpp"
@@ -319,8 +320,8 @@ class ShotPair{ public:
                     matches.push_back( PtoN[i] );
                     break;
                 }
-                if( (j%div) == 0 ) cout << "." << flush;
             }
+            if( (i%div) == 0 ) cout << "." << flush;
         }
         cout << " Complete!" << endl;
     }
@@ -335,6 +336,27 @@ class ShotPair{ public:
             if( (i>0) && (i>=limit) ) break;
         }
         cout << endl;
+    }
+
+    Mat load_prev_kp(){
+        size_t N = matches.size();
+        Mat P   = Mat::zeros( N, 2, CV_32F );
+        // Mat row = Mat::zeros( 1, 2, CV_32F );
+        for( size_t i = 0; i < N; ++i ){
+            // P.row(i) = { prev->kpts[ matches[i].prevDex ].pt.x ,
+            //              prev->kpts[ matches[i].prevDex ].pt.y };
+            // row()      = {  ,
+            //              prev->kpts[ matches[i].prevDex ].pt.y };
+            P.at<float>(i,0) = prev->kpts[ matches[i].prevDex ].pt.x;
+            P.at<float>(i,1) = prev->kpts[ matches[i].prevDex ].pt.y;
+        }
+        return P;
+    }
+
+    void calc_fundamental_matx_F(){
+        Mat P = load_prev_kp();
+        Mat N = Mat::zeros( matches.size(), 2, CV_32F );
+        cout << P << endl;
     }
 };
 
@@ -355,7 +377,7 @@ vector<shotPtr> shots_from_images( const vector<string>& paths, const vector<Mat
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 int main(){
 
-    ulong Nfeat = 50000;
+    ulong Nfeat = 25000;
 
     vector<string> fNames = list_files_at_path( _IMG_PATH );
     for( string fName : fNames ) cout << fName << endl;
@@ -371,6 +393,7 @@ int main(){
     ShotPair sp{ shots[0], shots[1] };
     sp.brute_force_match( (ulong)(Nfeat/2) );
     sp.report_matches( 100 );
+    sp.calc_fundamental_matx_F();
 
     return 0;
 }
