@@ -3,24 +3,31 @@
 ////////// DEV PLAN & NOTES ////////////////////////////////////////////////////////////////////////
 /*
 ##### Sources #####
-* https://imkaywu.github.io/tutorials/sfm/
+* Image Features
+    - https://docs.opencv.org/4.x/db/d70/tutorial_akaze_matching.html
+* Structure from Motion
+    - https://imkaywu.github.io/tutorials/sfm/
+    - https://docs.opencv.org/4.9.0/d9/d0c/group__calib3d.html#ga59b0d57f46f8677fb5904294a23d404a
+    - https://en.wikipedia.org/wiki/Bundle_adjustment
 
 
 ##### DEV PLAN #####
 [Y] Load images in a dir, 2024-02-02: Req'd `pkg-config`
 [Y] 00 SURF Example, 2024-02-02: Finally, Finally, Finally
-[>] ORB Example, Compute ORB features for one image
+[Y] ORB Example, Compute ORB features for one image, 2024-02-0X: Can specify how many. More might offer 
+    greater match opportunities for matches, but take longer to compute correspondence. Do not forget 
+    the AKAZE alternative: https://docs.opencv.org/4.x/db/d70/tutorial_akaze_matching.html
 [>] Basic SfM Tutorial: https://imkaywu.github.io/tutorials/sfm/
     [Y] Compute ORB for all images, 2024-02-02: Easy!
-    [>] Feature matching
-        [>] Match features between each pair of images in the input image set,
+    [P] Feature matching
+        [P] Match features between each pair of images in the input image set,
             [Y] Brute force, 2024-02-08: Not the longest wait ever
-            [ ] Approximate nearest neighbour library, such as FLANN, ANN, Nanoflann
+            [P] Approximate nearest neighbour library, such as FLANN, ANN, Nanoflann
             https://docs.opencv.org/3.4/d5/d6f/tutorial_feature_flann_matcher.html
         [>] Bi-directional verification
             [Y] Brute force, 2024-02-08: Have to wait quite a while to get mutual matches from brute force,
                 5321 matched keypoint pairs for two images with 50000 features each.
-            [ ] Approximate nearest neighbour
+            [P] Approximate nearest neighbour
     [>] Relative pose estimation
         * Extrinsic and Intrinsic: 
             - The extrinsic parameters of a camera depend on its location and orientation and have nothing to do with 
@@ -37,31 +44,48 @@
           compute the essential matrix, and then to get the rotation and translation between the cameras from the 
           essential matrix. This, of course, assumes that you know the intrinsics of your camera. 
           Also, this would give you up-to-scale reconstruction, with the translation being a unit vector.
-        [ ] For each pair of images with sufficient number of matches, compute relative pose
+        [>] For each pair of images with sufficient number of matches, compute relative pose
             * 2024-02-08: For now, assume that pictures with consecutive alpha filenames are related by virtue
                           of being taken in burst fashion while orbiting the subject. Close the loop. No search needed.
+            [Y] Compute the fundamental matrix F from match coordinates, 2024-02-10: Very fast, once you have matches!
+            [>] Compute the essential matrix E from intrinsic matrix K and fundamental matrix F
         [ ] N-view triangulation
-        [ ] Bundle adjustment
+            [ ] Compute correspondences for each pair of images
+            [ ] Compute the extrinsics of each camera shot: What is the relationship to the essential matrix?
+            [ ] Find correspondence tracks across images
+            [ ] class `Structure_Point`: https://github.com/imkaywu/open3DCV/blob/master/src/sfm/structure_point.h
+            [ ] class `Graph`: https://github.com/imkaywu/open3DCV/blob/master/src/sfm/graph.h
+            [ ] Nonlinear Triangulation
+                [ ] pick graph g in graphs having maximum number of common tracks with the global graph
+                [ ] merge tracks of global graph with those of graph g
+                [ ] triangulate tracks
+        [ ] Bundle adjustment: Optimize a reprojection error with respect to all estimated parameters
     [ ] Two-view SfM
         [ ] Render PC
     [ ] N-view SfM
         [ ] iterative step that merges multiple graphs into a global graph, for graph in graphs
-            [ ] pick graph g in graphs having maximum number of common tracks with the global graph
-            [ ] merge tracks of global graph with those of graph g
-            [ ] triangulate tracks
+            Loop:
             [ ] perform bundle adjustment
             [ ] remove track outliers based on baseline angle and reprojection error
-            [ ] perform bundle adjustment
         [ ] Render PC 
             [ ] Point Cloud
             [ ] Camera poses
             [ ] Fly around
 [ ] Advanced Textured SfM
-    [ ] SfM PC
+    [ ] SfM Point Cloud
     [ ] Delaunay at each camera view
+        [ ] Project onto camera plane
+        [ ] Run Delaunay
+        [ ] Store candidate triangulation
+        [ ] Score Triangles: Higher penalty is worse
+            [ ] Angle between normal and ray to triangle center
+            [ ] Narrowness
     [ ] Consolidate triangulations
-    [ ] Project textures at each camera view
+        [ ] Prefer low-penalty triangles
+        [ ] Find and fix holes: Complicated?
     [ ] Consolidate textures @ facet objects
+        [ ] Project textures at each camera view
+        [ ] Prefer textures with sharp pixels
     [ ] Write individual textures to a single image file
     [ ] OBJ Output
     [ ] Render OBJ (or other appropriate format)
@@ -104,11 +128,11 @@ using cv::imread, cv::IMREAD_COLOR, cv::IMREAD_GRAYSCALE;
 using namespace cv::samples;
 using cv::waitKey;
 #include "opencv2/features2d.hpp"
-using cv::Ptr, cv::KeyPoint, cv::Point, cv::FeatureDetector;
+using cv::Ptr, cv::KeyPoint, cv::Point2f, cv::FeatureDetector;
 #include "opencv2/xfeatures2d.hpp"
 using cv::ORB, cv::normL2Sqr;
-#include "opencv2/core/types.hpp"
-using cv::Scalar;
+#include <opencv2/calib3d.hpp>
+using cv::findFundamentalMat, cv::FM_7POINT;
 
 /// Local ///
 #include "helpers.hpp"
@@ -238,9 +262,10 @@ class ShotPair{ public:
     // Represents correspondences between two `CamShot`s
 
     /// Members ///
-    shotPtr /*---*/ prev = nullptr;
+    shotPtr /*---*/ prev = nullptr; 
     shotPtr /*---*/ next = nullptr;
     vector<KpMatch> matches;
+    Mat /*-------*/ F;
 
     /// Constructor(s) ///
 
@@ -338,25 +363,44 @@ class ShotPair{ public:
         cout << endl;
     }
 
+    // Match Coordinate Getters // 
+    Point2f prev_pt_i( size_t i ){  return prev->kpts[ matches[i].prevDex ].pt;  }
+    Point2f next_pt_i( size_t i ){  return next->kpts[ matches[i].nextDex ].pt;  }
+
     Mat load_prev_kp(){
-        size_t N = matches.size();
-        Mat P   = Mat::zeros( N, 2, CV_32F );
-        // Mat row = Mat::zeros( 1, 2, CV_32F );
-        for( size_t i = 0; i < N; ++i ){
-            // P.row(i) = { prev->kpts[ matches[i].prevDex ].pt.x ,
-            //              prev->kpts[ matches[i].prevDex ].pt.y };
-            // row()      = {  ,
-            //              prev->kpts[ matches[i].prevDex ].pt.y };
-            P.at<float>(i,0) = prev->kpts[ matches[i].prevDex ].pt.x;
-            P.at<float>(i,1) = prev->kpts[ matches[i].prevDex ].pt.y;
+        // Get a matrix of the previous shot correspondence point coordinates
+        size_t  Mrows = matches.size();
+        Mat     P   = Mat::zeros( Mrows, 2, CV_32F );
+        Point2f pt_i;
+        for( size_t i = 0; i < Mrows; ++i ){
+            pt_i = prev_pt_i(i);
+            P.at<float>(i,0) = pt_i.x;
+            P.at<float>(i,1) = pt_i.y;
         }
         return P;
     }
 
+    Mat load_next_kp(){
+        // Get a matrix of the next shot correspondence point coordinates
+        size_t  Mrows = matches.size();
+        Mat     N     = Mat::zeros( Mrows, 2, CV_32F );
+        Point2f pt_i;
+        for( size_t i = 0; i < Mrows; ++i ){
+            pt_i = next_pt_i(i);
+            N.at<float>(i,0) = pt_i.x;
+            N.at<float>(i,1) = pt_i.y;
+        }
+        return N;
+    }
+
     void calc_fundamental_matx_F(){
+        // Get the fundamental matrix from corresponding keypoints in two images
         Mat P = load_prev_kp();
-        Mat N = Mat::zeros( matches.size(), 2, CV_32F );
-        cout << P << endl;
+        Mat N = load_next_kp();
+        cout << "About to obtain F ..." << flush;
+        Mat F = findFundamentalMat( P, N, FM_7POINT );
+        cout << " Obtained!" << endl;
+        cout << F << endl;
     }
 };
 
@@ -377,7 +421,8 @@ vector<shotPtr> shots_from_images( const vector<string>& paths, const vector<Mat
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 int main(){
 
-    ulong Nfeat = 25000;
+    ulong Nfeat  = 25000;
+    ulong Ktop   = Nfeat/2;
 
     vector<string> fNames = list_files_at_path( _IMG_PATH );
     for( string fName : fNames ) cout << fName << endl;
@@ -391,9 +436,11 @@ int main(){
     }
 
     ShotPair sp{ shots[0], shots[1] };
-    sp.brute_force_match( (ulong)(Nfeat/2) );
+    sp.brute_force_match( Ktop );
     sp.report_matches( 100 );
     sp.calc_fundamental_matx_F();
+
+    cout << endl << "##### CALCULATIONS COMPLETE #####" << endl;
 
     return 0;
 }
