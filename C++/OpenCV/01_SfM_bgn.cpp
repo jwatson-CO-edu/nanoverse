@@ -115,6 +115,10 @@ using std::shared_ptr;
 using std::pair;
 #include <cmath>
 using std::abs, std::min;
+#include <fstream>
+using std::ofstream;
+#include <sstream>
+using std::stringstream;
 
 /// Special ///
 #include <opencv2/opencv.hpp>
@@ -197,7 +201,6 @@ vector<vector<KeyPoint>> calc_ORB_keypoints_from_images( const vector<Mat>& imag
 
 ////////// KEYPOINT DETECTION & CORRELATION ////////////////////////////////////////////////////////
 
-
 class CamShot{ public:
     // Represents an image and all of the information inferred from that image
     
@@ -205,15 +208,35 @@ class CamShot{ public:
     string /*-----*/ path;
     Mat /*--------*/ imag;
     vector<KeyPoint> kpts;
-    // FIXME: ESTIMATED POSE
+    Mat /*--------*/ xfrm;
 
     /// Constructors ///
     CamShot( string fPath, const Mat& image, const vector<KeyPoint>& keypoints ){
         path = fPath;
         imag = Mat( image );
         kpts = keypoints;
-        // FIXME: INIT ESTIMATED POSE
+        xfrm = Mat::eye( 4, 4, CV_32F );
     };
+    
+    /// Methods ///
+    string serialize(){
+        // Write reconstruction information to a string
+        stringstream outStr;
+        outStr << "path:" << path << '\n';
+        outStr << "xfrm:" << serialize_Mat_2D<float>( xfrm ) << '\n';
+        for( const KeyPoint& kp :kpts ){
+            outStr << "kpnt:" << kp.pt.x << ',' << kp.pt.y << ',' << kp.angle << ",\n";
+        }
+        return outStr.str();
+    }
+
+    void serialize( string oPath ){
+        // Write reconstruction information to a file
+        ofstream outFile;
+        outFile.open( oPath );
+        outFile << serialize();
+        outFile.close();
+    }
 };
 typedef shared_ptr<CamShot> shotPtr;
 
@@ -234,11 +257,14 @@ size_t N_KM = 0;
 
 struct KpMatch{
     // Matching keypoints for use in `ShotPair`
+
+    /// Members ///
     size_t ID;
     size_t prevDex;
     size_t nextDex;
     float  diff;
 
+    /// Constructor(s) ///
     KpMatch( size_t prevDex_, size_t nextDex_, float diff_ ){
         // Assign a unique ID and set values
         ID = N_KM;
@@ -248,11 +274,19 @@ struct KpMatch{
         ++N_KM;
     }
 
+    /// Methods ///
     bool p_same_indices( const KpMatch& other ){
         // Return true if both matches contain the same indices
         return ( ((prevDex == other.prevDex) && (nextDex == other.nextDex))
                  ||
                  ((prevDex == other.nextDex) && (nextDex == other.prevDex)) );
+    }
+
+    string serialize(){
+        // Write reconstruction information to a string
+        stringstream outStr;
+        outStr << ID << ',' << prevDex << ',' << nextDex << ',' << diff << ',';
+        return outStr.str();
     }
 };
 
@@ -275,6 +309,25 @@ class ShotPair{ public:
     }
 
     /// Methods ///
+
+    string serialize(){
+        // Write reconstruction information to a string
+        stringstream outStr;
+        outStr << "prev:" << prev->path << '\n';
+        outStr << "next:" << next->path << '\n';
+        outStr << "fMtx:" << serialize_Mat_2D<float>( F ) << '\n';
+        for( KpMatch& match : matches ){ 
+            outStr << "mtch:" << match.serialize() << '\n';
+        }
+    }
+
+    void serialize( string oPath ){
+        // Write reconstruction information to a file
+        ofstream outFile;
+        outFile.open( oPath );
+        outFile << serialize();
+        outFile.close();
+    }
 
     void brute_force_match( ulong topK ){
         // Linear search for best matches, O(n^2)
@@ -403,7 +456,7 @@ class ShotPair{ public:
         cout << F << endl;
     }
 };
-
+typedef shared_ptr<ShotPair> pairPtr;
 
 vector<shotPtr> shots_from_images( const vector<string>& paths, const vector<Mat>& images, ulong Nfeat = 10000 ){
     // Construct a camera shot object for every photo in the vector
@@ -417,6 +470,19 @@ vector<shotPtr> shots_from_images( const vector<string>& paths, const vector<Mat
     }
     return rtnShots;
 }
+
+////////// PHOTOGRAMMETRY & RECONSTRUCTION /////////////////////////////////////////////////////////
+
+class Photogrammetry{ public:
+    // Full desription and solution to a photogrammetry problem
+
+    /// Members ///
+    string /*----*/ picDir;
+    vector<string>  picPaths;
+    vector<Mat>     images;
+    vector<shotPtr> shots;
+    vector<pairPtr> pairs;
+};
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 int main(){
