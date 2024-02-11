@@ -104,7 +104,7 @@
 #include <vector>
 using std::vector;
 #include <string>
-using std::string;
+using std::string, std::to_string;
 #include <filesystem>
 using std::filesystem::directory_iterator;
 #include <iostream>
@@ -319,6 +319,7 @@ class ShotPair{ public:
         for( KpMatch& match : matches ){ 
             outStr << "mtch:" << match.serialize() << '\n';
         }
+        return outStr.str();
     }
 
     void serialize( string oPath ){
@@ -471,6 +472,18 @@ vector<shotPtr> shots_from_images( const vector<string>& paths, const vector<Mat
     return rtnShots;
 }
 
+vector<pairPtr> pairs_from_shots( vector<shotPtr>& shotsVec, bool wrapEnd = true ){
+    // Construct a picture correspondence object for pair of shots in the vector, optionally in a ring
+    vector<pairPtr> rtnPairs;
+    size_t /*----*/ N = shotsVec.size();
+    for( size_t i = 1; i < N; ++i ){
+        rtnPairs.push_back( pairPtr( new ShotPair{ shotsVec[i-1], shotsVec[i] } ) );
+    }
+    if( wrapEnd )
+        rtnPairs.push_back( pairPtr( new ShotPair{ shotsVec[N-1], shotsVec[0] } ) );
+    return rtnPairs;
+}
+
 ////////// PHOTOGRAMMETRY & RECONSTRUCTION /////////////////////////////////////////////////////////
 
 class Photogrammetry{ public:
@@ -482,6 +495,38 @@ class Photogrammetry{ public:
     vector<Mat>     images;
     vector<shotPtr> shots;
     vector<pairPtr> pairs;
+
+    /// Constructor(s) ///
+    Photogrammetry( string pDir, ulong Nfeat = 25000, ulong Ktop = 12500 ){
+        picDir   = pDir;
+        if( picDir[ picDir.size()-1 ] != '/' ){  picDir += '/';  }
+        picPaths = list_files_at_path( pDir, true );
+        images   = fetch_images_at_path( pDir );
+        shots    = shots_from_images( picPaths, images, Nfeat );
+        pairs    = pairs_from_shots( shots, true );
+    }
+
+    /// Methods ///
+
+    void save_problem( string shotPrefix = "shot_" ){
+        // Save all relevant reconstruction data except for the actual images
+        string outPath;
+        string fNum;
+        size_t i;
+
+        // Save all camera shots for recovery
+        for( shotPtr& shot : shots ){
+            fNum    = to_string( i );
+            outPath = picDir + shotPrefix + string( 3-fNum.size(), '0') + fNum + ".CamShot";
+            shot->serialize( outPath );
+            ++i;
+        }
+
+        // FIXME, START HERE: Save all pairs for recovery
+        for( pairPtr& pair : pairs ){
+
+        }
+    }
 };
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
