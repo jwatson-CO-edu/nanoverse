@@ -1,4 +1,4 @@
-// g++ 01_SfM_bgn.cpp `pkg-config --cflags --libs opencv4` -std=c++17 -lopencv_xfeatures2d -I /usr/local/include/opencv4/ -o load-kp.out
+// g++ 01_SfM_bgn.cpp `pkg-config --cflags --libs opencv4` -std=c++17 -lopencv_xfeatures2d -I /usr/local/include/opencv4/ -o save-kp.out
 
 ////////// DEV PLAN & NOTES ////////////////////////////////////////////////////////////////////////
 /*
@@ -495,36 +495,54 @@ class Photogrammetry{ public:
     vector<Mat>     images;
     vector<shotPtr> shots;
     vector<pairPtr> pairs;
+    ulong /*-----*/ Nfeat;
+    ulong /*-----*/ Ktop;
 
     /// Constructor(s) ///
-    Photogrammetry( string pDir, ulong Nfeat = 25000, ulong Ktop = 12500 ){
+    Photogrammetry( string pDir, ulong Nfeat_ = 25000, ulong Ktop_ = 12500 ){
         picDir   = pDir;
         if( picDir[ picDir.size()-1 ] != '/' ){  picDir += '/';  }
         picPaths = list_files_at_path( pDir, true );
         images   = fetch_images_at_path( pDir );
-        shots    = shots_from_images( picPaths, images, Nfeat );
+        shots    = shots_from_images( picPaths, images, Nfeat_ );
         pairs    = pairs_from_shots( shots, true );
+        Nfeat    = Nfeat_;
+        Ktop     = Ktop_;
     }
 
     /// Methods ///
 
-    void save_problem( string shotPrefix = "shot_" ){
+    void save_problem( string shotPrefix = "shot_", string pairPrefix = "pair_" ){
         // Save all relevant reconstruction data except for the actual images
         string outPath;
         string fNum;
         size_t i;
+        uint   Npl = to_string( shots.size() ).size();
 
         // Save all camera shots for recovery
         for( shotPtr& shot : shots ){
             fNum    = to_string( i );
-            outPath = picDir + shotPrefix + string( 3-fNum.size(), '0') + fNum + ".CamShot";
+            outPath = picDir + shotPrefix + string( Npl-fNum.size(), '0') + fNum + ".CamShot";
             shot->serialize( outPath );
             ++i;
         }
 
-        // FIXME, START HERE: Save all pairs for recovery
         for( pairPtr& pair : pairs ){
+            fNum    = to_string( i );
+            outPath = picDir + pairPrefix + string( Npl-fNum.size(), '0') + fNum + ".ShotPair";
+            pair->serialize( outPath );
+        }
+    }
 
+    void brute_force_match( ulong topK = 0 ){
+        // Perform matching on all pairs
+        size_t N = pairs.size();
+        size_t i = 1;
+        if( topK == 0 )  topK = Ktop;
+        for( pairPtr& pair : pairs ){  
+            cout << i << " of " << N << ": " << flush;
+            pair->brute_force_match( topK );
+            ++i;
         }
     }
 };
@@ -535,23 +553,16 @@ int main(){
     ulong Nfeat  = 25000;
     ulong Ktop   = Nfeat/2;
 
-    vector<string> fNames = list_files_at_path( _IMG_PATH );
-    for( string fName : fNames ) cout << fName << endl;
-    cout << endl;
-    vector<Mat> images = fetch_images_at_path( _IMG_PATH, 2 );
-    cout << endl;
-    vector<shotPtr> shots = shots_from_images( fNames, images, Nfeat );
-    cout << endl;
-    for( shotPtr& shot : shots ){
-        cout << shot->path << ", KP: " << shot->kpts.size() << endl;
-    }
 
-    ShotPair sp{ shots[0], shots[1] };
-    sp.brute_force_match( Ktop );
-    sp.report_matches( 100 );
-    sp.calc_fundamental_matx_F();
-
+    Photogrammetry pg{ _IMG_PATH, Nfeat, Ktop };
+    
+    pg.brute_force_match();
     cout << endl << "##### CALCULATIONS COMPLETE #####" << endl;
+
+    cout << endl << "Serializing reconstruction data ... " << endl;
+    pg.save_problem();
+    cout << endl << "##### PROBLEM SAVED #####" << endl;
+    
 
     return 0;
 }

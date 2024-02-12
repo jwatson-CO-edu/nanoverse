@@ -5,7 +5,7 @@
 #include <vector>
 using std::vector;
 #include <string>
-using std::string;
+using std::string, std::to_string;
 
 
 template<typename T>
@@ -25,7 +25,7 @@ string serialize_Mat_2D( const Mat& mat ){
     size_t N = mat.cols;
     for( size_t i = 0; i < M; ++i ){
         for( size_t j = 0; j < N; ++j ){
-            rtnStr << mat.at<T>(i,j) << ",";
+            rtnStr += to_string( mat.at<T>(i,j) ) + ',';
         }    
     }
     return rtnStr;
