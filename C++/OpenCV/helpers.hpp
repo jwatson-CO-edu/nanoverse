@@ -1,11 +1,40 @@
 #ifndef HELPERS_HPP
 #define HELPERS_HPP
 
-////////// STANDARD CONTAINERS /////////////////////////////////////////////////////////////////////
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 #include <vector>
 using std::vector;
 #include <string>
 using std::string, std::to_string;
+
+////////// STRING PROCESSING ///////////////////////////////////////////////////////////////////////
+
+
+vector<string> split_string_ws( string input ){
+    // Return a vector of strings found in `input` separated by whitespace
+    vector<string> rtnWords;
+    string /*---*/ currWord;
+    char /*-----*/ currChar;
+    size_t /*---*/ strLen = input.size();
+
+    input.push_back( ' ' ); // Separator hack
+    
+    for( size_t i = 0 ; i < strLen ; i++ ){
+        currChar = input[i];
+        if( isspace( currChar ) ){
+            if( currWord.length() > 0 )  rtnWords.push_back( currWord );
+            currWord = "";
+        }else{
+            currWord.push_back( currChar );
+        }
+    }
+    return rtnWords; 
+}
+
+// FIXME, START HERE: NEED TO SPLIT ON AN ARBITRARY CHAR
+// FIXME: NEED TO FILTER ON FILE EXTENSION
+
+////////// STANDARD CONTAINERS /////////////////////////////////////////////////////////////////////
 
 
 template<typename T>
