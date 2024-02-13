@@ -516,21 +516,31 @@ class Photogrammetry{ public:
         // Save all relevant reconstruction data except for the actual images
         string outPath;
         string fNum;
-        size_t i;
+        string pad;
+        size_t i = 0;
         uint   Npl = to_string( shots.size() ).size();
 
         // Save all camera shots for recovery
+        cout << "About to serialize `CamShot`s ..." << endl;
         for( shotPtr& shot : shots ){
             fNum    = to_string( i );
-            outPath = picDir + shotPrefix + string( Npl-fNum.size(), '0') + fNum + ".CamShot";
+            if( Npl-fNum.size() > 0 )  pad = string( Npl-fNum.size(), '0');  else  pad = "";
+            outPath = picDir + shotPrefix + pad + fNum + ".CamShot";
+            cout << "Write: " << outPath << " ... " << flush;
             shot->serialize( outPath );
+            cout << "Done!" << endl;
             ++i;
         }
 
+        i = 0;
+        cout << "About to serialize `ShotPair`s ..." << endl;
         for( pairPtr& pair : pairs ){
             fNum    = to_string( i );
-            outPath = picDir + pairPrefix + string( Npl-fNum.size(), '0') + fNum + ".ShotPair";
+            if( Npl-fNum.size() > 0 )  pad = string( Npl-fNum.size(), '0');  else  pad = "";
+            outPath = picDir + pairPrefix + pad + fNum + ".ShotPair";
+            cout << "Write: " << outPath << " ... " << flush;
             pair->serialize( outPath );
+            cout << "Done!" << endl;
         }
     }
 
