@@ -541,6 +541,7 @@ class Photogrammetry{ public:
             cout << "Write: " << outPath << " ... " << flush;
             pair->serialize( outPath );
             cout << "Done!" << endl;
+            ++i;
         }
     }
 
