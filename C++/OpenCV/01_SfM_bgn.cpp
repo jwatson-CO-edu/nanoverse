@@ -104,7 +104,7 @@
 #include <vector>
 using std::vector;
 #include <string>
-using std::string, std::to_string;
+using std::string, std::to_string, std::stof;
 #include <filesystem>
 using std::filesystem::directory_iterator;
 #include <iostream>
@@ -144,16 +144,17 @@ using cv::findFundamentalMat, cv::FM_7POINT;
 
 ////////// UTILITY FUNCTIONS ///////////////////////////////////////////////////////////////////////
 
-vector<string> list_files_at_path( string path, bool sortAlpha = true ){
-    // List all the files found at a path
-    vector<string> rtnNams;
-    string /*---*/ path_i;
-    for (const auto & entry : directory_iterator( path ) ){  
-        path_i = entry.path().string();
-        rtnNams.push_back( path_i );  
+Mat deserialize_2d_Mat_f( string input, size_t Mrows, size_t Ncols, char sep = ',' ){
+    // Deserialize an OpenCV `CV_32F` matrix stored row-major in a comma-separated list in a string
+    Mat rtnMat = Mat::zeros( Mrows, Ncols, CV_32F );
+    vector<string> tokens = split_string_on_char( input, sep );
+    size_t k = 0;
+    for( size_t i = 0; i < Mrows; ++i ){
+        for( size_t j = 0; j < Ncols; ++j ){
+            rtnMat.at<float>(i,j) = stof( tokens[k] );
+        }
     }
-    if( sortAlpha )  std::sort( rtnNams.begin(),rtnNams.end() );
-    return rtnNams;
+    return rtnMat;
 }
 
 
@@ -165,10 +166,9 @@ string _IMG_PATH = "data/SfM/00_sculpture";
 
 ////////// IMAGE PROCESSING ////////////////////////////////////////////////////////////////////////
 
-
-vector<Mat> fetch_images_at_path( string path, uint limit = 0 ){
+vector<Mat> fetch_images_at_path( string path, uint limit = 0, string ext = "jpg" ){
     // Load all the images found at a path
-    vector<string> fNames = list_files_at_path( path );
+    vector<string> fNames = list_files_at_path_w_ext( path, ext, true );
     uint /*-----*/ Nimg   = fNames.size();
     Mat /*------*/ img;  
     vector<Mat>    images;
@@ -236,6 +236,11 @@ class CamShot{ public:
         outFile.open( oPath );
         outFile << serialize();
         outFile.close();
+    }
+
+    static CamShot deserialize( string iPath ){
+        vector<string> lines = read_lines( iPath );
+        string /*---*/ path  = get_last( split_string_on_char( lines[0], ':' ) );
     }
 };
 typedef shared_ptr<CamShot> shotPtr;
