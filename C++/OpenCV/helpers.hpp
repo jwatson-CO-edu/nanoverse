@@ -107,7 +107,7 @@ T get_last( vector<T>& vec ){
     if( N > 0 )
         return vec[ N-1 ];
     else
-        throw std::out_of_range;
+        throw std::out_of_range{ "get_last: Vector was EMPTY!" };
 }
 
 template<typename T>
@@ -117,7 +117,7 @@ T get_last( const vector<T>& vec ){
     if( N > 0 )
         return vec[ N-1 ];
     else
-        throw std::out_of_range;
+        throw std::out_of_range{ "get_last: Vector was EMPTY!" };
 }
 
 ////////// OPENCV //////////////////////////////////////////////////////////////////////////////////

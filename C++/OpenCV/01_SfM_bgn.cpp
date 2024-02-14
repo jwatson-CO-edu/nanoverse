@@ -148,16 +148,27 @@ Mat deserialize_2d_Mat_f( string input, size_t Mrows, size_t Ncols, char sep = '
     // Deserialize an OpenCV `CV_32F` matrix stored row-major in a comma-separated list in a string
     Mat rtnMat = Mat::zeros( Mrows, Ncols, CV_32F );
     vector<string> tokens = split_string_on_char( input, sep );
+    if( tokens.size() < Mrows*Ncols )  return rtnMat; // Return the zero matrix if there are insufficient elements
     size_t k = 0;
     for( size_t i = 0; i < Mrows; ++i ){
         for( size_t j = 0; j < Ncols; ++j ){
             rtnMat.at<float>(i,j) = stof( tokens[k] );
+            ++k;
         }
     }
     return rtnMat;
 }
 
+// Get everything after the last ':' in a string
+string get_line_arg( string line ){  return get_last( split_string_on_char( line, ':' ) );  }
 
+vector<float> get_comma_sep_floats( string input ){
+    // Separate a string on commas and attempt conversion of each part into float
+    vector<string> parts = split_string_on_char( input, ',' );
+    vector<float>  rtnVec;
+    for( string& part : parts ){  rtnVec.push_back( stof( part ) );  }
+    return rtnVec;
+}
 
 ////////// GLOBALS /////////////////////////////////////////////////////////////////////////////////
 string _IMG_PATH = "data/SfM/00_sculpture";
@@ -217,6 +228,13 @@ class CamShot{ public:
         kpts = keypoints;
         xfrm = Mat::eye( 4, 4, CV_32F );
     };
+
+    CamShot( string fPath, const Mat& image, const vector<KeyPoint>& keypoints, const Mat& xform ){
+        path = fPath;
+        imag = Mat( image );
+        kpts = keypoints;
+        xfrm = xform;
+    };
     
     /// Methods ///
     string serialize(){
@@ -225,7 +243,7 @@ class CamShot{ public:
         outStr << "path:" << path << '\n';
         outStr << "xfrm:" << serialize_Mat_2D<float>( xfrm ) << '\n';
         for( const KeyPoint& kp :kpts ){
-            outStr << "kpnt:" << kp.pt.x << ',' << kp.pt.y << ',' << kp.angle << ",\n";
+            outStr << "kpnt:" << kp.pt.x << ',' << kp.pt.y << ',' << kp.angle << ',' << kp.size << ",\n";
         }
         return outStr.str();
     }
@@ -239,8 +257,26 @@ class CamShot{ public:
     }
 
     static CamShot deserialize( string iPath ){
-        vector<string> lines = read_lines( iPath );
-        string /*---*/ path  = get_last( split_string_on_char( lines[0], ':' ) );
+        // Load a `CamShot` from serialized data
+        vector<string>   lines = read_lines( iPath );
+        string /*-----*/ path_ = get_line_arg( lines[0] );
+        Mat /*--------*/ img = imread( path_, IMREAD_GRAYSCALE );
+        Mat /*--------*/ xfrm_ = deserialize_2d_Mat_f( get_line_arg( lines[1] ), 3, 3, ',' );
+        size_t /*-----*/ Nlin  = lines.size();
+        KeyPoint /*---*/ kp_i;
+        vector<float>    kpData;
+        vector<KeyPoint> kps;
+        for( size_t i = 2; i < Nlin; ++i ){
+            kp_i   = KeyPoint{};
+            kpData = get_comma_sep_floats( get_line_arg( lines[1] ) );
+            if( kpData.size() < 4 ) continue;
+            kp_i.pt.x  = kpData[0];
+            kp_i.pt.y  = kpData[1];
+            kp_i.angle = kpData[2];
+            kp_i.size  = kpData[3];
+            kps.push_back( kp_i );
+        }
+        return CamShot( path_, img, kps, xfrm_ );
     }
 };
 typedef shared_ptr<CamShot> shotPtr;
@@ -334,6 +370,14 @@ class ShotPair{ public:
         outFile << serialize();
         outFile.close();
     }
+
+    // static ShotPair deserialize( string iPath ){
+    //     // Load a `ShotPair` from serialized data
+    //     vector<string> lines = read_lines( iPath );
+    //     string prvPath = get_line_arg( lines[0] );
+    //     string nxtPath = get_line_arg( lines[1] );
+    //     // Mat    fMtx    = // FIXME, START HERE: LOAD FUNDIE MATRIX
+    // }
 
     void brute_force_match( ulong topK ){
         // Linear search for best matches, O(n^2)
