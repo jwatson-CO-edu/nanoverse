@@ -554,9 +554,7 @@ class Photogrammetry{ public:
         picDir   = pDir;
         if( picDir[ picDir.size()-1 ] != '/' ){  picDir += '/';  }
         cout << "Finding files ... " << flush;
-        picPaths = list_files_at_path( pDir, true );
-        cout << "Loading files ... " << flush;
-        images   = fetch_images_at_path( pDir );
+        fetch_images_at_path( pDir, picPaths, images );
         cout << "Creating shots ... " << flush;
         shots    = shots_from_images( picPaths, images, Nfeat_ );
         cout << "Creating pairs ... " << flush;
