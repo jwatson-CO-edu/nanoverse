@@ -177,22 +177,24 @@ string _IMG_PATH = "data/SfM/00_sculpture";
 
 ////////// IMAGE PROCESSING ////////////////////////////////////////////////////////////////////////
 
-vector<Mat> fetch_images_at_path( string path, uint limit = 0, string ext = "jpg" ){
+void fetch_images_at_path( string path, vector<string>& fNames, vector<Mat>& images, uint limit = 0, string ext = "jpg" ){
     // Load all the images found at a path
-    vector<string> fNames = list_files_at_path_w_ext( path, ext, true );
+    fNames.clear();
+    images.clear();
+    fNames = list_files_at_path_w_ext( path, ext, true );
     uint /*-----*/ Nimg   = fNames.size();
     Mat /*------*/ img;  
-    vector<Mat>    images;
     uint /*-----*/ i = 0;
+    cout << "Found: " << Nimg << " files ... " << flush;
     for( string fName : fNames ){
         if( (limit > 0) && (i > (limit-1)) ) break;
+        cout << "Found: " << fName << " ... " << flush;
         img = imread( fName, IMREAD_GRAYSCALE );
         images.push_back( img );
         cout << "Loaded: " << fName << ", Bytes: " << (img.total() * img.elemSize()) << endl;
         i++;
     }
     cout << endl << "Got " << images.size() << " images!" << endl;
-    return images;
 }
 
 vector<vector<KeyPoint>> calc_ORB_keypoints_from_images( const vector<Mat>& images, ulong N = 10000 ){
@@ -551,10 +553,15 @@ class Photogrammetry{ public:
     Photogrammetry( string pDir, ulong Nfeat_ = 25000, ulong Ktop_ = 12500 ){
         picDir   = pDir;
         if( picDir[ picDir.size()-1 ] != '/' ){  picDir += '/';  }
+        cout << "Finding files ... " << flush;
         picPaths = list_files_at_path( pDir, true );
+        cout << "Loading files ... " << flush;
         images   = fetch_images_at_path( pDir );
+        cout << "Creating shots ... " << flush;
         shots    = shots_from_images( picPaths, images, Nfeat_ );
+        cout << "Creating pairs ... " << flush;
         pairs    = pairs_from_shots( shots, true );
+        cout << "COMPLETE" << endl << endl;
         Nfeat    = Nfeat_;
         Ktop     = Ktop_;
     }
@@ -613,9 +620,10 @@ int main(){
     ulong Nfeat  = 25000;
     ulong Ktop   = Nfeat/2;
 
-
+    cout << "Instantiating problem ... " << endl;
     Photogrammetry pg{ _IMG_PATH, Nfeat, Ktop };
     
+    cout << "About to match ... " << endl;
     pg.brute_force_match();
     cout << endl << "##### CALCULATIONS COMPLETE #####" << endl;
 
