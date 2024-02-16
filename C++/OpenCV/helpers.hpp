@@ -121,6 +121,7 @@ T get_last( const vector<T>& vec ){
         throw std::out_of_range{ "get_last: Vector was EMPTY!" };
 }
 
+
 ////////// OPENCV //////////////////////////////////////////////////////////////////////////////////
 #include <opencv2/core/utility.hpp>
 using cv::Mat;

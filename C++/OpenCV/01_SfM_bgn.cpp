@@ -170,6 +170,20 @@ vector<float> get_comma_sep_floats( string input ){
     return rtnVec;
 }
 
+vector<size_t> get_comma_sep_size_t( string input ){
+    // Separate a string on commas and attempt conversion of each part into size_t
+    vector<string> parts = split_string_on_char( input, ',' );
+    vector<size_t> rtnVec;
+    stringstream   sstream;
+    size_t /*---*/ result;
+    for( string& part : parts ){  
+        sstream = stringstream( part );
+        sstream >> result;
+        rtnVec.push_back( result );  
+    }
+    return rtnVec;
+}
+
 ////////// GLOBALS /////////////////////////////////////////////////////////////////////////////////
 string _IMG_PATH = "data/SfM/00_sculpture";
 
@@ -258,7 +272,7 @@ class CamShot{ public:
         outFile.close();
     }
 
-    static CamShot deserialize( string iPath ){
+    static shared_ptr<CamShot> deserialize( string iPath ){
         // Load a `CamShot` from serialized data
         vector<string>   lines = read_lines( iPath );
         string /*-----*/ path_ = get_line_arg( lines[0] );
@@ -270,7 +284,7 @@ class CamShot{ public:
         vector<KeyPoint> kps;
         for( size_t i = 2; i < Nlin; ++i ){
             kp_i   = KeyPoint{};
-            kpData = get_comma_sep_floats( get_line_arg( lines[1] ) );
+            kpData = get_comma_sep_floats( get_line_arg( lines[i] ) );
             if( kpData.size() < 4 ) continue;
             kp_i.pt.x  = kpData[0];
             kp_i.pt.y  = kpData[1];
@@ -278,7 +292,7 @@ class CamShot{ public:
             kp_i.size  = kpData[3];
             kps.push_back( kp_i );
         }
-        return CamShot( path_, img, kps, xfrm_ );
+        return shared_ptr<CamShot>( new CamShot( path_, img, kps, xfrm_ ) );
     }
 };
 typedef shared_ptr<CamShot> shotPtr;
@@ -308,6 +322,15 @@ struct KpMatch{
     float  diff;
 
     /// Constructor(s) ///
+    KpMatch(){
+        // Assign a unique ID and set values
+        ID = N_KM;
+        prevDex = 0;
+        nextDex = 0;
+        diff    = 0.0f;
+        ++N_KM;
+    }
+
     KpMatch( size_t prevDex_, size_t nextDex_, float diff_ ){
         // Assign a unique ID and set values
         ID = N_KM;
@@ -341,14 +364,26 @@ class ShotPair{ public:
     /// Members ///
     shotPtr /*---*/ prev = nullptr; 
     shotPtr /*---*/ next = nullptr;
+    Mat /*-------*/ E; // Output essential matrix.
+    Mat /*-------*/ R; // Output rotation matrix.
+    Mat /*-------*/ t; // Output translation vector.
     vector<KpMatch> matches;
-    Mat /*-------*/ F;
+    
 
     /// Constructor(s) ///
 
     ShotPair( shotPtr& p, shotPtr& n ){
         prev = shotPtr( p );
         next = shotPtr( n );
+    }
+
+    ShotPair( shotPtr& p, shotPtr& n, Mat& E_, Mat& R_, Mat& t_, vector<KpMatch>& matches_ ){
+        prev    = shotPtr( p );
+        next    = shotPtr( n );
+        E /*-*/ = E_;
+        R /*-*/ = R_;
+        t /*-*/ = t_;
+        matches = matches_;
     }
 
     /// Methods ///
@@ -358,7 +393,9 @@ class ShotPair{ public:
         stringstream outStr;
         outStr << "prev:" << prev->path << '\n';
         outStr << "next:" << next->path << '\n';
-        outStr << "fMtx:" << serialize_Mat_2D<float>( F ) << '\n';
+        outStr << "fMtx:" << serialize_Mat_2D<float>( E ) << '\n';
+        outStr << "rMtx:" << serialize_Mat_2D<float>( R ) << '\n';
+        outStr << "tVec:" << serialize_Mat_2D<float>( t ) << '\n';
         for( KpMatch& match : matches ){ 
             outStr << "mtch:" << match.serialize() << '\n';
         }
@@ -373,13 +410,37 @@ class ShotPair{ public:
         outFile.close();
     }
 
-    // static ShotPair deserialize( string iPath ){
-    //     // Load a `ShotPair` from serialized data
-    //     vector<string> lines = read_lines( iPath );
-    //     string prvPath = get_line_arg( lines[0] );
-    //     string nxtPath = get_line_arg( lines[1] );
-    //     // Mat    fMtx    = // FIXME, START HERE: LOAD FUNDIE MATRIX
-    // }
+    static shared_ptr<ShotPair> deserialize( string iPath, const vector<shotPtr>& shots ){
+        // Load a `ShotPair` from serialized data
+        vector<string> lines = read_lines( iPath );
+        string prvPath = get_line_arg( lines[0] );
+        string nxtPath = get_line_arg( lines[1] );
+        Mat E_ = deserialize_2d_Mat_f( get_line_arg( lines[2] ), 4, 4 ); // Output essential matrix.
+        Mat R_ = deserialize_2d_Mat_f( get_line_arg( lines[3] ), 3, 3 ); // Output rotation matrix.
+        Mat t_ = deserialize_2d_Mat_f( get_line_arg( lines[4] ), 3, 1 ); // Output translation vector.
+        size_t /*-----*/ Nlin  = lines.size();
+        KpMatch /*---*/ mtc_i;
+        vector<float>    mtcData;
+        vector<KpMatch>  mtcs;
+        shotPtr /*----*/ prev_ = nullptr;
+        shotPtr /*----*/ next_ = nullptr;
+        for( size_t i = 5; i < Nlin; ++i ){
+            mtc_i   = KpMatch{};
+            mtcData = get_comma_sep_floats( get_line_arg( lines[i] ) );
+            if( mtcData.size() < 4 ) continue;
+            mtc_i.ID /**/ = (size_t) mtcData[0];
+            mtc_i.prevDex = (size_t) mtcData[1];
+            mtc_i.nextDex = (size_t) mtcData[2];
+            mtc_i.diff    = mtcData[3];
+            mtcs.push_back( mtc_i );
+        }
+        for( const shotPtr& shot : shots ){
+            if( shot->path == prvPath )  prev_ = shotPtr( shot );
+            if( shot->path == nxtPath )  next_ = shotPtr( shot );
+            if( (prev_ != nullptr) && (next_ != nullptr) )  break;
+        }
+        return shared_ptr<ShotPair>( new ShotPair{ prev_, next_, E_, R_, t_, mtcs } );
+    }
 
     void brute_force_match( ulong topK ){
         // Linear search for best matches, O(n^2)
@@ -566,6 +627,15 @@ class Photogrammetry{ public:
 
     /// Methods ///
 
+    string serialize(){
+        // Write root-level reconstruction information to a string
+        stringstream outStr;
+        outStr << "pDir:" << picDir << endl;
+        // FIXME, START HERE: FINISH WRITING ROOT-LEVEL DATA TO A STRING
+    }
+
+    // FIXME: SAVE SERIALIZATION TO FILE
+
     void save_problem( string shotPrefix = "shot_", string pairPrefix = "pair_" ){
         // Save all relevant reconstruction data except for the actual images
         string outPath;
@@ -597,6 +667,21 @@ class Photogrammetry{ public:
             cout << "Done!" << endl;
             ++i;
         }
+
+        // FIXME: SAVE THE ROOT-LEVEL DATA
+    }
+
+    void load_problem( string shotExt = "CamShot", string pairExt = "ShotPair" ){
+        // Load all relevant reconstruction data including the actual images
+        vector<string> shotPaths = list_files_at_path_w_ext( picDir, shotExt, true );
+        vector<string> pairPaths = list_files_at_path_w_ext( picDir, pairExt, true );
+        for( string& path : shotPaths ){
+            shots.push_back( CamShot::deserialize( path ) );
+        }
+        for( string& path : pairPaths ){
+            pairs.push_back( ShotPair::deserialize( path, shots ) );
+        }
+        // FIXME: LOAD THE ROOT-LEVEL DATA
     }
 
     void brute_force_match( ulong topK = 0 ){
