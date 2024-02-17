@@ -413,18 +413,18 @@ class ShotPair{ public:
 
     static shared_ptr<ShotPair> deserialize( string iPath, const vector<shotPtr>& shots ){
         // Load a `ShotPair` from serialized data
-        vector<string> lines = read_lines( iPath );
-        string prvPath = get_line_arg( lines[0] );
-        string nxtPath = get_line_arg( lines[1] );
-        Mat E_ = deserialize_2d_Mat_f( get_line_arg( lines[2] ), 4, 4 ); // Output essential matrix.
-        Mat R_ = deserialize_2d_Mat_f( get_line_arg( lines[3] ), 3, 3 ); // Output rotation matrix.
-        Mat t_ = deserialize_2d_Mat_f( get_line_arg( lines[4] ), 3, 1 ); // Output translation vector.
-        size_t /*-----*/ Nlin  = lines.size();
+        vector<string>  lines   = read_lines( iPath );
+        string /*----*/ prvPath = get_line_arg( lines[0] );
+        string /*----*/ nxtPath = get_line_arg( lines[1] );
+        Mat /*-------*/ E_ /**/ = deserialize_2d_Mat_f( get_line_arg( lines[2] ), 4, 4 ); // Output essential matrix.
+        Mat /*-------*/ R_ /**/ = deserialize_2d_Mat_f( get_line_arg( lines[3] ), 3, 3 ); // Output rotation matrix.
+        Mat /*-------*/ t_ /**/ = deserialize_2d_Mat_f( get_line_arg( lines[4] ), 3, 1 ); // Output translation vector.
+        size_t /*----*/ Nlin    = lines.size();
         KpMatch /*---*/ mtc_i;
-        vector<float>    mtcData;
-        vector<KpMatch>  mtcs;
-        shotPtr /*----*/ prev_ = nullptr;
-        shotPtr /*----*/ next_ = nullptr;
+        vector<float>   mtcData;
+        vector<KpMatch> mtcs;
+        shotPtr /*---*/ prev_ = nullptr;
+        shotPtr /*---*/ next_ = nullptr;
         for( size_t i = 5; i < Nlin; ++i ){
             mtc_i   = KpMatch{};
             mtcData = get_comma_sep_floats( get_line_arg( lines[i] ) );
@@ -661,18 +661,27 @@ class Photogrammetry{ public:
 
     ///// Constructor(s) //////////////////////////////////////////////////
 
-    Photogrammetry( string pDir, ulong Nfeat_ = 25000, ulong Ktop_ = 12500 ){
-        picDir   = pDir;
+    Photogrammetry( string pDir, ulong Nfeat_, ulong Ktop_ ){
+        picDir = pDir;
         if( picDir[ picDir.size()-1 ] != '/' ){  picDir += '/';  }
         cout << "Finding files ... " << flush;
         fetch_images_at_path( pDir, picPaths, images );
         cout << "Creating shots ... " << flush;
-        shots    = shots_from_images( picPaths, images, Nfeat_ );
+        shots = shots_from_images( picPaths, images, Nfeat_ );
         cout << "Creating pairs ... " << flush;
-        pairs    = pairs_from_shots( shots, true );
+        pairs = pairs_from_shots( shots, true );
         cout << "COMPLETE" << endl << endl;
-        Nfeat    = Nfeat_;
-        Ktop     = Ktop_;
+        Nfeat = Nfeat_;
+        Ktop  = Ktop;
+    }
+
+    Photogrammetry( string pDir, string mainExt = "Photogrammetry",
+                    string shotExt = "CamShot", string pairExt = "ShotPair" ){
+        picDir = pDir;
+        if( picDir[ picDir.size()-1 ] != '/' ){  picDir += '/';  }
+        cout << "Finding files ... " << flush;
+        fetch_images_at_path( pDir, picPaths, images );
+        // FIXME, START HERE
     }
 
 
@@ -682,10 +691,18 @@ class Photogrammetry{ public:
         // Write root-level reconstruction information to a string
         stringstream outStr;
         outStr << "pDir:" << picDir << endl;
-        // FIXME, START HERE: FINISH WRITING ROOT-LEVEL DATA TO A STRING
+        outStr << "feat:" << Nfeat  << endl;
+        outStr << "kTop:" << Nfeat  << endl;
+        return outStr.str();
     }
 
-    // FIXME: SAVE SERIALIZATION TO FILE
+    void serialize( string oPath ){
+        // Write root-level reconstruction information to a file
+        ofstream outFile;
+        outFile.open( oPath );
+        outFile << serialize();
+        outFile.close();
+    }
 
     void save_problem( string shotPrefix = "shot_", string pairPrefix = "pair_" ){
         // Save all relevant reconstruction data except for the actual images
@@ -719,7 +736,8 @@ class Photogrammetry{ public:
             ++i;
         }
 
-        // FIXME: SAVE THE ROOT-LEVEL DATA
+        outPath = picDir + "soln" + ".Photogrammetry";
+        serialize( outPath );
     }
 
     void load_problem( string shotExt = "CamShot", string pairExt = "ShotPair" ){
