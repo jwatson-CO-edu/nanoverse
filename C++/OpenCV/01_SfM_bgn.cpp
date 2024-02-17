@@ -608,41 +608,40 @@ vector<pairPtr> pairs_from_shots( vector<shotPtr>& shotsVec, bool wrapEnd = true
 
 
 ////////// 3D GRAPH STRUCTURE //////////////////////////////////////////////////////////////////////
-// Stolen wholesale from imkaywu @ https://github.com/imkaywu/open3DCV/tree/master
+typedef shared_ptr<KeyPoint> kpPtr;
 
-class Structure_Point{ public:
+struct KpNode{
+    // Linked list node of a `Track`
+    shared_ptr<KpNode> next;
+    kpPtr /*--------*/ kpnt;
+};
+typedef shared_ptr<KpNode> kNodePtr;
+
+
+class Track{ public:
+    // Basic linked list of related `KeyPoint`s
+
+    /// Members ///
+    kNodePtr head;
+
+    Track(){  head = nullptr;  }
 
     /// Methods ///
-    Vec3f p_; // The x,y,z coordinates, better is it's of double
-    Vec3i c_; //!< The r,g,b color components (0-255 for each)
 
-    /// Constructors ///
-    Structure_Point() : p_(0, 0, 0), c_(0, 0, 0){}
-    
-    Structure_Point(const Vec3f& coord) : p_(coord), c_(0, 0, 0){}
-    
-    Structure_Point(const Vec3f &coord, const Vec3i &color) : p_(coord), c_(color){}
-    
-    // ~Structure_Point(){}
-
-    /// Getters and Setters ///
-
-    Structure_Point& operator=(const Structure_Point& struct_pt){
-        p_ = struct_pt.p_;
-        c_ = struct_pt.c_;
-        return *this;
+    kNodePtr get_end(){
+        // Get the last node of the LL
+        kNodePtr rtnPtr = head;
+        while( rtnPtr->next != nullptr )  rtnPtr = rtnPtr->next;
+        return rtnPtr;
     }
-    
-    const Vec3f& coords() const {  return p_;  }
-    
-    Vec3f& coords(){  return p_;  }
-    
-    const Vec3i& color() const {  return c_;  }
-    
-    Vec3i& color(){  return c_;  }
+
+    kNodePtr append( const kNodePtr& nuNode ){ // FIXME: INSTEAD `kpPtr`
+        kNodePtr last = get_end();
+        last->next = kNodePtr( nuNode );
+    }
 };
 
-// FIXME, START HERE: ADD THE `Graph` CLASS
+
 
 ////////// PHOTOGRAMMETRY & RECONSTRUCTION /////////////////////////////////////////////////////////
 

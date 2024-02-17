@@ -23,6 +23,13 @@ typedef Eigen::Matrix<float, 6, 1>  Vec6f;
 typedef Eigen::Matrix<float, 9, 1>  Vec9f;
 typedef Eigen::Matrix<double, 9, 1> Vec9;
 
+typedef Eigen::Matrix2f /*-------*/ Mat2f;
+typedef Eigen::Matrix3f /*-------*/ Mat3f;
+typedef Eigen::Matrix4i /*-------*/ Mat4i;
+typedef Eigen::Matrix4f /*-------*/ Mat4f;
+typedef Eigen::Matrix<float, 3, 4>  Mat34f;
+
+
 ////////// STRING PROCESSING ///////////////////////////////////////////////////////////////////////
 
 string to_upper( string input ){
