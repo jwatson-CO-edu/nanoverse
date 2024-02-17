@@ -1,3 +1,4 @@
+# OpenCV
 1. Install dependencies
     * `sudo apt install libgtk2.0-dev pkg-config`
 1. Nuke all previous installations!
@@ -25,3 +26,9 @@
     1. `ls /usr/local/include/opencv4/opencv2/ | grep xfeatures2d` , Verify that extra 2D features module was **actually** *installed*
     1. `export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib` , Let the compiler find the shared object location
     1. Add `/usr/local/include/opencv4/` to the editor search path for this project.
+    
+# Eigen3
+1. `sudo apt install libeigen3-dev`
+1. `cd /usr/include`
+1. `sudo ln -sf eigen3/Eigen Eigen`
+1. `sudo ln -sf eigen3/unsupported unsupported`

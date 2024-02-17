@@ -9,6 +9,19 @@ using std::string, std::to_string;
 #include <sys/stat.h>
 #include <fstream>
 using std::ifstream, std::ofstream;
+#include <iostream>
+using std::cout, std::endl, std::flush;
+
+#include "Eigen/Core"
+typedef Eigen::Vector2i /*-------*/ Vec2i;
+typedef Eigen::Vector2f /*-------*/ Vec2f;
+typedef Eigen::Vector3i /*-------*/ Vec3i;
+typedef Eigen::Vector3f /*-------*/ Vec3f;
+typedef Eigen::Vector3d /*-------*/ Vec3;
+typedef Eigen::Vector4i /*-------*/ Vec4i;
+typedef Eigen::Matrix<float, 6, 1>  Vec6f;
+typedef Eigen::Matrix<float, 9, 1>  Vec9f;
+typedef Eigen::Matrix<double, 9, 1> Vec9;
 
 ////////// STRING PROCESSING ///////////////////////////////////////////////////////////////////////
 

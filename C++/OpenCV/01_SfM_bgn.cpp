@@ -107,8 +107,6 @@ using std::vector;
 using std::string, std::to_string, std::stof;
 #include <filesystem>
 using std::filesystem::directory_iterator;
-#include <iostream>
-using std::cout, std::endl, std::flush;
 #include <memory>
 using std::shared_ptr;
 #include <map>
@@ -136,7 +134,7 @@ using cv::Ptr, cv::KeyPoint, cv::Point2f, cv::FeatureDetector;
 #include "opencv2/xfeatures2d.hpp"
 using cv::ORB, cv::normL2Sqr;
 #include <opencv2/calib3d.hpp>
-using cv::findFundamentalMat, cv::FM_7POINT;
+using cv::findEssentialMat, cv::FM_7POINT, cv::recoverPose;
 
 /// Local ///
 #include "helpers.hpp"
@@ -191,7 +189,8 @@ string _IMG_PATH = "data/SfM/00_sculpture";
 
 ////////// IMAGE PROCESSING ////////////////////////////////////////////////////////////////////////
 
-void fetch_images_at_path( string path, vector<string>& fNames, vector<Mat>& images, uint limit = 0, string ext = "jpg" ){
+void fetch_images_at_path( string path, vector<string>& fNames, vector<Mat>& images, 
+                           uint limit = 0, string ext = "jpg" ){
     // Load all the images found at a path
     fNames.clear();
     images.clear();
@@ -225,6 +224,8 @@ vector<vector<KeyPoint>> calc_ORB_keypoints_from_images( const vector<Mat>& imag
     cout << endl;
     return rtnKps;
 }
+
+
 
 ////////// KEYPOINT DETECTION & CORRELATION ////////////////////////////////////////////////////////
 
@@ -522,7 +523,8 @@ class ShotPair{ public:
         cout << "There are " << matches.size() << " matched keypoint pairs." << endl;
         size_t i = 0;
         for( KpMatch& match : matches ){ 
-            cout << "\t" << match.ID << ": " << match.prevDex << "<->" << match.nextDex << " = " << match.diff << endl;
+            cout << "\t" << match.ID << ": " << match.prevDex << "<->" << match.nextDex << " = " 
+                 << match.diff << endl;
             ++i;
             if( (i>0) && (i>=limit) ) break;
         }
@@ -559,14 +561,21 @@ class ShotPair{ public:
         return N;
     }
 
-    void calc_fundamental_matx_F(){
+    void calc_essential_matx_E( Mat& camCal ){
         // Get the fundamental matrix from corresponding keypoints in two images
         Mat P = load_prev_kp();
         Mat N = load_next_kp();
         cout << "About to obtain F ..." << flush;
-        Mat F = findFundamentalMat( P, N, FM_7POINT );
+        E = findEssentialMat( P, N, camCal );
         cout << " Obtained!" << endl;
-        cout << F << endl;
+        cout << E << endl;
+    }
+
+    void recover_relative_pose( Mat& camCal ){
+        // Recover relative pose from `prev` to `next`
+        Mat P = load_prev_kp();
+        Mat N = load_next_kp();
+        recoverPose( E, P, N, camCal, R, t );
     }
 };
 typedef shared_ptr<ShotPair> pairPtr;
@@ -596,12 +605,52 @@ vector<pairPtr> pairs_from_shots( vector<shotPtr>& shotsVec, bool wrapEnd = true
     return rtnPairs;
 }
 
+
+
+////////// 3D GRAPH STRUCTURE //////////////////////////////////////////////////////////////////////
+// Stolen wholesale from imkaywu @ https://github.com/imkaywu/open3DCV/tree/master
+
+class Structure_Point{ public:
+
+    /// Methods ///
+    Vec3f p_; // The x,y,z coordinates, better is it's of double
+    Vec3i c_; //!< The r,g,b color components (0-255 for each)
+
+    /// Constructors ///
+    Structure_Point() : p_(0, 0, 0), c_(0, 0, 0){}
+    
+    Structure_Point(const Vec3f& coord) : p_(coord), c_(0, 0, 0){}
+    
+    Structure_Point(const Vec3f &coord, const Vec3i &color) : p_(coord), c_(color){}
+    
+    // ~Structure_Point(){}
+
+    /// Getters and Setters ///
+
+    Structure_Point& operator=(const Structure_Point& struct_pt){
+        p_ = struct_pt.p_;
+        c_ = struct_pt.c_;
+        return *this;
+    }
+    
+    const Vec3f& coords() const {  return p_;  }
+    
+    Vec3f& coords(){  return p_;  }
+    
+    const Vec3i& color() const {  return c_;  }
+    
+    Vec3i& color(){  return c_;  }
+};
+
+// FIXME, START HERE: ADD THE `Graph` CLASS
+
 ////////// PHOTOGRAMMETRY & RECONSTRUCTION /////////////////////////////////////////////////////////
 
 class Photogrammetry{ public:
     // Full desription and solution to a photogrammetry problem
 
-    /// Members ///
+    ///// Methods /////////////////////////////////////////////////////////
+
     string /*----*/ picDir;
     vector<string>  picPaths;
     vector<Mat>     images;
@@ -610,7 +659,9 @@ class Photogrammetry{ public:
     ulong /*-----*/ Nfeat;
     ulong /*-----*/ Ktop;
 
-    /// Constructor(s) ///
+
+    ///// Constructor(s) //////////////////////////////////////////////////
+
     Photogrammetry( string pDir, ulong Nfeat_ = 25000, ulong Ktop_ = 12500 ){
         picDir   = pDir;
         if( picDir[ picDir.size()-1 ] != '/' ){  picDir += '/';  }
@@ -625,7 +676,8 @@ class Photogrammetry{ public:
         Ktop     = Ktop_;
     }
 
-    /// Methods ///
+
+    ///// De/Serialization ////////////////////////////////////////////////
 
     string serialize(){
         // Write root-level reconstruction information to a string
@@ -684,6 +736,8 @@ class Photogrammetry{ public:
         // FIXME: LOAD THE ROOT-LEVEL DATA
     }
 
+    ///// Solver //////////////////////////////////////////////////////////
+
     void brute_force_match( ulong topK = 0 ){
         // Perform matching on all pairs
         size_t N = pairs.size();
@@ -695,9 +749,19 @@ class Photogrammetry{ public:
             ++i;
         }
     }
+
+    void recover_relative_poses(){
+        // Get the relative pose for every pair of shots
+        for( pairPtr& pair : pairs ){
+
+        }
+    }
 };
 
+
+
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
+
 int main(){
 
     ulong Nfeat  = 25000;
