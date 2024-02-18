@@ -24,10 +24,9 @@
             [Y] Brute force, 2024-02-08: Not the longest wait ever
             [P] Approximate nearest neighbour library, such as FLANN, ANN, Nanoflann
             https://docs.opencv.org/3.4/d5/d6f/tutorial_feature_flann_matcher.html
-        [>] Bi-directional verification
+        [Y] Bi-directional verification
             [Y] Brute force, 2024-02-08: Have to wait quite a while to get mutual matches from brute force,
                 5321 matched keypoint pairs for two images with 50000 features each.
-            [P] Approximate nearest neighbour
     [>] Relative pose estimation
         * Extrinsic and Intrinsic: 
             - The extrinsic parameters of a camera depend on its location and orientation and have nothing to do with 
@@ -71,6 +70,9 @@
             [ ] Point Cloud
             [ ] Camera poses
             [ ] Fly around
+        [ ] Improvements
+            [ ] Filter the max distance for keypoint matches
+            [ ] Approximate nearest neighbour matching for keypoints
 [ ] Advanced Textured SfM
     [ ] SfM Point Cloud
     [ ] Delaunay at each camera view
@@ -562,22 +564,18 @@ class ShotPair{ public:
         return N;
     }
 
-    void calc_essential_matx_E( Mat& camCal ){
+    void recover_relative_pose( Mat& camCal ){
         // Get the fundamental matrix from corresponding keypoints in two images
         Mat P = load_prev_kp();
         Mat N = load_next_kp();
-        cout << "About to obtain F ..." << flush;
+        cout << "About to obtain relative pose ..." << flush;
         E = findEssentialMat( P, N, camCal );
+        recoverPose( E, P, N, camCal, R, t );
         cout << " Obtained!" << endl;
         cout << E << endl;
     }
 
-    void recover_relative_pose( Mat& camCal ){
-        // Recover relative pose from `prev` to `next`
-        Mat P = load_prev_kp();
-        Mat N = load_next_kp();
-        recoverPose( E, P, N, camCal, R, t );
-    }
+    
 };
 typedef shared_ptr<ShotPair> pairPtr;
 
@@ -651,7 +649,7 @@ class Track{ public:
 class Photogrammetry{ public:
     // Full desription and solution to a photogrammetry problem
 
-    ///// Methods /////////////////////////////////////////////////////////
+    ///// Members /////////////////////////////////////////////////////////
 
     string /*----*/ picDir;
     vector<string>  picPaths;
@@ -660,6 +658,7 @@ class Photogrammetry{ public:
     vector<pairPtr> pairs;
     ulong /*-----*/ Nfeat;
     ulong /*-----*/ Ktop;
+    Mat /*-------*/ camCal;
 
 
     ///// Constructor(s) //////////////////////////////////////////////////
@@ -697,7 +696,7 @@ class Photogrammetry{ public:
         stringstream outStr;
         outStr << "pDir:" << picDir << endl;
         outStr << "feat:" << Nfeat  << endl;
-        outStr << "kTop:" << Nfeat  << endl;
+        outStr << "kTop:" << Ktop   << endl;
         return outStr.str();
     }
 
@@ -709,19 +708,31 @@ class Photogrammetry{ public:
         outFile.close();
     }
 
+    void load_cam_calibration( string cPath = "", string camExt = "instrinsic" ){
+        if( cPath.length() == 0 ){
+            vector<string> paths = list_files_at_path_w_ext( picDir, camExt, true );
+            cPath = paths[0];
+        }
+        vector<string> lines = read_lines( cPath );
+        camCal = deserialize_2d_Mat_f( get_line_arg( lines[0] ), 3, 3, ',' );
+    }
+
     void deserialize( string iPath ){
         // Read root-level reconstruction information from a file
         vector<string> lines = read_lines( iPath );
         Nfeat = str_to_size_t( get_line_arg( lines[1] ) );
         Ktop  = str_to_size_t( get_line_arg( lines[2] ) );
+        load_cam_calibration();
     }
+
+    
 
     void save_problem( string shotPrefix = "shot_", string pairPrefix = "pair_" ){
         // Save all relevant reconstruction data except for the actual images
         string outPath;
         string fNum;
         string pad;
-        size_t i = 0;
+        size_t i   = 0;
         uint   Npl = to_string( shots.size() ).size();
 
         // Save all camera shots for recovery
@@ -779,19 +790,9 @@ class Photogrammetry{ public:
         }
     }
 
-    void recover_relative_poses( Mat& camCal ){
+    void recover_relative_poses(){
         // Get the relative pose for every pair of shots
-        for( pairPtr& pair : pairs ){
-            pair->calc_essential_matx_E( camCal );
-            recoverPose( 	
-                pair->E,
-                pair->load_prev_kp(),
-                pair->load_next_kp(),
-                camCal,
-                pair->R,
-                pair->t
-            );
-        }
+        for( pairPtr& pair : pairs ){  pair->recover_relative_pose( camCal );  }
     }
 };
 
@@ -809,6 +810,9 @@ int main(){
     
     cout << "About to match ... " << endl;
     pg.brute_force_match();
+    cout << "About to calculate relative poses ... " << endl;
+    pg.load_cam_calibration();
+    pg.recover_relative_poses();
     cout << endl << "##### CALCULATIONS COMPLETE #####" << endl;
 
     cout << endl << "Serializing reconstruction data ... " << endl;
