@@ -168,15 +168,21 @@ vector<float> get_comma_sep_floats( string input ){
     return rtnVec;
 }
 
+size_t str_to_size_t( string input ){
+    // Convert the `input` to a `size_t`
+    stringstream sstream;
+    size_t /*-*/ result;
+    sstream >> result;
+    return result;
+}
+
 vector<size_t> get_comma_sep_size_t( string input ){
     // Separate a string on commas and attempt conversion of each part into size_t
     vector<string> parts = split_string_on_char( input, ',' );
     vector<size_t> rtnVec;
-    stringstream   sstream;
     size_t /*---*/ result;
     for( string& part : parts ){  
-        sstream = stringstream( part );
-        sstream >> result;
+        result = str_to_size_t( part );
         rtnVec.push_back( result );  
     }
     return rtnVec;
@@ -454,11 +460,6 @@ class ShotPair{ public:
         vector<KpMatch> PtoN;
         vector<KpMatch> NtoP;
 
-        // TBD: Eliminate one-to-many matches?
-        // vector<KpMatch> candidates;
-        // vector<size_t>  delVec;
-        // bool /*------*/ oneID = false;
-
         cout << "Brute Force Keypoint Matching ";
 
         for( size_t ip = 0; ip < Np; ++ip ){
@@ -635,9 +636,11 @@ class Track{ public:
         return rtnPtr;
     }
 
-    kNodePtr append( const kNodePtr& nuNode ){ // FIXME: INSTEAD `kpPtr`
+    kNodePtr append( const kpPtr& kp ){ 
+        // Create and append a new node that points to `kp`
         kNodePtr last = get_end();
-        last->next = kNodePtr( nuNode );
+        last->next = kNodePtr( new KpNode{ nullptr, kpPtr( kp ) } );
+        return last->next;
     }
 };
 
@@ -677,11 +680,13 @@ class Photogrammetry{ public:
 
     Photogrammetry( string pDir, string mainExt = "Photogrammetry",
                     string shotExt = "CamShot", string pairExt = "ShotPair" ){
+        // Load
         picDir = pDir;
         if( picDir[ picDir.size()-1 ] != '/' ){  picDir += '/';  }
+        vector<string> mPaths = list_files_at_path_w_ext( picDir, mainExt );
         cout << "Finding files ... " << flush;
         fetch_images_at_path( pDir, picPaths, images );
-        // FIXME, START HERE
+        load_problem( mPaths[0], shotExt, pairExt );
     }
 
 
@@ -702,6 +707,13 @@ class Photogrammetry{ public:
         outFile.open( oPath );
         outFile << serialize();
         outFile.close();
+    }
+
+    void deserialize( string iPath ){
+        // Read root-level reconstruction information from a file
+        vector<string> lines = read_lines( iPath );
+        Nfeat = str_to_size_t( get_line_arg( lines[1] ) );
+        Ktop  = str_to_size_t( get_line_arg( lines[2] ) );
     }
 
     void save_problem( string shotPrefix = "shot_", string pairPrefix = "pair_" ){
@@ -740,7 +752,7 @@ class Photogrammetry{ public:
         serialize( outPath );
     }
 
-    void load_problem( string shotExt = "CamShot", string pairExt = "ShotPair" ){
+    void load_problem( string mainPath, string shotExt = "CamShot", string pairExt = "ShotPair" ){
         // Load all relevant reconstruction data including the actual images
         vector<string> shotPaths = list_files_at_path_w_ext( picDir, shotExt, true );
         vector<string> pairPaths = list_files_at_path_w_ext( picDir, pairExt, true );
@@ -750,7 +762,7 @@ class Photogrammetry{ public:
         for( string& path : pairPaths ){
             pairs.push_back( ShotPair::deserialize( path, shots ) );
         }
-        // FIXME: LOAD THE ROOT-LEVEL DATA
+        deserialize( mainPath );
     }
 
     ///// Solver //////////////////////////////////////////////////////////
@@ -767,10 +779,18 @@ class Photogrammetry{ public:
         }
     }
 
-    void recover_relative_poses(){
+    void recover_relative_poses( Mat& camCal ){
         // Get the relative pose for every pair of shots
         for( pairPtr& pair : pairs ){
-
+            pair->calc_essential_matx_E( camCal );
+            recoverPose( 	
+                pair->E,
+                pair->load_prev_kp(),
+                pair->load_next_kp(),
+                camCal,
+                pair->R,
+                pair->t
+            );
         }
     }
 };
