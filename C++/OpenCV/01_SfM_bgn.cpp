@@ -1,4 +1,4 @@
-// g++ 01_SfM_bgn.cpp `pkg-config --cflags --libs opencv4` -std=c++17 -lopencv_xfeatures2d -I /usr/local/include/opencv4/ -o save-kp.out
+// g++ 01_SfM_bgn.cpp `pkg-config --cflags --libs opencv4` -std=c++17 -lopencv_xfeatures2d -I /usr/local/include/opencv4/ -o load-problem.out
 
 ////////// DEV PLAN & NOTES ////////////////////////////////////////////////////////////////////////
 /*
@@ -43,17 +43,24 @@
           compute the essential matrix, and then to get the rotation and translation between the cameras from the 
           essential matrix. This, of course, assumes that you know the intrinsics of your camera. 
           Also, this would give you up-to-scale reconstruction, with the translation being a unit vector.
-        [>] For each pair of images with sufficient number of matches, compute relative pose
+        [Y] For each pair of images with sufficient number of matches, compute relative pose, 2024-02-19: OBTAINED
             * 2024-02-08: For now, assume that pictures with consecutive alpha filenames are related by virtue
                           of being taken in burst fashion while orbiting the subject. Close the loop. No search needed.
             [Y] Compute the fundamental matrix F from match coordinates, 2024-02-10: Very fast, once you have matches!
-            [>] Compute the essential matrix E from intrinsic matrix K and fundamental matrix F
-        [ ] N-view triangulation
-            [ ] Compute correspondences for each pair of images
-            [ ] Compute the extrinsics of each camera shot: What is the relationship to the essential matrix?
-            [ ] Find correspondence tracks across images
-            [ ] class `Structure_Point`: https://github.com/imkaywu/open3DCV/blob/master/src/sfm/structure_point.h
+            [Y] Compute the essential matrix E from intrinsic matrix K and fundamental matrix F, 2024-02-19: OBTAINED
+        [>] N-view triangulation
+            [Y] Compute correspondences for each pair of images, 2024-02-19: OBTAINED
+            [>] Compute the extrinsics of each camera shot: 
+                [Y] Translation, 2024-02-19: OBTAINED
+                [Y] Orientation, 2024-02-19: OBTAINED
+                [>] Q: What is the relationship to the essential matrix?
+            [>] Find correspondence tracks across `ShotPair`s: class `StructureNode`
+                [ ] Track, 3D Location, Color
+                [ ] Need to trace back to keypoints?
+                [ ] Need to store error info?
+                 * Ref: `Structure_Point`: https://github.com/imkaywu/open3DCV/blob/master/src/sfm/structure_point.h
             [ ] class `Graph`: https://github.com/imkaywu/open3DCV/blob/master/src/sfm/graph.h
+                [ ] Q: Does this offer anything that `StructureNode` does not?
             [ ] Nonlinear Triangulation
                 [ ] pick graph g in graphs having maximum number of common tracks with the global graph
                 [ ] merge tracks of global graph with those of graph g
@@ -75,9 +82,12 @@
             [ ] Approximate nearest neighbour matching for keypoints
 [ ] Advanced Textured SfM
     [ ] SfM Point Cloud
-    [ ] Delaunay at each camera view
-        [ ] Project onto camera plane
-        [ ] Run Delaunay
+    [ ] Iterative Delaunay at each camera view
+        [ ] Order points by increasing distance from the camera location for this shot
+        [ ] For each point
+            [ ] Project onto camera plane
+            [ ] Run Iterative Delaunay 
+            [ ] Compute points occluded by facets and remove from this view
         [ ] Store candidate triangulation
         [ ] Score Triangles: Higher penalty is worse
             [ ] Angle between normal and ray to triangle center
@@ -189,10 +199,6 @@ vector<size_t> get_comma_sep_size_t( string input ){
     }
     return rtnVec;
 }
-
-////////// GLOBALS /////////////////////////////////////////////////////////////////////////////////
-string _IMG_PATH = "data/SfM/00_sculpture";
-
 
 
 ////////// IMAGE PROCESSING ////////////////////////////////////////////////////////////////////////
@@ -572,7 +578,8 @@ class ShotPair{ public:
         E = findEssentialMat( P, N, camCal );
         recoverPose( E, P, N, camCal, R, t );
         cout << " Obtained!" << endl;
-        cout << E << endl;
+        cout << "Translation:" << endl << t << endl;
+        cout << "Orientation:" << endl << R << endl << endl;
     }
 
     
@@ -683,9 +690,13 @@ class Photogrammetry{ public:
         picDir = pDir;
         if( picDir[ picDir.size()-1 ] != '/' ){  picDir += '/';  }
         vector<string> mPaths = list_files_at_path_w_ext( picDir, mainExt );
-        cout << "Finding files ... " << flush;
-        fetch_images_at_path( pDir, picPaths, images );
-        load_problem( mPaths[0], shotExt, pairExt );
+        // cout << "Finding files ... " << flush;
+        // fetch_images_at_path( pDir, picPaths, images );
+        cout << "About to load problem ... " << flush;
+        if( mPaths.size() )
+            load_problem( mPaths[0], shotExt, pairExt );
+        else
+            cout << "NO main solution file EXISTS!" << endl;
     }
 
 
@@ -703,25 +714,40 @@ class Photogrammetry{ public:
     void serialize( string oPath ){
         // Write root-level reconstruction information to a file
         ofstream outFile;
+        cout << "Write: " << oPath << " ... " << flush;
         outFile.open( oPath );
         outFile << serialize();
         outFile.close();
+        cout << "Done!" << endl;
     }
 
-    void load_cam_calibration( string cPath = "", string camExt = "instrinsic" ){
+    void load_cam_calibration( string cPath = "", string camExt = "intrinsic" ){
         if( cPath.length() == 0 ){
             vector<string> paths = list_files_at_path_w_ext( picDir, camExt, true );
+            if( !(paths.size()) ){
+                cout << "NO calibration file was found!" << endl;
+                return;
+            }
             cPath = paths[0];
         }
         vector<string> lines = read_lines( cPath );
-        camCal = deserialize_2d_Mat_f( get_line_arg( lines[0] ), 3, 3, ',' );
+        if( lines.size() ){
+            camCal = deserialize_2d_Mat_f( get_line_arg( lines[0] ), 3, 3, ',' );
+            cout << "Camera Calibration Matrix from " << cPath << ":" << endl;
+            cout << camCal << endl;
+        }else{
+            cout << "Calibration file " << cPath << " LACKS appropriate data!" << endl;
+        }
     }
 
     void deserialize( string iPath ){
         // Read root-level reconstruction information from a file
+        cout << "About to read main file ... " << endl;
         vector<string> lines = read_lines( iPath );
+        cout << "Main file has " << lines.size() << " lines!" << endl;
         Nfeat = str_to_size_t( get_line_arg( lines[1] ) );
         Ktop  = str_to_size_t( get_line_arg( lines[2] ) );
+        cout << "About to read camera calibration ... " << endl;
         load_cam_calibration();
     }
 
@@ -765,14 +791,21 @@ class Photogrammetry{ public:
 
     void load_problem( string mainPath, string shotExt = "CamShot", string pairExt = "ShotPair" ){
         // Load all relevant reconstruction data including the actual images
+        cout << "Find shot paths ..." << endl;
         vector<string> shotPaths = list_files_at_path_w_ext( picDir, shotExt, true );
+        cout << "Find pair paths ..." << endl;
         vector<string> pairPaths = list_files_at_path_w_ext( picDir, pairExt, true );
+        cout << "Load shots ..." << endl;
         for( string& path : shotPaths ){
             shots.push_back( CamShot::deserialize( path ) );
-        }
+            cout << '.' << flush;
+        } cout << endl;
+        cout << "Load pairs ..." << endl;
         for( string& path : pairPaths ){
             pairs.push_back( ShotPair::deserialize( path, shots ) );
-        }
+            cout << '.' << flush;
+        } cout << endl;
+        cout << "Load main: " << mainPath << " ... " << endl;
         deserialize( mainPath );
     }
 
@@ -796,7 +829,8 @@ class Photogrammetry{ public:
     }
 };
 
-
+////////// GLOBALS /////////////////////////////////////////////////////////////////////////////////
+string _IMG_PATH = "data/SfM/00_sculpture";
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
@@ -806,10 +840,11 @@ int main(){
     ulong Ktop   = Nfeat/2;
 
     cout << "Instantiating problem ... " << endl;
-    Photogrammetry pg{ _IMG_PATH, Nfeat, Ktop };
+    Photogrammetry pg{ _IMG_PATH };
     
-    cout << "About to match ... " << endl;
-    pg.brute_force_match();
+    // cout << "About to match ... " << endl;
+    // pg.brute_force_match();
+
     cout << "About to calculate relative poses ... " << endl;
     pg.load_cam_calibration();
     pg.recover_relative_poses();

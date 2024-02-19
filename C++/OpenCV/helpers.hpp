@@ -63,7 +63,7 @@ vector<string> split_string_on_char( string input, char ch ){
 bool file_has_ext( string path, string ext ){
     // Return true if a file has a 
     vector<string> parts = split_string_on_char( path, '.' );
-    cout << "There are " << parts.size() << " segments!" << endl;
+    // cout << "There are " << parts.size() << " segments!" << endl;
     return (to_upper( parts[ parts.size()-1 ] ) == to_upper( ext ));
 }
 
@@ -81,10 +81,10 @@ vector<string> list_files_at_path( string path, bool sortAlpha = true ){
 
 vector<string> list_files_at_path_w_ext( string path, string ext, bool sortAlpha = true ){
     vector<string> allPaths = list_files_at_path( path, sortAlpha );
-    cout << allPaths.size() << " candidate paths ..." << flush;
+    // cout << allPaths.size() << " candidate paths ..." << flush;
     vector<string> rtnPaths;
     for( string fPath : allPaths ){
-        cout << "Check: " << fPath << endl;
+        // cout << "Check: " << fPath << endl;
         if( file_has_ext( fPath, ext ) )
             rtnPaths.push_back( string( fPath ) );
     }
