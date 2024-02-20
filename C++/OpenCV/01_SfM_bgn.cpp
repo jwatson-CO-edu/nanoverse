@@ -170,7 +170,9 @@ Mat deserialize_2d_Mat_f( string input, int Mrows, int Ncols, char sep = ',' ){
     float val;
     for( int i = 0; i < Mrows; ++i ){
         for( int j = 0; j < Ncols; ++j ){
-            cout << "At (" << i << ',' << j << "), " << k << endl;
+            cout << "At (" << i << ',' << j << "), " << k << flush;
+            cout << ", " << tokens[k] << flush;
+            cout << ", " << stof( tokens[k] ) << flush;
             rtnMat.at<float>(i,j) = stof( tokens[k] );
             ++k;
         }
