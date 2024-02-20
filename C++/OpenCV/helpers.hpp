@@ -148,15 +148,15 @@ using cv::Mat;
 
 template<typename T>
 string serialize_Mat_2D( const Mat& mat ){
-    string rtnStr;
-    size_t M = mat.rows;
-    size_t N = mat.cols;
-    for( size_t i = 0; i < M; ++i ){
-        for( size_t j = 0; j < N; ++j ){
-            rtnStr += to_string( mat.at<T>(i,j) ) + ',';
+    stringstream outStr;
+    int M = mat.rows;
+    int N = mat.cols;
+    for( int i = 0; i < M; ++i ){
+        for( int j = 0; j < N; ++j ){
+            outStr << ((T) mat.at<T>(i,j)) << ',';
         }    
     }
-    return rtnStr;
+    return outStr.str();
 }
 
 #endif

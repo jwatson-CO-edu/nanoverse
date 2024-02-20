@@ -154,14 +154,23 @@ using cv::findEssentialMat, cv::FM_7POINT, cv::recoverPose;
 
 ////////// UTILITY FUNCTIONS ///////////////////////////////////////////////////////////////////////
 
-Mat deserialize_2d_Mat_f( string input, size_t Mrows, size_t Ncols, char sep = ',' ){
+Mat deserialize_2d_Mat_f( string input, int Mrows, int Ncols, char sep = ',' ){
     // Deserialize an OpenCV `CV_32F` matrix stored row-major in a comma-separated list in a string
     Mat rtnMat = Mat::zeros( Mrows, Ncols, CV_32F );
+
+    cout << "Got input: " << input << endl;
+
     vector<string> tokens = split_string_on_char( input, sep );
+    cout << "Separated input: " << endl;
+    for( string& token : tokens ) cout << '\t' << token << endl;
+
+
     if( tokens.size() < Mrows*Ncols )  return rtnMat; // Return the zero matrix if there are insufficient elements
-    size_t k = 0;
-    for( size_t i = 0; i < Mrows; ++i ){
-        for( size_t j = 0; j < Ncols; ++j ){
+    int k = 0;
+    float val;
+    for( int i = 0; i < Mrows; ++i ){
+        for( int j = 0; j < Ncols; ++j ){
+            cout << "At (" << i << ',' << j << "), " << k << endl;
             rtnMat.at<float>(i,j) = stof( tokens[k] );
             ++k;
         }
@@ -411,6 +420,12 @@ class ShotPair{ public:
         outStr << "fMtx:" << serialize_Mat_2D<float>( E ) << '\n';
         outStr << "rMtx:" << serialize_Mat_2D<float>( R ) << '\n';
         outStr << "tVec:" << serialize_Mat_2D<float>( t ) << '\n';
+
+        cout << "Translation:" << endl << t << endl;
+        cout << "Wrote: " << serialize_Mat_2D<float>( t ) << endl << endl;
+        cout << "Orientation:" << endl << R << endl << endl;
+        cout << "Wrote: " << serialize_Mat_2D<float>( R ) << endl << endl;
+
         for( KpMatch& match : matches ){ 
             outStr << "mtch:" << match.serialize() << '\n';
         }
