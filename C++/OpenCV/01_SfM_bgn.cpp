@@ -158,22 +158,30 @@ Mat deserialize_2d_Mat_f( string input, int Mrows, int Ncols, char sep = ',' ){
     // Deserialize an OpenCV `CV_32F` matrix stored row-major in a comma-separated list in a string
     Mat rtnMat = Mat::zeros( Mrows, Ncols, CV_32F );
 
-    cout << "Got input: " << input << endl;
+    // cout << "Got input: " << input << endl;
 
     vector<string> tokens = split_string_on_char( input, sep );
-    cout << "Separated input: " << endl;
-    for( string& token : tokens ) cout << '\t' << token << endl;
+    // cout << "Separated input: " << endl;
+    // for( string& token : tokens ) cout << '\t' << token << endl;
 
 
     if( tokens.size() < Mrows*Ncols )  return rtnMat; // Return the zero matrix if there are insufficient elements
     int k = 0;
     float val;
+    string item;
     for( int i = 0; i < Mrows; ++i ){
         for( int j = 0; j < Ncols; ++j ){
-            cout << endl << "\t\tAt (" << i << ',' << j << "), " << k << flush;
-            cout << ", " << tokens[k] << flush;
-            cout << ", " << stof( tokens[k] ) << flush;
-            rtnMat.at<float>(i,j) = stof( tokens[k] );
+            // cout << endl << "\t\tAt (" << i << ',' << j << "), " << k << flush;
+            // cout << ", " << tokens[k] << flush;
+            // item = tokens[k];
+            // item += '\0'
+            // cout << ", " << stof( tokens[k] ) << flush;
+            try{
+                rtnMat.at<float>(i,j) = stof( tokens[k] );
+            }catch (const std::out_of_range& e) {
+                cout << "Out of Range error." << endl;
+                rtnMat.at<float>(i,j) = nanf("");
+            }
             ++k;
         }
     }
@@ -303,7 +311,7 @@ class CamShot{ public:
         vector<string>   lines = read_lines( iPath );
         string /*-----*/ path_ = get_line_arg( lines[0] );
         Mat /*--------*/ img = imread( path_, IMREAD_GRAYSCALE );
-        Mat /*--------*/ xfrm_ = deserialize_2d_Mat_f( get_line_arg( lines[1] ), 3, 3, ',' );
+        Mat /*--------*/ xfrm_ = deserialize_2d_Mat_f( get_line_arg( lines[1] ), 4, 4, ',' );
         size_t /*-----*/ Nlin  = lines.size();
         KeyPoint /*---*/ kp_i;
         vector<float>    kpData;
@@ -401,6 +409,9 @@ class ShotPair{ public:
     ShotPair( shotPtr& p, shotPtr& n ){
         prev = shotPtr( p );
         next = shotPtr( n );
+        E = Mat::zeros(3,3,CV_32F);; // Output essential matrix.
+        R = Mat::zeros(3,3,CV_32F);; // Output rotation matrix.
+        t = Mat::zeros(3,1,CV_32F); // Output translation vector.
     }
 
     ShotPair( shotPtr& p, shotPtr& n, Mat& E_, Mat& R_, Mat& t_, vector<KpMatch>& matches_ ){
@@ -419,14 +430,14 @@ class ShotPair{ public:
         stringstream outStr;
         outStr << "prev:" << prev->path << '\n';
         outStr << "next:" << next->path << '\n';
-        outStr << "fMtx:" << serialize_Mat_2D<float>( E ) << '\n';
-        outStr << "rMtx:" << serialize_Mat_2D<float>( R ) << '\n';
-        outStr << "tVec:" << serialize_Mat_2D<float>( t ) << '\n';
+        outStr << "fMtx:" << serialize_Mat_2D<double>( E ) << '\n'; // THESE BECAME DOUBLE DURING POSE RECOVERY
+        outStr << "rMtx:" << serialize_Mat_2D<double>( R ) << '\n';
+        outStr << "tVec:" << serialize_Mat_2D<double>( t ) << '\n';
 
-        cout << "Translation:" << endl << t << endl;
-        cout << "Wrote: " << serialize_Mat_2D<float>( t ) << endl << endl;
-        cout << "Orientation:" << endl << R << endl << endl;
-        cout << "Wrote: " << serialize_Mat_2D<float>( R ) << endl << endl;
+        // cout << "Translation:" << endl << t << endl;
+        // cout << "Wrote: " << serialize_Mat_2D<double>( t ) << endl << endl;
+        // cout << "Orientation:" << endl << R << endl << endl;
+        // cout << "Wrote: " << serialize_Mat_2D<double>( R ) << endl << endl;
 
         for( KpMatch& match : matches ){ 
             outStr << "mtch:" << match.serialize() << '\n';
@@ -591,12 +602,12 @@ class ShotPair{ public:
         // Get the fundamental matrix from corresponding keypoints in two images
         Mat P = load_prev_kp();
         Mat N = load_next_kp();
-        cout << "About to obtain relative pose ..." << flush;
+        cout << "About to obtain relative pose from " << matches.size() << " matches ..." << flush;
         E = findEssentialMat( P, N, camCal );
         recoverPose( E, P, N, camCal, R, t );
         cout << " Obtained!" << endl;
-        cout << "Translation:" << endl << t << endl;
-        cout << "Orientation:" << endl << R << endl << endl;
+        // cout << "Translation:" << endl << t << endl;
+        // cout << "Orientation:" << endl << R << endl << endl;
     }
 
     
