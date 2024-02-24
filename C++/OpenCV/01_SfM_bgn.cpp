@@ -123,6 +123,8 @@ using std::filesystem::directory_iterator;
 using std::shared_ptr;
 #include <map>
 using std::pair;
+#include <list>
+using std::list;
 #include <cmath>
 using std::abs, std::min;
 #include <fstream>
@@ -135,7 +137,7 @@ using std::stringstream;
 #include "opencv2/core.hpp"
 using cv::CommandLineParser;
 #include <opencv2/core/utility.hpp>
-using cv::Mat, cv::String;
+using cv::Mat, cv::String, cv::Vec;
 #include <opencv2/imgcodecs.hpp>
 using cv::imread, cv::IMREAD_COLOR, cv::IMREAD_GRAYSCALE;
 #include "opencv2/highgui.hpp"
@@ -642,41 +644,38 @@ vector<pairPtr> pairs_from_shots( vector<shotPtr>& shotsVec, bool wrapEnd = true
 
 
 ////////// 3D GRAPH STRUCTURE //////////////////////////////////////////////////////////////////////
-typedef shared_ptr<KeyPoint> kpPtr;
-
-struct KpNode{
-    // Linked list node of a `Track`
-    shared_ptr<KpNode> next;
-    kpPtr /*--------*/ kpnt;
-};
-typedef shared_ptr<KpNode> kNodePtr;
+typedef pair<shotPtr,size_t> shotKpDex; // Indicates a camera view + `KeyPoint` index
+typedef Vec<float, 3> /*--*/ Vec3f;
+typedef Vec<int, 3> /*----*/ Vec3i;
 
 
-class Track{ public:
-    // Basic linked list of related `KeyPoint`s
+class StructureNode{
+    // A colored point in physical space, that points to photo keypoints that govern its location
 
     /// Members ///
-    kNodePtr head;
 
-    Track(){  head = nullptr;  }
+    list<shotKpDex> track;
+    Vec3f /*-----*/ coord;
+    Vec3i /*-----*/ color;
 
     /// Methods ///
 
-    kNodePtr get_end(){
-        // Get the last node of the LL
-        kNodePtr rtnPtr = head;
-        while( rtnPtr->next != nullptr )  rtnPtr = rtnPtr->next;
-        return rtnPtr;
-    }
-
-    kNodePtr append( const kpPtr& kp ){ 
-        // Create and append a new node that points to `kp`
-        kNodePtr last = get_end();
-        last->next = kNodePtr( new KpNode{ nullptr, kpPtr( kp ) } );
-        return last->next;
+    void append_to_track( shotPtr shot, size_t index ){
+        // Extend the track by one keypoint
+        track.emplace_back( shotKpDex{ shotPtr( shot ), index } );
     }
 };
+typedef shared_ptr<StructureNode> nodePtr;
 
+
+vector<nodePtr> get_nodes_from_pairs( vector<pairPtr>& pairs ){
+    // Gather contiguous correspondences between keypoints that span one or more `ShotPair`s
+    vector<nodePtr> rtnNodes;
+    size_t /*----*/ Npairs = pairs.size();
+    for( pairPtr& pair : pairs ){
+        // FIXME, START HERE: BEGIN BUILDING LISTS THAT SPAN POSSIBLY MULTIPLE PAIRS, RETURN AS NODES
+    }
+}
 
 
 ////////// PHOTOGRAMMETRY & RECONSTRUCTION /////////////////////////////////////////////////////////
@@ -778,8 +777,6 @@ class Photogrammetry{ public:
         cout << "About to read camera calibration ... " << endl;
         load_cam_calibration();
     }
-
-    
 
     void save_problem( string shotPrefix = "shot_", string pairPrefix = "pair_" ){
         // Save all relevant reconstruction data except for the actual images
