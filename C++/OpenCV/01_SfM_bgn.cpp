@@ -654,9 +654,9 @@ class StructureNode{
 
     /// Members ///
 
-    list<shotKpDex> track;
-    Vec3f /*-----*/ coord;
-    Vec3i /*-----*/ color;
+    list<shotKpDex> track; // LL of keypoints that govern location and color
+    Vec3f /*-----*/ coord; // World frame location
+    Vec3i /*-----*/ color; // Average color
 
     /// Methods ///
 
