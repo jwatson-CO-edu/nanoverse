@@ -649,7 +649,7 @@ typedef Vec<float, 3> /*--*/ Vec3f;
 typedef Vec<int, 3> /*----*/ Vec3i;
 
 
-class StructureNode{
+class StructureNode{ public:
     // A colored point in physical space, that points to photo keypoints that govern its location
 
     /// Members ///
@@ -657,6 +657,13 @@ class StructureNode{
     list<shotKpDex> track; // LL of keypoints that govern location and color
     Vec3f /*-----*/ coord; // World frame location
     Vec3i /*-----*/ color; // Average color
+
+    StructureNode( const shotPtr& shot, size_t index ){
+        // Begin a new track with the beginning 
+        track.push_back( shotKpDex( shotPtr( shot ), index ) );
+        coord = {0,0,0};
+        color = {0,0,0};
+    }
 
     /// Methods ///
 
@@ -672,9 +679,28 @@ vector<nodePtr> get_nodes_from_pairs( vector<pairPtr>& pairs ){
     // Gather contiguous correspondences between keypoints that span one or more `ShotPair`s
     vector<nodePtr> rtnNodes;
     size_t /*----*/ Npairs = pairs.size();
-    for( pairPtr& pair : pairs ){
-        // FIXME, START HERE: BEGIN BUILDING LISTS THAT SPAN POSSIBLY MULTIPLE PAIRS, RETURN AS NODES
+    bool /*------*/ nodeFound;
+    // 1. For every contiguous pair of camera shots
+    // NOTE: This function assumes pairs were already formed in a ring
+    // FIXME: NEEDS CHECKING
+    for( pairPtr& pair : pairs ){ 
+        // 2. For every correspondence in that pair
+        for( KpMatch& match : pair->matches ){
+            nodeFound = false;
+            // A. Search ends of existing tracks
+            for( nodePtr& node : rtnNodes ){
+                if( match.prevDex == node->track.back().second ){
+                    node->append_to_track( shotPtr( pair->next ), match.nextDex );
+                    nodeFound = true;
+                }
+            }
+            // B. Else start new tracks
+            if( !nodeFound ){
+                rtnNodes.push_back( nodePtr( new StructureNode{ shotPtr( pair->next ), match.nextDex } ) );
+            }
+        }
     }
+    return rtnNodes;
 }
 
 
@@ -685,14 +711,17 @@ class Photogrammetry{ public:
 
     ///// Members /////////////////////////////////////////////////////////
 
-    string /*----*/ picDir;
-    vector<string>  picPaths;
-    vector<Mat>     images;
-    vector<shotPtr> shots;
-    vector<pairPtr> pairs;
-    ulong /*-----*/ Nfeat;
-    ulong /*-----*/ Ktop;
-    Mat /*-------*/ camCal;
+    /// Params ///
+    string picDir; // Directory of (assumed) in-order 360deg walk-around of reconstructed object
+    ulong  Nfeat; //- # of features to find in each image
+    ulong  Ktop; // - Max # of mutual correspondences to consider
+    Mat    camCal; // Camera calibration matrix
+    /// Reconstruction Data ///
+    vector<string>  picPaths; // Paths to individual imates
+    vector<Mat>     images; // - All images loaded as matrices
+    vector<shotPtr> shots; // -- Image + `KeyPoint`s, FIXME: DOUBLE STORAGE
+    vector<pairPtr> pairs; // -- `KeyPoint` correspondences
+    vector<nodePtr> nodes; // -- 3D points based on multiple correspondences
 
 
     ///// Constructor(s) //////////////////////////////////////////////////
@@ -704,6 +733,7 @@ class Photogrammetry{ public:
         fetch_images_at_path( pDir, picPaths, images );
         cout << "Creating shots ... " << flush;
         shots = shots_from_images( picPaths, images, Nfeat_ );
+        images.clear(); // Fix double storage
         cout << "Creating pairs ... " << flush;
         pairs = pairs_from_shots( shots, true );
         cout << "COMPLETE" << endl << endl;
@@ -717,8 +747,6 @@ class Photogrammetry{ public:
         picDir = pDir;
         if( picDir[ picDir.size()-1 ] != '/' ){  picDir += '/';  }
         vector<string> mPaths = list_files_at_path_w_ext( picDir, mainExt );
-        // cout << "Finding files ... " << flush;
-        // fetch_images_at_path( pDir, picPaths, images );
         cout << "About to load problem ... " << flush;
         if( mPaths.size() )
             load_problem( mPaths[0], shotExt, pairExt );
@@ -816,6 +844,7 @@ class Photogrammetry{ public:
 
     void load_problem( string mainPath, string shotExt = "CamShot", string pairExt = "ShotPair" ){
         // Load all relevant reconstruction data including the actual images
+        // NOTE: This function should NOT populate `images`. Image data exists in `shots`
         cout << "Find shot paths ..." << endl;
         vector<string> shotPaths = list_files_at_path_w_ext( picDir, shotExt, true );
         cout << "Find pair paths ..." << endl;
