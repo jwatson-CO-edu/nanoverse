@@ -645,8 +645,6 @@ vector<pairPtr> pairs_from_shots( vector<shotPtr>& shotsVec, bool wrapEnd = true
 
 ////////// 3D GRAPH STRUCTURE //////////////////////////////////////////////////////////////////////
 typedef pair<shotPtr,size_t> shotKpDex; // Indicates a camera view + `KeyPoint` index
-typedef Vec<float, 3> /*--*/ Vec3f;
-typedef Vec<int, 3> /*----*/ Vec3i;
 
 
 class StructureNode{ public:
@@ -881,6 +879,11 @@ class Photogrammetry{ public:
         // Get the relative pose for every pair of shots
         for( pairPtr& pair : pairs ){  pair->recover_relative_pose( camCal );  }
     }
+
+    void get_nodes(){
+        // Attempt to get correspondences across 
+        nodes = get_nodes_from_pairs( pairs );
+    }
 };
 
 ////////// GLOBALS /////////////////////////////////////////////////////////////////////////////////
@@ -902,6 +905,7 @@ int main(){
     cout << "About to calculate relative poses ... " << endl;
     pg.load_cam_calibration();
     pg.recover_relative_poses();
+    pg.get_nodes();
     cout << endl << "##### CALCULATIONS COMPLETE #####" << endl;
 
     cout << endl << "Serializing reconstruction data ... " << endl;
