@@ -41,8 +41,8 @@ class Ellipsoid : public DynaMesh { public:
             for( Vector3& pnt : tri ){
                 // Get the angle from vertical
                 phi   = atan2f( sqrt( pnt.x * pnt.x + pnt.y * pnt.y ), pnt.z );
-                elScl = cosf( phi );
-                zScl  = sinf( phi );
+                elScl = sinf( phi );
+                zScl  = cosf( phi );
                 // Get the angle in the XY-plane
                 theta = atan2f( pnt.y, pnt.x );
                 // Set the point
