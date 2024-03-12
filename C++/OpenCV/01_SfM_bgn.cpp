@@ -1,4 +1,4 @@
-// g++ 01_SfM_bgn.cpp `pkg-config --cflags --libs opencv4` -std=c++17 -lopencv_xfeatures2d -I /usr/local/include/opencv4/ -o load-problem.out
+// g++ 01_SfM_bgn.cpp `pkg-config --cflags --libs opencv4` -std=c++17 -lopencv_xfeatures2d -I /usr/local/include/opencv4/ -o build-struct.out
 
 ////////// DEV PLAN & NOTES ////////////////////////////////////////////////////////////////////////
 /*
@@ -53,10 +53,14 @@
             [>] Compute the extrinsics of each camera shot: 
                 [Y] Translation, 2024-02-19: OBTAINED
                 [Y] Orientation, 2024-02-19: OBTAINED
-                [>] Q: What is the relationship to the essential matrix?
+                [N] Q: What is the relationship to the essential matrix?
+                [>] Render all relative poses as a sanity check
+                [>] Serialize all relative poses
             [>] Find correspondence tracks across `ShotPair`s: class `StructureNode`
-                [ ] Track, 3D Location, Color
-                [ ] Need to trace back to keypoints?
+                [>] Track, 3D Location, Color
+                    [>] Need to trace back to keypoints?
+                    [>] ISSUE: Something is VERY slow about building tracks!
+                        [>] Print out number of tracks vs how fast they are growing
                 [ ] Need to store error info?
                  * Ref: `Structure_Point`: https://github.com/imkaywu/open3DCV/blob/master/src/sfm/structure_point.h
             [ ] class `Graph`: https://github.com/imkaywu/open3DCV/blob/master/src/sfm/graph.h
@@ -66,8 +70,6 @@
                 [ ] merge tracks of global graph with those of graph g
                 [ ] triangulate tracks
         [ ] Bundle adjustment: Optimize a reprojection error with respect to all estimated parameters
-    [ ] Two-view SfM
-        [ ] Render PC
     [ ] N-view SfM
         [ ] iterative step that merges multiple graphs into a global graph, for graph in graphs
             Loop:
@@ -682,6 +684,7 @@ vector<nodePtr> get_nodes_from_pairs( vector<pairPtr>& pairs ){
     // NOTE: This function assumes pairs were already formed in a ring
     // FIXME: NEEDS CHECKING
     for( pairPtr& pair : pairs ){ 
+        cout << rtnNodes.size() << ", " << flush;
         // 2. For every correspondence in that pair
         for( KpMatch& match : pair->matches ){
             nodeFound = false;
