@@ -1,7 +1,25 @@
 #ifndef OGL_GEO_H // This pattern is to prevent symbols to be loaded multiple times
 #define OGL_GEO_H // from multiple imports
 
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
+
 #include "OGL_Utils.h"
+
+
+
+////////// GEOMETRY HELPERS ////////////////////////////////////////////////////////////////////////
+
+void Vertex_sphr( float th , float ph ){
+	// Draw vertex in polar coordinates
+	// Author: Willem A. (Vlakkies) Schreüder  
+	glVertex3d( Sin( th )*Cos( ph ), 
+				Sin( ph ), 
+				Cos( th )*Cos( ph ) );
+}
+
+
+
+////////// GEOMETRY DRAWING FUNCTIONS //////////////////////////////////////////////////////////////
 
 void draw_cuboid_lined( float x , float y , float z ,
                         float dx , float dy , float dz ,
@@ -95,6 +113,39 @@ void draw_cuboid_lined( float x , float y , float z ,
 		glVertex3f(-d,+d,-d);
 		
 	glEnd();
+	//  Undo transformations
+	glPopMatrix();
+}
+
+
+void draw_sphere( vec3f center, float radius, vec3f color ){
+	// Draw a sphere (version 2) at (x,y,z) radius (r)
+	// Author: Willem A. (Vlakkies) Schreüder  
+	const int d = 5;
+	int /*-*/ th , ph;
+    float     x = center[0];
+    float     y = center[1];
+    float     z = center[2];
+    float     r = radius;
+
+	//  Save transformation
+	glPushMatrix();
+	//  Offset and scale
+	glTranslated( x , y , z );
+	glScaled( r , r , r );
+
+    glColor3f( color[0] , color[1] , color[2] );
+
+	//  Latitude bands
+	for( ph = -90 ; ph < 90 ; ph += d ){
+		glBegin( GL_QUAD_STRIP );
+		for( th = 0 ; th <= 360 ; th += d ){
+			Vertex_sphr( th , ph     );
+			Vertex_sphr( th , ph + d );
+		}
+		glEnd();
+	}
+
 	//  Undo transformations
 	glPopMatrix();
 }

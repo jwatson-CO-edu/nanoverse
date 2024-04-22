@@ -1,17 +1,33 @@
+#pragma GCC diagnostic ignored "-Wimplicit-function-declaration" // UNKNOWN MAGIC
+
 #ifndef OGL_UTILS_H // This pattern is to prevent symbols to be loaded multiple times
 #define OGL_UTILS_H // from multiple imports
+
+
 
 #include <stdio.h> // Streams to communicate with devices such as keyboards, printers, terminals or with any other type of files supported 
 #include <stdlib.h> // defines four variable types, several macros, and various functions for performing general functions. , size_t
 #include <stdarg.h> // macros to access individual args of a list of unnamed arguments whose number and types are not known to the called function
+#include <math.h>
 
 #include <GL/glut.h>
 
 // OpenGL with prototypes for glext
 #define GL_GLEXT_PROTOTYPES // Important for all of your programs
 #define LEN 8192  // Maximum length of text string
+#define _USE_MATH_DEFINES
 
 typedef float vec3f[3];
+
+
+// Cosine and Sine in degrees
+// Author: Willem A. (Vlakkies) Schreüder  
+double Cos( double x ){  return cos( (x) * 3.1415927 / 180 );  }
+double Sin( double x ){  return sin( (x) * 3.1415927 / 180 );  }
+float  Cosf( float x ){  return (float)cos( (x) * 3.1415927 / 180 );  }
+float  Sinf( float x ){  return (float)sin( (x) * 3.1415927 / 180 );  }
+
+
 
 void Print( const char* format , ... ){
 	// Convenience routine to output raster text , Use VARARGS to make this more flexible   
@@ -27,5 +43,25 @@ void Print( const char* format , ... ){
 	while( *ch )
 		glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18 , *ch++ );
 }
+
+typedef struct {
+	// Camera state goes here
+
+	/// Members ///
+	vec3f eyeLoc; // ------------ Camera location (world frame)
+	vec3f lookPt; // ------------ Focus of camera (world frame)
+	vec3f upVctr; // ------------ Direction of "up"
+
+} Camera3D;
+
+/// Methods ///
+void look( const Camera3D camera ){
+	// Set camera position, target, and orientation
+	gluLookAt( (double) camera.eyeLoc[0], (double) camera.eyeLoc[1], (double) camera.eyeLoc[2],  
+			   (double) camera.lookPt[0], (double) camera.lookPt[1], (double) camera.lookPt[2],  
+			   (double) camera.upVctr[0], (double) camera.upVctr[1], (double) camera.upVctr[2] );
+}
+
+
 
 #endif

@@ -1,9 +1,42 @@
-// gcc -O3 -Wall 00_restart.c -lglut -lGLU -lGL -lm -o test.out
-#pragma GCC diagnostic ignored "-Wimplicit-function-declaration" // UNKNOWN MAGIC
+// gcc -O3 -Wall 02_sphere.c -lglut -lGLU -lGL -lm -o sphere.out
+
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
 #include "OGL_Geo.h"
+
+
+////////// SETTINGS ////////////////////////////////////////////////////////////////////////////////
+const float _SCALE = 10.0; //- Scale Dimension
+
+
+////////// VIEW PROJECTION /////////////////////////////////////////////////////////////////////////
+float w2h =  0.0f; // Aspect ratio
+int   fov = 55; // -- Field of view (for perspective)
+
+static void Project(){
+	// Set projection
+	// Adapted from code provided by Willem A. (Vlakkies) Schreüder  
+	// NOTE: This function assumes that aspect rario will be computed by 'resize'
+	
+	//  Tell OpenGL we want to manipulate the projection matrix
+	glMatrixMode( GL_PROJECTION );
+	//  Undo previous transformations
+	glLoadIdentity();
+	
+	gluPerspective( (double) fov , // -- Field of view angle, in degrees, in the y direction.
+					(double) w2h , // -- Aspect ratio , the field of view in the x direction. Ratio of x (width) to y (height).
+					(double) _SCALE/4.0 , //- Specifies the distance from the viewer to the near clipping plane (always positive).
+					(double) 4.0*_SCALE ); // Specifies the distance from the viewer to the far clipping plane (always positive).
+	
+	// Switch back to manipulating the model matrix
+	glMatrixMode( GL_MODELVIEW );
+	// Undo previous transformations
+	glLoadIdentity();
+}
+
+////////// GEOMETRY & CAMERA ///////////////////////////////////////////////////////////////////////
+Camera3D cam = { {5.0f, 2.0f, 2.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f} };
 
 
 
@@ -15,27 +48,24 @@ void display(){
 	// Display the scene
 	// Adapted from code provided by Willem Schreuder
 	
-    vec3f cubClr = {0.0f,1.0f,0.0f};
-    vec3f linClr = {0.0f,0.0f,0.0f};
+    vec3f sphClr = {0.0f,1.0f,0.0f};
+    vec3f center = {0.0f,0.0f,0.0f};
 
 	//  Clear the image
-	glClear( GL_COLOR_BUFFER_BIT );
-	//  Reset previous transforms to the identity matrix
+	glClearDepth( 1.0f );
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 	//  Reset previous transforms to the identity matrix
 	glLoadIdentity();
 	
-	//  Set view angle
-	glRotated( ph , 1 , 0 , 0 ); // 2. Rotate around the X axis
-	glRotated( th , 0 , 1 , 0 ); // 1. Rotate around the Y axis
+	// Set view 
+	look( cam );
 
 	
-	draw_cuboid_lined( 0.0f, 0.0f, 0.0f,
-                       1.0f, 2.0f, 3.0f,
-                       cubClr, linClr );
+	draw_sphere( center, 3.0f, sphClr );
 
-	//  Display parameters
+	// Display status
+	glColor3f( 249/255.0 , 255/255.0 , 99/255.0 ); // Text Yellow
 	glWindowPos2i( 5 , 5 ); // Next raster operation relative to lower lefthand corner of the window
-	
 	Print( "HELLO WORLD!" );
 
 	//  Flush and swap
@@ -50,25 +80,12 @@ double dim    =  40; // Dimension of orthogonal box
 
 void reshape( int width , int height ){
 	// GLUT calls this routine when the window is resized
-	// Code provided by Willem Schreuder
-	
-	//  Ratio of the width to the height of the window
-	double w2h = ( height > 0 ) ? (double) width / height : 1;
-	//  Set the viewport to the entire window
+	// Calc the aspect ratio: width to the height of the window
+	w2h = ( height > 0 ) ? (float) width / height : 1;
+	// Set the viewport to the entire window
 	glViewport( 0 , 0 , width , height );
-	//  Tell OpenGL we want to manipulate the projection matrix
-	glMatrixMode( GL_PROJECTION );
-	//  Undo previous transformations
-	glLoadIdentity();
-	//  Orthogonal projection box adjusted for the
-	//  aspect ratio of the window
-	glOrtho( -dim * w2h , +dim * w2h , 
-			 -dim       , +dim       , 
-			 -dim       , +dim       );
-	//  Switch to manipulating the model matrix
-	glMatrixMode( GL_MODELVIEW );
-	//  Undo previous transformations
-	glLoadIdentity();
+	// Set projection
+	Project();
 }
 
 int main( int argc , char* argv[] ){
@@ -84,7 +101,7 @@ int main( int argc , char* argv[] ){
 	glutInitWindowSize( 1000 , 750 );
 	
 	//  Create the window
-	glutCreateWindow( "LOOK AT THIS GODDAMN CUBOID" );
+	glutCreateWindow( "LOOK AT THIS GODDAMN SPHERE" );
 
     // NOTE: Set modes AFTER the window / graphics context has been created!
     //  Request double buffered, true color window 
