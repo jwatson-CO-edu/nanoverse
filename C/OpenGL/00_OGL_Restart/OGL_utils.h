@@ -8,6 +8,8 @@ Convenience functions for OpenGL
 Template Version: 2017-09-23
 ***********/
 
+////////// 
+
 #ifndef OGL_UTILS_H // This pattern is to prevent symbols to be loaded multiple times
 #define OGL_UTILS_H // from multiple imports
 
@@ -17,11 +19,7 @@ Template Version: 2017-09-23
 #include <stdbool.h> // Why isn't this a part of every language since ever?
 
 // ~~ System-Specific Includes ~~
-#ifdef __APPLE__ // This constant is always defined on Apple machines
-      #include <GLUT/glut.h> // GLUT is in a different place on Apple machines
-#else
-      #include <GL/glut.h>
-#endif
+#include <GL/glut.h>
 
 #define LEN 8192  // Maximum length of text string
 //  OpenGL with prototypes for glext
