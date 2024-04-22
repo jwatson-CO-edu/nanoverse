@@ -6,10 +6,10 @@ Convenience functions for OpenGL
 Template Version: 2017-09-23
 ***********/
 
-////////// INIT ////////////////////////////////////////////////////////////////////////////////////
-
 #ifndef OGL_UTILS_H // This pattern is to prevent symbols to be loaded multiple times
 #define OGL_UTILS_H // from multiple imports
+
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
 // ~~ Defines ~~
 #define LEN 8192  // Maximum length of text string
@@ -25,6 +25,8 @@ Template Version: 2017-09-23
 
 // ~~ Standard ~~
 #include <stdio.h> // Streams to communicate with devices such as keyboards, printers, terminals or with any other type of files supported 
+#include <iostream>
+using std::cout, std::endl, std::flush, std::ostream;
 #include <stdarg.h> // macros to access individual args of a list of unnamed arguments whose number and types are not known to the called function
 #include <math.h> // ceilf
 #include <stdbool.h> // Why isn't this a part of every language since ever?
@@ -34,15 +36,50 @@ using std::string;
 // ~~ OpenGL ~~
 #include <GL/glut.h>
 
-// ~~ Local ~~
+///// Aliases /////
+typedef unsigned char  ubyte;
+typedef array<float,2> vec2f;
+typedef array<float,3> vec3f;
 
 /////////// HELPER FUNCTIONS ///////////////////////////////////////////////////////////////////////
 
-int    randrange( int end ){    return (int)( rand() % end );    }
-size_t randrange( size_t end ){ return (size_t)( rand() % end ); }
-int    randrange( int bgn , int end ){ return bgn + (int)( rand() % ( end - bgn ) ); }
+///// Printing Functions //////////////////////////////////////////////////
+ostream& operator<<( ostream& os, const vec3f& vec ) { // ostream '<<' operator for vectors
+	// NOTE: This function assumes that the ostream '<<' operator for T has already been defined
+	os << "[" << vec[0] << ", " << vec[1] << ", " << vec[2] << "]";
+	return os; // You must return a reference to the stream!
+}
 
+///// std <--> OpenGL /////////////////////////////////////////////////////
+void glVec3f( const vec3f& v ){  glVertex3f( v[0] , v[1] , v[2] );  }
+void glClr3f( const vec3f& c ){  glColor3f( c[0] , c[1] , c[2] );  }
+
+///// Random Numbers //////////////////////////////////////////////////////
 void init_rand(){  srand( time( NULL ) );  }
+
+float randf(){
+    // Return a pseudo-random number between 0.0 and 1.0
+    return  1.0f * rand() / RAND_MAX;
+}
+
+float randf( float lo, float hi ){
+    // Return a pseudo-random number between `lo` and `hi`
+    // NOTE: This function assumes `hi > lo`
+    float span = hi - lo;
+    return lo + span * randf();
+}
+
+int randi( int lo, int hi ){
+    // Return a pseudo-random number between `lo` and `hi` (int)
+    int span = hi - lo;
+    return lo + (rand() % span);
+}
+
+ubyte rand_ubyte(){
+    // Return a pseudo-random unsigned byte
+    return (ubyte) randf( 0.0, 256.0 );
+}
+
 
 
 /////////// GRAPHICS STRUCTS ///////////////////////////////////////////////////////////////////////
@@ -69,15 +106,10 @@ struct OGL_window{
 	void create( int width , int height, string name = "WINDOW" ){
 		// Actually create the window, WARNING: Call AFTER `glutInit( &argc , argv )`
 
-		//  Request double buffered, true color window 
-		glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
 		//  Request W x H pixel window
 		glutInitWindowSize( width, height );
 		//  Create the window
 		glutCreateWindow( name.c_str() );
-		// Don't ask questions!
-		glEnable( GL_DEPTH_TEST );
-		glDepthRange( 0.0f , 1.0f );
 	}
 
 	void Project(){
@@ -98,10 +130,10 @@ struct OGL_window{
 			
 				break;
 			case PERSP:
-				gluPerspective( fov , // -- Field of view angle, in degrees, in the y direction.
-								w2h , // -- Aspect ratio , the field of view in the x direction. Ratio of x (width) to y (height).
-								dim/4 , //- Specifies the distance from the viewer to the near clipping plane (always positive).
-								4*dim ); // Specifies the distance from the viewer to the far clipping plane (always positive).
+				gluPerspective( (double) fov , // -- Field of view angle, in degrees, in the y direction.
+								(double) w2h , // -- Aspect ratio , the field of view in the x direction. Ratio of x (width) to y (height).
+								(double) dim/4.0 , //- Specifies the distance from the viewer to the near clipping plane (always positive).
+								(double) 4.0*dim ); // Specifies the distance from the viewer to the far clipping plane (always positive).
 				break;
 		}
 		
@@ -114,23 +146,73 @@ struct OGL_window{
 };
 
 
+struct Camera3D{
+	// Camera state goes here
+
+	/// Members ///
+	vec3f eyeLoc; // ------------ Camera location (world frame)
+	vec3f lookPt; // ------------ Focus of camera (world frame)
+	vec3f upVctr; // ------------ Direction of "up"
+
+	/// Constructor ///
+	Camera3D(){
+		eyeLoc = {1.0f, 1.0f, 1.0f};
+		lookPt = {0.0f, 0.0f, 0.0f};
+		upVctr = {0.0f, 0.0f, 1.0f}; // Up is +Z, I WILL FIGHT YOU
+	}
+
+	/// Methods ///
+	void look(){
+		// Set camera position, target, and orientation
+		gluLookAt( (double) eyeLoc[0], (double) eyeLoc[1], (double) eyeLoc[2],  
+			       (double) lookPt[0], (double) lookPt[1], (double) lookPt[2],  
+			       (double) upVctr[0], (double) upVctr[1], (double) upVctr[2] );
+	}
+
+	void set_position( const vec3f& loc ){
+		// Move the camera to `loc` and set view
+		eyeLoc = loc;
+		look();
+	}
+
+	void set_target( const vec3f& target ){
+		// Point the camera at `target` and set view
+		lookPt = target;
+		look();
+	}
+};
+
+
 /////////// GRAPHICS HELPERS ///////////////////////////////////////////////////////////////////////
 
-void OGL_frame_start(){
-	// Do this before drawing anything
-	//  Clear the image
-	glClearDepth( 1.0f );
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-	//  Reset previous transforms to the identity matrix
-	glLoadIdentity();
+bool ErrCheck( const char* where ){
+	// See if OpenGL has raised any errors
+	// Author: Willem A. (Vlakkies) Schreüder  
+	int err = glGetError();
+	if( err ){  
+		fprintf( stderr , "ERROR: %s [%s]\n" , gluErrorString( err ) , where );  
+		return true;
+	}else{  return false;  }
 }
 
 
-void OGL_frame_end(){
-	// Do this after drawing everything, Flush and swap
-	glFlush();
-	glutSwapBuffers();
-}
+// void OGL_frame_start(){
+// 	// Do this before drawing anything
+// 	// Clear the image
+// 	glClearDepth( 1.0 );
+// 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+// 	// Reset previous transforms to the identity matrix
+// 	glLoadIdentity();
+// }
+
+
+// void OGL_frame_end(){
+// 	// Do this after drawing everything, Flush and swap
+// 	ErrCheck( "display" );
+// 	glFlush();
+// 	glutSwapBuffers();
+// }
+
 
 void Print( const char* format , ... ){
 	// Convenience routine to output raster text , Use VARARGS to make this more flexible   
@@ -148,6 +230,7 @@ void Print( const char* format , ... ){
 	}
 }
 
+
 void Print( string format , ... ){
 	// 'std::string' version of the above
 	va_list args;
@@ -155,9 +238,6 @@ void Print( string format , ... ){
 	Print( format.c_str() , args );
 	va_end( args );
 }
-
-
-
 
 
 void draw_origin( float scale ){
@@ -230,136 +310,7 @@ void draw_grid_org_XY( float gridSize , uint xPlusMinus , uint yPlusMinus ,
 	glEnd();
 }
 
-void Vertex_sphr( float th , float ph ){
-	// Draw vertex in polar coordinates
-	// Author: Willem A. (Vlakkies) Schreüder  
-	// glColor3f( Cos( th )*Cos( th ) , Sin(ph)*Sin(ph) , Sin(th)*Sin(th));
-	glVertex3d( Sinf( th ) * Cosf( ph ) , 
-				Sinf( ph ) , 
-				Cosf( th ) * Cosf( ph ) );
-}
 
-void sphere2( float x , float y , float z , float r ){
-	// Draw a sphere (version 2) at (x,y,z) radius (r)
-	// Author: Willem A. (Vlakkies) Schreüder  
-	const int d = 5;
-	int       th , ph;
-
-	//  Save transformation
-	glPushMatrix();
-	//  Offset and scale
-	glTranslated( x , y , z );
-	glScaled( r , r , r );
-
-	//  Latitude bands
-	for( ph = -90 ; ph < 90 ; ph += d ){
-		glBegin( GL_QUAD_STRIP );
-		for( th = 0 ; th <= 360 ; th += d ){
-			Vertex_sphr( th , ph     );
-			Vertex_sphr( th , ph + d );
-		}
-		glEnd();
-	}
-
-	//  Undo transformations
-	glPopMatrix();
-}
-
-void cube( float x , float y , float z ,
-           float dx , float dy , float dz ,
-           float fillColor[3] , float lineColor[3] ){
-	// Draw a cube at (x,y,z) dimensions (dx,dy,dz) 
-	float lineOffset = 1.005;
-	//  Save transformation
-	glPushMatrix();
-	glColor3f( fillColor[0] , fillColor[1] , fillColor[2] );
-	//  Offset
-	glTranslated( x , y , z );
-	glScaled( dx/2.0f , dy/2.0f , dz/2.0f );
-	
-	//  Cube
-	glBegin(GL_QUADS);
-		//  Front
-		glVertex3f(-1,-1, 1);
-		glVertex3f(+1,-1, 1);
-		glVertex3f(+1,+1, 1);
-		glVertex3f(-1,+1, 1);
-		//  Back
-		glVertex3f(+1,-1,-1);
-		glVertex3f(-1,-1,-1);
-		glVertex3f(-1,+1,-1);
-		glVertex3f(+1,+1,-1);
-		//  Right
-		glVertex3f(+1,-1,+1);
-		glVertex3f(+1,-1,-1);
-		glVertex3f(+1,+1,-1);
-		glVertex3f(+1,+1,+1);
-		//  Left
-		glVertex3f(-1,-1,-1);
-		glVertex3f(-1,-1,+1);
-		glVertex3f(-1,+1,+1);
-		glVertex3f(-1,+1,-1);
-		//  Top
-		glVertex3f(-1,+1,+1);
-		glVertex3f(+1,+1,+1);
-		glVertex3f(+1,+1,-1);
-		glVertex3f(-1,+1,-1);
-		//  Bottom
-		glVertex3f(-1,-1,-1);
-		glVertex3f(+1,-1,-1);
-		glVertex3f(+1,-1,+1);
-		glVertex3f(-1,-1,+1);
-	//  End
-	glEnd();
-	
-	// Draw outline
-	float d = lineOffset;
-	glColor3f( lineColor[0] , lineColor[1] , lineColor[2] );
-	
-	glBegin( GL_LINES );
-		// Bottom
-		glVertex3f(-d,-d,-d);
-		glVertex3f(+d,-d,-d);
-		
-		glVertex3f(+d,-d,-d);
-		glVertex3f(+d,+d,-d);
-		
-		glVertex3f(+d,+d,-d);
-		glVertex3f(-d,+d,-d);
-		
-		glVertex3f(-d,+d,-d);
-		glVertex3f(-d,-d,-d);
-
-		// Top
-		glVertex3f(-d,-d,+d);
-		glVertex3f(+d,-d,+d);
-		
-		glVertex3f(+d,-d,+d);
-		glVertex3f(+d,+d,+d);
-		
-		glVertex3f(+d,+d,+d);
-		glVertex3f(-d,+d,+d);
-		
-		glVertex3f(-d,+d,+d);
-		glVertex3f(-d,-d,+d);
-		
-		// Sides
-		glVertex3f(-d,-d,+d);
-		glVertex3f(-d,-d,-d);
-		
-		glVertex3f(+d,-d,+d);
-		glVertex3f(+d,-d,-d);
-		
-		glVertex3f(+d,+d,+d);
-		glVertex3f(+d,+d,-d);
-		
-		glVertex3f(-d,+d,+d);
-		glVertex3f(-d,+d,-d);
-		
-	glEnd();
-	//  Undo transformations
-	glPopMatrix();
-}
 
 
 

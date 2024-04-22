@@ -118,10 +118,10 @@ struct OGL_window{
 
 void OGL_frame_start(){
 	// Do this before drawing anything
-	//  Clear the image
+	// Clear the image
 	glClearDepth( 1.0f );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-	//  Reset previous transforms to the identity matrix
+	// Reset previous transforms to the identity matrix
 	glLoadIdentity();
 }
 
@@ -138,7 +138,7 @@ void Print( const char* format , ... ){
 	char    buf[ LEN ];
 	char*   ch = buf;
 	va_list args;
-	//  Turn the parameters into a character string
+	// Turn the parameters into a character string
 	va_start( args , format );
 	vsnprintf( buf , LEN , format , args );
 	va_end( args );
