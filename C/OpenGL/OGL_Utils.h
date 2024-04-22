@@ -3,8 +3,9 @@
 #ifndef OGL_UTILS_H // This pattern is to prevent symbols to be loaded multiple times
 #define OGL_UTILS_H // from multiple imports
 
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
-
+///// Imports /////
 #include <stdio.h> // Streams to communicate with devices such as keyboards, printers, terminals or with any other type of files supported 
 #include <stdlib.h> // defines four variable types, several macros, and various functions for performing general functions. , size_t
 #include <stdarg.h> // macros to access individual args of a list of unnamed arguments whose number and types are not known to the called function
@@ -12,13 +13,18 @@
 
 #include <GL/glut.h>
 
+///// Defines /////
 // OpenGL with prototypes for glext
 #define GL_GLEXT_PROTOTYPES // Important for all of your programs
 #define LEN 8192  // Maximum length of text string
 #define _USE_MATH_DEFINES
 
+///// Aliases /////
 typedef float vec3f[3];
 
+
+
+////////// TRIGONOMETRY ////////////////////////////////////////////////////////////////////////////
 
 // Cosine and Sine in degrees
 // Author: Willem A. (Vlakkies) Schreüder  
@@ -62,6 +68,18 @@ void look( const Camera3D camera ){
 			   (double) camera.upVctr[0], (double) camera.upVctr[1], (double) camera.upVctr[2] );
 }
 
+float** matrix_new_f( size_t rows , size_t cols ){
+	// Allocate a 2D matrix and return a pointer to it , ROW MAJOR
+	// ALERT: 'malloc' without 'delete'
+	float** ptr = (float**)malloc( rows * sizeof( float* ) );
+	for( size_t i = 0 ; i < rows ; ++i ){  ptr[i] = (float*)malloc( cols * sizeof( float ) );  }
+	return ptr;
+}
 
+void matrix_del_f( float** matx , size_t rows ){
+	// Delete a 2D matrix , ROW MAJOR
+	for( size_t i = 0 ; i < rows ; i++ ){  free( matx[i] );  }
+	free( matx );
+}
 
 #endif
