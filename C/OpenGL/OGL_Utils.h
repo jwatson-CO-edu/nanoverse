@@ -25,6 +25,42 @@ typedef float /*--*/ vec3f[3];
 
 
 
+////////// GEOMETRY HELPERS ////////////////////////////////////////////////////////////////////////
+void sub( const vec3f* u, const vec3f* v, vec3f* r ){
+	// Calc `u` - `v` = `r`, R^3
+	(*r)[0] = (*u)[0] - (*v)[0];
+	(*r)[1] = (*u)[1] - (*v)[1];
+	(*r)[2] = (*u)[2] - (*v)[2];
+}
+
+float norm( const vec3f* vec ){  
+	// Euclidean length of an R^3
+	return sqrtf((*vec)[0]*(*vec)[0] + (*vec)[1]*(*vec)[1] + (*vec)[2]*(*vec)[2]);  
+} 
+
+void unit( const vec3f* vec, vec3f* unt ){
+	// Calc the unit direction of `vec` and store in `unt`, R^3
+	float mag = norm( *vec );
+	if( mag > 0.0 ){
+		(*unt)[0] = (*vec)[0] / mag;
+		(*unt)[1] = (*vec)[1] / mag;
+		(*unt)[2] = (*vec)[2] / mag;
+	}else{
+		(*unt)[0] = 0.0f;
+		(*unt)[1] = 0.0f;
+		(*unt)[2] = 0.0f;
+	}
+}
+
+void cross( const vec3f* u, const vec3f* v, vec3f* p ){
+	// Calc `u` X `v` = `p`, R^3
+	// Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
+	(*p)[0] = (*u)[1]*(*v)[2] - (*u)[2]*(*v)[1];
+	(*p)[1] = (*u)[2]*(*v)[0] - (*u)[0]*(*v)[2];
+	(*p)[2] = (*u)[0]*(*v)[1] - (*u)[1]*(*v)[0];
+}
+
+
 ////////// TRIGONOMETRY ////////////////////////////////////////////////////////////////////////////
 
 // Cosine and Sine in degrees
@@ -88,10 +124,11 @@ matx_Nx3f* matrix_new_Nx3f( size_t rows ){
 	return ptr;
 }
 
-void matrix_del( float** matx , size_t rows ){
-	// Delete a 2D matrix , ROW MAJOR
-	for( size_t i = 0 ; i < rows ; i++ ){  free( matx[i] );  }
-	free( matx );
+void load_3f_row( matx_Nx3f* matx, size_t i, float x, float y, float z ){
+	// Load an R^3 vector into row `i` of `matx`
+	(*matx)[i][0] = x;
+	(*matx)[i][1] = y;
+	(*matx)[i][2] = z;
 }
 
 matx_Nx3u* matrix_new_Nx3u( size_t rows ){
@@ -101,10 +138,11 @@ matx_Nx3u* matrix_new_Nx3u( size_t rows ){
 	return ptr;
 }
 
-void matrix_del( uint** matx , size_t rows ){
-	// Delete a 2D matrix , ROW MAJOR
-	for( size_t i = 0 ; i < rows ; i++ ){  free( matx[i] );  }
-	free( matx );
+void load_3u_row( matx_Nx3u* matx, size_t i, uint v1, uint v2, uint v3 ){
+	// Load an I^3 vector into row `i` of `matx`
+	(*matx)[i][0] = v1;
+	(*matx)[i][1] = v2;
+	(*matx)[i][2] = v3;
 }
 
 #endif

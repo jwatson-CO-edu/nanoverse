@@ -25,7 +25,7 @@ typedef struct{
 }TriNet;
 
 TriNet* alloc_net( uint Ntri_, uint Nvrt_ ){
-	// Allocate mem for a `TriNet` with `N` faces
+	// Allocate mem for a `TriNet` with `Ntri_` faces and `Nvrt_` vertices (shared vertices allowed)
 	TriNet* rtnStruct = malloc( sizeof( *rtnStruct ) ); 
 	rtnStruct->Nvrt = Nvrt_; // ------------------ Number of vertices
 	rtnStruct->Ntri = Ntri_; // ------------------ Number of triangles
@@ -39,31 +39,81 @@ TriNet* alloc_net( uint Ntri_, uint Nvrt_ ){
 }
 
 void delete_net( TriNet* net ){
-	// Free mem for a `TriNet` with `N` faces
-	matrix_del( net->vert, net->Nvrt );
-	matrix_del( net->face, net->Ntri );
-	matrix_del( net->norm, net->Ntri );
-	matrix_del( net->adjc, net->Ntri );
-	matrix_del( net->Xdir, net->Ntri );
-	matrix_del( net->Ydir, net->Ntri );
+	// Free mem for a `TriNet` 
+	free( net->vert );
+	free( net->face );
+	free( net->norm );
+	free( net->adjc );
+	free( net->Xdir );
+	free( net->Ydir );
 	free( net );
 }
 
-void load_vec3f_row( matx_Nx3f* matx, size_t i, float x, float y, float z ){
-	// Load an R^3 vector into row `i` of `matx`
-	(*matx)[i][0] = x;
-	(*matx)[i][1] = y;
-	(*matx)[i][2] = z;
-}
 
-void populate_icos_vertices( matx_Nx3f* V, float radius ){
+void populate_icos_vertices_and_faces( matx_Nx3f* V, matx_Nx3u* F, float radius ){
+	// Load geometry for an icosahedron onto matrices `V` and `F` 
+	/// Calc req'd constants ///
 	float sqrt5 = (float) sqrt( 5.0 ); // ----------------------------------- Square root of 5
 	float phi   = (float)( 1.0 + sqrt5 ) * 0.5; // ------------------------- The Golden Ratio
 	float ratio = (float)sqrt( 10.0 + ( 2.0 * sqrt5 ) ) / ( 4.0 * phi ); // ratio of edge length to radius
 	float a     = ( radius / ratio ) * 0.5;
 	float b     = ( radius / ratio ) / ( 2.0f * phi );
-	load_vec3f_row( V,0, 0,b,-a );
-	// FIXME, START HERE: LOAD VERTICES AND FACES
+	/// Load Vertices ///
+	// Assume `V` already allocated for *12* vertices
+	load_3f_row( V, 0,  0, b,-a ); 
+	load_3f_row( V, 1,  b, a, 0 );
+	load_3f_row( V, 2, -b, a, 0 );
+	load_3f_row( V, 3,  0, b, a );
+	load_3f_row( V, 4,  0,-b, a );
+	load_3f_row( V, 5, -a, 0, b );
+	load_3f_row( V, 6,  0,-b,-a );
+	load_3f_row( V, 7,  a, 0,-b );
+	load_3f_row( V, 8,  a, 0, b );
+	load_3f_row( V, 9, -a, 0,-b );
+	load_3f_row( V,10,  b,-a, 0 );
+	load_3f_row( V,11, -b,-a, 0 );
+	/// Load Faces ///
+	// Assume `F` already allocated for *20* faces
+	load_3u_row( F, 0,  2, 1, 0 );
+	load_3u_row( F, 1,  1, 2, 3 );
+	load_3u_row( F, 2,  5, 4, 3 );
+	load_3u_row( F, 3,  4, 8, 3 );
+	load_3u_row( F, 4,  7, 6, 0 );
+	load_3u_row( F, 5,  6, 9, 0 );
+	load_3u_row( F, 6, 11,10, 4 );
+	load_3u_row( F, 7, 10,11, 6 );
+	load_3u_row( F, 8,  9, 5, 2 );
+	load_3u_row( F, 9,  5, 9,11 );
+	load_3u_row( F,10,  8, 7, 1 );
+	load_3u_row( F,11,  7, 8,10 );
+	load_3u_row( F,12,  2, 5, 3 );
+	load_3u_row( F,13,  8, 1, 3 );
+	load_3u_row( F,14,  9, 2, 0 );
+	load_3u_row( F,15,  1, 7, 0 );
+	load_3u_row( F,16, 11, 9, 6 );
+	load_3u_row( F,17,  7,10, 6 );
+	load_3u_row( F,18,  5,11, 4 );
+	load_3u_row( F,18, 10, 8, 4 );
+}
+
+void get_CCW_tri_norm( const vec3f* v0, const vec3f* v1, const vec3f* v2, vec3f* n ){
+	// Find the normal vector `n` of a triangle defined by CCW vertices in R^3: {`v0`,`v1`,`v2`}
+	vec3f r1;     sub( v1, v0, &r1 );
+	vec3f r2;     sub( v2, v0, &r2 );
+	vec3f xBasis; unit( &r1, &xBasis );
+	vec3f vecB;   unit( &r2, &vecB );
+
+	vec3f nBig; // FIXME, START HERE: FINISH THE CALC
+	
+	return xBasis.cross( vecB ).normalized(); // This should already be normalized
+}
+
+TriNet* create_icos_net( float radius ){
+	// Create an regular icosahedron with unfolded net data
+	/// Allocate ///
+	TriNet* icosNet = alloc_net( 20, 12 );
+	/// Vertices and Faces ///
+	populate_icos_vertices_and_faces( icosNet->vert, icosNet->face, radius );
 }
 
 
