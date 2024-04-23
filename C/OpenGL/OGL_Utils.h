@@ -20,7 +20,8 @@
 #define _USE_MATH_DEFINES
 
 ///// Aliases /////
-typedef float vec3f[3];
+typedef unsigned int uint;
+typedef float /*--*/ vec3f[3];
 
 
 
@@ -34,6 +35,8 @@ float  Cosf( float x ){  return (float)cos( (x) * 3.1415927 / 180 );  }
 float  Sinf( float x ){  return (float)sin( (x) * 3.1415927 / 180 );  }
 
 
+
+////////// TEXT / STATUS ///////////////////////////////////////////////////////////////////////////
 
 void Print( const char* format , ... ){
 	// Convenience routine to output raster text , Use VARARGS to make this more flexible   
@@ -49,6 +52,10 @@ void Print( const char* format , ... ){
 	while( *ch )
 		glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18 , *ch++ );
 }
+
+
+
+////////// CAMERA //////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
 	// Camera state goes here
@@ -68,15 +75,33 @@ void look( const Camera3D camera ){
 			   (double) camera.upVctr[0], (double) camera.upVctr[1], (double) camera.upVctr[2] );
 }
 
-float** matrix_new_f( size_t rows , size_t cols ){
+
+
+////////// MEMORY OPERATIONS ///////////////////////////////////////////////////////////////////////
+typedef float matx_Nx3f[][3];
+typedef uint  matx_Nx3u[][3];
+
+matx_Nx3f* matrix_new_Nx3f( size_t rows ){
 	// Allocate a 2D matrix and return a pointer to it , ROW MAJOR
 	// ALERT: 'malloc' without 'delete'
-	float** ptr = (float**)malloc( rows * sizeof( float* ) );
-	for( size_t i = 0 ; i < rows ; ++i ){  ptr[i] = (float*)malloc( cols * sizeof( float ) );  }
+	matx_Nx3f* ptr = malloc( sizeof( float[rows][3] ) );
 	return ptr;
 }
 
-void matrix_del_f( float** matx , size_t rows ){
+void matrix_del( float** matx , size_t rows ){
+	// Delete a 2D matrix , ROW MAJOR
+	for( size_t i = 0 ; i < rows ; i++ ){  free( matx[i] );  }
+	free( matx );
+}
+
+matx_Nx3u* matrix_new_Nx3u( size_t rows ){
+	// Allocate a 2D matrix and return a pointer to it , ROW MAJOR
+	// ALERT: 'malloc' without 'delete'
+	matx_Nx3u* ptr = malloc( sizeof( uint[rows][3] ) );
+	return ptr;
+}
+
+void matrix_del( uint** matx , size_t rows ){
 	// Delete a 2D matrix , ROW MAJOR
 	for( size_t i = 0 ; i < rows ; i++ ){  free( matx[i] );  }
 	free( matx );
