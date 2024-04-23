@@ -1,4 +1,4 @@
-// gcc -O3 -Wall 02_sphere.c -lglut -lGLU -lGL -lm -o sphere.out
+// gcc -O3 -Wall 03_atmos-CPU.c -lglut -lGLU -lGL -lm -o atmos.out
 
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
@@ -60,40 +60,40 @@ void populate_icos_vertices_and_faces( matx_Nx3f* V, matx_Nx3u* F, float radius 
 	float b     = ( radius / ratio ) / ( 2.0f * phi );
 	/// Load Vertices ///
 	// Assume `V` already allocated for *12* vertices
-	load_3f_row( V, 0,  0, b,-a ); 
-	load_3f_row( V, 1,  b, a, 0 );
-	load_3f_row( V, 2, -b, a, 0 );
-	load_3f_row( V, 3,  0, b, a );
-	load_3f_row( V, 4,  0,-b, a );
-	load_3f_row( V, 5, -a, 0, b );
-	load_3f_row( V, 6,  0,-b,-a );
-	load_3f_row( V, 7,  a, 0,-b );
-	load_3f_row( V, 8,  a, 0, b );
-	load_3f_row( V, 9, -a, 0,-b );
-	load_3f_row( V,10,  b,-a, 0 );
-	load_3f_row( V,11, -b,-a, 0 );
+	load_3f_to_row( V, 0,  0, b,-a ); 
+	load_3f_to_row( V, 1,  b, a, 0 );
+	load_3f_to_row( V, 2, -b, a, 0 );
+	load_3f_to_row( V, 3,  0, b, a );
+	load_3f_to_row( V, 4,  0,-b, a );
+	load_3f_to_row( V, 5, -a, 0, b );
+	load_3f_to_row( V, 6,  0,-b,-a );
+	load_3f_to_row( V, 7,  a, 0,-b );
+	load_3f_to_row( V, 8,  a, 0, b );
+	load_3f_to_row( V, 9, -a, 0,-b );
+	load_3f_to_row( V,10,  b,-a, 0 );
+	load_3f_to_row( V,11, -b,-a, 0 );
 	/// Load Faces ///
 	// Assume `F` already allocated for *20* faces
-	load_3u_row( F, 0,  2, 1, 0 );
-	load_3u_row( F, 1,  1, 2, 3 );
-	load_3u_row( F, 2,  5, 4, 3 );
-	load_3u_row( F, 3,  4, 8, 3 );
-	load_3u_row( F, 4,  7, 6, 0 );
-	load_3u_row( F, 5,  6, 9, 0 );
-	load_3u_row( F, 6, 11,10, 4 );
-	load_3u_row( F, 7, 10,11, 6 );
-	load_3u_row( F, 8,  9, 5, 2 );
-	load_3u_row( F, 9,  5, 9,11 );
-	load_3u_row( F,10,  8, 7, 1 );
-	load_3u_row( F,11,  7, 8,10 );
-	load_3u_row( F,12,  2, 5, 3 );
-	load_3u_row( F,13,  8, 1, 3 );
-	load_3u_row( F,14,  9, 2, 0 );
-	load_3u_row( F,15,  1, 7, 0 );
-	load_3u_row( F,16, 11, 9, 6 );
-	load_3u_row( F,17,  7,10, 6 );
-	load_3u_row( F,18,  5,11, 4 );
-	load_3u_row( F,18, 10, 8, 4 );
+	load_3u_to_row( F, 0,  2, 1, 0 );
+	load_3u_to_row( F, 1,  1, 2, 3 );
+	load_3u_to_row( F, 2,  5, 4, 3 );
+	load_3u_to_row( F, 3,  4, 8, 3 );
+	load_3u_to_row( F, 4,  7, 6, 0 );
+	load_3u_to_row( F, 5,  6, 9, 0 );
+	load_3u_to_row( F, 6, 11,10, 4 );
+	load_3u_to_row( F, 7, 10,11, 6 );
+	load_3u_to_row( F, 8,  9, 5, 2 );
+	load_3u_to_row( F, 9,  5, 9,11 );
+	load_3u_to_row( F,10,  8, 7, 1 );
+	load_3u_to_row( F,11,  7, 8,10 );
+	load_3u_to_row( F,12,  2, 5, 3 );
+	load_3u_to_row( F,13,  8, 1, 3 );
+	load_3u_to_row( F,14,  9, 2, 0 );
+	load_3u_to_row( F,15,  1, 7, 0 );
+	load_3u_to_row( F,16, 11, 9, 6 );
+	load_3u_to_row( F,17,  7,10, 6 );
+	load_3u_to_row( F,18,  5,11, 4 );
+	load_3u_to_row( F,19, 10, 8, 4 );
 }
 
 void get_CCW_tri_norm( const vec3f* v0, const vec3f* v1, const vec3f* v2, vec3f* n ){
@@ -102,10 +102,23 @@ void get_CCW_tri_norm( const vec3f* v0, const vec3f* v1, const vec3f* v2, vec3f*
 	vec3f r2;     sub( v2, v0, &r2 );
 	vec3f xBasis; unit( &r1, &xBasis );
 	vec3f vecB;   unit( &r2, &vecB );
+	vec3f nBig;   cross( &xBasis, &vecB, &nBig );
+	/*---------*/ unit( &nBig, n ); // This should already be normalized
+}
 
-	vec3f nBig; // FIXME, START HERE: FINISH THE CALC
-	
-	return xBasis.cross( vecB ).normalized(); // This should already be normalized
+void N_from_VF( uint Ntri_, const matx_Nx3f* V, const matx_Nx3u* F, matx_Nx3f* N ){
+	// Calc all face normals (One per face)
+	vec3f v0;
+	vec3f v1;
+	vec3f v2;
+	vec3f n_i;
+	for( uint i = 0 ; i < Ntri_ ; i++ ){
+		load_row_to_vec3f( V, (*F)[i][0], &v0 );
+		load_row_to_vec3f( V, (*F)[i][1], &v1 );
+		load_row_to_vec3f( V, (*F)[i][2], &v2 );
+		get_CCW_tri_norm( &v0, &v1, &v2, &n_i );
+		load_vec3f_to_row( N, i, &n_i );
+	}
 }
 
 TriNet* create_icos_net( float radius ){
@@ -114,6 +127,24 @@ TriNet* create_icos_net( float radius ){
 	TriNet* icosNet = alloc_net( 20, 12 );
 	/// Vertices and Faces ///
 	populate_icos_vertices_and_faces( icosNet->vert, icosNet->face, radius );
+	/// Normals ///
+	N_from_VF( icosNet->Ntri, icosNet->vert, icosNet->face, icosNet->norm );
+
+
+
+	/// Return ///
+	return icosNet;
+}
+
+void draw_net_wireframe( TriNet* net, vec3f lineColor ){
+	glClr3f( lineColor );
+	glBegin( GL_LINES );
+	for( uint i = 0; i < net->Ntri; ++i ){
+		load_row_to_glVtx3f( net->vert, (*net->face)[i][0] );  load_row_to_glVtx3f( net->vert, (*net->face)[i][1] );
+		load_row_to_glVtx3f( net->vert, (*net->face)[i][1] );  load_row_to_glVtx3f( net->vert, (*net->face)[i][2] );
+		load_row_to_glVtx3f( net->vert, (*net->face)[i][2] );  load_row_to_glVtx3f( net->vert, (*net->face)[i][1] );
+	}
+	glEnd();
 }
 
 
@@ -144,6 +175,7 @@ static void Project(){
 
 ////////// GEOMETRY & CAMERA ///////////////////////////////////////////////////////////////////////
 Camera3D cam = { {5.0f, 2.0f, 2.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f} };
+TriNet*  icos;
 
 
 
@@ -155,8 +187,8 @@ void display(){
 	// Display the scene
 	// Adapted from code provided by Willem Schreuder
 	
-    vec3f sphClr = {0.0f,1.0f,0.0f};
-    vec3f center = {0.0f,0.0f,0.0f};
+    vec3f icsClr = {0.0f,1.0f,0.0f};
+    // vec3f center = {0.0f,0.0f,0.0f};
 
 	//  Clear the image
 	glClearDepth( 1.0f );
@@ -167,8 +199,8 @@ void display(){
 	// Set view 
 	look( cam );
 
-	
-	draw_sphere( center, 3.0f, sphClr );
+	// draw_sphere( center, 3.0f, sphClr );
+	draw_net_wireframe( icos, icsClr );
 
 	// Display status
 	glColor3f( 249/255.0 , 255/255.0 , 99/255.0 ); // Text Yellow
@@ -197,8 +229,7 @@ void reshape( int width , int height ){
 
 int main( int argc , char* argv[] ){
 	
-	// // Calc the initial system before the user changes it
-	// lorenz_system_trace( &FUNCTRACE , SIGMA , RHO , BETA , 50 , 0.001 , &N_FUNC );
+	icos = create_icos_net( 2.0 );
 	
 	//  Initialize GLUT and process user parameters
 	glutInit( &argc , argv );
@@ -208,7 +239,7 @@ int main( int argc , char* argv[] ){
 	glutInitWindowSize( 1000 , 750 );
 	
 	//  Create the window
-	glutCreateWindow( "LOOK AT THIS GODDAMN SPHERE" );
+	glutCreateWindow( "LOOK AT THIS GODDAMN ICOSAHEDRON" );
 
     // NOTE: Set modes AFTER the window / graphics context has been created!
     //  Request double buffered, true color window 
@@ -233,7 +264,7 @@ int main( int argc , char* argv[] ){
 	glutMainLoop();
 	
 	// // Free memory
-	// matrix_del_f( FUNCTRACE , N_FUNC );
+	delete_net( icos );
 	
 	//  Return code
 	return 0;

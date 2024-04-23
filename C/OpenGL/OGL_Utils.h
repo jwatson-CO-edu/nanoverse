@@ -24,6 +24,10 @@ typedef unsigned int uint;
 typedef float /*--*/ vec3f[3];
 
 
+void glVtx3f( const vec3f v ){  glVertex3f( v[0] , v[1] , v[2] );  } // Set vertex with a vector
+void glNrm3f( const vec3f n ){  glNormal3f( n[0] , n[1] , n[2] );  } // Set normal with a vector
+void glClr3f( const vec3f c ){  glColor3f(  c[0] , c[1] , c[2] );  } // Set color with a vector
+
 
 ////////// GEOMETRY HELPERS ////////////////////////////////////////////////////////////////////////
 void sub( const vec3f* u, const vec3f* v, vec3f* r ){
@@ -40,7 +44,7 @@ float norm( const vec3f* vec ){
 
 void unit( const vec3f* vec, vec3f* unt ){
 	// Calc the unit direction of `vec` and store in `unt`, R^3
-	float mag = norm( *vec );
+	float mag = norm( vec );
 	if( mag > 0.0 ){
 		(*unt)[0] = (*vec)[0] / mag;
 		(*unt)[1] = (*vec)[1] / mag;
@@ -124,12 +128,30 @@ matx_Nx3f* matrix_new_Nx3f( size_t rows ){
 	return ptr;
 }
 
-void load_3f_row( matx_Nx3f* matx, size_t i, float x, float y, float z ){
+void load_3f_to_row( matx_Nx3f* matx, size_t i, float x, float y, float z ){
 	// Load an R^3 vector into row `i` of `matx`
 	(*matx)[i][0] = x;
 	(*matx)[i][1] = y;
 	(*matx)[i][2] = z;
 }
+
+void load_vec3f_to_row( matx_Nx3f* matx, size_t i, const vec3f* vec ){
+	// Load an R^3 vector into row `i` of `matx`
+	(*matx)[i][0] = (*vec)[0];
+	(*matx)[i][1] = (*vec)[1];
+	(*matx)[i][2] = (*vec)[2];
+}
+
+void load_row_to_vec3f( const matx_Nx3f* matx, size_t i, vec3f* vec ){
+	(*vec)[0] = (*matx)[i][0];
+	(*vec)[1] = (*matx)[i][1];
+	(*vec)[2] = (*matx)[i][2];
+}
+
+void load_row_to_glVtx3f( const matx_Nx3f* matx, size_t i ){  
+	// Set vertex with a matrix row
+	glVertex3f( (*matx)[i][0], (*matx)[i][1], (*matx)[i][2] );  
+} 
 
 matx_Nx3u* matrix_new_Nx3u( size_t rows ){
 	// Allocate a 2D matrix and return a pointer to it , ROW MAJOR
@@ -138,7 +160,7 @@ matx_Nx3u* matrix_new_Nx3u( size_t rows ){
 	return ptr;
 }
 
-void load_3u_row( matx_Nx3u* matx, size_t i, uint v1, uint v2, uint v3 ){
+void load_3u_to_row( matx_Nx3u* matx, size_t i, uint v1, uint v2, uint v3 ){
 	// Load an I^3 vector into row `i` of `matx`
 	(*matx)[i][0] = v1;
 	(*matx)[i][1] = v2;

@@ -5,10 +5,10 @@
 * `[Y]` Geo Shader Tut, 2024-04-22: Geo shader does not really store non-geo state, Not executed in particular order
     - `[N]` Choose a tut to implement, 2024-04-22: May not be the correct tool for the job
 * `[>]` Atmos particles on the CPU
-    - `[>]` Icos
-        * `[ ]` Draw as wireframe
-    - `[ ]` Icos net
-        * `[ ]` Port neighbor-finding code from MS
+    - `[Y]` Icos, 2024-04-22: Drawn
+        * `[Y]` Draw as wireframe, 2024-04-22: Drawn
+    - `[>]` Icos net
+        * `[>]` Port neighbor-finding code from MS
     - `[ ]` Per-face coordinates (code from MS)
     - `[ ]` Per-face particles
         * `[ ]` Particles + Wireframe
