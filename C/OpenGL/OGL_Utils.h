@@ -20,8 +20,10 @@
 #define _USE_MATH_DEFINES
 
 ///// Aliases /////
-typedef unsigned int uint;
-typedef float /*--*/ vec3f[3];
+typedef unsigned int  uint;
+typedef unsigned char ubyte;
+typedef float /*---*/ vec3f[3];
+typedef uint /*----*/ vec3u[3];
 
 
 void glVtx3f( const vec3f v ){  glVertex3f( v[0] , v[1] , v[2] );  } // Set vertex with a vector
@@ -40,6 +42,13 @@ void sub( const vec3f* u, const vec3f* v, vec3f* r ){
 float norm( const vec3f* vec ){  
 	// Euclidean length of an R^3
 	return sqrtf((*vec)[0]*(*vec)[0] + (*vec)[1]*(*vec)[1] + (*vec)[2]*(*vec)[2]);  
+} 
+
+float diff( const vec3f* u, const vec3f* v ){  
+	// Euclidean length of `u`-`v`
+	vec3f r;  
+	sub( u, v, &r );
+	return norm( &r );
 } 
 
 void unit( const vec3f* vec, vec3f* unt ){
@@ -165,6 +174,13 @@ void load_3u_to_row( matx_Nx3u* matx, size_t i, uint v1, uint v2, uint v3 ){
 	(*matx)[i][0] = v1;
 	(*matx)[i][1] = v2;
 	(*matx)[i][2] = v3;
+}
+
+void load_row_to_vec3u( const matx_Nx3u* matx, size_t i, vec3u* vec ){
+	// Load row `i` of `matx` into an I^3 vector
+	(*vec)[0] = (*matx)[i][0];
+	(*vec)[0] = (*matx)[i][1];
+	(*vec)[0] = (*matx)[i][2];
 }
 
 #endif

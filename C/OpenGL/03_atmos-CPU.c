@@ -49,6 +49,50 @@ void delete_net( TriNet* net ){
 	free( net );
 }
 
+void N_from_VF( uint Ntri_, const matx_Nx3f* V, const matx_Nx3u* F, matx_Nx3f* N ){
+	// Calc all face normals (One per face)
+	vec3f v0;
+	vec3f v1;
+	vec3f v2;
+	vec3f n_i;
+	for( uint i = 0 ; i < Ntri_ ; ++i ){
+		load_row_to_vec3f( V, (*F)[i][0], &v0 );
+		load_row_to_vec3f( V, (*F)[i][1], &v1 );
+		load_row_to_vec3f( V, (*F)[i][2], &v2 );
+		get_CCW_tri_norm( &v0, &v1, &v2, &n_i );
+		load_vec3f_to_row( N, i, &n_i );
+	}
+}
+
+void adjacency_from_VF( uint Ntri_, float eps, const matx_Nx3f* V, const matx_Nx3u* F, matx_Nx3u* A ){
+	// Find face adjacencies, O(n^2) in number of faces
+	vec3u face_i;
+	vec3u face_j;
+	vec3f vert_a1;
+	vec3f vert_a2;
+	vec3f vert_b1;
+	vec3f vert_b2;
+	for( uint i = 0 ; i < Ntri_ ; ++i ){
+		load_row_to_vec3u( F, i, &face_i );
+		for( uint j = 0 ; j < Ntri_ ; ++j ){
+			load_row_to_vec3u( F, j, &face_j );
+			for( ubyte a = 0; a < 3; ++a ){
+				load_row_to_vec3f( V, face_i[a]      , &vert_a1 );
+				load_row_to_vec3f( V, face_i[(a+1)%3], &vert_a2 );
+				for( ubyte b = 0; b < 3; ++b ){
+					load_row_to_vec3f( V, face_j[b]      , &vert_b1 );
+					load_row_to_vec3f( V, face_j[(b+1)%3], &vert_b2 );
+					(*A)[i][a] = i; // Self-reference means NO neighbor here!
+					(*A)[j][b] = j;
+					if( (i != j) && (diff( vert_a1, vert_b2 ) <= eps) && (diff( vert_a2, vert_b1 ) <= eps) ){
+						(*A)[i][a] = j;
+						(*A)[j][b] = i;
+					}
+				}
+			}
+		}
+	}
+}
 
 void populate_icos_vertices_and_faces( matx_Nx3f* V, matx_Nx3u* F, float radius ){
 	// Load geometry for an icosahedron onto matrices `V` and `F` 
@@ -106,20 +150,7 @@ void get_CCW_tri_norm( const vec3f* v0, const vec3f* v1, const vec3f* v2, vec3f*
 	/*---------*/ unit( &nBig, n ); // This should already be normalized
 }
 
-void N_from_VF( uint Ntri_, const matx_Nx3f* V, const matx_Nx3u* F, matx_Nx3f* N ){
-	// Calc all face normals (One per face)
-	vec3f v0;
-	vec3f v1;
-	vec3f v2;
-	vec3f n_i;
-	for( uint i = 0 ; i < Ntri_ ; i++ ){
-		load_row_to_vec3f( V, (*F)[i][0], &v0 );
-		load_row_to_vec3f( V, (*F)[i][1], &v1 );
-		load_row_to_vec3f( V, (*F)[i][2], &v2 );
-		get_CCW_tri_norm( &v0, &v1, &v2, &n_i );
-		load_vec3f_to_row( N, i, &n_i );
-	}
-}
+
 
 TriNet* create_icos_net( float radius ){
 	// Create an regular icosahedron with unfolded net data
@@ -137,6 +168,7 @@ TriNet* create_icos_net( float radius ){
 }
 
 void draw_net_wireframe( TriNet* net, vec3f lineColor ){
+	// Draw the net as a wireframe
 	glClr3f( lineColor );
 	glBegin( GL_LINES );
 	for( uint i = 0; i < net->Ntri; ++i ){
@@ -215,7 +247,6 @@ void display(){
 
 
 ////////// WINDOW STATE ////////////////////////////////////////////////////////////////////////////
-double dim    =  40; // Dimension of orthogonal box
 
 void reshape( int width , int height ){
 	// GLUT calls this routine when the window is resized
