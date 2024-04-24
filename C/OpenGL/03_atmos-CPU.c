@@ -385,8 +385,6 @@ TriNet*  icos;
 
 
 ////////// RENDERING LOOP //////////////////////////////////////////////////////////////////////////
-int    th     =  60; // Azimuth of view angle
-int    ph     = 220; // Elevation of view angle
 
 void display(){
 	// Display the scene
@@ -446,7 +444,7 @@ int main( int argc , char* argv[] ){
 	glutInitWindowSize( 1000 , 750 );
 	
 	//  Create the window
-	glutCreateWindow( "LOOK AT THIS GODDAMN NETWORK" );
+	glutCreateWindow( "LOOK AT THIS GODDAMN PLANET" );
 
     // NOTE: Set modes AFTER the window / graphics context has been created!
     //  Request double buffered, true color window 
