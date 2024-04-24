@@ -12,18 +12,21 @@ const float _SCALE = 10.0; //- Scale Dimension
 
 ////////// GEOMETRY STRUCTS ////////////////////////////////////////////////////////////////////////
 
+///// Polyhedral Net //////////////////////////////////////////////////////
+
 typedef struct{
 	// Holds geo info for a net of triangles
-	uint    Nvrt; // Number of vertices
-	uint    Ntri; // Number of triangles
+	uint /*-*/ Nvrt; // Number of vertices
+	uint /*-*/ Ntri; // Number of triangles
 	matx_Nx3f* vert; // Vertices: _________ Ntri X {x,y,z}
 	matx_Nx3u* face; // Faces: ____________ Ntri X {v1,v2,v3}, CCW order
 	matx_Nx3f* norm; // Face Normals: _____ Ntri X {x,y,z}, Normal is the "Zdir" of local coord system
 	matx_Nx3u* adjc; // Adjacent Triangles: Ntri X {f1,f2,f3}, CCW order
 	matx_Nx3f* orgn; // Local Origin: _____ Ntri X {x,y,z}
-	matx_Nx3f* Xdir; // Local Face X: _____ Ntri X {x,y,z}
-	matx_Nx3f* Ydir; // Local Face Y: _____ Ntri X {x,y,z}
+	matx_Nx3f* xDir; // Local Face X: _____ Ntri X {x,y,z}
+	matx_Nx3f* yDir; // Local Face Y: _____ Ntri X {x,y,z}
 }TriNet;
+
 
 TriNet* alloc_net( uint Ntri_, uint Nvrt_ ){
 	// Allocate mem for a `TriNet` with `Ntri_` faces and `Nvrt_` vertices (shared vertices allowed)
@@ -34,10 +37,12 @@ TriNet* alloc_net( uint Ntri_, uint Nvrt_ ){
 	rtnStruct->face = matrix_new_Nx3u( Ntri_ ); // Faces: ____________ Ntri X {v1,v2,v3}, CCW order
 	rtnStruct->norm = matrix_new_Nx3f( Ntri_ ); // Face Normals: _____ Ntri X {x,y,z}
 	rtnStruct->adjc = matrix_new_Nx3u( Ntri_ ); // Adjacent Triangles: Ntri X {f1,f2,f3}, CCW order
-	rtnStruct->Xdir = matrix_new_Nx3f( Ntri_ ); // Local Face X: _____ Ntri X {x,y,z}
-	rtnStruct->Ydir = matrix_new_Nx3f( Ntri_ ); // Local Face Y: _____ Ntri X {x,y,z}
+	rtnStruct->orgn = matrix_new_Nx3f( Ntri_ ); // Local Face Origin:  Ntri X {x,y,z}
+	rtnStruct->xDir = matrix_new_Nx3f( Ntri_ ); // Local Face X: _____ Ntri X {x,y,z}
+	rtnStruct->yDir = matrix_new_Nx3f( Ntri_ ); // Local Face Y: _____ Ntri X {x,y,z}
 	return rtnStruct;
 }
+
 
 void delete_net( TriNet* net ){
 	// Free mem for a `TriNet` 
@@ -45,8 +50,9 @@ void delete_net( TriNet* net ){
 	free( net->face );
 	free( net->norm );
 	free( net->adjc );
-	free( net->Xdir );
-	free( net->Ydir );
+	free( net->orgn );
+	free( net->xDir );
+	free( net->yDir );
 	free( net );
 }
 
@@ -76,6 +82,7 @@ void N_from_VF( uint Ntri_, const matx_Nx3f* V, const matx_Nx3u* F, matx_Nx3f* N
 		load_vec3f_to_row( N, i, &n_i );
 	}
 }
+
 
 void adjacency_from_VF( uint Ntri_, float eps, const matx_Nx3f* V, const matx_Nx3u* F, matx_Nx3u* A ){
 	// Find face adjacencies and store connectivity in `A`, O(n^2) in number of faces
@@ -123,13 +130,164 @@ void adjacency_from_VF( uint Ntri_, float eps, const matx_Nx3f* V, const matx_Nx
 	}
 }
 
-void populate_coord_sys_per_face( const matx_Nx3f* V, const matx_Nx3u* F, const matx_Nx3f* N, 
+
+void populate_coord_sys_per_face( uint Ntri_, const matx_Nx3f* V, const matx_Nx3u* F, const matx_Nx3f* N, 
 								  matx_Nx3f* orgMtx, matx_Nx3f* xMtx, matx_Nx3f* yMtx ){
 	// Create a local reference frame for every face of the polyhedron
-
-	// FIXME, START HERE: THIS IS JUST FETCHES AND CROSS PRODUCTS AND NORMALIZATION
-	
+	vec3f v0;
+	vec3f v1;
+	vec3f n;
+	vec3f xSide;
+	vec3f xBasis;
+	vec3f yBasis;
+	for( uint i = 0 ; i < Ntri_ ; ++i ){
+		// Compute Frame //
+		load_row_to_vec3f( V, (*F)[i][0], &v0 );
+		load_row_to_vec3f( V, (*F)[i][1], &v1 );
+		load_row_to_vec3f( N, i, &n );
+		sub( &v1, &v0, &xSide );
+		unit( &xSide, &xBasis );
+		cross( &n, &xBasis, &yBasis );
+		unit( &yBasis, &yBasis );
+		// Store Frame //
+		load_vec3f_to_row( orgMtx, i, &v0     );
+		// load_vec3f_to_row( xMtx  , i, &xBasis );
+		// load_vec3f_to_row( yMtx  , i, &yBasis );
+	}
 }
+
+
+void populate_net_connectivity_and_facet_frames( TriNet* net, float eps ){
+	// Get facet neighborhoods and local reference frames
+	// Connectivity //
+	adjacency_from_VF( net->Ntri, eps, net->vert, net->face, net->adjc );
+	// Frames //
+	populate_coord_sys_per_face( net->Ntri, net->vert, net->face, net->norm, net->orgn, net->xDir, net->yDir );
+}
+
+
+void draw_net_wireframe( TriNet* net, vec3f lineColor ){
+	// Draw the net as a wireframe, NOTE: Only `vert` and `face` data req'd
+	glClr3f( lineColor );
+	glBegin( GL_LINES );
+	for( uint i = 0; i < net->Ntri; ++i ){
+		load_row_to_glVtx3f( net->vert, (*net->face)[i][0] );  load_row_to_glVtx3f( net->vert, (*net->face)[i][1] );
+		load_row_to_glVtx3f( net->vert, (*net->face)[i][1] );  load_row_to_glVtx3f( net->vert, (*net->face)[i][2] );
+		load_row_to_glVtx3f( net->vert, (*net->face)[i][2] );  load_row_to_glVtx3f( net->vert, (*net->face)[i][1] );
+	}
+	glEnd();
+}
+
+void draw_net_connectivity( TriNet* net, vec3f lineColor ){
+	// Draw the net as a wireframe, NOTE: Only `vert` and `face` data req'd
+	glClr3f( lineColor );
+	glBegin( GL_LINES );
+	vec3f v0;
+	vec3f v1;
+	vec3f v2;
+	vec3f triCntr;
+	vec3f segCntr;
+	vec3u neighbors = {0,0,0};
+	// 1. For each face
+	for( uint i = 0; i < net->Ntri; ++i ){
+		// 2. Calc center
+		load_row_to_vec3f( net->vert, (*net->face)[i][0], &v0 );
+		load_row_to_vec3f( net->vert, (*net->face)[i][1], &v1 );
+		load_row_to_vec3f( net->vert, (*net->face)[i][2], &v2 );
+		tri_center( &v0, &v1, &v2, &triCntr );
+		// 3. Load neighborhood
+		load_row_to_vec3u( net->adjc, i, &neighbors );
+		// 4. Test each possible connection. If it exists, then draw a segment from center of face to center of shared edge
+		if( neighbors[0] != i ){
+			seg_center( &v0, &v1, &segCntr );
+			glVtx3f( triCntr );  glVtx3f( segCntr );  
+		}
+		if( neighbors[1] != i ){
+			seg_center( &v1, &v2, &segCntr );
+			glVtx3f( triCntr );  glVtx3f( segCntr );  
+		}
+		if( neighbors[2] != i ){
+			seg_center( &v2, &v0, &segCntr );
+			glVtx3f( triCntr );  glVtx3f( segCntr );  
+		}
+	}
+	glEnd();
+}
+
+
+
+///// Triangular Cell /////////////////////////////////////////////////////
+
+typedef struct{
+	// Holds particle info for one triangular cell
+	uint /*-*/ prtclMax; // Max number of particles
+	uint /*-*/ N_prtcls; // Current number of particles
+	uint /*-*/ insertDx; // Index to insert newest particle
+	vec2f /**/ accelrtn; // Per-frame change in velocity
+	vec2f /**/ v0; // ----- Vertex 0 in local frame
+	vec2f /**/ v1; // ----- Vertex 1 in local frame
+	vec2f /**/ v3; // ----- Vertex 2 in local frame
+	matx_Nx2f* position; // Particle Position: prtclMax X {x,y}
+	matx_Nx2f* velocity; // Particle Velocity: prtclMax X {x,y}
+}TriCell;
+
+
+TriCell* alloc_cell( uint prtclMax_ ){
+	// Allocate mem for a `TriNet` with `Ntri_` faces and `Nvrt_` vertices (shared vertices allowed)
+	TriCell* rtnStruct  = malloc( sizeof( *rtnStruct ) ); 
+	rtnStruct->prtclMax = prtclMax_; // ------------------ Max number of particles
+	rtnStruct->N_prtcls = 0; // -------------------------- Current number of particles
+	rtnStruct->insertDx = 0; // -------------------------- Index to insert newest particle
+	rtnStruct->position = matrix_new_Nx2f( prtclMax_ ); // Particle Position: prtclMax X {x,y}
+	rtnStruct->velocity = matrix_new_Nx2f( prtclMax_ ); // Particle Velocity: prtclMax X {x,y}
+	return rtnStruct;
+}
+
+void delete_cell( TriCell* cell ){
+	// Free mem for a `TriCell` 
+	free( cell->position );
+	free( cell->velocity );
+	free( cell );
+}
+
+
+
+///// Particle Atmosphere /////////////////////////////////////////////////
+
+typedef struct{
+	// Holds net and cell data for a toy atmosphere with cells containing particles that move in a planar fashion
+	uint /**/ Ncells; // Number of cells in this atmosphere
+	TriNet*   net; // -- Geometric information for atmosphere
+	TriCell** cells; //- Array of pointers to cells containing particles
+}Atmos;
+
+
+Atmos* alloc_atmos( float radius, uint Nvrt_, uint Ncells_, uint prtclMax_ ){
+	// Allocate memory for a toy atmosphere
+	Atmos* rtnStruct = malloc( sizeof( *rtnStruct ) ); 
+	rtnStruct->Ncells = Ncells_;
+	rtnStruct->cells  = malloc( sizeof( TriCell* ) * Ncells_ ); 
+	rtnStruct->net    = alloc_net( Ncells_, Nvrt_ );
+	for( ubyte i = 0; i < Ncells_; ++i ){
+		rtnStruct->cells[i] = alloc_cell( prtclMax_ );
+	}
+	return rtnStruct;
+}
+
+
+void delete_atmos( Atmos* atmos ){
+	// Free memory for a toy atmosphere
+	for( ubyte i = 0; i < atmos->Ncells; ++i ){
+		delete_cell( atmos->cells[i] );
+	}
+	free( atmos->cells );
+	delete_net( atmos->net );
+	free( atmos );
+}
+
+
+
+///// Icosahedron /////////////////////////////////////////////////////////
 
 void populate_icos_vertices_and_faces( matx_Nx3f* V, matx_Nx3u* F, float radius ){
 	// Load geometry for an icosahedron onto matrices `V` and `F` 
@@ -191,53 +349,8 @@ TriNet* create_icos_mesh_only( float radius ){
 }
 
 
-void draw_net_wireframe( TriNet* net, vec3f lineColor ){
-	// Draw the net as a wireframe, NOTE: Only `vert` and `face` data req'd
-	glClr3f( lineColor );
-	glBegin( GL_LINES );
-	for( uint i = 0; i < net->Ntri; ++i ){
-		load_row_to_glVtx3f( net->vert, (*net->face)[i][0] );  load_row_to_glVtx3f( net->vert, (*net->face)[i][1] );
-		load_row_to_glVtx3f( net->vert, (*net->face)[i][1] );  load_row_to_glVtx3f( net->vert, (*net->face)[i][2] );
-		load_row_to_glVtx3f( net->vert, (*net->face)[i][2] );  load_row_to_glVtx3f( net->vert, (*net->face)[i][1] );
-	}
-	glEnd();
-}
 
-void draw_net_connectivity( TriNet* net, vec3f lineColor ){
-	// Draw the net as a wireframe, NOTE: Only `vert` and `face` data req'd
-	glClr3f( lineColor );
-	glBegin( GL_LINES );
-	vec3f v0;
-	vec3f v1;
-	vec3f v2;
-	vec3f triCntr;
-	vec3f segCntr;
-	vec3u neighbors = {0,0,0};
-	// 1. For each face
-	for( uint i = 0; i < net->Ntri; ++i ){
-		// 2. Calc center
-		load_row_to_vec3f( net->vert, (*net->face)[i][0], &v0 );
-		load_row_to_vec3f( net->vert, (*net->face)[i][1], &v1 );
-		load_row_to_vec3f( net->vert, (*net->face)[i][2], &v2 );
-		tri_center( &v0, &v1, &v2, &triCntr );
-		// 3. Load neighborhood
-		load_row_to_vec3u( net->adjc, i, &neighbors );
-		// 4. Test each possible connection. If it exists, then draw a segment from center of face to center of shared edge
-		if( neighbors[0] != i ){
-			seg_center( &v0, &v1, &segCntr );
-			glVtx3f( triCntr );  glVtx3f( segCntr );  
-		}
-		if( neighbors[1] != i ){
-			seg_center( &v1, &v2, &segCntr );
-			glVtx3f( triCntr );  glVtx3f( segCntr );  
-		}
-		if( neighbors[2] != i ){
-			seg_center( &v2, &v0, &segCntr );
-			glVtx3f( triCntr );  glVtx3f( segCntr );  
-		}
-	}
-	glEnd();
-}
+
 
 
 ////////// VIEW PROJECTION /////////////////////////////////////////////////////////////////////////
@@ -280,7 +393,8 @@ void display(){
 	// Adapted from code provided by Willem Schreuder
 	
     vec3f icsClr = {0.0f,1.0f,0.0f};
-    // vec3f center = {0.0f,0.0f,0.0f};
+    vec3f center = {0.0f,0.0f,0.0f};
+    vec3f sphClr = {0.0, 14.0f/255.0f, 214.0f/255.0f};
 
 	//  Clear the image
 	glClearDepth( 1.0f );
@@ -291,9 +405,9 @@ void display(){
 	// Set view 
 	look( cam );
 
-	// draw_sphere( center, 3.0f, sphClr );
-	// draw_net_wireframe( icos, icsClr );
-	draw_net_connectivity( icos, icsClr );
+	draw_sphere( center, 1.5f, sphClr );
+	draw_net_wireframe( icos, icsClr );
+	// draw_net_connectivity( icos, icsClr );
 
 	// Display status
 	glColor3f( 249/255.0 , 255/255.0 , 99/255.0 ); // Text Yellow
@@ -322,7 +436,8 @@ void reshape( int width , int height ){
 int main( int argc , char* argv[] ){
 	
 	icos = create_icos_mesh_only( 2.0 );
-	adjacency_from_VF( icos->Ntri, 0.01, icos->vert, icos->face, icos->adjc );
+	// adjacency_from_VF( icos->Ntri, 0.01, icos->vert, icos->face, icos->adjc );
+	populate_net_connectivity_and_facet_frames( icos, 0.01 );
 	
 	//  Initialize GLUT and process user parameters
 	glutInit( &argc , argv );

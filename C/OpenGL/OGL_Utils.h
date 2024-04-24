@@ -20,15 +20,26 @@
 #define _USE_MATH_DEFINES
 
 ///// Aliases /////
+/// Basic ///
 typedef unsigned int  uint;
 typedef unsigned char ubyte;
-typedef float /*---*/ vec3f[3];
-typedef uint /*----*/ vec3u[3];
+/// Float Vectors and Matrices ///
+typedef float vec2f[2];
+typedef float vec3f[3];
+typedef float matx_Nx2f[][2];
+typedef float matx_Nx3f[][3];
+/// Unsigned Vectors and Matrices ///
+typedef uint vec3u[3];
+typedef uint matx_Nx3u[][3];
 
+
+
+////////// OPENGL HELPERS //////////////////////////////////////////////////////////////////////////
 
 void glVtx3f( const vec3f v ){  glVertex3f( v[0] , v[1] , v[2] );  } // Set vertex with a vector
 void glNrm3f( const vec3f n ){  glNormal3f( n[0] , n[1] , n[2] );  } // Set normal with a vector
 void glClr3f( const vec3f c ){  glColor3f(  c[0] , c[1] , c[2] );  } // Set color with a vector
+
 
 
 ////////// GEOMETRY HELPERS ////////////////////////////////////////////////////////////////////////
@@ -143,15 +154,22 @@ void look( const Camera3D camera ){
 
 
 ////////// MEMORY OPERATIONS ///////////////////////////////////////////////////////////////////////
-typedef float matx_Nx3f[][3];
-typedef uint  matx_Nx3u[][3];
 
 matx_Nx3f* matrix_new_Nx3f( size_t rows ){
-	// Allocate a 2D matrix and return a pointer to it , ROW MAJOR
+	// Allocate a 2D matrix and return a pointer to it, ROW MAJOR
 	// ALERT: 'malloc' without 'delete'
 	matx_Nx3f* ptr = malloc( sizeof( float[rows][3] ) );
 	return ptr;
 }
+
+
+matx_Nx2f* matrix_new_Nx2f( size_t rows ){
+	// Allocate a 2D matrix and return a pointer to it, ROW MAJOR
+	// ALERT: 'malloc' without 'delete'
+	matx_Nx2f* ptr = malloc( sizeof( float[rows][2] ) );
+	return ptr;
+}
+
 
 void load_3f_to_row( matx_Nx3f* matx, size_t i, float x, float y, float z ){
 	// Load an R^3 vector into row `i` of `matx`
@@ -160,6 +178,7 @@ void load_3f_to_row( matx_Nx3f* matx, size_t i, float x, float y, float z ){
 	(*matx)[i][2] = z;
 }
 
+
 void load_vec3f_to_row( matx_Nx3f* matx, size_t i, const vec3f* vec ){
 	// Load an R^3 vector into row `i` of `matx`
 	(*matx)[i][0] = (*vec)[0];
@@ -167,16 +186,19 @@ void load_vec3f_to_row( matx_Nx3f* matx, size_t i, const vec3f* vec ){
 	(*matx)[i][2] = (*vec)[2];
 }
 
+
 void load_row_to_vec3f( const matx_Nx3f* matx, size_t i, vec3f* vec ){
 	(*vec)[0] = (*matx)[i][0];
 	(*vec)[1] = (*matx)[i][1];
 	(*vec)[2] = (*matx)[i][2];
 }
 
+
 void load_row_to_glVtx3f( const matx_Nx3f* matx, size_t i ){  
 	// Set vertex with a matrix row
 	glVertex3f( (*matx)[i][0], (*matx)[i][1], (*matx)[i][2] );  
 } 
+
 
 matx_Nx3u* matrix_new_Nx3u( size_t rows ){
 	// Allocate a 2D matrix and return a pointer to it , ROW MAJOR
@@ -185,12 +207,14 @@ matx_Nx3u* matrix_new_Nx3u( size_t rows ){
 	return ptr;
 }
 
+
 void load_3u_to_row( matx_Nx3u* matx, size_t i, uint v1, uint v2, uint v3 ){
 	// Load an I^3 vector into row `i` of `matx`
 	(*matx)[i][0] = v1;
 	(*matx)[i][1] = v2;
 	(*matx)[i][2] = v3;
 }
+
 
 void load_row_to_vec3u( const matx_Nx3u* matx, size_t i, vec3u* vec ){
 	// Load row `i` of `matx` into an I^3 vector
