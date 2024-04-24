@@ -18,8 +18,9 @@ typedef struct{
 	uint    Ntri; // Number of triangles
 	matx_Nx3f* vert; // Vertices: _________ Ntri X {x,y,z}
 	matx_Nx3u* face; // Faces: ____________ Ntri X {v1,v2,v3}, CCW order
-	matx_Nx3f* norm; // Face Normals: _____ Ntri X {x,y,z}
+	matx_Nx3f* norm; // Face Normals: _____ Ntri X {x,y,z}, Normal is the "Zdir" of local coord system
 	matx_Nx3u* adjc; // Adjacent Triangles: Ntri X {f1,f2,f3}, CCW order
+	matx_Nx3f* orgn; // Local Origin: _____ Ntri X {x,y,z}
 	matx_Nx3f* Xdir; // Local Face X: _____ Ntri X {x,y,z}
 	matx_Nx3f* Ydir; // Local Face Y: _____ Ntri X {x,y,z}
 }TriNet;
@@ -96,7 +97,6 @@ void adjacency_from_VF( uint Ntri_, float eps, const matx_Nx3f* V, const matx_Nx
 			}
 		}
 	}
-
 	// 1. For each triangle `i`, load face indices, then ...
 	for( uint i = 0 ; i < Ntri_ ; ++i ){
 		load_row_to_vec3u( F, i, &face_i );
@@ -116,15 +116,19 @@ void adjacency_from_VF( uint Ntri_, float eps, const matx_Nx3f* V, const matx_Nx
 					if( (i != j) && (diff( &vert_a1, &vert_b2 ) <= eps) && (diff( &vert_a2, &vert_b1 ) <= eps) ){
 						(*A)[i][a] = j;
 						(*A)[j][b] = i;
-					// 6. In all other cases, use triangle's own index to show no neighbor is present
-					}/*else{
-						(*A)[i][a] = i; // FIXME: DOES THIS OVERWRITE VALID NEIGHBORS? !!TEST!!
-						(*A)[j][b] = j;
-					}*/
+					}
 				}
 			}
 		}
 	}
+}
+
+void populate_coord_sys_per_face( const matx_Nx3f* V, const matx_Nx3u* F, const matx_Nx3f* N, 
+								  matx_Nx3f* orgMtx, matx_Nx3f* xMtx, matx_Nx3f* yMtx ){
+	// Create a local reference frame for every face of the polyhedron
+
+	// FIXME, START HERE: THIS IS JUST FETCHES AND CROSS PRODUCTS AND NORMALIZATION
+	
 }
 
 void populate_icos_vertices_and_faces( matx_Nx3f* V, matx_Nx3u* F, float radius ){
@@ -318,7 +322,7 @@ void reshape( int width , int height ){
 int main( int argc , char* argv[] ){
 	
 	icos = create_icos_mesh_only( 2.0 );
-	adjacency_from_VF( icos->Ntri, 0.001, icos->vert, icos->face, icos->adjc );
+	adjacency_from_VF( icos->Ntri, 0.01, icos->vert, icos->face, icos->adjc );
 	
 	//  Initialize GLUT and process user parameters
 	glutInit( &argc , argv );
