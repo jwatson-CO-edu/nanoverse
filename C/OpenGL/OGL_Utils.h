@@ -73,6 +73,22 @@ void cross( const vec3f* u, const vec3f* v, vec3f* p ){
 	(*p)[2] = (*u)[0]*(*v)[1] - (*u)[1]*(*v)[0];
 }
 
+void tri_center( const vec3f* v0, const vec3f* v1, const vec3f* v2, vec3f* c ){
+	// Calc centroid of 3 R^3 points
+	// Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
+	(*c)[0] = ((*v0)[0] + (*v1)[0] + (*v2)[0]) / 3.0f;
+	(*c)[1] = ((*v0)[1] + (*v1)[1] + (*v2)[1]) / 3.0f;
+	(*c)[2] = ((*v0)[2] + (*v1)[2] + (*v2)[2]) / 3.0f;
+}
+
+void seg_center( const vec3f* v0, const vec3f* v1, vec3f* c ){
+	// Calc centroid of 2 R^3 points
+	// Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
+	(*c)[0] = ((*v0)[0] + (*v1)[0]) / 2.0f;
+	(*c)[1] = ((*v0)[1] + (*v1)[1]) / 2.0f;
+	(*c)[2] = ((*v0)[2] + (*v1)[2]) / 2.0f;
+}
+
 
 ////////// TRIGONOMETRY ////////////////////////////////////////////////////////////////////////////
 

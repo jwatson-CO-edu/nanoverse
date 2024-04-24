@@ -49,6 +49,18 @@ void delete_net( TriNet* net ){
 	free( net );
 }
 
+
+void get_CCW_tri_norm( const vec3f* v0, const vec3f* v1, const vec3f* v2, vec3f* n ){
+	// Find the normal vector `n` of a triangle defined by CCW vertices in R^3: {`v0`,`v1`,`v2`}
+	vec3f r1;     sub( v1, v0, &r1 );
+	vec3f r2;     sub( v2, v0, &r2 );
+	vec3f xBasis; unit( &r1, &xBasis );
+	vec3f vecB;   unit( &r2, &vecB );
+	vec3f nBig;   cross( &xBasis, &vecB, &nBig );
+	/*---------*/ unit( &nBig, n ); // This should already be normalized
+}
+
+
 void N_from_VF( uint Ntri_, const matx_Nx3f* V, const matx_Nx3u* F, matx_Nx3f* N ){
 	// Calc all face normals (One per face)
 	vec3f v0;
@@ -65,28 +77,36 @@ void N_from_VF( uint Ntri_, const matx_Nx3f* V, const matx_Nx3u* F, matx_Nx3f* N
 }
 
 void adjacency_from_VF( uint Ntri_, float eps, const matx_Nx3f* V, const matx_Nx3u* F, matx_Nx3u* A ){
-	// Find face adjacencies, O(n^2) in number of faces
-	vec3u face_i;
-	vec3u face_j;
+	// Find face adjacencies and store connectivity in `A`, O(n^2) in number of faces
+	vec3u face_i = {0,0,0};
+	vec3u face_j = {0,0,0};
 	vec3f vert_a1;
 	vec3f vert_a2;
 	vec3f vert_b1;
 	vec3f vert_b2;
+	// 1. For each triangle `i`, load face indices, then ...
 	for( uint i = 0 ; i < Ntri_ ; ++i ){
 		load_row_to_vec3u( F, i, &face_i );
+		// 2. For each triangle `j`, load face indices, then ...
 		for( uint j = 0 ; j < Ntri_ ; ++j ){
 			load_row_to_vec3u( F, j, &face_j );
+			// 3. For each segment `a` of triangle `i`, load endpoint verts, then ...
 			for( ubyte a = 0; a < 3; ++a ){
 				load_row_to_vec3f( V, face_i[a]      , &vert_a1 );
 				load_row_to_vec3f( V, face_i[(a+1)%3], &vert_a2 );
+				// 4. For each segment `b` of triangle `j`, load endpoint verts, then ...
 				for( ubyte b = 0; b < 3; ++b ){
 					load_row_to_vec3f( V, face_j[b]      , &vert_b1 );
 					load_row_to_vec3f( V, face_j[(b+1)%3], &vert_b2 );
-					(*A)[i][a] = i; // Self-reference means NO neighbor here!
-					(*A)[j][b] = j;
-					if( (i != j) && (diff( vert_a1, vert_b2 ) <= eps) && (diff( vert_a2, vert_b1 ) <= eps) ){
+					// 5. Triangles that share an edge will have their shared vertices listed in an order reverse of the other
+					//    NOTE: We test distance instead of index because some meshes might not have shared vertices
+					if( (i != j) && (diff( &vert_a1, &vert_b2 ) <= eps) && (diff( &vert_a2, &vert_b1 ) <= eps) ){
 						(*A)[i][a] = j;
 						(*A)[j][b] = i;
+					// 6. In all other cases, use triangle's own index to show no neighbor is present
+					}else{
+						(*A)[i][a] = i; // FIXME: DOES THIS OVERWRITE VALID NEIGHBORS? !!TEST!!
+						(*A)[j][b] = j;
 					}
 				}
 			}
@@ -140,41 +160,64 @@ void populate_icos_vertices_and_faces( matx_Nx3f* V, matx_Nx3u* F, float radius 
 	load_3u_to_row( F,19, 10, 8, 4 );
 }
 
-void get_CCW_tri_norm( const vec3f* v0, const vec3f* v1, const vec3f* v2, vec3f* n ){
-	// Find the normal vector `n` of a triangle defined by CCW vertices in R^3: {`v0`,`v1`,`v2`}
-	vec3f r1;     sub( v1, v0, &r1 );
-	vec3f r2;     sub( v2, v0, &r2 );
-	vec3f xBasis; unit( &r1, &xBasis );
-	vec3f vecB;   unit( &r2, &vecB );
-	vec3f nBig;   cross( &xBasis, &vecB, &nBig );
-	/*---------*/ unit( &nBig, n ); // This should already be normalized
-}
 
-
-
-TriNet* create_icos_net( float radius ){
-	// Create an regular icosahedron with unfolded net data
+TriNet* create_icos_mesh_only( float radius ){
+	// Create an regular icosahedron (*without* unfolded net data)
 	/// Allocate ///
 	TriNet* icosNet = alloc_net( 20, 12 );
 	/// Vertices and Faces ///
 	populate_icos_vertices_and_faces( icosNet->vert, icosNet->face, radius );
 	/// Normals ///
 	N_from_VF( icosNet->Ntri, icosNet->vert, icosNet->face, icosNet->norm );
-
-
-
 	/// Return ///
 	return icosNet;
 }
 
+
 void draw_net_wireframe( TriNet* net, vec3f lineColor ){
-	// Draw the net as a wireframe
+	// Draw the net as a wireframe, NOTE: Only `vert` and `face` data req'd
 	glClr3f( lineColor );
 	glBegin( GL_LINES );
 	for( uint i = 0; i < net->Ntri; ++i ){
 		load_row_to_glVtx3f( net->vert, (*net->face)[i][0] );  load_row_to_glVtx3f( net->vert, (*net->face)[i][1] );
 		load_row_to_glVtx3f( net->vert, (*net->face)[i][1] );  load_row_to_glVtx3f( net->vert, (*net->face)[i][2] );
 		load_row_to_glVtx3f( net->vert, (*net->face)[i][2] );  load_row_to_glVtx3f( net->vert, (*net->face)[i][1] );
+	}
+	glEnd();
+}
+
+void draw_net_connectivity( TriNet* net, vec3f lineColor ){
+	// Draw the net as a wireframe, NOTE: Only `vert` and `face` data req'd
+	glClr3f( lineColor );
+	glBegin( GL_LINES );
+	vec3f v0;
+	vec3f v1;
+	vec3f v2;
+	vec3f triCntr;
+	vec3f segCntr;
+	vec3u neighbors = {0,0,0};
+	// 1. For each face
+	for( uint i = 0; i < net->Ntri; ++i ){
+		// 2. Calc center
+		load_row_to_vec3f( net->vert, (*net->face)[i][0], &v0 );
+		load_row_to_vec3f( net->vert, (*net->face)[i][1], &v1 );
+		load_row_to_vec3f( net->vert, (*net->face)[i][2], &v2 );
+		tri_center( &v0, &v1, &v2, &triCntr );
+		// 3. Load neighborhood
+		load_row_to_vec3u( net->adjc, i, &neighbors );
+		// 4. Test each possible connection. If it exists, then draw a segment from center of face to center of shared edge
+		if( neighbors[0] != i ){
+			seg_center( &v0, &v1, &segCntr );
+			glVtx3f( triCntr );  glVtx3f( segCntr );  
+		}
+		if( neighbors[1] != i ){
+			seg_center( &v1, &v2, &segCntr );
+			glVtx3f( triCntr );  glVtx3f( segCntr );  
+		}
+		if( neighbors[2] != i ){
+			seg_center( &v2, &v0, &segCntr );
+			glVtx3f( triCntr );  glVtx3f( segCntr );  
+		}
 	}
 	glEnd();
 }
@@ -232,12 +275,13 @@ void display(){
 	look( cam );
 
 	// draw_sphere( center, 3.0f, sphClr );
-	draw_net_wireframe( icos, icsClr );
+	// draw_net_wireframe( icos, icsClr );
+	draw_net_connectivity( icos, icsClr );
 
 	// Display status
 	glColor3f( 249/255.0 , 255/255.0 , 99/255.0 ); // Text Yellow
 	glWindowPos2i( 5 , 5 ); // Next raster operation relative to lower lefthand corner of the window
-	Print( "HELLO WORLD!" );
+	Print( "Icosahedron Net Connectivity" );
 
 	//  Flush and swap
 	glFlush();
@@ -260,17 +304,17 @@ void reshape( int width , int height ){
 
 int main( int argc , char* argv[] ){
 	
-	icos = create_icos_net( 2.0 );
+	icos = create_icos_mesh_only( 2.0 );
+	adjacency_from_VF( icos->Ntri, 0.001, icos->vert, icos->face, icos->adjc );
 	
 	//  Initialize GLUT and process user parameters
 	glutInit( &argc , argv );
-	
 	
 	//  Request 500 x 500 pixel window
 	glutInitWindowSize( 1000 , 750 );
 	
 	//  Create the window
-	glutCreateWindow( "LOOK AT THIS GODDAMN ICOSAHEDRON" );
+	glutCreateWindow( "LOOK AT THIS GODDAMN NETWORK" );
 
     // NOTE: Set modes AFTER the window / graphics context has been created!
     //  Request double buffered, true color window 
