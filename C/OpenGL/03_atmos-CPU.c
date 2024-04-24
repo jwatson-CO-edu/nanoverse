@@ -84,6 +84,19 @@ void adjacency_from_VF( uint Ntri_, float eps, const matx_Nx3f* V, const matx_Nx
 	vec3f vert_a2;
 	vec3f vert_b1;
 	vec3f vert_b2;
+
+	// 0. All potential edges begin as null, Use triangle's own index to show no neighbor is present
+	for( uint i = 0 ; i < Ntri_ ; ++i ){
+		for( uint j = 0 ; j < Ntri_ ; ++j ){
+			for( ubyte a = 0; a < 3; ++a ){
+				for( ubyte b = 0; b < 3; ++b ){
+					(*A)[i][a] = i; 
+					(*A)[j][b] = j;
+				}
+			}
+		}
+	}
+
 	// 1. For each triangle `i`, load face indices, then ...
 	for( uint i = 0 ; i < Ntri_ ; ++i ){
 		load_row_to_vec3u( F, i, &face_i );
@@ -104,10 +117,10 @@ void adjacency_from_VF( uint Ntri_, float eps, const matx_Nx3f* V, const matx_Nx
 						(*A)[i][a] = j;
 						(*A)[j][b] = i;
 					// 6. In all other cases, use triangle's own index to show no neighbor is present
-					}else{
+					}/*else{
 						(*A)[i][a] = i; // FIXME: DOES THIS OVERWRITE VALID NEIGHBORS? !!TEST!!
 						(*A)[j][b] = j;
-					}
+					}*/
 				}
 			}
 		}
