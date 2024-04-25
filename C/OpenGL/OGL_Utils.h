@@ -10,6 +10,7 @@
 #include <stdlib.h> // defines four variable types, several macros, and various functions for performing general functions. , size_t
 #include <stdarg.h> // macros to access individual args of a list of unnamed arguments whose number and types are not known to the called function
 #include <math.h>
+#include <stdbool.h> // bool
 
 #include <GL/glut.h>
 
@@ -31,6 +32,38 @@ typedef float matx_Nx3f[][3];
 /// Unsigned Vectors and Matrices ///
 typedef uint vec3u[3];
 typedef uint matx_Nx3u[][3];
+
+
+
+////////// MATH HELPERS ////////////////////////////////////////////////////////////////////////////
+uint min_uint( uint x, uint y ){  return ((x) < (y)) ? (x) : (y);  } 
+
+
+///// Random Numbers //////////////////////////////////////////////////////
+void init_rand(){  srand( time( NULL ) );  }
+
+float randf(){
+    // Return a pseudo-random number between 0.0 and 1.0
+    return  1.0f * rand() / RAND_MAX;
+}
+
+float randf_range( float lo, float hi ){
+    // Return a pseudo-random number between `lo` and `hi`
+    // NOTE: This function assumes `hi > lo`
+    float span = hi - lo;
+    return lo + span * randf();
+}
+
+int randi( int lo, int hi ){
+    // Return a pseudo-random number between `lo` and `hi` (int)
+    int span = hi - lo;
+    return lo + (rand() % span);
+}
+
+ubyte rand_ubyte(){
+    // Return a pseudo-random unsigned byte
+    return (ubyte) randf( 0.0, 256.0 );
+}
 
 
 
@@ -176,6 +209,13 @@ void load_3f_to_row( matx_Nx3f* matx, size_t i, float x, float y, float z ){
 	(*matx)[i][0] = x;
 	(*matx)[i][1] = y;
 	(*matx)[i][2] = z;
+}
+
+
+void load_2f_to_row( matx_Nx2f* matx, size_t i, float x, float y ){
+	// Load an R^3 vector into row `i` of `matx`
+	(*matx)[i][0] = x;
+	(*matx)[i][1] = y;
 }
 
 

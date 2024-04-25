@@ -92,37 +92,36 @@ void adjacency_from_VF( uint Ntri_, float eps, const matx_Nx3f* V, const matx_Nx
 	vec3f vert_a2;
 	vec3f vert_b1;
 	vec3f vert_b2;
+	// bool  found = false;
 
 	// 0. All potential edges begin as null, Use triangle's own index to show no neighbor is present
 	for( uint i = 0 ; i < Ntri_ ; ++i ){
-		for( uint j = 0 ; j < Ntri_ ; ++j ){
-			for( ubyte a = 0; a < 3; ++a ){
-				for( ubyte b = 0; b < 3; ++b ){
-					(*A)[i][a] = i; 
-					(*A)[j][b] = j;
-				}
-			}
+		for( ubyte a = 0; a < 3; ++a ){
+			(*A)[i][a] = i; 
 		}
 	}
+
 	// 1. For each triangle `i`, load face indices, then ...
-	for( uint i = 0 ; i < Ntri_ ; ++i ){
+	for( uint i = 0 ; i < Ntri_ ; i++ ){
 		load_row_to_vec3u( F, i, &face_i );
-		// 2. For each triangle `j`, load face indices, then ...
-		for( uint j = 0 ; j < Ntri_ ; ++j ){
-			load_row_to_vec3u( F, j, &face_j );
-			// 3. For each segment `a` of triangle `i`, load endpoint verts, then ...
-			for( ubyte a = 0; a < 3; ++a ){
-				load_row_to_vec3f( V, face_i[a]      , &vert_a1 );
-				load_row_to_vec3f( V, face_i[(a+1)%3], &vert_a2 );
-				// 4. For each segment `b` of triangle `j`, load endpoint verts, then ...
-				for( ubyte b = 0; b < 3; ++b ){
-					load_row_to_vec3f( V, face_j[b]      , &vert_b1 );
-					load_row_to_vec3f( V, face_j[(b+1)%3], &vert_b2 );
-					// 5. Triangles that share an edge will have their shared vertices listed in an order reverse of the other
-					//    NOTE: We test distance instead of index because some meshes might not have shared vertices
-					if( (i != j) && (diff( &vert_a1, &vert_b2 ) <= eps) && (diff( &vert_a2, &vert_b1 ) <= eps) ){
-						(*A)[i][a] = j;
-						(*A)[j][b] = i;
+		// 3. For each segment `a` of triangle `i`, load endpoint verts, then ...
+		for( uint a = 0; a < 3; a++ ){
+			load_row_to_vec3f( V, face_i[a]      , &vert_a1 );
+			load_row_to_vec3f( V, face_i[(a+1)%3], &vert_a2 );
+			// 2. For each triangle `j`, load face indices, then ...
+			for( uint j = 0 ; j < Ntri_ ; j++ ){
+				if(i != j){
+					load_row_to_vec3u( F, j, &face_j );
+					// 4. For each segment `b` of triangle `j`, load endpoint verts, then ...
+					for( uint b = 0; b < 3; b++ ){
+						load_row_to_vec3f( V, face_j[b]      , &vert_b1 );
+						load_row_to_vec3f( V, face_j[(b+1)%3], &vert_b2 );
+						// 5. Triangles that share an edge will have their shared vertices listed in an order reverse of the other
+						//    NOTE: We test distance instead of index because some meshes might not have shared vertices
+						if( (diff( &vert_a1, &vert_b2 ) <= eps) && (diff( &vert_a2, &vert_b1 ) <= eps) ){
+							(*A)[i][a] = j;
+							break;
+						}
 					}
 				}
 			}
@@ -180,14 +179,14 @@ void draw_net_wireframe( TriNet* net, vec3f lineColor ){
 
 void draw_net_connectivity( TriNet* net, vec3f lineColor ){
 	// Draw the net as a wireframe, NOTE: Only `vert` and `face` data req'd
-	glClr3f( lineColor );
-	glBegin( GL_LINES );
 	vec3f v0;
 	vec3f v1;
 	vec3f v2;
 	vec3f triCntr;
 	vec3f segCntr;
 	vec3u neighbors = {0,0,0};
+	glClr3f( lineColor );
+	glBegin( GL_LINES );
 	// 1. For each face
 	for( uint i = 0; i < net->Ntri; ++i ){
 		// 2. Calc center
@@ -216,40 +215,75 @@ void draw_net_connectivity( TriNet* net, vec3f lineColor ){
 
 
 
+///// Cloud Particle //////////////////////////////////////////////////////
+
+typedef struct{
+	// Holds particle info for one triangular cell
+	vec2f     postn;
+	vec2f     veloc;
+	Particle* next;
+}Particle;
+
+void free_particle_LL( Particle* head_ ){
+	// Free a linked list of particles
+}
+
 ///// Triangular Cell /////////////////////////////////////////////////////
 
 typedef struct{
 	// Holds particle info for one triangular cell
-	uint /*-*/ prtclMax; // Max number of particles
-	uint /*-*/ N_prtcls; // Current number of particles
-	uint /*-*/ insertDx; // Index to insert newest particle
-	vec2f /**/ accelrtn; // Per-frame change in velocity
-	vec2f /**/ v0; // ----- Vertex 0 in local frame
-	vec2f /**/ v1; // ----- Vertex 1 in local frame
-	vec2f /**/ v3; // ----- Vertex 2 in local frame
-	matx_Nx2f* position; // Particle Position: prtclMax X {x,y}
-	matx_Nx2f* velocity; // Particle Velocity: prtclMax X {x,y}
+	vec2f     accelrtn; // Per-frame change in velocity
+	vec2f     v0; // ----- Vertex 0 in local frame
+	vec2f     v1; // ----- Vertex 1 in local frame
+	vec2f     v3; // ----- Vertex 2 in local frame
+	Particle* head;
+	Particle* tail;
+	Particle* send;
+	float     speedLim;
 }TriCell;
 
 
 TriCell* alloc_cell( uint prtclMax_ ){
 	// Allocate mem for a `TriNet` with `Ntri_` faces and `Nvrt_` vertices (shared vertices allowed)
-	TriCell* rtnStruct  = malloc( sizeof( *rtnStruct ) ); 
-	rtnStruct->prtclMax = prtclMax_; // ------------------ Max number of particles
-	rtnStruct->N_prtcls = 0; // -------------------------- Current number of particles
-	rtnStruct->insertDx = 0; // -------------------------- Index to insert newest particle
-	rtnStruct->position = matrix_new_Nx2f( prtclMax_ ); // Particle Position: prtclMax X {x,y}
-	rtnStruct->velocity = matrix_new_Nx2f( prtclMax_ ); // Particle Velocity: prtclMax X {x,y}
+	TriCell* rtnStruct = malloc( sizeof( *rtnStruct ) ); 
+	rtnStruct->head = NULL;
+	rtnStruct->tail = NULL;
 	return rtnStruct;
 }
 
 void delete_cell( TriCell* cell ){
 	// Free mem for a `TriCell` 
-	free( cell->position );
-	free( cell->velocity );
+	Particle* currPart = NULL;
+	
 	free( cell );
 }
 
+void push_particle( TriCell* cell, vec2f postn_, vec2f veloc_ ){
+	Particle* nuPrtcl = malloc( sizeof( *nuPrtcl ) ); 
+	nuPrtcl->postn[0] = postn_[0];
+	nuPrtcl->postn[1] = postn_[1];
+	nuPrtcl->veloc[0] = veloc_[0];
+	nuPrtcl->veloc[1] = veloc_[1];
+	nuPrtcl->next     = NULL;
+	cell->tail->next  = nuPrtcl;
+	cell->tail /*--*/ = nuPrtcl;
+}
+
+
+void init_cell( TriCell* cell, uint Nadd, float dimLim, float speedLim_ ){
+	// Populate particles with zero velocity, Set speed limit
+	uint actAdd = min_uint( cell->prtclMax, Nadd );
+	for( uint i = 0; i < Nadd; ++i ){
+		load_2f_to_row( cell->position, i, randf()*dimLim, randf()*dimLim );
+		load_2f_to_row( cell->velocity, i, 0.0f          , 0.0f           );
+	}
+	cell->N_prtcls = actAdd;
+	cell->speedLim = fabsf( speedLim_ );
+}
+
+void advance_particles( TriCell* cell ){
+	// Perform one tick of the simulation
+}
 
 
 ///// Particle Atmosphere /////////////////////////////////////////////////
@@ -350,9 +384,6 @@ TriNet* create_icos_mesh_only( float radius ){
 
 
 
-
-
-
 ////////// VIEW PROJECTION /////////////////////////////////////////////////////////////////////////
 float w2h =  0.0f; // Aspect ratio
 int   fov = 55; // -- Field of view (for perspective)
@@ -390,7 +421,8 @@ void display(){
 	// Display the scene
 	// Adapted from code provided by Willem Schreuder
 	
-    vec3f icsClr = {0.0f,1.0f,0.0f};
+    vec3f icsClr = {1.0f,1.0f,1.0f};
+    vec3f conClr = {0.0f,1.0f,0.0f};
     vec3f center = {0.0f,0.0f,0.0f};
     vec3f sphClr = {0.0, 14.0f/255.0f, 214.0f/255.0f};
 
@@ -405,7 +437,7 @@ void display(){
 
 	draw_sphere( center, 1.5f, sphClr );
 	draw_net_wireframe( icos, icsClr );
-	// draw_net_connectivity( icos, icsClr );
+	draw_net_connectivity( icos, conClr );
 
 	// Display status
 	glColor3f( 249/255.0 , 255/255.0 , 99/255.0 ); // Text Yellow
@@ -433,7 +465,7 @@ void reshape( int width , int height ){
 
 int main( int argc , char* argv[] ){
 	
-	icos = create_icos_mesh_only( 2.0 );
+	icos = create_icos_mesh_only( 2.00 );
 	// adjacency_from_VF( icos->Ntri, 0.01, icos->vert, icos->face, icos->adjc );
 	populate_net_connectivity_and_facet_frames( icos, 0.01 );
 	
