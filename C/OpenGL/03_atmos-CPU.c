@@ -230,6 +230,8 @@ void free_particle_LL( Particle* head_ ){
 
 ///// Triangular Cell /////////////////////////////////////////////////////
 
+// FIXME: YOU DON"T HAVE TO MAKE IT A LINKED LIST, YOU CAN JUST ZERO OUT THE ROW
+
 typedef struct{
 	// Holds particle info for one triangular cell
 	vec2f     accelrtn; // Per-frame change in velocity
