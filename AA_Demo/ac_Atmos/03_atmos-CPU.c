@@ -478,7 +478,7 @@ int main( int argc , char* argv[] ){
 	glutInitWindowSize( 1000 , 750 );
 	
 	//  Create the window
-	glutCreateWindow( "LOOK AT THIS GODDAMN PLANET" );
+	glutCreateWindow( "INSERT PLANET HERE" );
 
     // NOTE: Set modes AFTER the window / graphics context has been created!
     //  Request double buffered, true color window 
