@@ -88,6 +88,8 @@ void adjacency_from_VF( uint Ntri_, float eps, const matx_Nx3f* V, const matx_Nx
 	vec3f vert_b1;
 	vec3f vert_b2;
 	uint  totMatch = 0;
+	uint  totCompr = 0;
+	bool  found    = false;
 
 	// 0. All potential edges begin as null, Use triangle's own index to show no neighbor is present
 	for( uint i = 0 ; i < Ntri_ ; ++i ){
@@ -104,6 +106,7 @@ void adjacency_from_VF( uint Ntri_, float eps, const matx_Nx3f* V, const matx_Nx
 			load_row_to_vec3f( V, face_i[a]      , &vert_a1 );
 			load_row_to_vec3f( V, face_i[(a+1)%3], &vert_a2 );
 			// 2. For each triangle `j`, load face indices, then ...
+			found = false;
 			for( uint j = 0 ; j < Ntri_ ; j++ ){
 				if(i != j){
 					load_row_to_vec3u( F, j, &face_j );
@@ -120,20 +123,33 @@ void adjacency_from_VF( uint Ntri_, float eps, const matx_Nx3f* V, const matx_Nx
 						printf( "Compare [%i,%i] to [%i,%i]: ",i,(a+1)%3,j,b );  
 						print_vec3f( vert_a2 );  print_vec3f( vert_b1 );  nl();  
 
+						++totCompr;
+
 						if( (diff( &vert_a1, &vert_b2 ) <= eps) && (diff( &vert_a2, &vert_b1 ) <= eps) ){
 							printf( "! MATCH !\n\n" );
 							++totMatch;
 							(*A)[i][a] = j;
-							break;
+							found = true;
 						}
 
 						nl();
+
+						if( found )  break;
 					}
 				}
+				if( found )  break;
 			}
 		}
 	}
 	printf( "##### There were %i total matches! #####\n", totMatch );
+	printf( "\tThere were %i comparisons made! \n", totCompr );
+}
+
+bool p_net_faces_outward_convex( uint Ntri_, const matx_Nx3f* V, const matx_Nx3u* F, const matx_Nx3f* N ){
+	// Return true if the faces of an assumed convex net all face outwards
+
+	// FIXME, START HERE: MAYBE I MADE A SILLY MISTAKE?
+
 }
 
 
