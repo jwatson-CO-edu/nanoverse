@@ -29,6 +29,7 @@ typedef float vec2f[2];
 typedef float vec3f[3];
 typedef float matx_Nx2f[][2];
 typedef float matx_Nx3f[][3];
+typedef float matx_Nx4f[][4];
 /// Unsigned Vectors and Matrices ///
 typedef uint vec3u[3];
 typedef uint matx_Nx3u[][3];
@@ -115,6 +116,12 @@ void cross( const vec3f* u, const vec3f* v, vec3f* p ){
 	(*p)[0] = (*u)[1]*(*v)[2] - (*u)[2]*(*v)[1];
 	(*p)[1] = (*u)[2]*(*v)[0] - (*u)[0]*(*v)[2];
 	(*p)[2] = (*u)[0]*(*v)[1] - (*u)[1]*(*v)[0];
+}
+
+float dot( const vec3f* u, const vec3f* v ){
+	// Calc `u` * `v` = `p`, R^3
+	// Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
+	return (*u)[0]*(*v)[0] + (*u)[1]*(*v)[1] + (*u)[2]*(*v)[2];
 }
 
 void tri_center( const vec3f* v0, const vec3f* v1, const vec3f* v2, vec3f* c ){
@@ -204,6 +211,14 @@ matx_Nx2f* matrix_new_Nx2f( size_t rows ){
 }
 
 
+matx_Nx4f* matrix_new_Nx4f( size_t rows ){
+	// Allocate a 2D matrix and return a pointer to it, ROW MAJOR
+	// ALERT: 'malloc' without 'delete'
+	matx_Nx4f* ptr = malloc( sizeof( float[rows][4] ) );
+	return ptr;
+}
+
+
 void load_3f_to_row( matx_Nx3f* matx, size_t i, float x, float y, float z ){
 	// Load an R^3 vector into row `i` of `matx`
 	(*matx)[i][0] = x;
@@ -216,6 +231,15 @@ void load_2f_to_row( matx_Nx2f* matx, size_t i, float x, float y ){
 	// Load an R^3 vector into row `i` of `matx`
 	(*matx)[i][0] = x;
 	(*matx)[i][1] = y;
+}
+
+
+void load_4f_to_row( matx_Nx4f* matx, size_t i, float w, float x, float y, float z ){
+	// Load an R^3 vector into row `i` of `matx`
+	(*matx)[i][0] = w;
+	(*matx)[i][1] = x;
+	(*matx)[i][2] = y;
+	(*matx)[i][3] = z;
 }
 
 

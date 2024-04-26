@@ -215,77 +215,99 @@ void draw_net_connectivity( TriNet* net, vec3f lineColor ){
 
 
 
-// ///// Cloud Particle //////////////////////////////////////////////////////
-
-// typedef struct{
-// 	// Holds particle info for one triangular cell
-// 	vec2f     postn;
-// 	vec2f     veloc;
-// 	Particle* next;
-// }Particle;
-
-// void free_particle_LL( Particle* head_ ){
-// 	// Free a linked list of particles
-// }
-
-// ///// Triangular Cell /////////////////////////////////////////////////////
-
-// // FIXME: YOU DON"T HAVE TO MAKE IT A LINKED LIST, YOU CAN JUST ZERO OUT THE ROW
-
-// typedef struct{
-// 	// Holds particle info for one triangular cell
-// 	vec2f     accelrtn; // Per-frame change in velocity
-// 	vec2f     v0; // ----- Vertex 0 in local frame
-// 	vec2f     v1; // ----- Vertex 1 in local frame
-// 	vec2f     v3; // ----- Vertex 2 in local frame
-// 	Particle* head;
-// 	Particle* tail;
-// 	Particle* send;
-// 	float     speedLim;
-// }TriCell;
 
 
-// TriCell* alloc_cell( uint prtclMax_ ){
-// 	// Allocate mem for a `TriNet` with `Ntri_` faces and `Nvrt_` vertices (shared vertices allowed)
-// 	TriCell* rtnStruct = malloc( sizeof( *rtnStruct ) ); 
-// 	rtnStruct->head = NULL;
-// 	rtnStruct->tail = NULL;
-// 	return rtnStruct;
-// }
+///// Triangular Cell /////////////////////////////////////////////////////
 
-// void delete_cell( TriCell* cell ){
-// 	// Free mem for a `TriCell` 
-// 	Particle* currPart = NULL;
-	
-// 	free( cell );
-// }
-
-// void push_particle( TriCell* cell, vec2f postn_, vec2f veloc_ ){
-// 	Particle* nuPrtcl = malloc( sizeof( *nuPrtcl ) ); 
-// 	nuPrtcl->postn[0] = postn_[0];
-// 	nuPrtcl->postn[1] = postn_[1];
-// 	nuPrtcl->veloc[0] = veloc_[0];
-// 	nuPrtcl->veloc[1] = veloc_[1];
-// 	nuPrtcl->next     = NULL;
-// 	cell->tail->next  = nuPrtcl;
-// 	cell->tail /*--*/ = nuPrtcl;
-// }
+typedef struct{
+	// Holds particle info for one triangular cell
+	uint /*-*/ Nmax; // ---- Max number of particles that can occupy this cell
+	uint /*-*/ insrtDex; //- Index for next insert
+	vec2f /**/ accel; // --- Per-frame change in velocity
+	float /**/ speedLim; //- Max speed of any particle
+	vec2f /**/ v1; // ------ Vertex 1 in local frame
+	vec2f /**/ v2; // ------ Vertex 2 in local frame
+	uint /*-*/ ID; // ------ Triangle index in the mesh associated with this cell
+	vec3u /**/ neighbors; // Local connectivity
+	matx_Nx4f* prtLocVel; // Local position and velocity of each particle
+	uint* /**/ triDices; //- Cell membership of each particle
+}TriCell;
 
 
-// void init_cell( TriCell* cell, uint Nadd, float dimLim, float speedLim_ ){
-// 	// Populate particles with zero velocity, Set speed limit
-// 	uint actAdd = min_uint( cell->prtclMax, Nadd );
-// 	for( uint i = 0; i < Nadd; ++i ){
-// 		load_2f_to_row( cell->position, i, randf()*dimLim, randf()*dimLim );
-// 		load_2f_to_row( cell->velocity, i, 0.0f          , 0.0f           );
-// 	}
-// 	cell->N_prtcls = actAdd;
-// 	cell->speedLim = fabsf( speedLim_ );
-// }
+TriCell* alloc_cell( uint prtclMax_ ){
+	// Allocate mem for a `TriNet` with `Ntri_` faces and `Nvrt_` vertices (shared vertices allowed)
+	TriCell* rtnStruct = malloc( sizeof( *rtnStruct ) ); 
+	rtnStruct->prtLocVel = matrix_new_Nx4f( prtclMax_ );
+	rtnStruct->triDices  = malloc( sizeof( uint ) * prtclMax_ );
+	return rtnStruct;
+}
 
-// void advance_particles( TriCell* cell ){
-// 	// Perform one tick of the simulation
-// }
+
+void delete_cell( TriCell* cell ){
+	// Free mem for a `TriCell` 
+	free( cell->prtLocVel );
+	free( cell->triDices );
+	free( cell );
+}
+
+
+void init_cell( TriCell* cell, uint Nadd, float dimLim, float speedLim_, uint id ){
+	// Populate particles with zero velocity, Set speed limit
+	uint actAdd = min_uint( cell->Nmax, Nadd );
+	for( uint i = 0; i < Nadd; ++i ){
+		load_4f_to_row( cell->prtLocVel, i, randf()*dimLim, randf()*dimLim, 0.0f, 0.0f );
+	}
+	if( actAdd < cell->Nmax ){
+		for( uint i = actAdd; i < cell->Nmax; ++i ){
+			load_4f_to_row( cell->prtLocVel, i, 0.0f, 0.0f, 0.0f, 0.0f );
+		}
+	}
+	cell->insrtDex = actAdd;
+	cell->speedLim = fabsf( speedLim_ );
+	cell->ID /*-*/ = id;
+}
+
+
+void set_cell_bounds( TriCell* cell, vec3f origin, vec3f xDir, vec3f yDir, vec3f v1_3f, vec3f v2_3f ){
+	// Locate the vertices of the 2D cell
+	vec3f v1delta;  sub( &v1_3f, &origin, &v1delta );
+	vec3f v2delta;  sub( &v2_3f, &origin, &v2delta );
+	cell->v1[0] = dot( &xDir, &v1delta );
+	cell->v1[1] = dot( &yDir, &v1delta );
+	cell->v2[0] = dot( &xDir, &v2delta );
+	cell->v2[1] = dot( &yDir, &v2delta );
+}
+
+
+void advance_particles( TriCell* cell ){
+	// Perform one tick of the simulation
+	float mag = 0.0f;
+	float pX  = 0.0f;
+	float pY  = 0.0f;
+	float vX  = 0.0f;
+	float vY  = 0.0f;
+	for( uint i = 0; i < cell->Nmax; ++i ){
+		pX = (*cell->prtLocVel)[i][0];
+		pY = (*cell->prtLocVel)[i][1];
+		if( ((vX != 0.0f)||(vY != 0.0f)) && (cell->triDices[i] == cell->ID) ){
+			vX = (*cell->prtLocVel)[i][2];
+			vY = (*cell->prtLocVel)[i][3];
+			vX += cell->accel[0];
+			vY += cell->accel[1];
+			// FIXME: MAKE THIS CHECK FASTER AND LESS CORRECT
+			mag = sqrtf( vX*vX + vY*vY );
+			if( mag > cell->speedLim ){  
+				mag /= cell->speedLim; 
+				vX  /= mag;
+				vY  /= mag;
+			}
+			pX += vX;
+			pY += vY;
+			load_4f_to_row( cell->prtLocVel, i, pX, pY, vX, vY );
+		}
+		
+	}
+}
 
 
 // ///// Particle Atmosphere /////////////////////////////////////////////////
