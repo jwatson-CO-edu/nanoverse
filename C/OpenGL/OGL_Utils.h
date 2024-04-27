@@ -97,6 +97,14 @@ void set_vec3f( vec3f* lh, /*<<*/ const vec3f* rh ){
 }
 
 
+void set_vec2f( vec2f* lh, /*<<*/ const vec2f* rh ){
+	// Copy array
+	(*lh)[0] = (*rh)[0];
+	(*lh)[1] = (*rh)[1];
+
+}
+
+
 void set_vec3u( vec3u* lh, /*<<*/ const vec3u* rh ){
 	// Copy array
 	(*lh)[0] = (*rh)[0];

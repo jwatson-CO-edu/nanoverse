@@ -1,4 +1,4 @@
-// gcc -O3 -Wall 03_atmos-CPU.c -lglut -lGLU -lGL -lm -o atmos.out
+// gcc -std=gnu17 -O3 -Wall 03_atmos-CPU.c -lglut -lGLU -lGL -lm -o atmos.out
 
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
@@ -43,6 +43,7 @@ typedef struct{
 TriCell* alloc_cell( uint prtclMax_ ){
 	// Allocate mem for a `TriNet` with `Ntri_` faces and `Nvrt_` vertices (shared vertices allowed)
 	TriCell* rtnStruct   = malloc( sizeof( *rtnStruct ) ); 
+	rtnStruct->Nmax /**/ = prtclMax_;
 	rtnStruct->prtLocVel = matrix_new_Nx4f( prtclMax_ );
 	rtnStruct->triDices  = malloc( sizeof( uint ) * prtclMax_ );
 	rtnStruct->pntGlbPos = matrix_new_Nx3f( prtclMax_ );
@@ -59,10 +60,23 @@ void delete_cell( TriCell* cell ){
 }
 
 
-void init_cell( TriCell* cell, uint Nadd, float dimLim, float speedLim_, uint id, const vec3u* neighbors_ ){
+void init_cell( TriCell* cell, uint Nadd, float dimLim, uint id, const vec3u* neighbors_, 
+				const vec2f* accel, float speedLim_ ){
 	// Populate particles with zero velocity, Set speed limit
+	
+	// 0. Init
 	uint actAdd = min_uint( cell->Nmax, Nadd );
 	uint i /**/ = 0;
+	
+	// 1. Set static state
+	cell->Nprt = actAdd; // ----------------------- Number of particles that currently occupy this cell
+	cell->insrtDex = actAdd; // ------------------- Index for next insert
+	set_vec2f( &(cell->accel), accel ); // -------- Per-frame change in velocity
+	cell->speedLim = fabsf( speedLim_ ); // ------- Max speed of any particle
+	cell->ID /*-*/ = id; // ----------------------- Triangle index in the mesh associated with this cell
+	set_vec3u( &(cell->neighbors), neighbors_ ); // Local connectivity
+	
+	// 2. Set dynamic state: Particle position, speed, and membership
 	for( ; i < Nadd; ++i ){
 		load_row_from_4f( cell->prtLocVel, i, randf()*dimLim, randf()*dimLim, 0.0f, 0.0f );
 		cell->triDices[i] = id;
@@ -71,10 +85,6 @@ void init_cell( TriCell* cell, uint Nadd, float dimLim, float speedLim_, uint id
 		load_row_from_4f( cell->prtLocVel, i, 0.0f, 0.0f, 0.0f, 0.0f );
 		cell->triDices[i] = UINT_MAX;
 	}
-	cell->insrtDex = actAdd;
-	cell->speedLim = fabsf( speedLim_ );
-	cell->ID /*-*/ = id;
-	set_vec3u( &(cell->neighbors), neighbors_ );
 }
 
 
@@ -97,6 +107,7 @@ void set_cell_geo( TriCell* cell, const vec3f* v0_3f, const vec3f* v1_3f, const 
 	cell->v1_2f[1] = dot_vec3f( &(cell->yBasis), &v1delta );
 	cell->v2_2f[0] = dot_vec3f( &(cell->xBasis), &v2delta );
 	cell->v2_2f[1] = dot_vec3f( &(cell->yBasis), &v2delta );
+	// printf( "%u: ", cell->ID );  print_vec3f( cell->origin );  print_vec3f( cell->xBasis );  print_vec3f( cell->yBasis );  nl();
 }
 
 
@@ -108,6 +119,9 @@ void advance_particles( TriCell* cell ){
 	float vY    = 0.0f;
 	uint  curID = cell->ID;
 	float spdLm = cell->speedLim;
+
+	// printf( "### %u ###", cell->ID );  nl();  
+
 	// 1. For every particle
 	for( uint i = 0; i < cell->Nmax; ++i ){
 		// 2. If particle belongs to this cell, Then load data and perform updates
@@ -118,19 +132,29 @@ void advance_particles( TriCell* cell ){
 			// 4. Load particle velocity
 			vX = (*cell->prtLocVel)[i][2];
 			vY = (*cell->prtLocVel)[i][3];
+
+			// printf("[%f,%f,%f,%f] --> ",pX, pY, vX, vY);
+
 			// 5. Accelerate
 			vX += cell->accel[0];
 			vY += cell->accel[1];
+
 			// 6. Apply per-direction speed limit
 			vX /= fmaxf(fabsf(vX)/spdLm, 1.0);
 			vY /= fmaxf(fabsf(vY)/spdLm, 1.0);
+
 			// 7. Move particle
 			pX += vX;
 			pY += vY;
+
+			// printf("[%f,%f,%f,%f]",pX, pY, vX, vY);  nl();
+
 			// 8. Store updated particle info
 			load_row_from_4f( cell->prtLocVel, i, pX, pY, vX, vY );
 		}
 	}
+
+	// nl();
 }
 
 
@@ -144,17 +168,30 @@ void project_particles_to_points( TriCell* cell ){
 	vec3f yDelta = {0.0f,0.0f,0.0f};
 	vec3f posGlb = {0.0f,0.0f,0.0f};
 	cell->Nprt   = 0;
+
+	// printf( "### %u ###", cell->ID );  nl();  
+
 	// 1. For every particle
 	for( uint i = 0; i < cell->Nmax; ++i ){
 		// 2. If particle belongs to this cell, Then calc its 3D position
 		if(cell->triDices[i] == curID){
+			// 3. Load particle position
+			pX = (*cell->prtLocVel)[i][0];
+			pY = (*cell->prtLocVel)[i][1];
+			// 4. Calc 3D position
 			scale_vec3f( &xDelta, &(cell->xBasis), pX );
 			scale_vec3f( &yDelta, &(cell->yBasis), pY );
 			add3_vec3f( &posGlb, &(cell->origin), &xDelta, &yDelta );
+			
+			// printf("[%f,%f] --> ",pX,pY); print_vec3f( cell->origin );  print_vec3f( xDelta );  print_vec3f( yDelta );  
+			// printf( " --> " );  print_vec3f( posGlb );  nl();
+			// 5. Store 3D position
 			load_row_from_vec3f( cell->pntGlbPos, j, &posGlb );
 			++j;
 		}
 	}
+
+	// nl();
 
 	/* WARNING: TEMPORARY */ cell->Nprt = j;
 
@@ -167,6 +204,7 @@ void project_particles_to_points( TriCell* cell ){
 
 void draw_cell_points( TriCell* cell, vec3f pntColor ){
 	// Draw all currently active particles belonging to this cell
+	project_particles_to_points( cell );
 	glColor3f( pntColor[0] , pntColor[1] , pntColor[2] );
 	glBegin( GL_POINTS );
 	for( uint i = 0; i < cell->Nprt; ++i ){  send_row_to_glVtx3f( cell->pntGlbPos, i );  }
@@ -179,19 +217,20 @@ void draw_cell_points( TriCell* cell, vec3f pntColor ){
 
 typedef struct{
 	// Holds net and cell data for a toy atmosphere with cells containing particles that move in a planar fashion
-	uint /**/ Ncell; // Number of cells in this atmosphere
-	TriNet*   net; // - Geometric information for atmosphere
-	TriCell** cells; // Array of pointers to cells containing particles
+	uint /**/ Ncell; // -- Number of cells in this atmosphere
+	uint /**/ NmaxCell; // Max number of particles any one cell can have
+	TriNet*   net; // ---- Geometric information for atmosphere
+	TriCell** cells; // -- Array of pointers to cells containing particles
 }Atmos;
 
 
-Atmos* alloc_atmos( float radius, uint Nvrt_, uint Ncells_, uint prtclMax_ ){
+Atmos* alloc_atmos( uint Ncells_, uint prtclMax_ ){
 	// Allocate memory for a toy atmosphere
-	Atmos* rtnStruct = malloc( sizeof( *rtnStruct ) ); 
-	rtnStruct->Ncell = Ncells_;
-	rtnStruct->cells = malloc( sizeof( TriCell* ) * Ncells_ ); 
-	rtnStruct->net   = alloc_net( Ncells_, Nvrt_ );
-	for( ubyte i = 0; i < Ncells_; ++i ){
+	Atmos* rtnStruct    = malloc( sizeof( *rtnStruct ) ); 
+	rtnStruct->Ncell    = Ncells_;
+	rtnStruct->NmaxCell = prtclMax_;
+	rtnStruct->cells    = malloc( sizeof( TriCell* ) * Ncells_ ); 
+	for( uint i = 0; i < Ncells_; ++i ){
 		rtnStruct->cells[i] = alloc_cell( prtclMax_ );
 	}
 	return rtnStruct;
@@ -200,7 +239,7 @@ Atmos* alloc_atmos( float radius, uint Nvrt_, uint Ncells_, uint prtclMax_ ){
 
 void delete_atmos( Atmos* atmos ){
 	// Free memory for a toy atmosphere
-	for( ubyte i = 0; i < atmos->Ncell; ++i ){
+	for( uint i = 0; i < atmos->Ncell; ++i ){
 		delete_cell( atmos->cells[i] );
 	}
 	free( atmos->cells );
@@ -209,21 +248,44 @@ void delete_atmos( Atmos* atmos ){
 }
 
 
-void init_all_cells( Atmos* atmos, uint Nadd, float speedLim_ ){
+void init_atmos( Atmos* atmos, TriNet* filledNet, uint Nadd, float speedLim_, float accelLim_ ){
+	// Set mesh, Allocate cells, Init cells, and Setup cell geometries
 	vec3f v0     = {0.0f,0.0f,0.0f};
 	vec3f v1     = {0.0f,0.0f,0.0f};
+	vec3f v2     = {0.0f,0.0f,0.0f};
 	vec3u nghbrs = {0,0,0};
-	for( ubyte i = 0; i < atmos->Ncell; ++i ){	
+	vec2f acl_i  = {0.0f,0.0f};
+	// 1. Set mesh
+	atmos->net = filledNet;
+	// 2. For every cell, Setup ...
+	for( uint i = 0; i < atmos->Ncell; ++i ){
+		// 3. Allocate cell
+		atmos->cells[i] = alloc_cell( atmos->NmaxCell );
+		// 4. Calc params
 		load_vec3f_from_row( &v0    , atmos->net->V, (*atmos->net->F)[i][0] );
 		load_vec3f_from_row( &v1    , atmos->net->V, (*atmos->net->F)[i][1] );
+		load_vec3f_from_row( &v2    , atmos->net->V, (*atmos->net->F)[i][2] );
 		load_vec3u_from_row( &nghbrs, atmos->net->A, i                      );
-		init_cell( atmos->cells[i], Nadd, diff_vec3f( &v0, &v1 ), speedLim_, i, &nghbrs );
+		acl_i[0] = randf_range( -accelLim_, accelLim_ );
+		acl_i[1] = randf_range( -accelLim_, accelLim_ );
+		// 5. Init cell
+		init_cell( atmos->cells[i], Nadd, diff_vec3f( &v0, &v1 ), i, &nghbrs, &acl_i, speedLim_ );
+		// 6. Setup cell geometry
+		set_cell_geo( atmos->cells[i], &v0, &v1, &v2 );
+		// print_vec3f( v0 );  print_vec3f( v1 );  print_vec3f( v2 );  nl();
 	}
 }
 
 
-void draw_all_cells( Atmos* atmos ){
-	// FIXME, START HERE: INVOKE CELL DRAW FUNCTION ACROSS STRUCT
+void tick_atmos( Atmos* atmos ){
+	// 2. For every cell, Step
+	for( uint i = 0; i < atmos->Ncell; ++i ){	advance_particles( atmos->cells[i] );  }
+}
+
+
+void draw_all_cells( Atmos* atmos, vec3f pntColor ){
+	// Draw the current particles in every cell
+	for( uint i = 0; i < atmos->Ncell; ++i ){	draw_cell_points( atmos->cells[i], pntColor );  }
 }
 
 
@@ -289,6 +351,31 @@ TriNet* create_icos_mesh_only( float radius ){
 }
 
 
+TriNet* create_icos_VFNA( float radius ){
+	// Create an regular icosahedron (*without* unfolded net data)
+	/// Allocate ///
+	TriNet* icosNet = alloc_net( 20, 12 );
+	/// Vertices and Faces ///
+	populate_icos_vertices_and_faces( icosNet->V, icosNet->F, radius );
+	/// Normals ///
+	N_from_VF( icosNet->Ntri, icosNet->V, icosNet->F, icosNet->N );
+	/// Advacency ///
+	populate_net_connectivity( icosNet, 0.005 );
+	/// Return ///
+	return icosNet;
+}
+
+
+///// Icos Atmos //////////////////////////////////////////////////////////
+
+Atmos* create_icos_atmos( float radius, uint prtclMax_, uint Nadd, float speedLim_, float accelLim_ ){
+	// Allocate and initialize a toy atmosphere based on an icosahedron
+	TriNet* icosNet   = create_icos_VFNA( radius );
+	Atmos*  rtnStruct = alloc_atmos( icosNet->Ntri, prtclMax_ );
+	init_atmos( rtnStruct, icosNet, Nadd, speedLim_, accelLim_ );
+	return rtnStruct;
+}
+
 
 ////////// VIEW PROJECTION /////////////////////////////////////////////////////////////////////////
 float w2h =  0.0f; // Aspect ratio
@@ -317,7 +404,7 @@ static void Project(){
 
 ////////// GEOMETRY & CAMERA ///////////////////////////////////////////////////////////////////////
 Camera3D cam = { {5.0f, 2.0f, 2.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f} };
-TriNet*  icos;
+Atmos*   simpleAtmos;
 
 
 
@@ -328,7 +415,7 @@ void display(){
 	// Adapted from code provided by Willem Schreuder
 	
     vec3f icsClr = {1.0f,1.0f,1.0f};
-    vec3f conClr = {0.0f,1.0f,0.0f};
+    vec3f atmClr = {0.0f,1.0f,0.0f};
     vec3f center = {0.0f,0.0f,0.0f};
     vec3f sphClr = {0.0, 14.0f/255.0f, 214.0f/255.0f};
 
@@ -341,18 +428,27 @@ void display(){
 	// Set view 
 	look( cam );
 
-	draw_sphere( center, 1.5f, sphClr );
-	draw_net_wireframe( icos, icsClr );
-	draw_net_connectivity( icos, conClr );
+	draw_sphere( center, 1.55f, sphClr );
+	draw_net_wireframe( simpleAtmos->net, icsClr );
+	draw_all_cells( simpleAtmos, atmClr );
 
 	// Display status
 	glColor3f( 249/255.0 , 255/255.0 , 99/255.0 ); // Text Yellow
 	glWindowPos2i( 5 , 5 ); // Next raster operation relative to lower lefthand corner of the window
-	Print( "Particles!" );
+	Print( "Particles!, %i", glutGet(GLUT_ELAPSED_TIME) );
 
 	//  Flush and swap
 	glFlush();
 	glutSwapBuffers();
+}
+
+
+void tick(){
+	// Simulation updates in between repaints
+	tick_atmos( simpleAtmos );
+
+	//  Tell GLUT it is necessary to redisplay the scene
+	glutPostRedisplay();
 }
 
 
@@ -372,9 +468,8 @@ void reshape( int width , int height ){
 
 int main( int argc , char* argv[] ){
 	
-	icos = create_icos_mesh_only( 2.00 );
-	// adjacency_from_VF( icos->Ntri, 0.01, icos->V, icos->F, icos->adjc );
-	populate_net_connectivity( icos, 0.01 );
+	// icos = create_icos_VFNA( 2.00 );
+	simpleAtmos = create_icos_atmos( 2.00, 64, 32, 0.00125, 0.00006 );
 	
 	//  Initialize GLUT and process user parameters
 	glutInit( &argc , argv );
@@ -394,6 +489,9 @@ int main( int argc , char* argv[] ){
 	
 	//  Tell GLUT to call "display" when the scene should be drawn
 	glutDisplayFunc( display );
+
+	// Tell GLUT to call "idle" when there is nothing else to do
+	glutIdleFunc( tick );
 	
 	//  Tell GLUT to call "reshape" when the window is resized
 	glutReshapeFunc( reshape );
@@ -408,7 +506,8 @@ int main( int argc , char* argv[] ){
 	glutMainLoop();
 	
 	// // Free memory
-	delete_net( icos );
+	// delete_net( icos );
+	delete_atmos( simpleAtmos );
 	
 	//  Return code
 	return 0;

@@ -13,21 +13,21 @@
         * `[Y]` ISSUE: NOT all neighbors are found!, 2024-04-27: There was an issue with the uint row loader!
             - `[Y]` Test with a simple tetrahedron, 2024-04-27: PASSED!
     - `[Y]` Per-face coordinate system, 2024-04-27: Testing req'd
-
-    - `[>]` Per-face particles
+    - `[Y]` Per-face particles, 2024-04-27: They fly!
         * `[Y]` Init particles, 2024-04-27: Testing req'd
-        * `[>]` Render: Particles + Wireframe + Planet
+        * `[Y]` Render: Particles + Wireframe + Planet, 2024-04-27: They fly!
             - `[Y]` Project particles to 3D, 2024-04-27: Testing req'd
+    - `[Y]` Per-face particle motion w/ appealing particle dynamics, 2024-04-27: They fly!
+        * `[Y]` Each cell imparts a fixed accel per frame, 2024-04-27: They fly!
+        * `[Y]` Clip particle vel at some appropriate value, 2024-04-27: They fly!
+        * `[Y]` Animate, ignore cell bounds, 2024-04-27: They fly!
 
-    - `[>]` Per-face particle motion w/ appealing particle dynamics
-        * `[>]` Each cell imparts a fixed accel per frame
-        * `[ ]` Clip particle vel at some appropriate value
-        * `[ ]` Animate, ignore cell bounds
     - `[ ]` Track boundary-crossing
         * `[ ]` Membership test: Detect particle exit
         * `[ ]` Project R^3 position to R^2 for new cell
         * `[ ]` Limit 32 particles
         * `[ ]` If over limit, Then new particle writes over interior particle  
+        
 * `[ ]` Compute shader test
     - `[ ]` ???
 * `[P]` Atmos particles on the GPU
