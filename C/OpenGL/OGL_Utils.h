@@ -82,28 +82,42 @@ void glClr3f( const vec3f c ){  glColor3f(  c[0] , c[1] , c[2] );  } // Set colo
 
 
 ////////// GEOMETRY HELPERS ////////////////////////////////////////////////////////////////////////
-void sub( const vec3f* u, const vec3f* v, vec3f* r ){
+void add_vec3f( const vec3f* u, const vec3f* v, vec3f* r ){
+	// Calc `u` + `v` = `r`, R^3
+	(*r)[0] = (*u)[0] + (*v)[0];
+	(*r)[1] = (*u)[1] + (*v)[1];
+	(*r)[2] = (*u)[2] + (*v)[2];
+}
+
+void sub_vec3f( const vec3f* u, const vec3f* v, vec3f* r ){
 	// Calc `u` - `v` = `r`, R^3
 	(*r)[0] = (*u)[0] - (*v)[0];
 	(*r)[1] = (*u)[1] - (*v)[1];
 	(*r)[2] = (*u)[2] - (*v)[2];
 }
 
-float norm( const vec3f* vec ){  
+void div_vec3f( const vec3f* u, float d, vec3f* r ){
+	// Calc `u` - `v` = `r`, R^3
+	(*r)[0] = (*u)[0] / d;
+	(*r)[1] = (*u)[1] / d;
+	(*r)[2] = (*u)[2] / d;
+}
+
+float norm_vec3f( const vec3f* vec ){  
 	// Euclidean length of an R^3
 	return sqrtf((*vec)[0]*(*vec)[0] + (*vec)[1]*(*vec)[1] + (*vec)[2]*(*vec)[2]);  
 } 
 
-float diff( const vec3f* u, const vec3f* v ){  
+float diff_vec3f( const vec3f* u, const vec3f* v ){  
 	// Euclidean length of `u`-`v`
 	vec3f r;  
-	sub( u, v, &r );
-	return norm( &r );
+	sub_vec3f( u, v, &r );
+	return norm_vec3f( &r );
 } 
 
-void unit( const vec3f* vec, vec3f* unt ){
+void unit_vec3f( const vec3f* vec, vec3f* unt ){
 	// Calc the unit direction of `vec` and store in `unt`, R^3
-	float mag = norm( vec );
+	float mag = norm_vec3f( vec );
 	if( mag > 0.0 ){
 		(*unt)[0] = (*vec)[0] / mag;
 		(*unt)[1] = (*vec)[1] / mag;
@@ -115,7 +129,7 @@ void unit( const vec3f* vec, vec3f* unt ){
 	}
 }
 
-void cross( const vec3f* u, const vec3f* v, vec3f* p ){
+void cross_vec3f( const vec3f* u, const vec3f* v, vec3f* p ){
 	// Calc `u` X `v` = `p`, R^3
 	// Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
 	(*p)[0] = (*u)[1]*(*v)[2] - (*u)[2]*(*v)[1];
@@ -123,7 +137,7 @@ void cross( const vec3f* u, const vec3f* v, vec3f* p ){
 	(*p)[2] = (*u)[0]*(*v)[1] - (*u)[1]*(*v)[0];
 }
 
-float dot( const vec3f* u, const vec3f* v ){
+float dot_vec3f( const vec3f* u, const vec3f* v ){
 	// Calc `u` * `v` = `p`, R^3
 	// Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
 	return (*u)[0]*(*v)[0] + (*u)[1]*(*v)[1] + (*u)[2]*(*v)[2];
@@ -288,8 +302,8 @@ void load_3u_to_row( matx_Nx3u* matx, size_t i, uint v1, uint v2, uint v3 ){
 void load_row_to_vec3u( const matx_Nx3u* matx, size_t i, vec3u* vec ){
 	// Load row `i` of `matx` into an I^3 vector
 	(*vec)[0] = (*matx)[i][0];
-	(*vec)[0] = (*matx)[i][1];
-	(*vec)[0] = (*matx)[i][2];
+	(*vec)[1] = (*matx)[i][1];
+	(*vec)[2] = (*matx)[i][2];
 }
 
 #endif

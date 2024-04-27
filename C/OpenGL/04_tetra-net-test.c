@@ -18,10 +18,10 @@ void populate_tetra_vertices_and_faces( matx_Nx3f* V, matx_Nx3u* F, float radius
     float b = radius / sqrtf( 2.0f );
 	/// Load Vertices ///
 	// Assume `V` already allocated for *4* vertices
-    load_3f_to_row( V, 0,   a, 0,-b );
-    load_3f_to_row( V, 1,  -a, 0,-b );
-    load_3f_to_row( V, 2,   0, a, b );
-    load_3f_to_row( V, 3,   0,-a, b );
+    load_3f_to_row( V, 0,   a   , 0.0f,-b );
+    load_3f_to_row( V, 1,  -a   , 0.0f,-b );
+    load_3f_to_row( V, 2,   0.0f, a   , b );
+    load_3f_to_row( V, 3,   0.0f,-a   , b );
 	/// Load Faces ///
 	// Assume `F` already allocated for *4* faces
 	load_3u_to_row( F, 0,  0,1,2 );
@@ -127,6 +127,8 @@ int main( int argc , char* argv[] ){
 	tetra = create_tetra_mesh_only( 2.00 );
 	// adjacency_from_VF( icos->Ntri, 0.01, icos->vert, icos->face, icos->adjc );
 	populate_net_connectivity_and_facet_frames( tetra, 0.01 );
+
+	p_net_faces_outward_convex( tetra->Ntri, tetra->Nvrt, tetra->vert, tetra->face, tetra->norm );
 	
 	//  Initialize GLUT and process user parameters
 	glutInit( &argc , argv );

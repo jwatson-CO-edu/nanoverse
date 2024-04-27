@@ -54,12 +54,13 @@ void delete_net( TriNet* net ){
 
 void get_CCW_tri_norm( const vec3f* v0, const vec3f* v1, const vec3f* v2, vec3f* n ){
 	// Find the normal vector `n` of a triangle defined by CCW vertices in R^3: {`v0`,`v1`,`v2`}
-	vec3f r1;     sub( v1, v0, &r1 );
-	vec3f r2;     sub( v2, v0, &r2 );
-	vec3f xBasis; unit( &r1, &xBasis );
-	vec3f vecB;   unit( &r2, &vecB );
-	vec3f nBig;   cross( &xBasis, &vecB, &nBig );
-	/*---------*/ unit( &nBig, n ); // This should already be normalized
+	vec3f r1;     sub_vec3f( v1, v0, &r1 );
+	vec3f r2;     sub_vec3f( v2, v0, &r2 );
+	vec3f xBasis; unit_vec3f( &r1, &xBasis );
+	vec3f vecB;   unit_vec3f( &r2, &vecB );
+	vec3f nBig;   cross_vec3f( &xBasis, &vecB, &nBig );
+	printf( "Area: %f, ", norm_vec3f( &nBig )/2.0f );
+	/*---------*/ unit_vec3f( &nBig, n ); // This should already be normalized
 }
 
 
@@ -83,10 +84,10 @@ void adjacency_from_VF( uint Ntri_, float eps, const matx_Nx3f* V, const matx_Nx
 	// Find face adjacencies and store connectivity in `A`, O(n^2) in number of faces
 	vec3u face_i = {0,0,0};
 	vec3u face_j = {0,0,0};
-	vec3f vert_a1;
-	vec3f vert_a2;
-	vec3f vert_b1;
-	vec3f vert_b2;
+	vec3f vert_i1;
+	vec3f vert_i2;
+	vec3f vert_j1;
+	vec3f vert_j2;
 	uint  totMatch = 0;
 	uint  totCompr = 0;
 	bool  found    = false;
@@ -103,8 +104,8 @@ void adjacency_from_VF( uint Ntri_, float eps, const matx_Nx3f* V, const matx_Nx
 		load_row_to_vec3u( F, i, &face_i );
 		// 3. For each segment `a` of triangle `i`, load endpoint verts, then ...
 		for( uint a = 0; a < 3; a++ ){
-			load_row_to_vec3f( V, face_i[a]      , &vert_a1 );
-			load_row_to_vec3f( V, face_i[(a+1)%3], &vert_a2 );
+			load_row_to_vec3f( V, face_i[a]      , &vert_i1 );
+			load_row_to_vec3f( V, face_i[(a+1)%3], &vert_i2 );
 			// 2. For each triangle `j`, load face indices, then ...
 			found = false;
 			for( uint j = 0 ; j < Ntri_ ; j++ ){
@@ -112,20 +113,20 @@ void adjacency_from_VF( uint Ntri_, float eps, const matx_Nx3f* V, const matx_Nx
 					load_row_to_vec3u( F, j, &face_j );
 					// 4. For each segment `b` of triangle `j`, load endpoint verts, then ...
 					for( uint b = 0; b < 3; b++ ){
-						load_row_to_vec3f( V, face_j[b]      , &vert_b1 );
-						load_row_to_vec3f( V, face_j[(b+1)%3], &vert_b2 );
+						load_row_to_vec3f( V, face_j[b]      , &vert_j1 );
+						load_row_to_vec3f( V, face_j[(b+1)%3], &vert_j2 );
 						// 5. Triangles that share an edge will have their shared vertices listed in an order reverse of the other
 						//    NOTE: We test distance instead of index because some meshes might not have shared vertices
 						
-						printf( "Compare [%i,%i] to [%i,%i]: ",i,a,j,(b+1)%3 );  
-						print_vec3f( vert_a1 );  print_vec3f( vert_b2 );  nl();
+						printf( "Compare [%u,%u] to [%u,%u]: ",i,a,j,(b+1)%3 );  
+						print_vec3f( vert_i1 );  print_vec3f( vert_j2 );  nl();
 
-						printf( "Compare [%i,%i] to [%i,%i]: ",i,(a+1)%3,j,b );  
-						print_vec3f( vert_a2 );  print_vec3f( vert_b1 );  nl();  
+						printf( "Compare [%u,%u] to [%u,%u]: ",i,(a+1)%3,j,b );  
+						print_vec3f( vert_i2 );  print_vec3f( vert_j1 );  nl();  
 
 						++totCompr;
 
-						if( (diff( &vert_a1, &vert_b2 ) <= eps) && (diff( &vert_a2, &vert_b1 ) <= eps) ){
+						if( (diff_vec3f( &vert_i1, &vert_j2 ) <= eps) && (diff_vec3f( &vert_i2, &vert_j1 ) <= eps) ){
 							printf( "! MATCH !\n\n" );
 							++totMatch;
 							(*A)[i][a] = j;
@@ -145,11 +146,36 @@ void adjacency_from_VF( uint Ntri_, float eps, const matx_Nx3f* V, const matx_Nx
 	printf( "\tThere were %i comparisons made! \n", totCompr );
 }
 
-bool p_net_faces_outward_convex( uint Ntri_, const matx_Nx3f* V, const matx_Nx3u* F, const matx_Nx3f* N ){
+bool p_net_faces_outward_convex( uint Ntri_, uint Nvrt_, const matx_Nx3f* V, const matx_Nx3u* F, const matx_Nx3f* N ){
 	// Return true if the faces of an assumed convex net all face outwards
-
-	// FIXME, START HERE: MAYBE I MADE A SILLY MISTAKE?
-
+	vec3f total = {0.0f,0.0f,0.0f};
+	vec3f oprnd = {0.0f,0.0f,0.0f};
+	vec3f centr = {0.0f,0.0f,0.0f};
+	vec3f v0_i  = {0.0f,0.0f,0.0f};
+	vec3f ray_i = {0.0f,0.0f,0.0f};
+	vec3f nrm_i = {0.0f,0.0f,0.0f};
+	float dTest = 0.0f;
+	bool  allOutward = true;
+	// Calc Centroid //
+	for( uint i = 0 ; i < Nvrt_ ; ++i ){
+		load_row_to_vec3f( V, i, &oprnd );
+		add_vec3f( &oprnd, &total, &total );
+	}
+	div_vec3f( &total, (float) Nvrt_, &centr );
+	// Check Each Normal //
+	for( uint i = 0 ; i < Ntri_ ; ++i ){
+		load_row_to_vec3f( V, (*F)[i][0], &v0_i  );
+		load_row_to_vec3f( N, i         , &nrm_i );
+		sub_vec3f( &v0_i, &centr, &ray_i );
+		dTest = dot_vec3f( &ray_i, &nrm_i );
+		printf( "%f, ", dTest );
+		if( dTest < 0.0f ){
+			printf( "Face %i should be REVERSED!\n", i );
+			allOutward = false;
+		}
+	}
+	if( allOutward ){  printf( "ALL triangles OKAY!\n" );  }
+	return allOutward;
 }
 
 
@@ -167,10 +193,10 @@ void populate_coord_sys_per_face( uint Ntri_, const matx_Nx3f* V, const matx_Nx3
 		load_row_to_vec3f( V, (*F)[i][0], &v0 );
 		load_row_to_vec3f( V, (*F)[i][1], &v1 );
 		load_row_to_vec3f( N, i, &n );
-		sub( &v1, &v0, &xSide );
-		unit( &xSide, &xBasis );
-		cross( &n, &xBasis, &yBasis );
-		unit( &yBasis, &yBasis );
+		sub_vec3f( &v1, &v0, &xSide );
+		unit_vec3f( &xSide, &xBasis );
+		cross_vec3f( &n, &xBasis, &yBasis );
+		unit_vec3f( &yBasis, &yBasis );
 		// Store Frame //
 		load_vec3f_to_row( orgMtx, i, &v0     );
 		// load_vec3f_to_row( xMtx  , i, &xBasis );

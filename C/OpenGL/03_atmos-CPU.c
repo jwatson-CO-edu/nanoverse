@@ -65,41 +65,43 @@ void init_cell( TriCell* cell, uint Nadd, float dimLim, float speedLim_, uint id
 }
 
 
-void set_cell_bounds( TriCell* cell, vec3f origin, vec3f xDir, vec3f yDir, vec3f v1_3f, vec3f v2_3f ){
+void set_cell_bounds( TriCell* cell, vec3f* origin, vec3f* xDir, vec3f* yDir, vec3f* v1_3f, vec3f* v2_3f ){
 	// Locate the vertices of the 2D cell
-	vec3f v1delta;  sub( &v1_3f, &origin, &v1delta );
-	vec3f v2delta;  sub( &v2_3f, &origin, &v2delta );
-	cell->v1[0] = dot( &xDir, &v1delta );
-	cell->v1[1] = dot( &yDir, &v1delta );
-	cell->v2[0] = dot( &xDir, &v2delta );
-	cell->v2[1] = dot( &yDir, &v2delta );
+	vec3f v1delta;  sub_vec3f( v1_3f, origin, &v1delta );
+	vec3f v2delta;  sub_vec3f( v2_3f, origin, &v2delta );
+	cell->v1[0] = dot_vec3f( xDir, &v1delta );
+	cell->v1[1] = dot_vec3f( yDir, &v1delta );
+	cell->v2[0] = dot_vec3f( xDir, &v2delta );
+	cell->v2[1] = dot_vec3f( yDir, &v2delta );
 }
 
 
 void advance_particles( TriCell* cell ){
 	// Perform one tick of the simulation
-	float mag = 0.0f;
 	float pX  = 0.0f;
 	float pY  = 0.0f;
 	float vX  = 0.0f;
 	float vY  = 0.0f;
+	// 1. For every particle
 	for( uint i = 0; i < cell->Nmax; ++i ){
+		// 2. Load particle position
 		pX = (*cell->prtLocVel)[i][0];
 		pY = (*cell->prtLocVel)[i][1];
+		// 3. If particle is valid and it belongs to this cell, then ...
 		if( ((vX != 0.0f)||(vY != 0.0f)) && (cell->triDices[i] == cell->ID) ){
+			// 4. Load particle velocity
 			vX = (*cell->prtLocVel)[i][2];
 			vY = (*cell->prtLocVel)[i][3];
+			// 5. Accelerate
 			vX += cell->accel[0];
 			vY += cell->accel[1];
-			// FIXME: MAKE THIS CHECK FASTER AND LESS CORRECT
-			mag = sqrtf( vX*vX + vY*vY );
-			if( mag > cell->speedLim ){  
-				mag /= cell->speedLim; 
-				vX  /= mag;
-				vY  /= mag;
-			}
+			// 6. Apply per-direction speed limit
+			vX /= fmaxf(fabsf(vX)/cell->speedLim, 1.0);
+			vY /= fmaxf(fabsf(vY)/cell->speedLim, 1.0);
+			// 7. Move particle
 			pX += vX;
 			pY += vY;
+			// 8. Store updated particle info
 			load_4f_to_row( cell->prtLocVel, i, pX, pY, vX, vY );
 		}
 		
