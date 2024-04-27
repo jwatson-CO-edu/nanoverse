@@ -1,5 +1,6 @@
 // gcc -O3 -Wall 04_tetra-net-test.c -lglut -lGLU -lGL -lm -o tetra.out
-
+// 2024-04-27, WARNING: THIS FILE HAS NOT BEEN UPDATED TO THE L2R ARGUMENT CONVENTION, NON-FUNCTIONAL!
+// 2024-04-27, WARNING: THIS FILE HAS NOT BEEN UPDATED TO THE L2R NAMING   CONVENTION, NON-FUNCTIONAL!
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 

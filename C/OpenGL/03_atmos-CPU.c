@@ -3,7 +3,7 @@
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
-#include "PolyNet.h"
+#include "TriNet.h"
 
 
 ////////// SETTINGS ////////////////////////////////////////////////////////////////////////////////
@@ -18,24 +18,36 @@ const float _SCALE = 10.0; //- Scale Dimension
 
 typedef struct{
 	// Holds particle info for one triangular cell
-	uint /*-*/ Nmax; // ---- Max number of particles that can occupy this cell
-	uint /*-*/ insrtDex; //- Index for next insert
-	vec2f /**/ accel; // --- Per-frame change in velocity
-	float /**/ speedLim; //- Max speed of any particle
-	vec2f /**/ v1; // ------ Vertex 1 in local frame
-	vec2f /**/ v2; // ------ Vertex 2 in local frame
-	uint /*-*/ ID; // ------ Triangle index in the mesh associated with this cell
-	vec3u /**/ neighbors; // Local connectivity
+
+	// Bookkeeping //
+	uint  Nmax; // ---- Max number of particles that can occupy this cell
+	uint  insrtDex; //- Index for next insert
+	vec2f accel; // --- Per-frame change in velocity
+	float speedLim; //- Max speed of any particle
+	uint  ID; // ------ Triangle index in the mesh associated with this cell
+	vec3u neighbors; // Local connectivity
+	
+	// Geometry //
+	vec2f v1_2f; //- Vertex 1 in local frame
+	vec2f v2_2f; //- Vertex 2 in local frame
+	vec3f origin; // Origin in parent frame
+	vec3f xBasis; // X direction in parent frame
+	vec3f yBasis; // Y direction in parent frame
+	
+	// Update && Painting @ Heap //
 	matx_Nx4f* prtLocVel; // Local position and velocity of each particle
 	uint* /**/ triDices; //- Cell membership of each particle
+	matx_Nx3f* pntGlbPos; // 3D position of each drawn point
+
 }TriCell;
 
 
 TriCell* alloc_cell( uint prtclMax_ ){
 	// Allocate mem for a `TriNet` with `Ntri_` faces and `Nvrt_` vertices (shared vertices allowed)
-	TriCell* rtnStruct = malloc( sizeof( *rtnStruct ) ); 
+	TriCell* rtnStruct   = malloc( sizeof( *rtnStruct ) ); 
 	rtnStruct->prtLocVel = matrix_new_Nx4f( prtclMax_ );
 	rtnStruct->triDices  = malloc( sizeof( uint ) * prtclMax_ );
+	rtnStruct->pntGlbPos = matrix_new_Nx3f( prtclMax_ );
 	return rtnStruct;
 }
 
@@ -44,6 +56,7 @@ void delete_cell( TriCell* cell ){
 	// Free mem for a `TriCell` 
 	free( cell->prtLocVel );
 	free( cell->triDices );
+	free( cell->pntGlbPos );
 	free( cell );
 }
 
@@ -52,11 +65,11 @@ void init_cell( TriCell* cell, uint Nadd, float dimLim, float speedLim_, uint id
 	// Populate particles with zero velocity, Set speed limit
 	uint actAdd = min_uint( cell->Nmax, Nadd );
 	for( uint i = 0; i < Nadd; ++i ){
-		load_4f_to_row( cell->prtLocVel, i, randf()*dimLim, randf()*dimLim, 0.0f, 0.0f );
+		load_row_from_4f( cell->prtLocVel, i, randf()*dimLim, randf()*dimLim, 0.0f, 0.0f );
 	}
 	if( actAdd < cell->Nmax ){
 		for( uint i = actAdd; i < cell->Nmax; ++i ){
-			load_4f_to_row( cell->prtLocVel, i, 0.0f, 0.0f, 0.0f, 0.0f );
+			load_row_from_4f( cell->prtLocVel, i, 0.0f, 0.0f, 0.0f, 0.0f );
 		}
 	}
 	cell->insrtDex = actAdd;
@@ -65,30 +78,43 @@ void init_cell( TriCell* cell, uint Nadd, float dimLim, float speedLim_, uint id
 }
 
 
-void set_cell_bounds( TriCell* cell, vec3f* origin, vec3f* xDir, vec3f* yDir, vec3f* v1_3f, vec3f* v2_3f ){
-	// Locate the vertices of the 2D cell
-	vec3f v1delta;  sub_vec3f( v1_3f, origin, &v1delta );
-	vec3f v2delta;  sub_vec3f( v2_3f, origin, &v2delta );
-	cell->v1[0] = dot_vec3f( xDir, &v1delta );
-	cell->v1[1] = dot_vec3f( yDir, &v1delta );
-	cell->v2[0] = dot_vec3f( xDir, &v2delta );
-	cell->v2[1] = dot_vec3f( yDir, &v2delta );
+void set_cell_geo( TriCell* cell, const vec3f* v0_3f, const vec3f* v1_3f, const vec3f* v2_3f ){
+	// Construct the local coordinate frame && Locate the vertices of the 2D cell
+	vec3f xSide;  
+	vec3f n;  
+	vec3f v1delta;  
+	vec3f v2delta;  
+	// Calc local reference frame //
+	sub_vec3f( &xSide, v1_3f, v0_3f );
+	unit_vec3f( &(cell->xBasis), &xSide );
+	get_CCW_tri_norm( v0_3f, v1_3f, v2_3f, &n );
+	cross_vec3f( &(cell->yBasis), &n, &(cell->xBasis) );
+	set_vec3f( &(cell->origin), v0_3f );
+	// Calc planar reference frame //
+	sub_vec3f( &v1delta, v1_3f, &(cell->origin) );
+	sub_vec3f( &v2delta, v2_3f, &(cell->origin) );
+	cell->v1_2f[0] = dot_vec3f( &(cell->xBasis), &v1delta );
+	cell->v1_2f[1] = dot_vec3f( &(cell->yBasis), &v1delta );
+	cell->v2_2f[0] = dot_vec3f( &(cell->xBasis), &v2delta );
+	cell->v2_2f[1] = dot_vec3f( &(cell->yBasis), &v2delta );
 }
 
 
 void advance_particles( TriCell* cell ){
 	// Perform one tick of the simulation
-	float pX  = 0.0f;
-	float pY  = 0.0f;
-	float vX  = 0.0f;
-	float vY  = 0.0f;
+	float pX    = 0.0f;
+	float pY    = 0.0f;
+	float vX    = 0.0f;
+	float vY    = 0.0f;
+	uint  curID = cell->ID;
+	float spdLm = cell->speedLim;
 	// 1. For every particle
 	for( uint i = 0; i < cell->Nmax; ++i ){
-		// 2. Load particle position
-		pX = (*cell->prtLocVel)[i][0];
-		pY = (*cell->prtLocVel)[i][1];
-		// 3. If particle is valid and it belongs to this cell, then ...
-		if( ((vX != 0.0f)||(vY != 0.0f)) && (cell->triDices[i] == cell->ID) ){
+		// 2. If particle belongs to this cell, Then load data and perform updates
+		if(cell->triDices[i] == curID){
+			// 3. Load particle position
+			pX = (*cell->prtLocVel)[i][0];
+			pY = (*cell->prtLocVel)[i][1];
 			// 4. Load particle velocity
 			vX = (*cell->prtLocVel)[i][2];
 			vY = (*cell->prtLocVel)[i][3];
@@ -96,17 +122,36 @@ void advance_particles( TriCell* cell ){
 			vX += cell->accel[0];
 			vY += cell->accel[1];
 			// 6. Apply per-direction speed limit
-			vX /= fmaxf(fabsf(vX)/cell->speedLim, 1.0);
-			vY /= fmaxf(fabsf(vY)/cell->speedLim, 1.0);
+			vX /= fmaxf(fabsf(vX)/spdLm, 1.0);
+			vY /= fmaxf(fabsf(vY)/spdLm, 1.0);
 			// 7. Move particle
 			pX += vX;
 			pY += vY;
 			// 8. Store updated particle info
-			load_4f_to_row( cell->prtLocVel, i, pX, pY, vX, vY );
+			load_row_from_4f( cell->prtLocVel, i, pX, pY, vX, vY );
 		}
-		
 	}
 }
+
+// void project_particles_to_points( TriCell* cell ){
+// 	// Lift 2D particles in this cell to 3D points ready to draw
+// 	uint  curID = cell->ID;
+// 	uint  count = 0;
+// 	float pX    = 0.0f;
+// 	float pY    = 0.0f;
+// 	// vec3f x_i   = {0.0f,0.0f,0.0f};
+// 	// vec3f y_i   = {0.0f,0.0f,0.0f};
+// 	vec3f xGlb  = {0.0f,0.0f,0.0f};
+// 	vec3f yGlb  = {0.0f,0.0f,0.0f};
+// 	// 1. For every particle
+// 	for( uint i = 0; i < cell->Nmax; ++i ){
+// 		// 2. If particle belongs to this cell, Then load data and perform updates
+// 		if(cell->triDices[i] == curID){
+// 			scale_vec3f( vec3f* r, &(cell->), float f )		
+// 		}
+// 	}
+// }
+
 
 
 // ///// Particle Atmosphere /////////////////////////////////////////////////
@@ -156,40 +201,40 @@ void populate_icos_vertices_and_faces( matx_Nx3f* V, matx_Nx3u* F, float radius 
 	float b     = ( radius / ratio ) / ( 2.0f * phi );
 	/// Load Vertices ///
 	// Assume `V` already allocated for *12* vertices
-	load_3f_to_row( V, 0,  0, b,-a ); 
-	load_3f_to_row( V, 1,  b, a, 0 );
-	load_3f_to_row( V, 2, -b, a, 0 );
-	load_3f_to_row( V, 3,  0, b, a );
-	load_3f_to_row( V, 4,  0,-b, a );
-	load_3f_to_row( V, 5, -a, 0, b );
-	load_3f_to_row( V, 6,  0,-b,-a );
-	load_3f_to_row( V, 7,  a, 0,-b );
-	load_3f_to_row( V, 8,  a, 0, b );
-	load_3f_to_row( V, 9, -a, 0,-b );
-	load_3f_to_row( V,10,  b,-a, 0 );
-	load_3f_to_row( V,11, -b,-a, 0 );
+	load_row_from_3f( V, 0,  0, b,-a ); 
+	load_row_from_3f( V, 1,  b, a, 0 );
+	load_row_from_3f( V, 2, -b, a, 0 );
+	load_row_from_3f( V, 3,  0, b, a );
+	load_row_from_3f( V, 4,  0,-b, a );
+	load_row_from_3f( V, 5, -a, 0, b );
+	load_row_from_3f( V, 6,  0,-b,-a );
+	load_row_from_3f( V, 7,  a, 0,-b );
+	load_row_from_3f( V, 8,  a, 0, b );
+	load_row_from_3f( V, 9, -a, 0,-b );
+	load_row_from_3f( V,10,  b,-a, 0 );
+	load_row_from_3f( V,11, -b,-a, 0 );
 	/// Load Faces ///
 	// Assume `F` already allocated for *20* faces
-	load_3u_to_row( F, 0,  2, 1, 0 );
-	load_3u_to_row( F, 1,  1, 2, 3 );
-	load_3u_to_row( F, 2,  5, 4, 3 );
-	load_3u_to_row( F, 3,  4, 8, 3 );
-	load_3u_to_row( F, 4,  7, 6, 0 );
-	load_3u_to_row( F, 5,  6, 9, 0 );
-	load_3u_to_row( F, 6, 11,10, 4 );
-	load_3u_to_row( F, 7, 10,11, 6 );
-	load_3u_to_row( F, 8,  9, 5, 2 );
-	load_3u_to_row( F, 9,  5, 9,11 );
-	load_3u_to_row( F,10,  8, 7, 1 );
-	load_3u_to_row( F,11,  7, 8,10 );
-	load_3u_to_row( F,12,  2, 5, 3 );
-	load_3u_to_row( F,13,  8, 1, 3 );
-	load_3u_to_row( F,14,  9, 2, 0 );
-	load_3u_to_row( F,15,  1, 7, 0 );
-	load_3u_to_row( F,16, 11, 9, 6 );
-	load_3u_to_row( F,17,  7,10, 6 );
-	load_3u_to_row( F,18,  5,11, 4 );
-	load_3u_to_row( F,19, 10, 8, 4 );
+	load_row_from_3u( F, 0,  2, 1, 0 );
+	load_row_from_3u( F, 1,  1, 2, 3 );
+	load_row_from_3u( F, 2,  5, 4, 3 );
+	load_row_from_3u( F, 3,  4, 8, 3 );
+	load_row_from_3u( F, 4,  7, 6, 0 );
+	load_row_from_3u( F, 5,  6, 9, 0 );
+	load_row_from_3u( F, 6, 11,10, 4 );
+	load_row_from_3u( F, 7, 10,11, 6 );
+	load_row_from_3u( F, 8,  9, 5, 2 );
+	load_row_from_3u( F, 9,  5, 9,11 );
+	load_row_from_3u( F,10,  8, 7, 1 );
+	load_row_from_3u( F,11,  7, 8,10 );
+	load_row_from_3u( F,12,  2, 5, 3 );
+	load_row_from_3u( F,13,  8, 1, 3 );
+	load_row_from_3u( F,14,  9, 2, 0 );
+	load_row_from_3u( F,15,  1, 7, 0 );
+	load_row_from_3u( F,16, 11, 9, 6 );
+	load_row_from_3u( F,17,  7,10, 6 );
+	load_row_from_3u( F,18,  5,11, 4 );
+	load_row_from_3u( F,19, 10, 8, 4 );
 }
 
 
@@ -198,9 +243,9 @@ TriNet* create_icos_mesh_only( float radius ){
 	/// Allocate ///
 	TriNet* icosNet = alloc_net( 20, 12 );
 	/// Vertices and Faces ///
-	populate_icos_vertices_and_faces( icosNet->vert, icosNet->face, radius );
+	populate_icos_vertices_and_faces( icosNet->V, icosNet->F, radius );
 	/// Normals ///
-	N_from_VF( icosNet->Ntri, icosNet->vert, icosNet->face, icosNet->norm );
+	N_from_VF( icosNet->Ntri, icosNet->V, icosNet->F, icosNet->N );
 	/// Return ///
 	return icosNet;
 }
@@ -286,11 +331,12 @@ void reshape( int width , int height ){
 	Project();
 }
 
+
 int main( int argc , char* argv[] ){
 	
 	icos = create_icos_mesh_only( 2.00 );
-	// adjacency_from_VF( icos->Ntri, 0.01, icos->vert, icos->face, icos->adjc );
-	populate_net_connectivity_and_facet_frames( icos, 0.01 );
+	// adjacency_from_VF( icos->Ntri, 0.01, icos->V, icos->F, icos->adjc );
+	populate_net_connectivity( icos, 0.01 );
 	
 	//  Initialize GLUT and process user parameters
 	glutInit( &argc , argv );

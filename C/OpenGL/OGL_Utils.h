@@ -82,26 +82,44 @@ void glClr3f( const vec3f c ){  glColor3f(  c[0] , c[1] , c[2] );  } // Set colo
 
 
 ////////// GEOMETRY HELPERS ////////////////////////////////////////////////////////////////////////
-void add_vec3f( const vec3f* u, const vec3f* v, vec3f* r ){
+// NOTE: Information Flow is ( <LHS Result Args>  <-to--  <RHS Input Args> )
+
+void set_vec3f( vec3f* lh, /*<<*/ const vec3f* rh ){
+	// Calc `u` + `v` = `r`, R^3
+	(*lh)[0] = (*rh)[0];
+	(*lh)[1] = (*rh)[1];
+	(*lh)[2] = (*rh)[2];
+}
+
+void add_vec3f( vec3f* r, /*<<*/ const vec3f* u, const vec3f* v ){
 	// Calc `u` + `v` = `r`, R^3
 	(*r)[0] = (*u)[0] + (*v)[0];
 	(*r)[1] = (*u)[1] + (*v)[1];
 	(*r)[2] = (*u)[2] + (*v)[2];
 }
 
-void sub_vec3f( const vec3f* u, const vec3f* v, vec3f* r ){
+void sub_vec3f( vec3f* r, /*<<*/ const vec3f* u, const vec3f* v ){
 	// Calc `u` - `v` = `r`, R^3
 	(*r)[0] = (*u)[0] - (*v)[0];
 	(*r)[1] = (*u)[1] - (*v)[1];
 	(*r)[2] = (*u)[2] - (*v)[2];
 }
 
-void div_vec3f( const vec3f* u, float d, vec3f* r ){
-	// Calc `u` - `v` = `r`, R^3
+void div_vec3f( vec3f* r, /*<<*/ const vec3f* u, float d ){
+	// Calc `u` / `d` = `r`, R^3
 	(*r)[0] = (*u)[0] / d;
 	(*r)[1] = (*u)[1] / d;
 	(*r)[2] = (*u)[2] / d;
 }
+
+
+void scale_vec3f( vec3f* r, /*<<*/ const vec3f* u, float f ){
+	// Calc `u` * `f` = `r`, R^3
+	(*r)[0] = (*u)[0] * f;
+	(*r)[1] = (*u)[1] * f;
+	(*r)[2] = (*u)[2] * f;
+}
+
 
 float norm_vec3f( const vec3f* vec ){  
 	// Euclidean length of an R^3
@@ -111,11 +129,11 @@ float norm_vec3f( const vec3f* vec ){
 float diff_vec3f( const vec3f* u, const vec3f* v ){  
 	// Euclidean length of `u`-`v`
 	vec3f r;  
-	sub_vec3f( u, v, &r );
+	sub_vec3f( &r, u, v );
 	return norm_vec3f( &r );
 } 
 
-void unit_vec3f( const vec3f* vec, vec3f* unt ){
+void unit_vec3f( vec3f* unt, /*<<*/ const vec3f* vec ){
 	// Calc the unit direction of `vec` and store in `unt`, R^3
 	float mag = norm_vec3f( vec );
 	if( mag > 0.0 ){
@@ -129,7 +147,7 @@ void unit_vec3f( const vec3f* vec, vec3f* unt ){
 	}
 }
 
-void cross_vec3f( const vec3f* u, const vec3f* v, vec3f* p ){
+void cross_vec3f( vec3f* p, /*<<*/ const vec3f* u, const vec3f* v ){
 	// Calc `u` X `v` = `p`, R^3
 	// Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
 	(*p)[0] = (*u)[1]*(*v)[2] - (*u)[2]*(*v)[1];
@@ -137,13 +155,13 @@ void cross_vec3f( const vec3f* u, const vec3f* v, vec3f* p ){
 	(*p)[2] = (*u)[0]*(*v)[1] - (*u)[1]*(*v)[0];
 }
 
-float dot_vec3f( const vec3f* u, const vec3f* v ){
+float dot_vec3f( const vec3f* u, /*<<*/ const vec3f* v ){
 	// Calc `u` * `v` = `p`, R^3
 	// Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
 	return (*u)[0]*(*v)[0] + (*u)[1]*(*v)[1] + (*u)[2]*(*v)[2];
 }
 
-void tri_center( const vec3f* v0, const vec3f* v1, const vec3f* v2, vec3f* c ){
+void tri_center( vec3f* c, /*<<*/ const vec3f* v0, const vec3f* v1, const vec3f* v2 ){
 	// Calc centroid of 3 R^3 points
 	// Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
 	(*c)[0] = ((*v0)[0] + (*v1)[0] + (*v2)[0]) / 3.0f;
@@ -151,7 +169,7 @@ void tri_center( const vec3f* v0, const vec3f* v1, const vec3f* v2, vec3f* c ){
 	(*c)[2] = ((*v0)[2] + (*v1)[2] + (*v2)[2]) / 3.0f;
 }
 
-void seg_center( const vec3f* v0, const vec3f* v1, vec3f* c ){
+void seg_center( vec3f* c, /*<<*/ const vec3f* v0, const vec3f* v1 ){
 	// Calc centroid of 2 R^3 points
 	// Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
 	(*c)[0] = ((*v0)[0] + (*v1)[0]) / 2.0f;
@@ -202,6 +220,7 @@ typedef struct {
 
 } Camera3D;
 
+
 /// Methods ///
 void look( const Camera3D camera ){
 	// Set camera position, target, and orientation
@@ -213,6 +232,7 @@ void look( const Camera3D camera ){
 
 
 ////////// MEMORY OPERATIONS ///////////////////////////////////////////////////////////////////////
+// NOTE: Information Flow is ( <LHS Result Args>  <-to--  <RHS Input Args> )
 
 matx_Nx3f* matrix_new_Nx3f( size_t rows ){
 	// Allocate a 2D matrix and return a pointer to it, ROW MAJOR
@@ -238,7 +258,7 @@ matx_Nx4f* matrix_new_Nx4f( size_t rows ){
 }
 
 
-void load_3f_to_row( matx_Nx3f* matx, size_t i, float x, float y, float z ){
+void load_row_from_3f( matx_Nx3f* matx, size_t i, /*<<*/ float x, float y, float z ){
 	// Load an R^3 vector into row `i` of `matx`
 	(*matx)[i][0] = x;
 	(*matx)[i][1] = y;
@@ -246,14 +266,14 @@ void load_3f_to_row( matx_Nx3f* matx, size_t i, float x, float y, float z ){
 }
 
 
-void load_2f_to_row( matx_Nx2f* matx, size_t i, float x, float y ){
+void load_row_from_2f( matx_Nx2f* matx, size_t i, /*<<*/ float x, float y ){
 	// Load an R^3 vector into row `i` of `matx`
 	(*matx)[i][0] = x;
 	(*matx)[i][1] = y;
 }
 
 
-void load_4f_to_row( matx_Nx4f* matx, size_t i, float w, float x, float y, float z ){
+void load_row_from_4f( matx_Nx4f* matx, size_t i, /*<<*/ float w, float x, float y, float z ){
 	// Load an R^3 vector into row `i` of `matx`
 	(*matx)[i][0] = w;
 	(*matx)[i][1] = x;
@@ -262,7 +282,7 @@ void load_4f_to_row( matx_Nx4f* matx, size_t i, float w, float x, float y, float
 }
 
 
-void load_vec3f_to_row( matx_Nx3f* matx, size_t i, const vec3f* vec ){
+void load_row_from_vec3f( matx_Nx3f* matx, size_t i, /*<<*/ const vec3f* vec ){
 	// Load an R^3 vector into row `i` of `matx`
 	(*matx)[i][0] = (*vec)[0];
 	(*matx)[i][1] = (*vec)[1];
@@ -270,14 +290,14 @@ void load_vec3f_to_row( matx_Nx3f* matx, size_t i, const vec3f* vec ){
 }
 
 
-void load_row_to_vec3f( const matx_Nx3f* matx, size_t i, vec3f* vec ){
+void load_vec3f_from_row( vec3f* vec, /*<<*/ const matx_Nx3f* matx, size_t i ){
 	(*vec)[0] = (*matx)[i][0];
 	(*vec)[1] = (*matx)[i][1];
 	(*vec)[2] = (*matx)[i][2];
 }
 
 
-void load_row_to_glVtx3f( const matx_Nx3f* matx, size_t i ){  
+void send_row_to_glVtx3f( const matx_Nx3f* matx, size_t i ){  
 	// Set vertex with a matrix row
 	glVertex3f( (*matx)[i][0], (*matx)[i][1], (*matx)[i][2] );  
 } 
@@ -291,7 +311,7 @@ matx_Nx3u* matrix_new_Nx3u( size_t rows ){
 }
 
 
-void load_3u_to_row( matx_Nx3u* matx, size_t i, uint v1, uint v2, uint v3 ){
+void load_row_from_3u( matx_Nx3u* matx, size_t i, /*<<*/ uint v1, uint v2, uint v3 ){
 	// Load an I^3 vector into row `i` of `matx`
 	(*matx)[i][0] = v1;
 	(*matx)[i][1] = v2;
@@ -299,7 +319,7 @@ void load_3u_to_row( matx_Nx3u* matx, size_t i, uint v1, uint v2, uint v3 ){
 }
 
 
-void load_row_to_vec3u( const matx_Nx3u* matx, size_t i, vec3u* vec ){
+void load_vec3u_from_row( vec3u* vec, /*<<*/ const matx_Nx3u* matx, size_t i ){
 	// Load row `i` of `matx` into an I^3 vector
 	(*vec)[0] = (*matx)[i][0];
 	(*vec)[1] = (*matx)[i][1];
