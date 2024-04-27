@@ -4,9 +4,7 @@
 * `[Y]` Sphere, 2024-04-22: LET'S FUCKING GOOOOO
 * `[Y]` Geo Shader Tut, 2024-04-22: Geo shader does not really store non-geo state, Not executed in particular order
     - `[N]` Choose a tut to implement, 2024-04-22: May not be the correct tool for the job
-
-* `[<]` Left-to-Right Argument convention!
-
+* `[Y]` Left-to-Right Argument convention!, 2024-04-27: Implemented a consistent convention for naming functions and ordering function arguments that reflects C's Left-to-Right lexical flow of data for assignment.  Conventions should make thinking about the problem **easier**!
 * `[>]` Atmos particles on the CPU
     - `[Y]` Icos, 2024-04-23: Drawn
         * `[Y]` Draw as wireframe, 2024-04-23: Drawn
@@ -19,14 +17,14 @@
     - `[>]` Per-face particles
         * `[Y]` Init particles, 2024-04-27: Testing req'd
         * `[>]` Render: Particles + Wireframe + Planet
-            - `[>]` Project particles to 3D
+            - `[Y]` Project particles to 3D, 2024-04-27: Testing req'd
 
     - `[>]` Per-face particle motion w/ appealing particle dynamics
         * `[>]` Each cell imparts a fixed accel per frame
         * `[ ]` Clip particle vel at some appropriate value
         * `[ ]` Animate, ignore cell bounds
     - `[ ]` Track boundary-crossing
-        * `[ ]` Detect particle exit
+        * `[ ]` Membership test: Detect particle exit
         * `[ ]` Project R^3 position to R^2 for new cell
         * `[ ]` Limit 32 particles
         * `[ ]` If over limit, Then new particle writes over interior particle  

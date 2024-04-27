@@ -11,6 +11,8 @@
 #include <stdarg.h> // macros to access individual args of a list of unnamed arguments whose number and types are not known to the called function
 #include <math.h>
 #include <stdbool.h> // bool
+#include <limits.h>
+
 
 #include <GL/glut.h>
 
@@ -19,6 +21,7 @@
 #define GL_GLEXT_PROTOTYPES // Important for all of your programs
 #define LEN 8192  // Maximum length of text string
 #define _USE_MATH_DEFINES
+
 
 ///// Aliases /////
 /// Basic ///
@@ -84,12 +87,23 @@ void glClr3f( const vec3f c ){  glColor3f(  c[0] , c[1] , c[2] );  } // Set colo
 ////////// GEOMETRY HELPERS ////////////////////////////////////////////////////////////////////////
 // NOTE: Information Flow is ( <LHS Result Args>  <-to--  <RHS Input Args> )
 
+///// Vectors /////////////////////////////////////////////////////////////
+
 void set_vec3f( vec3f* lh, /*<<*/ const vec3f* rh ){
-	// Calc `u` + `v` = `r`, R^3
+	// Copy array
 	(*lh)[0] = (*rh)[0];
 	(*lh)[1] = (*rh)[1];
 	(*lh)[2] = (*rh)[2];
 }
+
+
+void set_vec3u( vec3u* lh, /*<<*/ const vec3u* rh ){
+	// Copy array
+	(*lh)[0] = (*rh)[0];
+	(*lh)[1] = (*rh)[1];
+	(*lh)[2] = (*rh)[2];
+}
+
 
 void add_vec3f( vec3f* r, /*<<*/ const vec3f* u, const vec3f* v ){
 	// Calc `u` + `v` = `r`, R^3
@@ -98,12 +112,22 @@ void add_vec3f( vec3f* r, /*<<*/ const vec3f* u, const vec3f* v ){
 	(*r)[2] = (*u)[2] + (*v)[2];
 }
 
+
+void add3_vec3f( vec3f* r, /*<<*/ const vec3f* u, const vec3f* v, const vec3f* w ){
+	// Calc `u` + `v` + `w` = `r`, R^3
+	(*r)[0] = (*u)[0] + (*v)[0] + (*w)[0];
+	(*r)[1] = (*u)[1] + (*v)[1] + (*w)[1];
+	(*r)[2] = (*u)[2] + (*v)[2] + (*w)[2];
+}
+
+
 void sub_vec3f( vec3f* r, /*<<*/ const vec3f* u, const vec3f* v ){
 	// Calc `u` - `v` = `r`, R^3
 	(*r)[0] = (*u)[0] - (*v)[0];
 	(*r)[1] = (*u)[1] - (*v)[1];
 	(*r)[2] = (*u)[2] - (*v)[2];
 }
+
 
 void div_vec3f( vec3f* r, /*<<*/ const vec3f* u, float d ){
 	// Calc `u` / `d` = `r`, R^3
@@ -126,12 +150,14 @@ float norm_vec3f( const vec3f* vec ){
 	return sqrtf((*vec)[0]*(*vec)[0] + (*vec)[1]*(*vec)[1] + (*vec)[2]*(*vec)[2]);  
 } 
 
+
 float diff_vec3f( const vec3f* u, const vec3f* v ){  
 	// Euclidean length of `u`-`v`
 	vec3f r;  
 	sub_vec3f( &r, u, v );
 	return norm_vec3f( &r );
 } 
+
 
 void unit_vec3f( vec3f* unt, /*<<*/ const vec3f* vec ){
 	// Calc the unit direction of `vec` and store in `unt`, R^3
@@ -147,6 +173,7 @@ void unit_vec3f( vec3f* unt, /*<<*/ const vec3f* vec ){
 	}
 }
 
+
 void cross_vec3f( vec3f* p, /*<<*/ const vec3f* u, const vec3f* v ){
 	// Calc `u` X `v` = `p`, R^3
 	// Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
@@ -155,11 +182,32 @@ void cross_vec3f( vec3f* p, /*<<*/ const vec3f* u, const vec3f* v ){
 	(*p)[2] = (*u)[0]*(*v)[1] - (*u)[1]*(*v)[0];
 }
 
+
 float dot_vec3f( const vec3f* u, /*<<*/ const vec3f* v ){
 	// Calc `u` * `v` = `p`, R^3
 	// Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
 	return (*u)[0]*(*v)[0] + (*u)[1]*(*v)[1] + (*u)[2]*(*v)[2];
 }
+
+
+float max_elem_vec3f( const vec3f* vec ){  
+	// Euclidean length of an R^3
+	return fmaxf( (*vec)[0], fmaxf( (*vec)[1], (*vec)[2] ) );
+} 
+
+
+///// Segments ////////////////////////////////////////////////////////////
+
+void seg_center( vec3f* c, /*<<*/ const vec3f* v0, const vec3f* v1 ){
+	// Calc centroid of 2 R^3 points
+	// Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
+	(*c)[0] = ((*v0)[0] + (*v1)[0]) / 2.0f;
+	(*c)[1] = ((*v0)[1] + (*v1)[1]) / 2.0f;
+	(*c)[2] = ((*v0)[2] + (*v1)[2]) / 2.0f;
+}
+
+
+///// Triangles ///////////////////////////////////////////////////////////
 
 void tri_center( vec3f* c, /*<<*/ const vec3f* v0, const vec3f* v1, const vec3f* v2 ){
 	// Calc centroid of 3 R^3 points
@@ -169,12 +217,30 @@ void tri_center( vec3f* c, /*<<*/ const vec3f* v0, const vec3f* v1, const vec3f*
 	(*c)[2] = ((*v0)[2] + (*v1)[2] + (*v2)[2]) / 3.0f;
 }
 
-void seg_center( vec3f* c, /*<<*/ const vec3f* v0, const vec3f* v1 ){
-	// Calc centroid of 2 R^3 points
-	// Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
-	(*c)[0] = ((*v0)[0] + (*v1)[0]) / 2.0f;
-	(*c)[1] = ((*v0)[1] + (*v1)[1]) / 2.0f;
-	(*c)[2] = ((*v0)[2] + (*v1)[2]) / 2.0f;
+
+void get_CCW_tri_norm( vec3f* n, /*<<*/ const vec3f* v0, const vec3f* v1, const vec3f* v2 ){
+	// Find the normal vector `n` of a triangle defined by CCW vertices in R^3: {`v0`,`v1`,`v2`}
+	vec3f r1;    sub_vec3f( &r1, v1, v0 );
+	vec3f r2;    sub_vec3f( &r2, v2, v0 );
+	vec3f nBig;  cross_vec3f( &nBig, &r1, &r2 );
+	/*-------*/  unit_vec3f( n, &nBig );
+}
+
+
+float get_tri_area( const vec3f* v0, const vec3f* v1, const vec3f* v2){
+	// Find the area of a triangle defined by vertices in R^3: {`v0`,`v1`,`v2`}
+	vec3f r1;    sub_vec3f( &r1, v1, v0 );
+	vec3f r2;    sub_vec3f( &r2, v2, v0 );
+	vec3f nBig;  cross_vec3f( &nBig, &r1, &r2 );
+	return /**/  norm_vec3f( &nBig )/2.0f;
+}
+
+
+void get_tri_lengths( vec3f* len, /*<<*/ const vec3f* v0, const vec3f* v1, const vec3f* v2){
+	// Find the area of a triangle defined by vertices in R^3: {`v0`,`v1`,`v2`}
+	(*len)[0] = diff_vec3f( v0, v1 );
+	(*len)[1] = diff_vec3f( v1, v2 );
+	(*len)[2] = diff_vec3f( v2, v0 );
 }
 
 
@@ -192,7 +258,7 @@ float  Sinf( float x ){  return (float)sin( (x) * 3.1415927 / 180 );  }
 ////////// TEXT / STATUS ///////////////////////////////////////////////////////////////////////////
 
 void Print( const char* format , ... ){
-	// Convenience routine to output raster text , Use VARARGS to make this more flexible   
+	// Convenience routine to output raster text, Use VARARGS to make this more flexible   
 	// Author: Willem A. Schreüder  
 	char    buf[ LEN ];
 	char*   ch = buf;

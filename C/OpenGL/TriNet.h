@@ -52,24 +52,6 @@ void delete_net( TriNet* net ){
 }
 
 
-void get_CCW_tri_norm( const vec3f* v0, const vec3f* v1, const vec3f* v2, vec3f* n ){
-	// Find the normal vector `n` of a triangle defined by CCW vertices in R^3: {`v0`,`v1`,`v2`}
-	vec3f r1;    sub_vec3f( &r1, v1, v0 );
-	vec3f r2;    sub_vec3f( &r2, v2, v0 );
-	vec3f nBig;  cross_vec3f( &nBig, &r1, &r2 );
-	/*-------*/  unit_vec3f( n, &nBig );
-}
-
-
-float get_tri_area( const vec3f* v0, const vec3f* v1, const vec3f* v2){
-	// Find the area of a triangle defined by vertices in R^3: {`v0`,`v1`,`v2`}
-	vec3f r1;    sub_vec3f( &r1, v1, v0 );
-	vec3f r2;    sub_vec3f( &r2, v2, v0 );
-	vec3f nBig;  cross_vec3f( &nBig, &r1, &r2 );
-	return /**/  norm_vec3f( &nBig )/2.0f;
-}
-
-
 void N_from_VF( uint Ntri_, const matx_Nx3f* V, const matx_Nx3u* F, matx_Nx3f* N ){
 	// Calc all F normals (One per F)
 	vec3f v0;
@@ -80,7 +62,7 @@ void N_from_VF( uint Ntri_, const matx_Nx3f* V, const matx_Nx3u* F, matx_Nx3f* N
 		load_vec3f_from_row( &v0, V, (*F)[i][0] );
 		load_vec3f_from_row( &v1, V, (*F)[i][1] );
 		load_vec3f_from_row( &v2, V, (*F)[i][2] );
-		get_CCW_tri_norm( &v0, &v1, &v2, &n_i );
+		get_CCW_tri_norm( &n_i, &v0, &v1, &v2 );
 		load_row_from_vec3f( N, i, &n_i );
 	}
 }

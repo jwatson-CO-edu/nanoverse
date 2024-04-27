@@ -11,9 +11,6 @@ const float _SCALE = 10.0; //- Scale Dimension
 
 
 
-
-
-
 ///// Triangular Cell /////////////////////////////////////////////////////
 
 typedef struct{
@@ -21,6 +18,7 @@ typedef struct{
 
 	// Bookkeeping //
 	uint  Nmax; // ---- Max number of particles that can occupy this cell
+	uint  Nprt; // ---- Number of particles that currently occupy this cell
 	uint  insrtDex; //- Index for next insert
 	vec2f accel; // --- Per-frame change in velocity
 	float speedLim; //- Max speed of any particle
@@ -61,20 +59,22 @@ void delete_cell( TriCell* cell ){
 }
 
 
-void init_cell( TriCell* cell, uint Nadd, float dimLim, float speedLim_, uint id ){
+void init_cell( TriCell* cell, uint Nadd, float dimLim, float speedLim_, uint id, const vec3u* neighbors_ ){
 	// Populate particles with zero velocity, Set speed limit
 	uint actAdd = min_uint( cell->Nmax, Nadd );
-	for( uint i = 0; i < Nadd; ++i ){
+	uint i /**/ = 0;
+	for( ; i < Nadd; ++i ){
 		load_row_from_4f( cell->prtLocVel, i, randf()*dimLim, randf()*dimLim, 0.0f, 0.0f );
+		cell->triDices[i] = id;
 	}
-	if( actAdd < cell->Nmax ){
-		for( uint i = actAdd; i < cell->Nmax; ++i ){
-			load_row_from_4f( cell->prtLocVel, i, 0.0f, 0.0f, 0.0f, 0.0f );
-		}
+	for( ; i < cell->Nmax; ++i ){
+		load_row_from_4f( cell->prtLocVel, i, 0.0f, 0.0f, 0.0f, 0.0f );
+		cell->triDices[i] = UINT_MAX;
 	}
 	cell->insrtDex = actAdd;
 	cell->speedLim = fabsf( speedLim_ );
 	cell->ID /*-*/ = id;
+	set_vec3u( &(cell->neighbors), neighbors_ );
 }
 
 
@@ -87,7 +87,7 @@ void set_cell_geo( TriCell* cell, const vec3f* v0_3f, const vec3f* v1_3f, const 
 	// Calc local reference frame //
 	sub_vec3f( &xSide, v1_3f, v0_3f );
 	unit_vec3f( &(cell->xBasis), &xSide );
-	get_CCW_tri_norm( v0_3f, v1_3f, v2_3f, &n );
+	get_CCW_tri_norm( &n, v0_3f, v1_3f, v2_3f );
 	cross_vec3f( &(cell->yBasis), &n, &(cell->xBasis) );
 	set_vec3f( &(cell->origin), v0_3f );
 	// Calc planar reference frame //
@@ -133,60 +133,98 @@ void advance_particles( TriCell* cell ){
 	}
 }
 
-// void project_particles_to_points( TriCell* cell ){
-// 	// Lift 2D particles in this cell to 3D points ready to draw
-// 	uint  curID = cell->ID;
-// 	uint  count = 0;
-// 	float pX    = 0.0f;
-// 	float pY    = 0.0f;
-// 	// vec3f x_i   = {0.0f,0.0f,0.0f};
-// 	// vec3f y_i   = {0.0f,0.0f,0.0f};
-// 	vec3f xGlb  = {0.0f,0.0f,0.0f};
-// 	vec3f yGlb  = {0.0f,0.0f,0.0f};
-// 	// 1. For every particle
-// 	for( uint i = 0; i < cell->Nmax; ++i ){
-// 		// 2. If particle belongs to this cell, Then load data and perform updates
-// 		if(cell->triDices[i] == curID){
-// 			scale_vec3f( vec3f* r, &(cell->), float f )		
-// 		}
-// 	}
-// }
+
+void project_particles_to_points( TriCell* cell ){
+	// Lift 2D particles in this cell to 3D points ready to draw
+	uint  curID = cell->ID;
+	uint  j     = 0;
+	float pX    = 0.0f;
+	float pY    = 0.0f;
+	vec3f xDelta = {0.0f,0.0f,0.0f};
+	vec3f yDelta = {0.0f,0.0f,0.0f};
+	vec3f posGlb = {0.0f,0.0f,0.0f};
+	cell->Nprt   = 0;
+	// 1. For every particle
+	for( uint i = 0; i < cell->Nmax; ++i ){
+		// 2. If particle belongs to this cell, Then calc its 3D position
+		if(cell->triDices[i] == curID){
+			scale_vec3f( &xDelta, &(cell->xBasis), pX );
+			scale_vec3f( &yDelta, &(cell->yBasis), pY );
+			add3_vec3f( &posGlb, &(cell->origin), &xDelta, &yDelta );
+			load_row_from_vec3f( cell->pntGlbPos, j, &posGlb );
+			++j;
+		}
+	}
+
+	/* WARNING: TEMPORARY */ cell->Nprt = j;
+
+	// 3. Clear out all rows not representing a member particle // NOT NEEDED?
+	// for( ; j < cell->Nmax; ++j ){
+	// 	load_row_from_3f( cell->pntGlbPos, j, 0.0f, 0.0f, 0.0f );
+	// }
+}
+
+
+void draw_cell_points( TriCell* cell, vec3f pntColor ){
+	// Draw all currently active particles belonging to this cell
+	glColor3f( pntColor[0] , pntColor[1] , pntColor[2] );
+	glBegin( GL_POINTS );
+	for( uint i = 0; i < cell->Nprt; ++i ){  send_row_to_glVtx3f( cell->pntGlbPos, i );  }
+	glEnd();
+}
 
 
 
-// ///// Particle Atmosphere /////////////////////////////////////////////////
+///// Particle Atmosphere /////////////////////////////////////////////////
 
-// typedef struct{
-// 	// Holds net and cell data for a toy atmosphere with cells containing particles that move in a planar fashion
-// 	uint /**/ Ncells; // Number of cells in this atmosphere
-// 	TriNet*   net; // -- Geometric information for atmosphere
-// 	TriCell** cells; //- Array of pointers to cells containing particles
-// }Atmos;
-
-
-// Atmos* alloc_atmos( float radius, uint Nvrt_, uint Ncells_, uint prtclMax_ ){
-// 	// Allocate memory for a toy atmosphere
-// 	Atmos* rtnStruct = malloc( sizeof( *rtnStruct ) ); 
-// 	rtnStruct->Ncells = Ncells_;
-// 	rtnStruct->cells  = malloc( sizeof( TriCell* ) * Ncells_ ); 
-// 	rtnStruct->net    = alloc_net( Ncells_, Nvrt_ );
-// 	for( ubyte i = 0; i < Ncells_; ++i ){
-// 		rtnStruct->cells[i] = alloc_cell( prtclMax_ );
-// 	}
-// 	return rtnStruct;
-// }
+typedef struct{
+	// Holds net and cell data for a toy atmosphere with cells containing particles that move in a planar fashion
+	uint /**/ Ncell; // Number of cells in this atmosphere
+	TriNet*   net; // - Geometric information for atmosphere
+	TriCell** cells; // Array of pointers to cells containing particles
+}Atmos;
 
 
-// void delete_atmos( Atmos* atmos ){
-// 	// Free memory for a toy atmosphere
-// 	for( ubyte i = 0; i < atmos->Ncells; ++i ){
-// 		delete_cell( atmos->cells[i] );
-// 	}
-// 	free( atmos->cells );
-// 	delete_net( atmos->net );
-// 	free( atmos );
-// }
+Atmos* alloc_atmos( float radius, uint Nvrt_, uint Ncells_, uint prtclMax_ ){
+	// Allocate memory for a toy atmosphere
+	Atmos* rtnStruct = malloc( sizeof( *rtnStruct ) ); 
+	rtnStruct->Ncell = Ncells_;
+	rtnStruct->cells = malloc( sizeof( TriCell* ) * Ncells_ ); 
+	rtnStruct->net   = alloc_net( Ncells_, Nvrt_ );
+	for( ubyte i = 0; i < Ncells_; ++i ){
+		rtnStruct->cells[i] = alloc_cell( prtclMax_ );
+	}
+	return rtnStruct;
+}
 
+
+void delete_atmos( Atmos* atmos ){
+	// Free memory for a toy atmosphere
+	for( ubyte i = 0; i < atmos->Ncell; ++i ){
+		delete_cell( atmos->cells[i] );
+	}
+	free( atmos->cells );
+	delete_net( atmos->net );
+	free( atmos );
+}
+
+
+void init_all_cells( Atmos* atmos, uint Nadd, float speedLim_ ){
+	vec3f v0     = {0.0f,0.0f,0.0f};
+	vec3f v1     = {0.0f,0.0f,0.0f};
+	vec3u nghbrs = {0,0,0};
+	for( ubyte i = 0; i < atmos->Ncell; ++i ){	
+		load_vec3f_from_row( &v0    , atmos->net->V, (*atmos->net->F)[i][0] );
+		load_vec3f_from_row( &v1    , atmos->net->V, (*atmos->net->F)[i][1] );
+		load_vec3u_from_row( &nghbrs, atmos->net->A, i                      );
+		init_cell( atmos->cells[i], Nadd, diff_vec3f( &v0, &v1 ), speedLim_, i, &nghbrs );
+	}
+}
+
+
+void draw_all_cells( Atmos* atmos ){
+	// FIXME, START HERE: INVOKE CELL DRAW FUNCTION ACROSS STRUCT
+}
 
 
 ///// Icosahedron /////////////////////////////////////////////////////////
@@ -310,7 +348,7 @@ void display(){
 	// Display status
 	glColor3f( 249/255.0 , 255/255.0 , 99/255.0 ); // Text Yellow
 	glWindowPos2i( 5 , 5 ); // Next raster operation relative to lower lefthand corner of the window
-	Print( "Icosahedron Net Connectivity" );
+	Print( "Particles!" );
 
 	//  Flush and swap
 	glFlush();
