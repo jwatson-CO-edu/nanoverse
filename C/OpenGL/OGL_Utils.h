@@ -90,165 +90,165 @@ void glClr3f( const vec3f c ){  glColor3f(  c[0] , c[1] , c[2] );  } // Set colo
 ///// Vectors /////////////////////////////////////////////////////////////
 
 void set_vec3f( vec3f* lh, /*<<*/ const vec3f* rh ){
-	// Copy array
-	(*lh)[0] = (*rh)[0];
-	(*lh)[1] = (*rh)[1];
-	(*lh)[2] = (*rh)[2];
+    // Copy array
+    (*lh)[0] = (*rh)[0];
+    (*lh)[1] = (*rh)[1];
+    (*lh)[2] = (*rh)[2];
 }
 
 
 void set_vec2f( vec2f* lh, /*<<*/ const vec2f* rh ){
-	// Copy array
-	(*lh)[0] = (*rh)[0];
-	(*lh)[1] = (*rh)[1];
+    // Copy array
+    (*lh)[0] = (*rh)[0];
+    (*lh)[1] = (*rh)[1];
 
 }
 
 
 void set_vec3u( vec3u* lh, /*<<*/ const vec3u* rh ){
-	// Copy array
-	(*lh)[0] = (*rh)[0];
-	(*lh)[1] = (*rh)[1];
-	(*lh)[2] = (*rh)[2];
+    // Copy array
+    (*lh)[0] = (*rh)[0];
+    (*lh)[1] = (*rh)[1];
+    (*lh)[2] = (*rh)[2];
 }
 
 
 void add_vec3f( vec3f* r, /*<<*/ const vec3f* u, const vec3f* v ){
-	// Calc `u` + `v` = `r`, R^3
-	(*r)[0] = (*u)[0] + (*v)[0];
-	(*r)[1] = (*u)[1] + (*v)[1];
-	(*r)[2] = (*u)[2] + (*v)[2];
+    // Calc `u` + `v` = `r`, R^3
+    (*r)[0] = (*u)[0] + (*v)[0];
+    (*r)[1] = (*u)[1] + (*v)[1];
+    (*r)[2] = (*u)[2] + (*v)[2];
 }
 
 
 void add3_vec3f( vec3f* r, /*<<*/ const vec3f* u, const vec3f* v, const vec3f* w ){
-	// Calc `u` + `v` + `w` = `r`, R^3
-	(*r)[0] = (*u)[0] + (*v)[0] + (*w)[0];
-	(*r)[1] = (*u)[1] + (*v)[1] + (*w)[1];
-	(*r)[2] = (*u)[2] + (*v)[2] + (*w)[2];
+    // Calc `u` + `v` + `w` = `r`, R^3
+    (*r)[0] = (*u)[0] + (*v)[0] + (*w)[0];
+    (*r)[1] = (*u)[1] + (*v)[1] + (*w)[1];
+    (*r)[2] = (*u)[2] + (*v)[2] + (*w)[2];
 }
 
 
 void sub_vec3f( vec3f* r, /*<<*/ const vec3f* u, const vec3f* v ){
-	// Calc `u` - `v` = `r`, R^3
-	(*r)[0] = (*u)[0] - (*v)[0];
-	(*r)[1] = (*u)[1] - (*v)[1];
-	(*r)[2] = (*u)[2] - (*v)[2];
+    // Calc `u` - `v` = `r`, R^3
+    (*r)[0] = (*u)[0] - (*v)[0];
+    (*r)[1] = (*u)[1] - (*v)[1];
+    (*r)[2] = (*u)[2] - (*v)[2];
 }
 
 
 void div_vec3f( vec3f* r, /*<<*/ const vec3f* u, float d ){
-	// Calc `u` / `d` = `r`, R^3
-	(*r)[0] = (*u)[0] / d;
-	(*r)[1] = (*u)[1] / d;
-	(*r)[2] = (*u)[2] / d;
+    // Calc `u` / `d` = `r`, R^3
+    (*r)[0] = (*u)[0] / d;
+    (*r)[1] = (*u)[1] / d;
+    (*r)[2] = (*u)[2] / d;
 }
 
 
 void scale_vec3f( vec3f* r, /*<<*/ const vec3f* u, float f ){
-	// Calc `u` * `f` = `r`, R^3
-	(*r)[0] = (*u)[0] * f;
-	(*r)[1] = (*u)[1] * f;
-	(*r)[2] = (*u)[2] * f;
+    // Calc `u` * `f` = `r`, R^3
+    (*r)[0] = (*u)[0] * f;
+    (*r)[1] = (*u)[1] * f;
+    (*r)[2] = (*u)[2] * f;
 }
 
 
 float norm_vec3f( const vec3f* vec ){  
-	// Euclidean length of an R^3
-	return sqrtf((*vec)[0]*(*vec)[0] + (*vec)[1]*(*vec)[1] + (*vec)[2]*(*vec)[2]);  
+    // Euclidean length of an R^3
+    return sqrtf((*vec)[0]*(*vec)[0] + (*vec)[1]*(*vec)[1] + (*vec)[2]*(*vec)[2]);  
 } 
 
 
 float diff_vec3f( const vec3f* u, const vec3f* v ){  
-	// Euclidean length of `u`-`v`
-	vec3f r;  
-	sub_vec3f( &r, u, v );
-	return norm_vec3f( &r );
+    // Euclidean length of `u`-`v`
+    vec3f r;  
+    sub_vec3f( &r, u, v );
+    return norm_vec3f( &r );
 } 
 
 
 void unit_vec3f( vec3f* unt, /*<<*/ const vec3f* vec ){
-	// Calc the unit direction of `vec` and store in `unt`, R^3
-	float mag = norm_vec3f( vec );
-	if( mag > 0.0 ){
-		(*unt)[0] = (*vec)[0] / mag;
-		(*unt)[1] = (*vec)[1] / mag;
-		(*unt)[2] = (*vec)[2] / mag;
-	}else{
-		(*unt)[0] = 0.0f;
-		(*unt)[1] = 0.0f;
-		(*unt)[2] = 0.0f;
-	}
+    // Calc the unit direction of `vec` and store in `unt`, R^3
+    float mag = norm_vec3f( vec );
+    if( mag > 0.0 ){
+        (*unt)[0] = (*vec)[0] / mag;
+        (*unt)[1] = (*vec)[1] / mag;
+        (*unt)[2] = (*vec)[2] / mag;
+    }else{
+        (*unt)[0] = 0.0f;
+        (*unt)[1] = 0.0f;
+        (*unt)[2] = 0.0f;
+    }
 }
 
 
 void cross_vec3f( vec3f* p, /*<<*/ const vec3f* u, const vec3f* v ){
-	// Calc `u` X `v` = `p`, R^3
-	// Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
-	(*p)[0] = (*u)[1]*(*v)[2] - (*u)[2]*(*v)[1];
-	(*p)[1] = (*u)[2]*(*v)[0] - (*u)[0]*(*v)[2];
-	(*p)[2] = (*u)[0]*(*v)[1] - (*u)[1]*(*v)[0];
+    // Calc `u` X `v` = `p`, R^3
+    // Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
+    (*p)[0] = (*u)[1]*(*v)[2] - (*u)[2]*(*v)[1];
+    (*p)[1] = (*u)[2]*(*v)[0] - (*u)[0]*(*v)[2];
+    (*p)[2] = (*u)[0]*(*v)[1] - (*u)[1]*(*v)[0];
 }
 
 
 float dot_vec3f( const vec3f* u, /*<<*/ const vec3f* v ){
-	// Calc `u` * `v` = `p`, R^3
-	// Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
-	return (*u)[0]*(*v)[0] + (*u)[1]*(*v)[1] + (*u)[2]*(*v)[2];
+    // Calc `u` * `v` = `p`, R^3
+    // Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
+    return (*u)[0]*(*v)[0] + (*u)[1]*(*v)[1] + (*u)[2]*(*v)[2];
 }
 
 
 float max_elem_vec3f( const vec3f* vec ){  
-	// Euclidean length of an R^3
-	return fmaxf( (*vec)[0], fmaxf( (*vec)[1], (*vec)[2] ) );
+    // Euclidean length of an R^3
+    return fmaxf( (*vec)[0], fmaxf( (*vec)[1], (*vec)[2] ) );
 } 
 
 
 ///// Segments ////////////////////////////////////////////////////////////
 
 void seg_center( vec3f* c, /*<<*/ const vec3f* v0, const vec3f* v1 ){
-	// Calc centroid of 2 R^3 points
-	// Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
-	(*c)[0] = ((*v0)[0] + (*v1)[0]) / 2.0f;
-	(*c)[1] = ((*v0)[1] + (*v1)[1]) / 2.0f;
-	(*c)[2] = ((*v0)[2] + (*v1)[2]) / 2.0f;
+    // Calc centroid of 2 R^3 points
+    // Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
+    (*c)[0] = ((*v0)[0] + (*v1)[0]) / 2.0f;
+    (*c)[1] = ((*v0)[1] + (*v1)[1]) / 2.0f;
+    (*c)[2] = ((*v0)[2] + (*v1)[2]) / 2.0f;
 }
 
 
 ///// Triangles ///////////////////////////////////////////////////////////
 
 void tri_center( vec3f* c, /*<<*/ const vec3f* v0, const vec3f* v1, const vec3f* v2 ){
-	// Calc centroid of 3 R^3 points
-	// Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
-	(*c)[0] = ((*v0)[0] + (*v1)[0] + (*v2)[0]) / 3.0f;
-	(*c)[1] = ((*v0)[1] + (*v1)[1] + (*v2)[1]) / 3.0f;
-	(*c)[2] = ((*v0)[2] + (*v1)[2] + (*v2)[2]) / 3.0f;
+    // Calc centroid of 3 R^3 points
+    // Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
+    (*c)[0] = ((*v0)[0] + (*v1)[0] + (*v2)[0]) / 3.0f;
+    (*c)[1] = ((*v0)[1] + (*v1)[1] + (*v2)[1]) / 3.0f;
+    (*c)[2] = ((*v0)[2] + (*v1)[2] + (*v2)[2]) / 3.0f;
 }
 
 
 void get_CCW_tri_norm( vec3f* n, /*<<*/ const vec3f* v0, const vec3f* v1, const vec3f* v2 ){
-	// Find the normal vector `n` of a triangle defined by CCW vertices in R^3: {`v0`,`v1`,`v2`}
-	vec3f r1;    sub_vec3f( &r1, v1, v0 );
-	vec3f r2;    sub_vec3f( &r2, v2, v0 );
-	vec3f nBig;  cross_vec3f( &nBig, &r1, &r2 );
-	/*-------*/  unit_vec3f( n, &nBig );
+    // Find the normal vector `n` of a triangle defined by CCW vertices in R^3: {`v0`,`v1`,`v2`}
+    vec3f r1;    sub_vec3f( &r1, v1, v0 );
+    vec3f r2;    sub_vec3f( &r2, v2, v0 );
+    vec3f nBig;  cross_vec3f( &nBig, &r1, &r2 );
+    /*-------*/  unit_vec3f( n, &nBig );
 }
 
 
 float get_tri_area( const vec3f* v0, const vec3f* v1, const vec3f* v2){
-	// Find the area of a triangle defined by vertices in R^3: {`v0`,`v1`,`v2`}
-	vec3f r1;    sub_vec3f( &r1, v1, v0 );
-	vec3f r2;    sub_vec3f( &r2, v2, v0 );
-	vec3f nBig;  cross_vec3f( &nBig, &r1, &r2 );
-	return /**/  norm_vec3f( &nBig )/2.0f;
+    // Find the area of a triangle defined by vertices in R^3: {`v0`,`v1`,`v2`}
+    vec3f r1;    sub_vec3f( &r1, v1, v0 );
+    vec3f r2;    sub_vec3f( &r2, v2, v0 );
+    vec3f nBig;  cross_vec3f( &nBig, &r1, &r2 );
+    return /**/  norm_vec3f( &nBig )/2.0f;
 }
 
 
 void get_tri_lengths( vec3f* len, /*<<*/ const vec3f* v0, const vec3f* v1, const vec3f* v2){
-	// Find the area of a triangle defined by vertices in R^3: {`v0`,`v1`,`v2`}
-	(*len)[0] = diff_vec3f( v0, v1 );
-	(*len)[1] = diff_vec3f( v1, v2 );
-	(*len)[2] = diff_vec3f( v2, v0 );
+    // Find the area of a triangle defined by vertices in R^3: {`v0`,`v1`,`v2`}
+    (*len)[0] = diff_vec3f( v0, v1 );
+    (*len)[1] = diff_vec3f( v1, v2 );
+    (*len)[2] = diff_vec3f( v2, v0 );
 }
 
 
@@ -266,18 +266,18 @@ float  Sinf( float x ){  return (float)sin( (x) * 3.1415927 / 180 );  }
 ////////// TEXT / STATUS ///////////////////////////////////////////////////////////////////////////
 
 void Print( const char* format , ... ){
-	// Convenience routine to output raster text, Use VARARGS to make this more flexible   
-	// Author: Willem A. Schreüder  
-	char    buf[ LEN ];
-	char*   ch = buf;
-	va_list args;
-	//  Turn the parameters into a character string
-	va_start( args , format );
-	vsnprintf( buf , LEN , format , args );
-	va_end( args );
-	//  Display the characters one at a time at the current raster position
-	while( *ch )
-		glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18 , *ch++ );
+    // Convenience routine to output raster text, Use VARARGS to make this more flexible   
+    // Author: Willem A. Schreüder  
+    char    buf[ LEN ];
+    char*   ch = buf;
+    va_list args;
+    //  Turn the parameters into a character string
+    va_start( args , format );
+    vsnprintf( buf , LEN , format , args );
+    va_end( args );
+    //  Display the characters one at a time at the current raster position
+    while( *ch )
+        glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18 , *ch++ );
 }
 
 
@@ -285,22 +285,22 @@ void Print( const char* format , ... ){
 ////////// CAMERA //////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
-	// Camera state goes here
+    // Camera state goes here
 
-	/// Members ///
-	vec3f eyeLoc; // ------------ Camera location (world frame)
-	vec3f lookPt; // ------------ Focus of camera (world frame)
-	vec3f upVctr; // ------------ Direction of "up"
+    /// Members ///
+    vec3f eyeLoc; // ------------ Camera location (world frame)
+    vec3f lookPt; // ------------ Focus of camera (world frame)
+    vec3f upVctr; // ------------ Direction of "up"
 
 } Camera3D;
 
 
 /// Methods ///
 void look( const Camera3D camera ){
-	// Set camera position, target, and orientation
-	gluLookAt( (double) camera.eyeLoc[0], (double) camera.eyeLoc[1], (double) camera.eyeLoc[2],  
-			   (double) camera.lookPt[0], (double) camera.lookPt[1], (double) camera.lookPt[2],  
-			   (double) camera.upVctr[0], (double) camera.upVctr[1], (double) camera.upVctr[2] );
+    // Set camera position, target, and orientation
+    gluLookAt( (double) camera.eyeLoc[0], (double) camera.eyeLoc[1], (double) camera.eyeLoc[2],  
+               (double) camera.lookPt[0], (double) camera.lookPt[1], (double) camera.lookPt[2],  
+               (double) camera.upVctr[0], (double) camera.upVctr[1], (double) camera.upVctr[2] );
 }
 
 
@@ -309,95 +309,95 @@ void look( const Camera3D camera ){
 // NOTE: Information Flow is ( <LHS Result Args>  <-to--  <RHS Input Args> )
 
 matx_Nx3f* matrix_new_Nx3f( size_t rows ){
-	// Allocate a 2D matrix and return a pointer to it, ROW MAJOR
-	// ALERT: 'malloc' without 'delete'
-	matx_Nx3f* ptr = malloc( sizeof( float[rows][3] ) );
-	return ptr;
+    // Allocate a 2D matrix and return a pointer to it, ROW MAJOR
+    // ALERT: 'malloc' without 'delete'
+    matx_Nx3f* ptr = malloc( sizeof( float[rows][3] ) );
+    return ptr;
 }
 
 
 matx_Nx2f* matrix_new_Nx2f( size_t rows ){
-	// Allocate a 2D matrix and return a pointer to it, ROW MAJOR
-	// ALERT: 'malloc' without 'delete'
-	matx_Nx2f* ptr = malloc( sizeof( float[rows][2] ) );
-	return ptr;
+    // Allocate a 2D matrix and return a pointer to it, ROW MAJOR
+    // ALERT: 'malloc' without 'delete'
+    matx_Nx2f* ptr = malloc( sizeof( float[rows][2] ) );
+    return ptr;
 }
 
 
 matx_Nx4f* matrix_new_Nx4f( size_t rows ){
-	// Allocate a 2D matrix and return a pointer to it, ROW MAJOR
-	// ALERT: 'malloc' without 'delete'
-	matx_Nx4f* ptr = malloc( sizeof( float[rows][4] ) );
-	return ptr;
+    // Allocate a 2D matrix and return a pointer to it, ROW MAJOR
+    // ALERT: 'malloc' without 'delete'
+    matx_Nx4f* ptr = malloc( sizeof( float[rows][4] ) );
+    return ptr;
 }
 
 
 void load_row_from_3f( matx_Nx3f* matx, size_t i, /*<<*/ float x, float y, float z ){
-	// Load an R^3 vector into row `i` of `matx`
-	(*matx)[i][0] = x;
-	(*matx)[i][1] = y;
-	(*matx)[i][2] = z;
+    // Load an R^3 vector into row `i` of `matx`
+    (*matx)[i][0] = x;
+    (*matx)[i][1] = y;
+    (*matx)[i][2] = z;
 }
 
 
 void load_row_from_2f( matx_Nx2f* matx, size_t i, /*<<*/ float x, float y ){
-	// Load an R^3 vector into row `i` of `matx`
-	(*matx)[i][0] = x;
-	(*matx)[i][1] = y;
+    // Load an R^3 vector into row `i` of `matx`
+    (*matx)[i][0] = x;
+    (*matx)[i][1] = y;
 }
 
 
 void load_row_from_4f( matx_Nx4f* matx, size_t i, /*<<*/ float w, float x, float y, float z ){
-	// Load an R^3 vector into row `i` of `matx`
-	(*matx)[i][0] = w;
-	(*matx)[i][1] = x;
-	(*matx)[i][2] = y;
-	(*matx)[i][3] = z;
+    // Load an R^3 vector into row `i` of `matx`
+    (*matx)[i][0] = w;
+    (*matx)[i][1] = x;
+    (*matx)[i][2] = y;
+    (*matx)[i][3] = z;
 }
 
 
 void load_row_from_vec3f( matx_Nx3f* matx, size_t i, /*<<*/ const vec3f* vec ){
-	// Load an R^3 vector into row `i` of `matx`
-	(*matx)[i][0] = (*vec)[0];
-	(*matx)[i][1] = (*vec)[1];
-	(*matx)[i][2] = (*vec)[2];
+    // Load an R^3 vector into row `i` of `matx`
+    (*matx)[i][0] = (*vec)[0];
+    (*matx)[i][1] = (*vec)[1];
+    (*matx)[i][2] = (*vec)[2];
 }
 
 
 void load_vec3f_from_row( vec3f* vec, /*<<*/ const matx_Nx3f* matx, size_t i ){
-	(*vec)[0] = (*matx)[i][0];
-	(*vec)[1] = (*matx)[i][1];
-	(*vec)[2] = (*matx)[i][2];
+    (*vec)[0] = (*matx)[i][0];
+    (*vec)[1] = (*matx)[i][1];
+    (*vec)[2] = (*matx)[i][2];
 }
 
 
 void send_row_to_glVtx3f( const matx_Nx3f* matx, size_t i ){  
-	// Set vertex with a matrix row
-	glVertex3f( (*matx)[i][0], (*matx)[i][1], (*matx)[i][2] );  
+    // Set vertex with a matrix row
+    glVertex3f( (*matx)[i][0], (*matx)[i][1], (*matx)[i][2] );  
 } 
 
 
 matx_Nx3u* matrix_new_Nx3u( size_t rows ){
-	// Allocate a 2D matrix and return a pointer to it , ROW MAJOR
-	// ALERT: 'malloc' without 'delete'
-	matx_Nx3u* ptr = malloc( sizeof( uint[rows][3] ) );
-	return ptr;
+    // Allocate a 2D matrix and return a pointer to it , ROW MAJOR
+    // ALERT: 'malloc' without 'delete'
+    matx_Nx3u* ptr = malloc( sizeof( uint[rows][3] ) );
+    return ptr;
 }
 
 
 void load_row_from_3u( matx_Nx3u* matx, size_t i, /*<<*/ uint v1, uint v2, uint v3 ){
-	// Load an I^3 vector into row `i` of `matx`
-	(*matx)[i][0] = v1;
-	(*matx)[i][1] = v2;
-	(*matx)[i][2] = v3;
+    // Load an I^3 vector into row `i` of `matx`
+    (*matx)[i][0] = v1;
+    (*matx)[i][1] = v2;
+    (*matx)[i][2] = v3;
 }
 
 
 void load_vec3u_from_row( vec3u* vec, /*<<*/ const matx_Nx3u* matx, size_t i ){
-	// Load row `i` of `matx` into an I^3 vector
-	(*vec)[0] = (*matx)[i][0];
-	(*vec)[1] = (*matx)[i][1];
-	(*vec)[2] = (*matx)[i][2];
+    // Load row `i` of `matx` into an I^3 vector
+    (*vec)[0] = (*matx)[i][0];
+    (*vec)[1] = (*matx)[i][1];
+    (*vec)[2] = (*matx)[i][2];
 }
 
 #endif
