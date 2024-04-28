@@ -12,6 +12,8 @@
 #include <math.h>
 #include <stdbool.h> // bool
 #include <limits.h>
+#include <time.h>
+#include <errno.h>  
 
 
 #include <GL/glut.h>
@@ -33,6 +35,7 @@ typedef float vec3f[3];
 typedef float matx_Nx2f[][2];
 typedef float matx_Nx3f[][3];
 typedef float matx_Nx4f[][4];
+typedef float matx_Nx6f[][6];
 /// Unsigned Vectors and Matrices ///
 typedef uint vec3u[3];
 typedef uint matx_Nx3u[][3];
@@ -137,6 +140,13 @@ void sub_vec3f( vec3f* r, /*<<*/ const vec3f* u, const vec3f* v ){
 }
 
 
+void sub_vec2f( vec2f* r, /*<<*/ const vec2f* u, const vec2f* v ){
+    // Calc `u` - `v` = `r`, R^2
+    (*r)[0] = (*u)[0] - (*v)[0];
+    (*r)[1] = (*u)[1] - (*v)[1];
+}
+
+
 void div_vec3f( vec3f* r, /*<<*/ const vec3f* u, float d ){
     // Calc `u` / `d` = `r`, R^3
     (*r)[0] = (*u)[0] / d;
@@ -191,10 +201,17 @@ void cross_vec3f( vec3f* p, /*<<*/ const vec3f* u, const vec3f* v ){
 }
 
 
-float dot_vec3f( const vec3f* u, /*<<*/ const vec3f* v ){
+float dot_vec3f( const vec3f* u, const vec3f* v ){
     // Calc `u` * `v` = `p`, R^3
     // Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
     return (*u)[0]*(*v)[0] + (*u)[1]*(*v)[1] + (*u)[2]*(*v)[2];
+}
+
+
+float dot_vec2f( const vec2f* u, const vec2f* v ){
+    // Calc `u` * `v` = `p`, R^3
+    // Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
+    return (*u)[0]*(*v)[0] + (*u)[1]*(*v)[1];
 }
 
 
@@ -332,6 +349,14 @@ matx_Nx4f* matrix_new_Nx4f( size_t rows ){
 }
 
 
+matx_Nx6f* matrix_new_Nx6f( size_t rows ){
+    // Allocate a 2D matrix and return a pointer to it, ROW MAJOR
+    // ALERT: 'malloc' without 'delete'
+    matx_Nx6f* ptr = malloc( sizeof( float[rows][6] ) );
+    return ptr;
+}
+
+
 void load_row_from_3f( matx_Nx3f* matx, size_t i, /*<<*/ float x, float y, float z ){
     // Load an R^3 vector into row `i` of `matx`
     (*matx)[i][0] = x;
@@ -399,5 +424,27 @@ void load_vec3u_from_row( vec3u* vec, /*<<*/ const matx_Nx3u* matx, size_t i ){
     (*vec)[1] = (*matx)[i][1];
     (*vec)[2] = (*matx)[i][2];
 }
+
+////////// ANIMATION HELPERS ///////////////////////////////////////////////////////////////////////
+
+int sleep_ms( long msec ){
+    // Pause main thread: implemented using nanosleep(), continuing the sleep if it is interrupted by a signal
+    // Author: Neuron, https://stackoverflow.com/a/1157217
+    struct timespec ts;
+    int res;
+
+    if(msec < 0){
+        errno = EINVAL;
+        return -1;
+    }
+
+    ts.tv_sec = msec / 1000;
+    ts.tv_nsec = (msec % 1000) * 1000000;
+    do{
+        res = nanosleep(&ts, &ts);
+    }while(res && errno == EINTR);
+    return res;
+}
+
 
 #endif

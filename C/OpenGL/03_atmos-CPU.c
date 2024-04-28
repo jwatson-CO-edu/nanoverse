@@ -11,6 +11,12 @@ const float _SCALE = 10.0; //- Scale Dimension
 
 
 
+////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
+
+
+////////// PROJECT STRUCTS /////////////////////////////////////////////////////////////////////////
+
+
 ///// Triangular Cell /////////////////////////////////////////////////////
 
 typedef struct{
@@ -18,8 +24,8 @@ typedef struct{
 
     // Bookkeeping //
     uint  Nmax; // ---- Max number of particles that can occupy this cell
-    uint  Nprt; // ---- Number of particles that currently occupy this cell
     uint  insrtDex; //- Index for next insert
+    uint  lost; // ---- Count of missing particles
     vec2f accel; // --- Per-frame change in velocity
     float speedLim; //- Max speed of any particle
     uint  ID; // ------ Triangle index in the mesh associated with this cell
@@ -36,6 +42,8 @@ typedef struct{
     matx_Nx4f* prtLocVel; // Local position and velocity of each particle
     uint* /**/ triDices; //- Cell membership of each particle
     matx_Nx3f* pntGlbPos; // 3D position of each drawn point
+    // uint* /**/ dstDices; // Destination cell IDs
+    // matx_Nx6f* pntState; // Particles to be transferred
 
 }TriCell;
 
@@ -47,6 +55,8 @@ TriCell* alloc_cell( uint prtclMax_ ){
     rtnStruct->prtLocVel = matrix_new_Nx4f( prtclMax_ );
     rtnStruct->triDices  = malloc( sizeof( uint ) * prtclMax_ );
     rtnStruct->pntGlbPos = matrix_new_Nx3f( prtclMax_ );
+    // rtnStruct->dstDices  = malloc( sizeof( uint ) * ((uint) prtclMax_/4) );
+    // rtnStruct->pntState  = matrix_new_Nx6f( (uint) prtclMax_/4 );
     return rtnStruct;
 }
 
@@ -69,8 +79,8 @@ void init_cell( TriCell* cell, uint Nadd, float dimLim, uint id, const vec3u* ne
     uint i /**/ = 0;
     
     // 1. Set static state
-    cell->Nprt = actAdd; // ----------------------- Number of particles that currently occupy this cell
     cell->insrtDex = actAdd; // ------------------- Index for next insert
+    cell->lost     = 0; // ------------------------ Count of missing particles
     set_vec2f( &(cell->accel), accel ); // -------- Per-frame change in velocity
     cell->speedLim = fabsf( speedLim_ ); // ------- Max speed of any particle
     cell->ID /*-*/ = id; // ----------------------- Triangle index in the mesh associated with this cell
@@ -167,11 +177,10 @@ void project_particles_to_points( TriCell* cell ){
     vec3f xDelta = {0.0f,0.0f,0.0f};
     vec3f yDelta = {0.0f,0.0f,0.0f};
     vec3f posGlb = {0.0f,0.0f,0.0f};
-    cell->Nprt   = 0;
 
     // printf( "### %u ###", cell->ID );  nl();  
 
-    // 1. For every particle
+    // 1. For every member particle, Calc 3D position for painting
     for( uint i = 0; i < cell->Nmax; ++i ){
         // 2. If particle belongs to this cell, Then calc its 3D position
         if(cell->triDices[i] == curID){
@@ -193,8 +202,6 @@ void project_particles_to_points( TriCell* cell ){
 
     // nl();
 
-    /* WARNING: TEMPORARY */ cell->Nprt = j;
-
     // 3. Clear out all rows not representing a member particle // NOT NEEDED?
     // for( ; j < cell->Nmax; ++j ){
     // 	load_row_from_3f( cell->pntGlbPos, j, 0.0f, 0.0f, 0.0f );
@@ -204,11 +211,70 @@ void project_particles_to_points( TriCell* cell ){
 
 void draw_cell_points( TriCell* cell, vec3f pntColor ){
     // Draw all currently active particles belonging to this cell
+    uint curID = cell->ID;
     project_particles_to_points( cell );
     glColor3f( pntColor[0] , pntColor[1] , pntColor[2] );
     glBegin( GL_POINTS );
-    for( uint i = 0; i < cell->Nprt; ++i ){  send_row_to_glVtx3f( cell->pntGlbPos, i );  }
+    for( uint i = 0; i < cell->Nmax; ++i ){  
+        if( cell->triDices[i] == curID ){  send_row_to_glVtx3f( cell->pntGlbPos, i );  }  
+    }
     glEnd();
+}
+
+
+void rot_90deg_about_orig( vec2f* r, /*<<*/ const vec2f* v ){
+    // Rotate `v` 90 degrees CCW about the origin, R^2
+    // https://www.khanacademy.org/math/geometry/hs-geo-transformations/hs-geo-rotations/a/rotating-shapes
+    (*r)[0] = -(*v)[1];
+    (*r)[1] =  (*v)[0];
+}
+
+
+bool p_pnt_positive_angle_from_seg( const vec2f* pnt, const vec2f* segOrg, const vec2f* segEnd ){
+    // Return true if the `pnt` is on the left of a segment defined bottom --to-> top, `segOrg` --to-> `segEnd `
+    vec2f diffEnd   = {0.0f,0.0f};  sub_vec2f( &diffEnd, segEnd, segOrg );
+    vec2f diffPnt   = {0.0f,0.0f};  sub_vec2f( &diffEnd, pnt   , segOrg );
+    vec2f pointLeft = {0.0f,0.0f};  rot_90deg_about_orig( &pointLeft, &diffEnd );
+    return (dot_vec2f( &diffPnt, &pointLeft ) >= 0.0f);
+}
+
+
+void determine_particle_exits( TriCell* cell ){
+    // Detect if any currently active particles have departed from the cell
+    vec2f posn_i = {0.0f,0.0f};
+    vec2f zero2f = {0.0f,0.0f};
+    uint curID = cell->ID;
+    for( uint i = 0; i < cell->Nmax; ++i ){ 
+        if( cell->triDices[i] == curID ){  
+            posn_i[0] = (*cell->prtLocVel)[i][0];
+            posn_i[1] = (*cell->prtLocVel)[i][1];
+            // Check Neighbor 0 //
+            if( posn_i[1] < 0.0f ){
+                cell->triDices[i] = cell->neighbors[0];
+                continue;
+            }
+            // Check Neighbor 1 //
+            if( !p_pnt_positive_angle_from_seg( &posn_i, &(cell->v1_2f), &(cell->v2_2f) ) ){
+                cell->triDices[i] = cell->neighbors[1];
+                continue;
+            }
+            // Check Neighbor 2 //
+            if( !p_pnt_positive_angle_from_seg( &posn_i, &(cell->v2_2f), &zero2f ) ){
+                cell->triDices[i] = cell->neighbors[2];
+                continue;
+            }
+        }
+    }
+}
+
+
+void transfer_particles( TriCell* recvCell, /*<<*/ TriCell* sendCell ){
+    // FIXME, START HERE: PACKAGE DEPARTURE STATE FOR CAPTURE BY NEIGHBOR CELL
+    // FIXME: INTERPRET DEPARTURE STATE IN LOCAL REFERENCE FRAME
+}
+
+void backfill_particles( TriCell* cell ){
+    // FIXME: ITERATE ALL ROWS, BACKFILL UP TO LOST, ASSUME DEPARTURES HAVE BEEN HANDLED
 }
 
 
@@ -377,9 +443,11 @@ Atmos* create_icos_atmos( float radius, uint prtclMax_, uint Nadd, float speedLi
 }
 
 
-////////// VIEW PROJECTION /////////////////////////////////////////////////////////////////////////
-float w2h =  0.0f; // Aspect ratio
-int   fov = 55; // -- Field of view (for perspective)
+////////// WINDOW STATE & VIEW PROJECTION //////////////////////////////////////////////////////////
+float w2h /**/ =  0.0f; // Aspect ratio
+int   fov /**/ = 55; // -- Field of view (for perspective)
+float lastTime = 0.0f;
+
 
 static void Project(){
     // Set projection
@@ -402,8 +470,10 @@ static void Project(){
     glLoadIdentity();
 }
 
+
+
 ////////// GEOMETRY & CAMERA ///////////////////////////////////////////////////////////////////////
-Camera3D cam = { {5.0f, 2.0f, 2.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f} };
+Camera3D cam = { {4.0f, 2.0f, 2.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f} };
 Atmos*   simpleAtmos;
 
 
@@ -422,6 +492,21 @@ void tick(){
 
 ////////// RENDERING LOOP //////////////////////////////////////////////////////////////////////////
 
+float heartbeat( float targetFPS ){
+    // Attempt to maintain framerate no greater than target. (Period is rounded down to next ms)
+    float currTime   = 0.0f;
+    float framTime   = 0.0f;
+    float target_ms  = 1000.0f / targetFPS;
+    static float FPS = 0.0f;
+    framTime = (float) glutGet( GLUT_ELAPSED_TIME ) - lastTime;
+    if( framTime < target_ms ){ sleep_ms( (long) (target_ms - framTime) );  }
+    currTime = (float) glutGet( GLUT_ELAPSED_TIME );
+    FPS = (1000.0f / (currTime - lastTime)) * 0.125f + FPS * 0.875f; // Filter for readable number
+    lastTime = currTime;
+    return FPS;
+}
+
+
 void display(){
     // Display the scene
     // Adapted from code provided by Willem Schreuder
@@ -430,6 +515,7 @@ void display(){
     vec3f atmClr = {0.0f,1.0f,0.0f};
     vec3f center = {0.0f,0.0f,0.0f};
     vec3f sphClr = {0.0, 14.0f/255.0f, 214.0f/255.0f};
+    float FPS;
 
     //  Clear the image
     glClearDepth( 1.0f );
@@ -444,10 +530,18 @@ void display(){
     draw_net_wireframe( simpleAtmos->net, icsClr );
     draw_all_cells( simpleAtmos, atmClr );
 
+    
+    FPS = heartbeat( 60.0 );
     // Display status
-    glColor3f( 249/255.0 , 255/255.0 , 99/255.0 ); // Text Yellow
+    if( FPS < 40.0f ){
+        glColor3f( 1.0f, 0.0f, 0.0f ); // Text Red
+    }else if( FPS < 50.0f ){
+        glColor3f( 249/255.0f, 255/255.0f, 99/255.0f ); // Text Yellow
+    }else{
+        glColor3f( 45/255.0f, 1.0f, 45/255.0f ); // Text Green
+    }
     glWindowPos2i( 5 , 5 ); // Next raster operation relative to lower lefthand corner of the window
-    Print( "Particles!, %i", glutGet(GLUT_ELAPSED_TIME) );
+    Print( "FPS %f", FPS );
 
     //  Flush and swap
     glFlush();
@@ -470,12 +564,15 @@ void reshape( int width , int height ){
 
 
 int main( int argc , char* argv[] ){
+    init_rand();
+    
     
     // icos = create_icos_VFNA( 2.00 );
-    simpleAtmos = create_icos_atmos( 2.00, 64, 32, 0.00125, 0.00006 );
+    simpleAtmos = create_icos_atmos( 2.00, 128, 64, 0.00125, 0.00006 );
     
     //  Initialize GLUT and process user parameters
     glutInit( &argc , argv );
+    lastTime = (float) glutGet( GLUT_ELAPSED_TIME );
     
     //  Request 500 x 500 pixel window
     glutInitWindowSize( 1000 , 750 );

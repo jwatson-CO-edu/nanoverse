@@ -22,12 +22,11 @@
         * `[Y]` Clip particle vel at some appropriate value, 2024-04-27: They fly!
         * `[Y]` Animate, ignore cell bounds, 2024-04-27: They fly!
 
-    - `[ ]` Track boundary-crossing
-        * `[ ]` Membership test: Detect particle exit
+    - `[>]` Track boundary-crossing
+        * `[>]` Membership test: Detect particle exit
         * `[ ]` Project R^3 position to R^2 for new cell
-        * `[ ]` Limit 32 particles
-        * `[ ]` If over limit, Then new particle writes over interior particle  
-        
+        * `[ ]` Remember to wrap insertion indices --> If over limit, Then new particle writes over interior particle  
+
 * `[ ]` Compute shader test
     - `[ ]` ???
 * `[P]` Atmos particles on the GPU
