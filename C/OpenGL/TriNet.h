@@ -10,16 +10,13 @@
 ///// Polyhedral Net //////////////////////////////////////////////////////
 
 typedef struct{
-    // Holds geo info for a net of triangles
+    // Holds geo info for a polyhedral net of triangles
     uint /*-*/ Nvrt; // Number of vertices
     uint /*-*/ Ntri; // Number of triangles
     matx_Nx3f* V; // Vertices: _________ Ntri X {x,y,z}
     matx_Nx3u* F; // Faces: ____________ Ntri X {v1,v2,v3}, CCW order
     matx_Nx3f* N; // Face Normals: _____ Ntri X {x,y,z}, Normal is the "Zdir" of local coord system
     matx_Nx3u* A; // Adjacent Triangles: Ntri X {f1,f2,f3}, CCW order
-    // matx_Nx3f* orgn; // Local Origin: _____ Ntri X {x,y,z}
-    // matx_Nx3f* xDir; // Local Face X: _____ Ntri X {x,y,z}
-    // matx_Nx3f* yDir; // Local Face Y: _____ Ntri X {x,y,z}
 }TriNet;
 
 
@@ -28,13 +25,10 @@ TriNet* alloc_net( uint Ntri_, uint Nvrt_ ){
     TriNet* rtnStruct = malloc( sizeof( *rtnStruct ) ); 
     rtnStruct->Nvrt = Nvrt_; // ------------------ Number of vertices
     rtnStruct->Ntri = Ntri_; // ------------------ Number of triangles
-    rtnStruct->V = matrix_new_Nx3f( Nvrt_ ); // Vertices: _________ Ntri X {x,y,z}
+    rtnStruct->V = matrix_new_Nx3f( Nvrt_ ); // Vertices: _________ Nvrt X {x,y,z}
     rtnStruct->F = matrix_new_Nx3u( Ntri_ ); // Faces: ____________ Ntri X {v1,v2,v3}, CCW order
     rtnStruct->N = matrix_new_Nx3f( Ntri_ ); // Face Normals: _____ Ntri X {x,y,z}
     rtnStruct->A = matrix_new_Nx3u( Ntri_ ); // Adjacent Triangles: Ntri X {f1,f2,f3}, CCW order
-    // rtnStruct->orgn = matrix_new_Nx3f( Ntri_ ); // Local Face Origin:  Ntri X {x,y,z}
-    // rtnStruct->xDir = matrix_new_Nx3f( Ntri_ ); // Local Face X: _____ Ntri X {x,y,z}
-    // rtnStruct->yDir = matrix_new_Nx3f( Ntri_ ); // Local Face Y: _____ Ntri X {x,y,z}
     return rtnStruct;
 }
 
@@ -45,9 +39,6 @@ void delete_net( TriNet* net ){
     free( net->F );
     free( net->N );
     free( net->A );
-    // free( net->orgn );
-    // free( net->xDir );
-    // free( net->yDir );
     free( net );
 }
 
@@ -105,16 +96,13 @@ void A_from_VF( uint Ntri_, float eps, const matx_Nx3f* V, const matx_Nx3u* F, m
                         load_vec3f_from_row( &vert_j2, V, face_j[(b+1)%3] );
                         // 5. Triangles that share an edge will have their shared vertices listed in an order reverse of the other
                         //    NOTE: We test distance instead of index because some meshes might not have shared vertices
-
                         ++totCompr;
-
                         if( (diff_vec3f( &vert_i1, &vert_j2 ) <= eps) && (diff_vec3f( &vert_i2, &vert_j1 ) <= eps) ){
                             // printf( "! MATCH !\n\n" );
                             ++totMatch;
                             (*A)[i][a] = j;
                             found = true;
                         }
-
                         if( found )  break;
                     }
                 }
@@ -123,12 +111,12 @@ void A_from_VF( uint Ntri_, float eps, const matx_Nx3f* V, const matx_Nx3u* F, m
         }
     }
     printf( "##### There were %i total matches! #####\n", totMatch );
-    printf( "\tThere were %i comparisons made! \n", totCompr );
+    printf( "\tThere were %i comparisons made! \n\n", totCompr );
 }
 
 
 bool p_net_faces_outward_convex( uint Ntri_, uint Nvrt_, const matx_Nx3f* V, const matx_Nx3u* F, const matx_Nx3f* N ){
-    // Return true if the faces of an assumed convex net all F outwards
+    // Return true if the face normals N of an (assumed convex) net all point away from the centroid of vertices
     vec3f total = {0.0f,0.0f,0.0f};
     vec3f oprnd = {0.0f,0.0f,0.0f};
     vec3f centr = {0.0f,0.0f,0.0f};

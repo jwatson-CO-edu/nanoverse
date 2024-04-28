@@ -44,8 +44,10 @@ typedef uint matx_Nx3u[][3];
 
 ////////// PRINTING HELPERS ////////////////////////////////////////////////////////////////////////
 void nl(){  printf( "\n");  }
-void print_vec3f( const vec3f vec ){  printf( "[%f, %f, %f]", vec[0], vec[1], vec[2] );  }
-void print_vec2f( const vec2f vec ){  printf( "[%f, %f]", vec[0], vec[1] );  }
+void print_vec3f( const vec3f vec ){  printf( "[%f, %f, %f] ", vec[0], vec[1], vec[2] );  }
+void print_vec2f( const vec2f vec ){  printf( "[%f, %f] ", vec[0], vec[1] );  }
+
+
 
 ////////// MATH HELPERS ////////////////////////////////////////////////////////////////////////////
 uint min_uint( uint x, uint y ){  return ((x) < (y)) ? (x) : (y);  } 
@@ -74,7 +76,7 @@ int randi( int lo, int hi ){
 
 ubyte rand_ubyte(){
     // Return a pseudo-random unsigned byte
-    return (ubyte) randf( 0.0, 256.0 );
+    return (ubyte) (randf()*256.0f);
 }
 
 
@@ -88,7 +90,7 @@ void glClr3f( const vec3f c ){  glColor3f(  c[0] , c[1] , c[2] );  } // Set colo
 
 
 ////////// GEOMETRY HELPERS ////////////////////////////////////////////////////////////////////////
-// NOTE: Information Flow is ( <LHS Result Args>  <-to--  <RHS Input Args> )
+// NOTE: Information Flow is ( <LHS Result Args>  <<to<<  <RHS Input Args> )
 
 ///// Vectors /////////////////////////////////////////////////////////////
 
@@ -319,7 +321,7 @@ void look( const Camera3D camera ){
 
 
 ////////// MEMORY OPERATIONS ///////////////////////////////////////////////////////////////////////
-// NOTE: Information Flow is ( <LHS Result Args>  <-to--  <RHS Input Args> )
+// NOTE: Information Flow is ( <LHS Result Args>  <<to<<  <RHS Input Args> )
 
 matx_Nx3f* matrix_new_Nx3f( size_t rows ){
     // Allocate a 2D matrix and return a pointer to it, ROW MAJOR
@@ -420,6 +422,8 @@ void load_vec3u_from_row( vec3u* vec, /*<<*/ const matx_Nx3u* matx, size_t i ){
     (*vec)[1] = (*matx)[i][1];
     (*vec)[2] = (*matx)[i][2];
 }
+
+
 
 ////////// ANIMATION HELPERS ///////////////////////////////////////////////////////////////////////
 
