@@ -70,6 +70,39 @@ void delete_cell( TriCell* cell ){
 }
 
 
+void determine_particle_exits( TriCell* cell ){
+    // Detect if any currently active particles have departed from the cell
+    // NOTE: Once per cell, Per timestep
+    vec2f posn_i = {0.0f,0.0f};
+    vec2f zero2f = {0.0f,0.0f};
+    uint curID = cell->ID;
+    for( uint i = 0; i < cell->Nmax; ++i ){ 
+        if( cell->triDices[i] == curID ){  
+            posn_i[0] = (*cell->prtLocVel)[i][0];
+            posn_i[1] = (*cell->prtLocVel)[i][1];
+            // Check Neighbor 0 //
+            if( !p_pnt_positive_angle_from_seg( &posn_i, &zero2f, &(cell->v1_2f) ) ){
+                cell->triDices[i] = cell->neighbors[0];
+                // printf( "Exit!: %u --> %u, ",curID,cell->neighbors[0] );
+                continue;
+            }
+            // Check Neighbor 1 //
+            if( !p_pnt_positive_angle_from_seg( &posn_i, &(cell->v1_2f), &(cell->v2_2f) ) ){
+                cell->triDices[i] = cell->neighbors[1];
+                // printf( "Exit!: %u --> %u, ",curID,cell->neighbors[1] );
+                continue;
+            }
+            // Check Neighbor 2 //
+            if( !p_pnt_positive_angle_from_seg( &posn_i, &(cell->v2_2f), &zero2f ) ){
+                cell->triDices[i] = cell->neighbors[2];
+                // printf( "Exit!: %u --> %u, ",curID,cell->neighbors[2] );
+                continue;
+            }
+        }
+    }
+}
+
+
 void init_cell( TriCell* cell, uint Nadd, float dimLim, uint id, const vec3u* neighbors_, 
                 const vec2f* accel, float speedLim_ ){
     // Populate particles with zero velocity, Set speed limit
@@ -114,10 +147,13 @@ void set_cell_geo( TriCell* cell, const vec3f* v0_3f, const vec3f* v1_3f, const 
     sub_vec3f( &v1delta, v1_3f, &(cell->origin) );
     sub_vec3f( &v2delta, v2_3f, &(cell->origin) );
     cell->v1_2f[0] = dot_vec3f( &(cell->xBasis), &v1delta );
-    cell->v1_2f[1] = dot_vec3f( &(cell->yBasis), &v1delta );
+    cell->v1_2f[1] = 0.0f;
     cell->v2_2f[0] = dot_vec3f( &(cell->xBasis), &v2delta );
     cell->v2_2f[1] = dot_vec3f( &(cell->yBasis), &v2delta );
-    // printf( "%u: ", cell->ID );  print_vec3f( cell->origin );  print_vec3f( cell->xBasis );  print_vec3f( cell->yBasis );  nl();
+    printf( "%u: ", cell->ID );  print_vec2f( cell->v1_2f );  print_vec2f( cell->v2_2f );  nl();
+
+    // // 3. Check for particles that were initialized out of bounds
+    // determine_particle_exits( cell );
 }
 
 
@@ -157,14 +193,10 @@ void advance_particles( TriCell* cell ){
             pX += vX;
             pY += vY;
 
-            // printf("[%f,%f,%f,%f]",pX, pY, vX, vY);  nl();
-
             // 8. Store updated particle info
             load_row_from_4f( cell->prtLocVel, i, pX, pY, vX, vY );
         }
     }
-
-    // nl();
 }
 
 
@@ -178,8 +210,6 @@ void project_particles_to_points( TriCell* cell ){
     vec3f yDelta = {0.0f,0.0f,0.0f};
     vec3f posGlb = {0.0f,0.0f,0.0f};
 
-    // printf( "### %u ###", cell->ID );  nl();  
-
     // 1. For every member particle, Calc 3D position for painting
     for( uint i = 0; i < cell->Nmax; ++i ){
         // 2. If particle belongs to this cell, Then calc its 3D position
@@ -191,21 +221,11 @@ void project_particles_to_points( TriCell* cell ){
             scale_vec3f( &xDelta, &(cell->xBasis), pX );
             scale_vec3f( &yDelta, &(cell->yBasis), pY );
             add3_vec3f( &posGlb, &(cell->origin), &xDelta, &yDelta );
-            
-            // printf("[%f,%f] --> ",pX,pY); print_vec3f( cell->origin );  print_vec3f( xDelta );  print_vec3f( yDelta );  
-            // printf( " --> " );  print_vec3f( posGlb );  nl();
             // 5. Store 3D position
             load_row_from_vec3f( cell->pntGlbPos, j, &posGlb );
             ++j;
         }
     }
-
-    // nl();
-
-    // 3. Clear out all rows not representing a member particle // NOT NEEDED?
-    // for( ; j < cell->Nmax; ++j ){
-    // 	load_row_from_3f( cell->pntGlbPos, j, 0.0f, 0.0f, 0.0f );
-    // }
 }
 
 
@@ -222,78 +242,17 @@ void draw_cell_points( TriCell* cell, vec3f pntColor ){
 }
 
 
-void rot_90deg_about_orig( vec2f* r, /*<<*/ const vec2f* v ){
-    // Rotate `v` 90 degrees CCW about the origin, R^2
-    // https://www.khanacademy.org/math/geometry/hs-geo-transformations/hs-geo-rotations/a/rotating-shapes
-    (*r)[0] = -(*v)[1];
-    (*r)[1] =  (*v)[0];
-}
-
-
-bool p_pnt_positive_angle_from_seg( const vec2f* pnt, const vec2f* segOrg, const vec2f* segEnd ){
-    // Return true if the `pnt` is on the left of a segment defined bottom --to-> top, `segOrg` --to-> `segEnd `
-    vec2f diffEnd   = {0.0f,0.0f};  sub_vec2f( &diffEnd, segEnd, segOrg );
-    vec2f diffPnt   = {0.0f,0.0f};  sub_vec2f( &diffEnd, pnt   , segOrg );
-    vec2f pointLeft = {0.0f,0.0f};  rot_90deg_about_orig( &pointLeft, &diffEnd );
-    return (dot_vec2f( &diffPnt, &pointLeft ) >= 0.0f);
-}
-
-
-void determine_particle_exits( TriCell* cell ){
-    // Detect if any currently active particles have departed from the cell
-    vec2f posn_i = {0.0f,0.0f};
-    vec2f zero2f = {0.0f,0.0f};
-    uint curID = cell->ID;
-    for( uint i = 0; i < cell->Nmax; ++i ){ 
-        if( cell->triDices[i] == curID ){  
-            posn_i[0] = (*cell->prtLocVel)[i][0];
-            posn_i[1] = (*cell->prtLocVel)[i][1];
-            // Check Neighbor 0 //
-            if( posn_i[1] < 0.0f ){
-                cell->triDices[i] = cell->neighbors[0];
-                continue;
-            }
-            // Check Neighbor 1 //
-            if( !p_pnt_positive_angle_from_seg( &posn_i, &(cell->v1_2f), &(cell->v2_2f) ) ){
-                cell->triDices[i] = cell->neighbors[1];
-                continue;
-            }
-            // Check Neighbor 2 //
-            if( !p_pnt_positive_angle_from_seg( &posn_i, &(cell->v2_2f), &zero2f ) ){
-                cell->triDices[i] = cell->neighbors[2];
-                continue;
-            }
-        }
-    }
-}
-
-
-void lift_pnt_2D_to_3D( vec3f* pnt3f, /*<<*/ vec2f* pnt2f, 
-                        const vec3f* origin, const vec3f* xBasis, const vec3f* yBasis ){
-    // Project the local 2D point to the global 3D frame
-    vec3f xLocal;  scale_vec3f( &xLocal, xBasis, (*pnt2f)[0] );
-    vec3f yLocal;  scale_vec3f( &yLocal, yBasis, (*pnt2f)[1] );
-    /*---------*/  add3_vec3f( pnt3f, origin, &xLocal, &yLocal );
-}
-
-
-void project_pnt_3D_to_2D( vec2f* pnt2f, /*<<*/ vec3f* pnt3f,
-                           const vec3f* origin, const vec3f* xBasis, const vec3f* yBasis ){
-    // Project the global 3D point to the local 2D frame
-    vec3f difPnt; sub_vec3f( &difPnt, pnt3f, origin );
-    (*pnt2f)[0] = dot_vec3f( &difPnt, xBasis );
-    (*pnt2f)[1] = dot_vec3f( &difPnt, yBasis );
-}
-
-
 void transfer_particles( TriCell* recvCell, /*<<*/ TriCell* sendCell ){
-    // FIXME, START HERE: PACKAGE DEPARTURE STATE FOR CAPTURE BY NEIGHBOR CELL
-    // FIXME: INTERPRET DEPARTURE STATE IN LOCAL REFERENCE FRAME
+    // Transfer all particles departing `sendCell` that are bound for `recvCell`
+    // NOTE: 3X per cell, Per timestep
 
+    // Outgoing State //
     vec2f postn2f_i = {0.0f,0.0f};
     vec2f veloc2f_i = {0.0f,0.0f};
-    vec3f postn3f_i = {0.0f,0.0f,0.0f};
-    vec3f veloc3f_i = {0.0f,0.0f,0.0f};
+    // Global State //
+    vec3f postn3f = {0.0f,0.0f,0.0f};
+    vec3f veloc3f = {0.0f,0.0f,0.0f};
+    // Incoming State //
     vec2f postn2f_j = {0.0f,0.0f};
     vec2f veloc2f_j = {0.0f,0.0f};
     
@@ -305,17 +264,35 @@ void transfer_particles( TriCell* recvCell, /*<<*/ TriCell* sendCell ){
             postn2f_i[1] = (*sendCell->prtLocVel)[i][1]; // pY
             veloc2f_i[0] = (*sendCell->prtLocVel)[i][2]; // vX
             veloc2f_i[1] = (*sendCell->prtLocVel)[i][3]; // vY
-            lift_pnt_2D_to_3D( &postn3f_i, &postn2f_i, 
-                               &(sendCell->origin), &(sendCell->xBasis), &(sendCell->yBasis) );
-            // FIXME, START HERE: PROJECT ON TO REF FRAME OF RECV CELL
-            // FIXME: COUNT IF LOST @ RECV
-            // FIXME: ADVANCE RECV INSERT INDEX (WRAPPED)
+            lift_pnt_2D_to_3D( &postn3f, &postn2f_i, &(sendCell->origin), &(sendCell->xBasis), &(sendCell->yBasis) );
+            lift_vec_2D_to_3D( &veloc3f, &veloc2f_i, &(sendCell->xBasis), &(sendCell->yBasis) );
+            // 3. Project 3D state onto neighboring cell
+            project_pnt_3D_to_2D( &postn2f_j, &postn3f, &(recvCell->origin), &(recvCell->xBasis), &(recvCell->yBasis) );
+            project_vec_3D_to_2D( &veloc2f_j, &veloc3f, &(recvCell->xBasis), &(recvCell->yBasis) );
+            // 4. Load 2D state at insert point
+            load_row_from_4f( recvCell->prtLocVel, recvCell->insrtDex, 
+                              postn2f_j[0], postn2f_j[1], veloc2f_j[0], veloc2f_j[1] );
+            // 5. If active, Then count overwrite, Else set particle active
+            if( recvCell->triDices[ recvCell->insrtDex ] == recvCell->ID ){  ++(recvCell->lost);  }
+            else{  recvCell->triDices[ recvCell->insrtDex ] = recvCell->ID;  }
+            // 6. Advance the insertion index, making sure to wrap
+            recvCell->insrtDex = (recvCell->insrtDex + 1) % (recvCell->Nmax);
+            // 7. Deactivate departed particle
+            sendCell->triDices[i] = UINT32_MAX;
         }
     }
 }
 
 void backfill_particles( TriCell* cell ){
-    // FIXME: ITERATE ALL ROWS, BACKFILL UP TO LOST, ASSUME DEPARTURES HAVE BEEN HANDLED
+    // Attempt to backfill lost particles, Assume that departures have been handled
+    float dimLim = diff_vec2f( &(cell->v1_2f), &(cell->v2_2f) );
+    for( uint i = 0; ((i < cell->Nmax ) && (cell->lost > 0)); ++i ){ 
+        if( cell->triDices[i] == UINT32_MAX ){  
+            load_row_from_4f( cell->prtLocVel, i, randf()*dimLim, randf()*dimLim, 0.0f, 0.0f );
+            cell->triDices[i] = cell->ID;
+            --(cell->lost);
+        }
+    }
 }
 
 
@@ -386,7 +363,10 @@ void init_atmos( Atmos* atmos, TriNet* filledNet, uint Nadd, float speedLim_, fl
 
 void tick_atmos( Atmos* atmos ){
     // 2. For every cell, Step
-    for( uint i = 0; i < atmos->Ncell; ++i ){  advance_particles( atmos->cells[i] );  }
+    for( uint i = 0; i < atmos->Ncell; ++i ){  
+        advance_particles( atmos->cells[i] );  
+        determine_particle_exits( atmos->cells[i] );
+    }
 }
 
 

@@ -171,11 +171,25 @@ float norm_vec3f( const vec3f* vec ){
 } 
 
 
+float norm_vec2f( const vec2f* vec ){  
+    // Euclidean length of an R^2
+    return sqrtf((*vec)[0]*(*vec)[0] + (*vec)[1]*(*vec)[1]);  
+} 
+
+
 float diff_vec3f( const vec3f* u, const vec3f* v ){  
     // Euclidean length of `u`-`v`
     vec3f r;  
     sub_vec3f( &r, u, v );
     return norm_vec3f( &r );
+} 
+
+
+float diff_vec2f( const vec2f* u, const vec2f* v ){  
+    // Euclidean length of `u`-`v`
+    vec2f r;  
+    sub_vec2f( &r, u, v );
+    return norm_vec2f( &r );
 } 
 
 
@@ -210,7 +224,7 @@ float dot_vec3f( const vec3f* u, const vec3f* v ){
 
 
 float dot_vec2f( const vec2f* u, const vec2f* v ){
-    // Calc `u` * `v` = `p`, R^3
+    // Calc `u` * `v` = `p`, R^2
     return (*u)[0]*(*v)[0] + (*u)[1]*(*v)[1];
 }
 
@@ -221,6 +235,43 @@ float max_elem_vec3f( const vec3f* vec ){
 } 
 
 
+
+///// 2D <---> 3D /////////////////////////////////////////////////////////
+
+void lift_pnt_2D_to_3D( vec3f* pnt3f, /*<<*/ vec2f* pnt2f, 
+                        const vec3f* origin, const vec3f* xBasis, const vec3f* yBasis ){
+    // Project the local 2D point to the global 3D frame
+    vec3f xLocal;  scale_vec3f( &xLocal, xBasis, (*pnt2f)[0] );
+    vec3f yLocal;  scale_vec3f( &yLocal, yBasis, (*pnt2f)[1] );
+    /*---------*/  add3_vec3f( pnt3f, origin, &xLocal, &yLocal );
+}
+
+
+void lift_vec_2D_to_3D( vec3f* vct3f, /*<<*/ vec2f* vct2f, const vec3f* xBasis, const vec3f* yBasis ){
+    // Project the local 2D point to the global 3D frame
+    vec3f xLocal;  scale_vec3f( &xLocal, xBasis, (*vct2f)[0] );
+    vec3f yLocal;  scale_vec3f( &yLocal, yBasis, (*vct2f)[1] );
+    /*---------*/  add_vec3f( vct3f, &xLocal, &yLocal );
+}
+
+
+void project_pnt_3D_to_2D( vec2f* pnt2f, /*<<*/ vec3f* pnt3f,
+                           const vec3f* origin, const vec3f* xBasis, const vec3f* yBasis ){
+    // Project the global 3D point to the local 2D frame
+    vec3f difPnt; sub_vec3f( &difPnt, pnt3f, origin );
+    (*pnt2f)[0] = dot_vec3f( &difPnt, xBasis );
+    (*pnt2f)[1] = dot_vec3f( &difPnt, yBasis );
+}
+
+
+void project_vec_3D_to_2D( vec2f* vct2f, /*<<*/ vec3f* vct3f, const vec3f* xBasis, const vec3f* yBasis ){
+    // Project the global 3D point to the local 2D frame
+    (*vct2f)[0] = dot_vec3f( vct3f, xBasis );
+    (*vct2f)[1] = dot_vec3f( vct3f, yBasis );
+}
+
+
+
 ///// Segments ////////////////////////////////////////////////////////////
 
 void seg_center( vec3f* c, /*<<*/ const vec3f* v0, const vec3f* v1 ){
@@ -228,6 +279,23 @@ void seg_center( vec3f* c, /*<<*/ const vec3f* v0, const vec3f* v1 ){
     (*c)[0] = ((*v0)[0] + (*v1)[0]) / 2.0f;
     (*c)[1] = ((*v0)[1] + (*v1)[1]) / 2.0f;
     (*c)[2] = ((*v0)[2] + (*v1)[2]) / 2.0f;
+}
+
+
+void rot_90deg_about_orig( vec2f* r, /*<<*/ const vec2f* v ){
+    // Rotate `v` 90 degrees CCW about the origin, R^2
+    // https://www.khanacademy.org/math/geometry/hs-geo-transformations/hs-geo-rotations/a/rotating-shapes
+    (*r)[0] = -(*v)[1];
+    (*r)[1] =  (*v)[0];
+}
+
+
+bool p_pnt_positive_angle_from_seg( const vec2f* pnt, const vec2f* segOrg, const vec2f* segEnd ){
+    // Return true if the `pnt` is on the left of a segment defined bottom --to-> top, `segOrg` --to-> `segEnd `
+    vec2f diffEnd   = {0.0f,0.0f};  sub_vec2f( &diffEnd, segEnd, segOrg );
+    vec2f diffPnt   = {0.0f,0.0f};  sub_vec2f( &diffPnt, pnt   , segOrg );
+    vec2f pointLeft = {0.0f,0.0f};  rot_90deg_about_orig( &pointLeft, &diffEnd );
+    return (dot_vec2f( &diffPnt, &pointLeft ) > 0.0f);
 }
 
 

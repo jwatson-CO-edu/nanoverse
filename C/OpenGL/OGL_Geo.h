@@ -19,7 +19,7 @@ void Vertex_sphr( float th , float ph ){
 
 
 
-////////// GEOMETRY DRAWING FUNCTIONS //////////////////////////////////////////////////////////////
+////////// 3D GEOMETRY DRAWING FUNCTIONS ///////////////////////////////////////////////////////////
 
 void draw_cuboid_lined( float x , float y , float z ,
                         float dx , float dy , float dz ,
