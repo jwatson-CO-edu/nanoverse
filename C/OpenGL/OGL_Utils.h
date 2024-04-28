@@ -203,20 +203,18 @@ void cross_vec3f( vec3f* p, /*<<*/ const vec3f* u, const vec3f* v ){
 
 float dot_vec3f( const vec3f* u, const vec3f* v ){
     // Calc `u` * `v` = `p`, R^3
-    // Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
     return (*u)[0]*(*v)[0] + (*u)[1]*(*v)[1] + (*u)[2]*(*v)[2];
 }
 
 
 float dot_vec2f( const vec2f* u, const vec2f* v ){
     // Calc `u` * `v` = `p`, R^3
-    // Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
     return (*u)[0]*(*v)[0] + (*u)[1]*(*v)[1];
 }
 
 
 float max_elem_vec3f( const vec3f* vec ){  
-    // Euclidean length of an R^3
+    // Return the maximum element of the R^3
     return fmaxf( (*vec)[0], fmaxf( (*vec)[1], (*vec)[2] ) );
 } 
 
@@ -225,7 +223,6 @@ float max_elem_vec3f( const vec3f* vec ){
 
 void seg_center( vec3f* c, /*<<*/ const vec3f* v0, const vec3f* v1 ){
     // Calc centroid of 2 R^3 points
-    // Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
     (*c)[0] = ((*v0)[0] + (*v1)[0]) / 2.0f;
     (*c)[1] = ((*v0)[1] + (*v1)[1]) / 2.0f;
     (*c)[2] = ((*v0)[2] + (*v1)[2]) / 2.0f;
@@ -236,7 +233,6 @@ void seg_center( vec3f* c, /*<<*/ const vec3f* v0, const vec3f* v1 ){
 
 void tri_center( vec3f* c, /*<<*/ const vec3f* v0, const vec3f* v1, const vec3f* v2 ){
     // Calc centroid of 3 R^3 points
-    // Source: http://aleph0.clarku.edu/~djoyce/ma131/dotcross.pdf , pg. 3
     (*c)[0] = ((*v0)[0] + (*v1)[0] + (*v2)[0]) / 3.0f;
     (*c)[1] = ((*v0)[1] + (*v1)[1] + (*v2)[1]) / 3.0f;
     (*c)[2] = ((*v0)[2] + (*v1)[2] + (*v2)[2]) / 3.0f;
@@ -262,7 +258,7 @@ float get_tri_area( const vec3f* v0, const vec3f* v1, const vec3f* v2){
 
 
 void get_tri_lengths( vec3f* len, /*<<*/ const vec3f* v0, const vec3f* v1, const vec3f* v2){
-    // Find the area of a triangle defined by vertices in R^3: {`v0`,`v1`,`v2`}
+    // Find the length of the sides of a triangle defined by vertices in R^3: {`v0`,`v1`,`v2`}
     (*len)[0] = diff_vec3f( v0, v1 );
     (*len)[1] = diff_vec3f( v1, v2 );
     (*len)[2] = diff_vec3f( v2, v0 );
