@@ -93,7 +93,7 @@ void init_cell( TriCell* cell, uint Nadd, float dimLim, uint id, const vec3u* ne
     }
     for( ; i < cell->Nmax; ++i ){
         load_row_from_4f( cell->prtLocVel, i, 0.0f, 0.0f, 0.0f, 0.0f );
-        cell->triDices[i] = UINT_MAX;
+        cell->triDices[i] = UINT32_MAX;
     }
 }
 
@@ -268,9 +268,50 @@ void determine_particle_exits( TriCell* cell ){
 }
 
 
+void lift_pnt_2D_to_3D( vec3f* pnt3f, /*<<*/ vec2f* pnt2f, 
+                        const vec3f* origin, const vec3f* xBasis, const vec3f* yBasis ){
+    // Project the local 2D point to the global 3D frame
+    vec3f xLocal;  scale_vec3f( &xLocal, xBasis, (*pnt2f)[0] );
+    vec3f yLocal;  scale_vec3f( &yLocal, yBasis, (*pnt2f)[1] );
+    /*---------*/  add3_vec3f( pnt3f, origin, &xLocal, &yLocal );
+}
+
+
+void project_pnt_3D_to_2D( vec2f* pnt2f, /*<<*/ vec3f* pnt3f,
+                           const vec3f* origin, const vec3f* xBasis, const vec3f* yBasis ){
+    // Project the global 3D point to the local 2D frame
+    vec3f difPnt; sub_vec3f( &difPnt, pnt3f, origin );
+    (*pnt2f)[0] = dot_vec3f( &difPnt, xBasis );
+    (*pnt2f)[1] = dot_vec3f( &difPnt, yBasis );
+}
+
+
 void transfer_particles( TriCell* recvCell, /*<<*/ TriCell* sendCell ){
     // FIXME, START HERE: PACKAGE DEPARTURE STATE FOR CAPTURE BY NEIGHBOR CELL
     // FIXME: INTERPRET DEPARTURE STATE IN LOCAL REFERENCE FRAME
+
+    vec2f postn2f_i = {0.0f,0.0f};
+    vec2f veloc2f_i = {0.0f,0.0f};
+    vec3f postn3f_i = {0.0f,0.0f,0.0f};
+    vec3f veloc3f_i = {0.0f,0.0f,0.0f};
+    vec2f postn2f_j = {0.0f,0.0f};
+    vec2f veloc2f_j = {0.0f,0.0f};
+    
+    // 1. For every departed particle bound for `recvCell`, do ...
+    for( uint i = 0; i < sendCell->Nmax; ++i ){ 
+        if(sendCell->triDices[i] == recvCell->ID){
+            // 2. Capture 3D state
+            postn2f_i[0] = (*sendCell->prtLocVel)[i][0]; // pX
+            postn2f_i[1] = (*sendCell->prtLocVel)[i][1]; // pY
+            veloc2f_i[0] = (*sendCell->prtLocVel)[i][2]; // vX
+            veloc2f_i[1] = (*sendCell->prtLocVel)[i][3]; // vY
+            lift_pnt_2D_to_3D( &postn3f_i, &postn2f_i, 
+                               &(sendCell->origin), &(sendCell->xBasis), &(sendCell->yBasis) );
+            // FIXME, START HERE: PROJECT ON TO REF FRAME OF RECV CELL
+            // FIXME: COUNT IF LOST @ RECV
+            // FIXME: ADVANCE RECV INSERT INDEX (WRAPPED)
+        }
+    }
 }
 
 void backfill_particles( TriCell* cell ){

@@ -1,4 +1,7 @@
 # `DEV PLAN`
+
+## `[>]` Planet Atmosphere + Compute Shader 
+
 * `[Y]` Orthogonal  Cuboid, 2024-04-22: HELL YES
 * `[Y]` Perspective Cuboid, 2024-04-22: FUCK YES
 * `[Y]` Sphere, 2024-04-22: LET'S FUCKING GOOOOO
@@ -23,13 +26,56 @@
         * `[Y]` Animate, ignore cell bounds, 2024-04-27: They fly!
 
     - `[>]` Track boundary-crossing
-        * `[>]` Membership test: Detect particle exit
-        * `[ ]` Project R^3 position to R^2 for new cell
-        * `[ ]` Remember to wrap insertion indices --> If over limit, Then new particle writes over interior particle  
+        * `[Y]` Membership test: Detect particle exit, 2024-04-28: Testing req'd
+        * `[>]` Particle transfer
+            - `[>]` Project R^3 position to R^2 for new cell
+            - `[ ]` Remember to wrap insertion indices --> If over limit, Then new particle writes over interior particle  
+            - `[ ]` Track lost particles
+        * `[ ]` Backfill lost particles
 
+    - `{?}` Jetstream adjustment?
 * `[ ]` Compute shader test
     - `[ ]` ???
 * `[P]` Atmos particles on the GPU
     - `[Y]` Ask V: How to store persistent state on the GPU?, 2024-04-27: See adv'd graphics Example 20 @ prinmath.com
     - `[Y]` Ask V: Compute Shader --to-> Geometry Shader?, 2024-04-27: See adv'd graphics Example 20 @ prinmath.com
     - `[ ]` ???
+* `[ ]` DELETE CLASS ASSIGNMENT CODE
+
+
+## `[ ]` Computer Graphics Blitz in Pure C + OpenGL + GLUT
+* C++ and Eigen are **DISALLOWED**!
+* Compile: `gcc -std=gnu17 -O3 -Wall <SOURCE FILE>.c -lglut -lGLU -lGL -lm -o <PROG NAME>.out`
+
+### HW2: Lorenz Attractor
+* `[ ]` Multiple, Chasing Traces of System State
+    - `[ ]` Different starting state, Different eq. params
+    - `{?}` Are there versions of the attractor with higher-dimensional state?
+
+### HW3: Nested References Frames with `glPushMatrix`/`glPopMatrix`
+* `[ ]` View newer class material
+
+### HW4: First-Person View in a Scene
+* `[ ]` View newer class material
+
+### HW5: Phong Shading + Moving Light Source(s)
+* `[ ]` View newer class material
+
+### HW6: Shaded & Textured Models
+* `[ ]` View newer class material
+
+### HW7: ???
+* `[ ]` View newer class material
+
+### Example Project: Shadow Mapping
+* `[ ]` View newer class material
+
+
+## `[ ]` Advanced Computer Graphics in Pure C + OpenGL + GLUT
+* C++ and Eigen are **DISALLOWED**!
+
+### HW2: Lorenz Attractor
+* `[ ]` Geometry shader to expand line into a ribbon
+
+### ???
+* `[ ]` ??????
