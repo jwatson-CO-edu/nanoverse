@@ -27,10 +27,17 @@ typedef struct{
     uint  Nmax; // ---- Max number of particles that can occupy this cell
     uint  insrtDex; //- Index for next insert
     uint  lost; // ---- Count of missing particles
-    vec2f accel; // --- Per-frame change in velocity
-    float speedLim; //- Max speed of any particle
     uint  ID; // ------ Triangle index in the mesh associated with this cell
     vec3u neighbors; // Local connectivity
+
+    // Wind Dynamics //
+    float accelLim;
+    vec2f accel; // --- Per-frame change in velocity
+    float speedLim; //- Max speed of any particle
+    float diffusProb; // Probability to exchange wind energy between cells
+    float diffusRate; // Rate of wind exchange
+    float pertrbProb; // Probability to change wind accel randomly
+    float pertrbRate; // Rate to blend in perturbation
     
     // Geometry //
     vec2f v1_2f; //- Vertex 1 in local frame
@@ -43,8 +50,6 @@ typedef struct{
     matx_Nx4f* prtLocVel; // Local position and velocity of each particle
     uint* /**/ triDices; //- Cell membership of each particle
     matx_Nx3f* pntGlbPos; // 3D position of each drawn point
-    // uint* /**/ dstDices; // Destination cell IDs
-    // matx_Nx6f* pntState; // Particles to be transferred
 
 }TriCell;
 
@@ -104,21 +109,40 @@ void determine_particle_exits( TriCell* cell ){
 }
 
 
+void generate_particle_at_row( TriCell* cell, uint row, /*<<*/ uint searchWidth ){
+    // Generate a particle with a slight clumping tendency
+    float stretch  = 2.0f;
+    vec2f position = {0.0f,0.0f};
+    vec2f velocity = {0.0f,0.0f};
+    uint  accum    = 0;
+    for( uint i = 0; i < searchWidth; ++i ){
+        // FIXME, START HERE: GET KIND OF AN AVERAGE STATE
+    }
+}
+
+
 void init_cell( TriCell* cell, uint Nadd, float dimLim, uint id, const vec3u* neighbors_, 
-                const vec2f* accel, float speedLim_ ){
+                float accelLim_, float speedLim_, float diffusProb_, float diffusRate_, float pertrbProb_, float pertrbRate_ ){
     // Populate particles with zero velocity, Set speed limit
     
     // 0. Init
     uint actAdd = min_uint( cell->Nmax, Nadd );
     uint i /**/ = 0;
-    
+    vec2f acl = {0.0f,0.0f};
+    acl[0] = randf_range( -accelLim_, accelLim_ );
+    acl[1] = randf_range( -accelLim_, accelLim_ );
+
     // 1. Set static state
     cell->insrtDex = actAdd; // ------------------- Index for next insert
     cell->lost     = 0; // ------------------------ Count of missing particles
-    set_vec2f( &(cell->accel), accel ); // -------- Per-frame change in velocity
+    set_vec2f( &(cell->accel), &acl ); // -------- Per-frame change in velocity
     cell->speedLim = fabsf( speedLim_ ); // ------- Max speed of any particle
     cell->ID /*-*/ = id; // ----------------------- Triangle index in the mesh associated with this cell
     set_vec3u( &(cell->neighbors), neighbors_ ); // Local connectivity
+    cell->diffusProb = diffusProb_;
+    cell->diffusRate = diffusRate_;
+    cell->pertrbProb = pertrbProb_;
+    cell->pertrbRate = pertrbRate_;
     
     // 2. Set dynamic state: Particle position, speed, and membership
     for( ; i < Nadd; ++i ){
@@ -305,7 +329,25 @@ void backfill_particles( TriCell* cell ){
 
 
 void cell_flow_interaction( TriCell* recvCell, /*<<*/ TriCell* sendCell ){
-    
+    // Perturb and diffuse per-cell wind acceleration 
+    vec2f acl /**/ = {0.0f,0.0f};
+    vec2f tempSend = {0.0f,0.0f};
+    vec2f tempRecv = {0.0f,0.0f};
+    if( randf() <= sendCell->pertrbProb ){
+        acl[0] = randf_range( -(sendCell->accelLim), sendCell->accelLim );
+        acl[1] = randf_range( -(sendCell->accelLim), sendCell->accelLim );
+        blend_vec2f( &(sendCell->accel), &acl, sendCell->pertrbRate, &(sendCell->accel), 1.0f-(sendCell->pertrbRate)  );
+    }
+    if( randf() <= sendCell->diffusProb ){
+        set_vec2f( &tempSend, &(sendCell->accel) );
+        set_vec2f( &tempRecv, &(recvCell->accel) );
+        blend_vec2f( &(sendCell->accel), 
+                     &tempRecv, sendCell->diffusRate, 
+                     &tempSend, 1.0f-(sendCell->diffusRate)  );
+        blend_vec2f( &(recvCell->accel), 
+                     &tempSend, recvCell->diffusRate, 
+                     &tempRecv, 1.0f-(recvCell->diffusRate)  );
+    }
 }
 
 ///// Particle Atmosphere /////////////////////////////////////////////////
@@ -343,13 +385,14 @@ void delete_atmos( Atmos* atmos ){
 }
 
 
-void init_atmos( Atmos* atmos, TriNet* filledNet, uint Nadd, float speedLim_, float accelLim_ ){
+void init_atmos( Atmos* atmos, TriNet* filledNet, uint Nadd, 
+                 float speedLim_, float accelLim_, float diffusProb_, float diffusRate_, float pertrbProb_, float pertrbRate_ ){
     // Set mesh, Allocate cells, Init cells, and Setup cell geometries
     vec3f v0     = {0.0f,0.0f,0.0f};
     vec3f v1     = {0.0f,0.0f,0.0f};
     vec3f v2     = {0.0f,0.0f,0.0f};
     vec3u nghbrs = {0,0,0};
-    vec2f acl_i  = {0.0f,0.0f};
+    // vec2f acl_i  = {0.0f,0.0f};
     // 1. Set mesh
     atmos->net = filledNet;
     // 2. For every cell, Setup ...
@@ -361,10 +404,9 @@ void init_atmos( Atmos* atmos, TriNet* filledNet, uint Nadd, float speedLim_, fl
         load_vec3f_from_row( &v1    , atmos->net->V, (*atmos->net->F)[i][1] );
         load_vec3f_from_row( &v2    , atmos->net->V, (*atmos->net->F)[i][2] );
         load_vec3u_from_row( &nghbrs, atmos->net->A, i                      );
-        acl_i[0] = randf_range( -accelLim_, accelLim_ );
-        acl_i[1] = randf_range( -accelLim_, accelLim_ );
         // 5. Init cell
-        init_cell( atmos->cells[i], Nadd, diff_vec3f( &v0, &v1 ), i, &nghbrs, &acl_i, speedLim_ );
+        init_cell( atmos->cells[i], Nadd, diff_vec3f( &v0, &v1 ), i, &nghbrs, 
+                   accelLim_, speedLim_, diffusProb_, diffusRate_, pertrbProb_, pertrbRate_ );
         // 6. Setup cell geometry
         set_cell_geo( atmos->cells[i], &v0, &v1, &v2 );
         // print_vec3f( v0 );  print_vec3f( v1 );  print_vec3f( v2 );  nl();
@@ -377,6 +419,22 @@ void perform_all_transfers_from_i( Atmos* atmos, uint i ){
     for( uint j = 0; j < 3; ++j ){
         n_j = atmos->cells[i]->neighbors[j];
         transfer_particles( atmos->cells[n_j], atmos->cells[i] );
+        cell_flow_interaction( atmos->cells[n_j], atmos->cells[i] );
+    }
+}
+
+
+void naturalize_flows( Atmos* atmos, uint Nrun ){
+    // Attempt to even out awkward flows
+    uint n_j = 0;
+    for( uint k = 0; k < Nrun; ++k ){  
+        for( uint i = 0; i < atmos->Ncell; ++i ){  
+            for( uint j = 0; j < 3; ++j ){
+                n_j = atmos->cells[i]->neighbors[j];
+                transfer_particles( atmos->cells[n_j], atmos->cells[i] );
+                cell_flow_interaction( atmos->cells[n_j], atmos->cells[i] );
+            }
+        }
     }
 }
 
@@ -595,25 +653,41 @@ TriNet* create_icosphere_VFNA( float radius, uint div ){
 
 ///// Icos Atmos //////////////////////////////////////////////////////////
 
-Atmos* create_icos_atmos( float radius, uint prtclMax_, uint Nadd, float speedLim_, float accelLim_ ){
-    // Allocate and initialize a toy atmosphere based on an icosahedron
-    TriNet* icosNet   = create_icos_VFNA( radius );
-    Atmos*  rtnStruct = alloc_atmos( icosNet->Ntri, prtclMax_ );
-    init_atmos( rtnStruct, icosNet, Nadd, speedLim_, accelLim_ );
-    return rtnStruct;
-}
+// Atmos* create_icos_atmos( float radius, uint prtclMax_, uint Nadd, float speedLim_, float accelLim_ ){
+//     // Allocate and initialize a toy atmosphere based on an icosahedron
+//     TriNet* icosNet   = create_icos_VFNA( radius );
+//     Atmos*  rtnStruct = alloc_atmos( icosNet->Ntri, prtclMax_ );
+//     init_atmos( rtnStruct, icosNet, Nadd, speedLim_, accelLim_ );
+//     return rtnStruct;
+// }
 
 
 ///// Spherical Atmos /////////////////////////////////////////////////////
 
-Atmos* create_icosphere_atmos( float radius, uint div, uint prtclMax_, uint Nadd, float speedLim_, float accelLim_ ){
+Atmos* create_icosphere_atmos( float radius, uint div, uint prtclMax_, uint Nadd, float speedLim_, 
+                               float accelLim_, float diffusProb_, float diffusRate_, float pertrbProb_, float pertrbRate_ ){
     // Allocate and initialize a toy atmosphere based on an icosahedron
     TriNet* sphrNet   = create_icosphere_VFNA( radius, div );
     Atmos*  rtnStruct = alloc_atmos( sphrNet->Ntri, prtclMax_ );
-    init_atmos( rtnStruct, sphrNet, Nadd, speedLim_, accelLim_ );
+    init_atmos( rtnStruct, sphrNet, Nadd, speedLim_, accelLim_, diffusProb_, diffusRate_, pertrbProb_, pertrbRate_ );
     return rtnStruct;
 }
 
+
+
+////////// PROGRAM SETTINGS ////////////////////////////////////////////////////////////////////////
+float _SPHERE_RADIUS =   2.15f;
+float _ATMOS_RADIUS  =   2.25f;
+uint  _ICOS_SUBDIVID =   8;
+uint  _MAX_PRT_CELL  = 128; 
+uint  _INIT_PRT_CELL =  64; 
+float _SPEED_LIMIT   =   0.00125;
+float _ACCEL_LIMIT   =   0.00006;
+float _DIFFUS_PROB   = 1.0f/500.0f;
+float _DIFFUS_RATE   = 0.125;
+float _PERTURB_PROB  = 1.0f/100.0f;
+float _PERTURB_RATE  = 0.5;
+uint  _N_ATMOS_NATR  = 25;
 
 
 ////////// WINDOW STATE & VIEW PROJECTION //////////////////////////////////////////////////////////
@@ -699,7 +773,7 @@ void display(){
     // Set view 
     look( cam );
 
-    draw_sphere( center, 2.15f, sphClr );
+    draw_sphere( center, _SPHERE_RADIUS, sphClr );
     // draw_net_wireframe( simpleAtmos->net, icsClr );
     draw_all_cells( simpleAtmos, atmClr );
 
@@ -741,14 +815,20 @@ int main( int argc , char* argv[] ){
     
     // icos = create_icos_VFNA( 2.00 );
     // simpleAtmos = create_icos_atmos( 2.00, 1024, 512, 0.00125, 0.00006 );
-    simpleAtmos = create_icosphere_atmos( 2.25, 8, 128, 64, 0.00125, 0.00006 );
-    p_net_faces_outward_convex( 
-        simpleAtmos->net->Ntri, 
-        simpleAtmos->net->Nvrt, 
-        simpleAtmos->net->V, 
-        simpleAtmos->net->F, 
-        simpleAtmos->net->N 
+    simpleAtmos = create_icosphere_atmos( 
+        _ATMOS_RADIUS, _ICOS_SUBDIVID, _MAX_PRT_CELL, _INIT_PRT_CELL, 
+        _SPEED_LIMIT, _ACCEL_LIMIT, _DIFFUS_PROB, _DIFFUS_RATE, _PERTURB_PROB, _PERTURB_RATE
     );
+    naturalize_flows( simpleAtmos, _N_ATMOS_NATR );
+
+
+    // p_net_faces_outward_convex( 
+    //     simpleAtmos->net->Ntri, 
+    //     simpleAtmos->net->Nvrt, 
+    //     simpleAtmos->net->V, 
+    //     simpleAtmos->net->F, 
+    //     simpleAtmos->net->N 
+    // );
     
     //  Initialize GLUT and process user parameters
     glutInit( &argc , argv );
