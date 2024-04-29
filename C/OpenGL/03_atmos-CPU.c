@@ -235,13 +235,13 @@ void draw_cell_points( TriCell* cell, vec3f pntColor ){
     // Draw all currently active particles belonging to this cell
     uint curID = cell->ID;
     project_particles_to_points( cell );
-    glColor3f( pntColor[0] , pntColor[1] , pntColor[2] );
-    glBegin( GL_POINTS );
+    // glColor3f( pntColor[0] , pntColor[1] , pntColor[2] );
+    // glBegin( GL_POINTS );
     for( uint i = 0; i < cell->Nmax; ++i ){  
         if( cell->triDices[i] == curID ){  send_row_to_glVtx3f( cell->pntGlbPos, i );  }  
         // if( cell->triDices[i] == 10 ){  send_row_to_glVtx3f( cell->pntGlbPos, i );  }  
     }
-    glEnd();
+    // glEnd();
 }
 
 
@@ -394,7 +394,10 @@ void tick_atmos( Atmos* atmos ){
 
 void draw_all_cells( Atmos* atmos, vec3f pntColor ){
     // Draw the current particles in every cell
+    glColor3f( pntColor[0] , pntColor[1] , pntColor[2] );
+    glBegin( GL_POINTS );
     for( uint i = 0; i < atmos->Ncell; ++i ){  draw_cell_points( atmos->cells[i], pntColor );  }
+    glEnd();
 }
 
 
@@ -475,6 +478,97 @@ TriNet* create_icos_VFNA( float radius ){
 }
 
 
+
+///// Sphere from Divided Icos ////////////////////////////////////////////
+
+TriNet* create_icosphere_mesh_only( float radius, uint div ){
+    vec3f v0, v1, v2, xTri, yTri, vA, vB, vC, nA, nB, nC;
+    vec2f   vct2f;
+    uint    Ntri = 20 * (div*(div+1)/2 + (div-1)*(div)/2);
+    uint    Nvrt = Ntri * 3;
+    TriNet* icos = create_icos_mesh_only( radius );
+    TriNet* sphr = alloc_net( Ntri, Nvrt );
+    uint    k    = 0;
+    uint    m    = 0;
+    // 1. For every triangle in the icos, Load geo data
+    for( ubyte i = 0; i < 20; ++i ){
+        load_vec3f_from_row( &v0, icos->V, (*icos->F)[i][0] );
+        load_vec3f_from_row( &v1, icos->V, (*icos->F)[i][1] );
+        load_vec3f_from_row( &v2, icos->V, (*icos->F)[i][2] );
+        sub_vec3f( &xTri, &v1, &v0 );  scale_vec3f( &xTri, &xTri, 1.0f/((float)div) );
+        sub_vec3f( &yTri, &v2, &v0 );  scale_vec3f( &yTri, &yTri, 1.0f/((float)div) );
+        // 1. For every subdivided row of this triangle, Do ...
+        for( uint row = 1; row <= div; ++row ){
+            // 2. Construct the v0-pointing triangles of this row
+            for( uint j = row ; j > 0 ; j-- ){ 
+                vct2f[0] = (float) (j  );
+                vct2f[1] = (float) (row-j);
+                lift_pnt_2D_to_3D( &vA, &vct2f, &v0, &xTri, &yTri );
+                vct2f[0] = (float) (j-1);
+                vct2f[1] = (float) (row-j+1);
+                lift_pnt_2D_to_3D( &vB, &vct2f, &v0, &xTri, &yTri );
+                vct2f[0] = (float) (j-1);
+                vct2f[1] = (float) (row-j);
+                lift_pnt_2D_to_3D( &vC, &vct2f, &v0, &xTri, &yTri );
+                unit_vec3f( &nA, &vA );
+                unit_vec3f( &nB, &vB );
+                unit_vec3f( &nC, &vC );
+                scale_vec3f( &vA, &nA, radius );
+                scale_vec3f( &vB, &nB, radius );
+                scale_vec3f( &vC, &nC, radius );
+                load_row_from_vec3f( sphr->V, k, &vA );  (*sphr->F)[m][0] = k;  ++k;
+                load_row_from_vec3f( sphr->V, k, &vB );  (*sphr->F)[m][1] = k;  ++k;
+                load_row_from_vec3f( sphr->V, k, &vC );  (*sphr->F)[m][2] = k;  ++k;  ++m; 
+            }
+            // 3. Construct the anti-v0-pointing triangles for this row
+            for( ubyte j = row - 1 ; j > 0 ; j-- ){ 
+                vct2f[0] = (float) (j);
+                vct2f[1] = (float) (row-1-j);
+                lift_pnt_2D_to_3D( &vA, &vct2f, &v0, &xTri, &yTri );
+                vct2f[0] = (float) (j);
+                vct2f[1] = (float) (row-1-j+1);
+                lift_pnt_2D_to_3D( &vB, &vct2f, &v0, &xTri, &yTri );
+                vct2f[0] = (float) (j-1);
+                vct2f[1] = (float) (row-1-j+1);
+                lift_pnt_2D_to_3D( &vC, &vct2f, &v0, &xTri, &yTri );
+                unit_vec3f( &nA, &vA );
+                unit_vec3f( &nB, &vB );
+                unit_vec3f( &nC, &vC );
+                scale_vec3f( &vA, &nA, radius );
+                scale_vec3f( &vB, &nB, radius );
+                scale_vec3f( &vC, &nC, radius );
+                load_row_from_vec3f( sphr->V, k, &vA );  (*sphr->F)[m][0] = k;  ++k;
+                load_row_from_vec3f( sphr->V, k, &vB );  (*sphr->F)[m][1] = k;  ++k;
+                load_row_from_vec3f( sphr->V, k, &vC );  (*sphr->F)[m][2] = k;  ++k;  ++m;
+            }
+        }
+    }
+    delete_net( icos );
+    return sphr;
+}
+
+
+TriNet* create_icosphere_VFNA( float radius, uint div ){
+    // Create an regular icosahedron (*without* unfolded net data)
+    /// Allocate Vertices and Faces ///
+    TriNet* sphrNet = create_icosphere_mesh_only( radius, div );
+    /// Normals ///
+    N_from_VF( sphrNet->Ntri, sphrNet->V, sphrNet->F, sphrNet->N );
+    repair_net_faces_outward_convex( 
+        sphrNet->Ntri, 
+        sphrNet->Nvrt, 
+        sphrNet->V, 
+        sphrNet->F, 
+        sphrNet->N 
+    );
+    /// Advacency ///
+    populate_net_connectivity( sphrNet, 0.005 );
+    /// Return ///
+    return sphrNet;
+}
+
+
+
 ///// Icos Atmos //////////////////////////////////////////////////////////
 
 Atmos* create_icos_atmos( float radius, uint prtclMax_, uint Nadd, float speedLim_, float accelLim_ ){
@@ -484,6 +578,18 @@ Atmos* create_icos_atmos( float radius, uint prtclMax_, uint Nadd, float speedLi
     init_atmos( rtnStruct, icosNet, Nadd, speedLim_, accelLim_ );
     return rtnStruct;
 }
+
+
+///// Spherical Atmos /////////////////////////////////////////////////////
+
+Atmos* create_icosphere_atmos( float radius, uint div, uint prtclMax_, uint Nadd, float speedLim_, float accelLim_ ){
+    // Allocate and initialize a toy atmosphere based on an icosahedron
+    TriNet* sphrNet   = create_icosphere_VFNA( radius, div );
+    Atmos*  rtnStruct = alloc_atmos( sphrNet->Ntri, prtclMax_ );
+    init_atmos( rtnStruct, sphrNet, Nadd, speedLim_, accelLim_ );
+    return rtnStruct;
+}
+
 
 
 ////////// WINDOW STATE & VIEW PROJECTION //////////////////////////////////////////////////////////
@@ -554,7 +660,7 @@ void display(){
     // Display the scene
     // Adapted from code provided by Willem Schreuder
     
-    vec3f icsClr = {1.0f,1.0f,1.0f};
+    // vec3f icsClr = {1.0f,1.0f,1.0f};
     vec3f atmClr = {0.0f,1.0f,0.0f};
     vec3f center = {0.0f,0.0f,0.0f};
     vec3f sphClr = {0.0, 14.0f/255.0f, 214.0f/255.0f};
@@ -569,7 +675,7 @@ void display(){
     // Set view 
     look( cam );
 
-    draw_sphere( center, 1.55f, sphClr );
+    draw_sphere( center, 2.15f, sphClr );
     // draw_net_wireframe( simpleAtmos->net, icsClr );
     draw_all_cells( simpleAtmos, atmClr );
 
@@ -610,7 +716,15 @@ int main( int argc , char* argv[] ){
     init_rand();
     
     // icos = create_icos_VFNA( 2.00 );
-    simpleAtmos = create_icos_atmos( 2.00, 1024, 512, 0.00125, 0.00006 );
+    // simpleAtmos = create_icos_atmos( 2.00, 1024, 512, 0.00125, 0.00006 );
+    simpleAtmos = create_icosphere_atmos( 2.25, 8, 128, 64, 0.00125, 0.00006 );
+    p_net_faces_outward_convex( 
+        simpleAtmos->net->Ntri, 
+        simpleAtmos->net->Nvrt, 
+        simpleAtmos->net->V, 
+        simpleAtmos->net->F, 
+        simpleAtmos->net->N 
+    );
     
     //  Initialize GLUT and process user parameters
     glutInit( &argc , argv );

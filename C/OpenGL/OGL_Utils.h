@@ -484,6 +484,14 @@ void load_row_from_3u( matx_Nx3u* matx, size_t i, /*<<*/ uint v1, uint v2, uint 
 }
 
 
+void load_row_from_vec3u( matx_Nx3u* matx, size_t i, /*<<*/ const vec3u* vec ){
+    // Load an I^3 vector into row `i` of `matx`
+    (*matx)[i][0] = (*vec)[0];
+    (*matx)[i][1] = (*vec)[1];
+    (*matx)[i][2] = (*vec)[2];
+}
+
+
 void load_vec3u_from_row( vec3u* vec, /*<<*/ const matx_Nx3u* matx, size_t i ){
     // Load row `i` of `matx` into an I^3 vector
     (*vec)[0] = (*matx)[i][0];

@@ -10,7 +10,7 @@
 ///// Polyhedral Net //////////////////////////////////////////////////////
 
 typedef struct{
-    // Holds geo info for a polyhedral net of triangles
+    // Holds geo info for a polyhedral net of triangles // WARNING: THERE SHOULD BE A NORMAL FOR EACH VERTEX
     uint /*-*/ Nvrt; // Number of vertices
     uint /*-*/ Ntri; // Number of triangles
     matx_Nx3f* V; // Vertices: _________ Ntri X {x,y,z}
@@ -145,6 +145,41 @@ bool p_net_faces_outward_convex( uint Ntri_, uint Nvrt_, const matx_Nx3f* V, con
     }
     if( allOutward ){  printf( "ALL triangles OKAY!\n" );  }
     return allOutward;
+}
+
+
+void repair_net_faces_outward_convex( uint Ntri_, uint Nvrt_, const matx_Nx3f* V, matx_Nx3u* F, matx_Nx3f* N ){
+    // Return true if the face normals N of an (assumed convex) net all point away from the centroid of vertices
+    vec3f total = {0.0f,0.0f,0.0f};
+    vec3f oprnd = {0.0f,0.0f,0.0f};
+    vec3f centr = {0.0f,0.0f,0.0f};
+    vec3f v0_i  = {0.0f,0.0f,0.0f};
+    vec3f ray_i = {0.0f,0.0f,0.0f};
+    vec3f nrm_i = {0.0f,0.0f,0.0f};
+    float dTest = 0.0f;
+    uint  swap;
+    // Calc Centroid //
+    for( uint i = 0 ; i < Nvrt_ ; ++i ){
+        load_vec3f_from_row( &oprnd, V, i );
+        add_vec3f( &total, &oprnd, &total );
+    }
+    div_vec3f( &centr, &total, (float) Nvrt_ );
+    // Check Each Normal //
+    for( uint i = 0 ; i < Ntri_ ; ++i ){
+        load_vec3f_from_row( &v0_i, V, (*F)[i][0] );
+        load_vec3f_from_row( &nrm_i, N, i         );
+        sub_vec3f( &ray_i, &v0_i, &centr );
+        dTest = dot_vec3f( &ray_i, &nrm_i );
+        // printf( "%f, ", dTest );
+        if( dTest < 0.0f ){
+            printf( "Face %i should be REVERSED!\n", i );
+            swap /*-*/ = (*F)[i][2];
+            (*F)[i][2] = (*F)[i][1];
+            (*F)[i][1] = swap;
+            scale_vec3f( &nrm_i, &nrm_i, -1.0f );
+            load_row_from_vec3f( N, i, &nrm_i );
+        }
+    }
 }
 
 
