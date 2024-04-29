@@ -83,19 +83,19 @@ void determine_particle_exits( TriCell* cell ){
             // Check Neighbor 0 //
             if( !p_pnt_positive_angle_from_seg( &posn_i, &zero2f, &(cell->v1_2f) ) ){
                 cell->triDices[i] = cell->neighbors[0];
-                // printf( "Exit!: %u --> %u, ",curID,cell->neighbors[0] );
+                // print_vec2f(posn_i);printf(" beyond ");print_vec2f(zero2f);printf("---");print_vec2f(cell->v1_2f);nl();
                 continue;
             }
             // Check Neighbor 1 //
             if( !p_pnt_positive_angle_from_seg( &posn_i, &(cell->v1_2f), &(cell->v2_2f) ) ){
                 cell->triDices[i] = cell->neighbors[1];
-                // printf( "Exit!: %u --> %u, ",curID,cell->neighbors[1] );
+                // print_vec2f(posn_i);printf(" beyond ");print_vec2f(cell->v1_2f);printf("---");print_vec2f(cell->v2_2f);nl();
                 continue;
             }
             // Check Neighbor 2 //
             if( !p_pnt_positive_angle_from_seg( &posn_i, &(cell->v2_2f), &zero2f ) ){
                 cell->triDices[i] = cell->neighbors[2];
-                // printf( "Exit!: %u --> %u, ",curID,cell->neighbors[2] );
+                // print_vec2f(posn_i);printf(" beyond ");print_vec2f(cell->v2_2f);printf("---");print_vec2f(zero2f);nl();
                 continue;
             }
         }
@@ -197,13 +197,15 @@ void advance_particles( TriCell* cell ){
             load_row_from_4f( cell->prtLocVel, i, pX, pY, vX, vY );
         }
     }
+
+    // determine_particle_exits( cell );
 }
 
 
 void project_particles_to_points( TriCell* cell ){
     // Lift 2D particles in this cell to 3D points ready to draw
     uint  curID = cell->ID;
-    uint  j     = 0;
+    // uint  j     = 0;
     float pX    = 0.0f;
     float pY    = 0.0f;
     vec3f xDelta = {0.0f,0.0f,0.0f};
@@ -222,8 +224,8 @@ void project_particles_to_points( TriCell* cell ){
             scale_vec3f( &yDelta, &(cell->yBasis), pY );
             add3_vec3f( &posGlb, &(cell->origin), &xDelta, &yDelta );
             // 5. Store 3D position
-            load_row_from_vec3f( cell->pntGlbPos, j, &posGlb );
-            ++j;
+            load_row_from_vec3f( cell->pntGlbPos, i, &posGlb );
+            // ++j;
         }
     }
 }
@@ -237,6 +239,7 @@ void draw_cell_points( TriCell* cell, vec3f pntColor ){
     glBegin( GL_POINTS );
     for( uint i = 0; i < cell->Nmax; ++i ){  
         if( cell->triDices[i] == curID ){  send_row_to_glVtx3f( cell->pntGlbPos, i );  }  
+        // if( cell->triDices[i] == 10 ){  send_row_to_glVtx3f( cell->pntGlbPos, i );  }  
     }
     glEnd();
 }
@@ -286,11 +289,15 @@ void transfer_particles( TriCell* recvCell, /*<<*/ TriCell* sendCell ){
 void backfill_particles( TriCell* cell ){
     // Attempt to backfill lost particles, Assume that departures have been handled
     float dimLim = diff_vec2f( &(cell->v1_2f), &(cell->v2_2f) );
+    float vX, vY;
     for( uint i = 0; ((i < cell->Nmax ) && (cell->lost > 0)); ++i ){ 
         if( cell->triDices[i] == UINT32_MAX ){  
-            load_row_from_4f( cell->prtLocVel, i, randf()*dimLim, randf()*dimLim, 0.0f, 0.0f );
+            vX = (*cell->prtLocVel)[ (i+1) % (cell->Nmax) ][2];
+            vY = (*cell->prtLocVel)[ (i+1) % (cell->Nmax) ][3];
+            load_row_from_4f( cell->prtLocVel, i, randf()*dimLim, randf()*dimLim, vX, vY );
             cell->triDices[i] = cell->ID;
             --(cell->lost);
+            cell->insrtDex = (i+1) % (cell->Nmax);
         }
     }
 }
@@ -361,12 +368,27 @@ void init_atmos( Atmos* atmos, TriNet* filledNet, uint Nadd, float speedLim_, fl
 }
 
 
+void perform_all_transfers_from_i( Atmos* atmos, uint i ){
+    uint n_j = 0;
+    for( uint j = 0; j < 3; ++j ){
+        n_j = atmos->cells[i]->neighbors[j];
+        transfer_particles( atmos->cells[n_j], atmos->cells[i] );
+    }
+}
+
+
 void tick_atmos( Atmos* atmos ){
     // 2. For every cell, Step
     for( uint i = 0; i < atmos->Ncell; ++i ){  
+        backfill_particles( atmos->cells[i] );
         advance_particles( atmos->cells[i] );  
+        
+        perform_all_transfers_from_i( atmos, i );
         determine_particle_exits( atmos->cells[i] );
     }
+    // for( uint i = 0; i < atmos->Ncell; ++i ){  
+    //     backfill_particles( atmos->cells[i] );
+    // }
 }
 
 
@@ -548,7 +570,7 @@ void display(){
     look( cam );
 
     draw_sphere( center, 1.55f, sphClr );
-    draw_net_wireframe( simpleAtmos->net, icsClr );
+    // draw_net_wireframe( simpleAtmos->net, icsClr );
     draw_all_cells( simpleAtmos, atmClr );
 
     
@@ -587,9 +609,8 @@ void reshape( int width , int height ){
 int main( int argc , char* argv[] ){
     init_rand();
     
-    
     // icos = create_icos_VFNA( 2.00 );
-    simpleAtmos = create_icos_atmos( 2.00, 128, 64, 0.00125, 0.00006 );
+    simpleAtmos = create_icos_atmos( 2.00, 1024, 512, 0.00125, 0.00006 );
     
     //  Initialize GLUT and process user parameters
     glutInit( &argc , argv );

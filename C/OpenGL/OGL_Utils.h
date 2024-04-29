@@ -44,8 +44,8 @@ typedef uint matx_Nx3u[][3];
 
 ////////// PRINTING HELPERS ////////////////////////////////////////////////////////////////////////
 void nl(){  printf( "\n");  }
-void print_vec3f( const vec3f vec ){  printf( "[%f, %f, %f] ", vec[0], vec[1], vec[2] );  }
-void print_vec2f( const vec2f vec ){  printf( "[%f, %f] ", vec[0], vec[1] );  }
+void print_vec3f( const vec3f vec ){  printf( "[%f, %f, %f]", vec[0], vec[1], vec[2] );  }
+void print_vec2f( const vec2f vec ){  printf( "[%f, %f]", vec[0], vec[1] );  }
 
 
 
