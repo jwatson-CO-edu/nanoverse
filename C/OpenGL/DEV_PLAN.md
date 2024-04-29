@@ -54,6 +54,7 @@
 
 
 ## `[ ]` Computer Graphics Blitz in Pure C + OpenGL + GLUT
+* Goal: Reinforce fluency in Pure C + Pure OpenGL. I have been spoiled by Raylib + C++!
 * C++ and Eigen are **DISALLOWED**!
 * Compile: `gcc -std=gnu17 -O3 -Wall <SOURCE FILE>.c -lglut -lGLU -lGL -lm -o <PROG NAME>.out`
 
@@ -79,6 +80,8 @@
 
 ### Example Project: Shadow Mapping
 * `[ ]` View newer class material
+* `{?}` Joystick interaction thru GLUT?
+* `{?}` Detect visible/obscured?
 
 
 ## `[ ]` Advanced Computer Graphics in Pure C + OpenGL + GLUT
