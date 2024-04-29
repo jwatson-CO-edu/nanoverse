@@ -42,10 +42,20 @@ typedef uint matx_Nx3u[][3];
 
 
 
-////////// PRINTING HELPERS ////////////////////////////////////////////////////////////////////////
+////////// CONSOLE HELPERS /////////////////////////////////////////////////////////////////////////
 void nl(){  printf( "\n");  }
 void print_vec3f( const vec3f vec ){  printf( "[%f, %f, %f]", vec[0], vec[1], vec[2] );  }
 void print_vec2f( const vec2f vec ){  printf( "[%f, %f]", vec[0], vec[1] );  }
+
+
+
+////////// TRIGONOMETRY (IN DEGREES) ///////////////////////////////////////////////////////////////
+// Cosine and Sine in degrees
+// Author: Willem A. (Vlakkies) Schreüder  
+double Cos( double x ){  return cos( (x) * 3.1415927 / 180 );  }
+double Sin( double x ){  return sin( (x) * 3.1415927 / 180 );  }
+float  Cosf( float x ){  return (float)cos( (x) * 3.1415927 / 180 );  }
+float  Sinf( float x ){  return (float)sin( (x) * 3.1415927 / 180 );  }
 
 
 
@@ -89,24 +99,16 @@ void glClr3f( const vec3f c ){  glColor3f(  c[0] , c[1] , c[2] );  } // Set colo
 
 
 
-////////// GEOMETRY HELPERS ////////////////////////////////////////////////////////////////////////
+////////// 3D GEOMETRY /////////////////////////////////////////////////////////////////////////////
 // NOTE: Information Flow is ( <LHS Result Args>  <<to<<  <RHS Input Args> )
 
-///// Vectors /////////////////////////////////////////////////////////////
+///// 3D Vectors //////////////////////////////////////////////////////////
 
 void set_vec3f( vec3f* lh, /*<<*/ const vec3f* rh ){
     // Copy array
     (*lh)[0] = (*rh)[0];
     (*lh)[1] = (*rh)[1];
     (*lh)[2] = (*rh)[2];
-}
-
-
-void set_vec2f( vec2f* lh, /*<<*/ const vec2f* rh ){
-    // Copy array
-    (*lh)[0] = (*rh)[0];
-    (*lh)[1] = (*rh)[1];
-
 }
 
 
@@ -142,13 +144,6 @@ void sub_vec3f( vec3f* r, /*<<*/ const vec3f* u, const vec3f* v ){
 }
 
 
-void sub_vec2f( vec2f* r, /*<<*/ const vec2f* u, const vec2f* v ){
-    // Calc `u` - `v` = `r`, R^2
-    (*r)[0] = (*u)[0] - (*v)[0];
-    (*r)[1] = (*u)[1] - (*v)[1];
-}
-
-
 void div_vec3f( vec3f* r, /*<<*/ const vec3f* u, float d ){
     // Calc `u` / `d` = `r`, R^3
     (*r)[0] = (*u)[0] / d;
@@ -171,25 +166,11 @@ float norm_vec3f( const vec3f* vec ){
 } 
 
 
-float norm_vec2f( const vec2f* vec ){  
-    // Euclidean length of an R^2
-    return sqrtf((*vec)[0]*(*vec)[0] + (*vec)[1]*(*vec)[1]);  
-} 
-
-
 float diff_vec3f( const vec3f* u, const vec3f* v ){  
     // Euclidean length of `u`-`v`
     vec3f r;  
     sub_vec3f( &r, u, v );
     return norm_vec3f( &r );
-} 
-
-
-float diff_vec2f( const vec2f* u, const vec2f* v ){  
-    // Euclidean length of `u`-`v`
-    vec2f r;  
-    sub_vec2f( &r, u, v );
-    return norm_vec2f( &r );
 } 
 
 
@@ -223,16 +204,123 @@ float dot_vec3f( const vec3f* u, const vec3f* v ){
 }
 
 
+float max_elem_vec3f( const vec3f* vec ){  
+    // Return the maximum element of the R^3
+    return fmaxf( (*vec)[0], fmaxf( (*vec)[1], (*vec)[2] ) );
+} 
+
+
+
+///// 3D Triangles ////////////////////////////////////////////////////////
+
+void tri_center( vec3f* c, /*<<*/ const vec3f* v0, const vec3f* v1, const vec3f* v2 ){
+    // Calc centroid of 3 R^3 points
+    (*c)[0] = ((*v0)[0] + (*v1)[0] + (*v2)[0]) / 3.0f;
+    (*c)[1] = ((*v0)[1] + (*v1)[1] + (*v2)[1]) / 3.0f;
+    (*c)[2] = ((*v0)[2] + (*v1)[2] + (*v2)[2]) / 3.0f;
+}
+
+
+void get_CCW_tri_norm( vec3f* n, /*<<*/ const vec3f* v0, const vec3f* v1, const vec3f* v2 ){
+    // Find the normal vector `n` of a triangle defined by CCW vertices in R^3: {`v0`,`v1`,`v2`}
+    vec3f r1;    sub_vec3f( &r1, v1, v0 );
+    vec3f r2;    sub_vec3f( &r2, v2, v0 );
+    vec3f nBig;  cross_vec3f( &nBig, &r1, &r2 );
+    /*-------*/  unit_vec3f( n, &nBig );
+}
+
+
+float get_tri_area( const vec3f* v0, const vec3f* v1, const vec3f* v2){
+    // Find the area of a triangle defined by vertices in R^3: {`v0`,`v1`,`v2`}
+    vec3f r1;    sub_vec3f( &r1, v1, v0 );
+    vec3f r2;    sub_vec3f( &r2, v2, v0 );
+    vec3f nBig;  cross_vec3f( &nBig, &r1, &r2 );
+    return /**/  norm_vec3f( &nBig )/2.0f;
+}
+
+
+void get_tri_lengths( vec3f* len, /*<<*/ const vec3f* v0, const vec3f* v1, const vec3f* v2){
+    // Find the length of the sides of a triangle defined by vertices in R^3: {`v0`,`v1`,`v2`}
+    (*len)[0] = diff_vec3f( v0, v1 );
+    (*len)[1] = diff_vec3f( v1, v2 );
+    (*len)[2] = diff_vec3f( v2, v0 );
+}
+
+
+
+////////// 2D GEOMETRY /////////////////////////////////////////////////////////////////////////////
+// NOTE: Information Flow is ( <LHS Result Args>  <<to<<  <RHS Input Args> )
+
+
+///// 2D Vectors //////////////////////////////////////////////////////////
+
+void set_vec2f( vec2f* lh, /*<<*/ const vec2f* rh ){
+    // Copy array
+    (*lh)[0] = (*rh)[0];
+    (*lh)[1] = (*rh)[1];
+
+}
+
+
+void sub_vec2f( vec2f* r, /*<<*/ const vec2f* u, const vec2f* v ){
+    // Calc `u` - `v` = `r`, R^2
+    (*r)[0] = (*u)[0] - (*v)[0];
+    (*r)[1] = (*u)[1] - (*v)[1];
+}
+
+
+float norm_vec2f( const vec2f* vec ){  
+    // Euclidean length of an R^2
+    return sqrtf((*vec)[0]*(*vec)[0] + (*vec)[1]*(*vec)[1]);  
+} 
+
+
+float diff_vec2f( const vec2f* u, const vec2f* v ){  
+    // Euclidean length of `u`-`v`
+    vec2f r;  
+    sub_vec2f( &r, u, v );
+    return norm_vec2f( &r );
+} 
+
+
 float dot_vec2f( const vec2f* u, const vec2f* v ){
     // Calc `u` * `v` = `p`, R^2
     return (*u)[0]*(*v)[0] + (*u)[1]*(*v)[1];
 }
 
 
-float max_elem_vec3f( const vec3f* vec ){  
-    // Return the maximum element of the R^3
-    return fmaxf( (*vec)[0], fmaxf( (*vec)[1], (*vec)[2] ) );
-} 
+void blend_vec2f( vec2f* r, /*<<*/ const vec2f* u, float fU, const vec2f* v, float fV ){
+    // Calc the weighted sum `u`*`fU` + `v`*`fV` 
+    (*r)[0] = (*u)[0]*fU + (*v)[0]*fV;
+    (*r)[1] = (*u)[1]*fU + (*v)[1]*fV;
+}
+
+
+void rot_90deg_about_orig( vec2f* r, /*<<*/ const vec2f* v ){
+    // Rotate `v` 90 degrees CCW about the origin, R^2
+    // https://www.khanacademy.org/math/geometry/hs-geo-transformations/hs-geo-rotations/a/rotating-shapes
+    (*r)[0] = -(*v)[1];
+    (*r)[1] =  (*v)[0];
+}
+
+
+///// 2D Segments /////////////////////////////////////////////////////////
+
+void seg_center( vec3f* c, /*<<*/ const vec3f* v0, const vec3f* v1 ){
+    // Calc centroid of 2 R^3 points
+    (*c)[0] = ((*v0)[0] + (*v1)[0]) / 2.0f;
+    (*c)[1] = ((*v0)[1] + (*v1)[1]) / 2.0f;
+    (*c)[2] = ((*v0)[2] + (*v1)[2]) / 2.0f;
+}
+
+
+bool p_pnt_positive_angle_from_seg( const vec2f* pnt, const vec2f* segOrg, const vec2f* segEnd ){
+    // Return true if the `pnt` is on the left of a segment defined bottom --to-> top, `segOrg` --to-> `segEnd `
+    vec2f diffEnd   = {0.0f,0.0f};  sub_vec2f( &diffEnd, segEnd, segOrg );
+    vec2f diffPnt   = {0.0f,0.0f};  sub_vec2f( &diffPnt, pnt   , segOrg );
+    vec2f pointLeft = {0.0f,0.0f};  rot_90deg_about_orig( &pointLeft, &diffEnd );
+    return (dot_vec2f( &diffPnt, &pointLeft ) > 0.0f);
+}
 
 
 
@@ -269,80 +357,6 @@ void project_vec_3D_to_2D( vec2f* vct2f, /*<<*/ vec3f* vct3f, const vec3f* xBasi
     (*vct2f)[0] = dot_vec3f( vct3f, xBasis );
     (*vct2f)[1] = dot_vec3f( vct3f, yBasis );
 }
-
-
-
-///// Segments ////////////////////////////////////////////////////////////
-
-void seg_center( vec3f* c, /*<<*/ const vec3f* v0, const vec3f* v1 ){
-    // Calc centroid of 2 R^3 points
-    (*c)[0] = ((*v0)[0] + (*v1)[0]) / 2.0f;
-    (*c)[1] = ((*v0)[1] + (*v1)[1]) / 2.0f;
-    (*c)[2] = ((*v0)[2] + (*v1)[2]) / 2.0f;
-}
-
-
-void rot_90deg_about_orig( vec2f* r, /*<<*/ const vec2f* v ){
-    // Rotate `v` 90 degrees CCW about the origin, R^2
-    // https://www.khanacademy.org/math/geometry/hs-geo-transformations/hs-geo-rotations/a/rotating-shapes
-    (*r)[0] = -(*v)[1];
-    (*r)[1] =  (*v)[0];
-}
-
-
-bool p_pnt_positive_angle_from_seg( const vec2f* pnt, const vec2f* segOrg, const vec2f* segEnd ){
-    // Return true if the `pnt` is on the left of a segment defined bottom --to-> top, `segOrg` --to-> `segEnd `
-    vec2f diffEnd   = {0.0f,0.0f};  sub_vec2f( &diffEnd, segEnd, segOrg );
-    vec2f diffPnt   = {0.0f,0.0f};  sub_vec2f( &diffPnt, pnt   , segOrg );
-    vec2f pointLeft = {0.0f,0.0f};  rot_90deg_about_orig( &pointLeft, &diffEnd );
-    return (dot_vec2f( &diffPnt, &pointLeft ) > 0.0f);
-}
-
-
-///// Triangles ///////////////////////////////////////////////////////////
-
-void tri_center( vec3f* c, /*<<*/ const vec3f* v0, const vec3f* v1, const vec3f* v2 ){
-    // Calc centroid of 3 R^3 points
-    (*c)[0] = ((*v0)[0] + (*v1)[0] + (*v2)[0]) / 3.0f;
-    (*c)[1] = ((*v0)[1] + (*v1)[1] + (*v2)[1]) / 3.0f;
-    (*c)[2] = ((*v0)[2] + (*v1)[2] + (*v2)[2]) / 3.0f;
-}
-
-
-void get_CCW_tri_norm( vec3f* n, /*<<*/ const vec3f* v0, const vec3f* v1, const vec3f* v2 ){
-    // Find the normal vector `n` of a triangle defined by CCW vertices in R^3: {`v0`,`v1`,`v2`}
-    vec3f r1;    sub_vec3f( &r1, v1, v0 );
-    vec3f r2;    sub_vec3f( &r2, v2, v0 );
-    vec3f nBig;  cross_vec3f( &nBig, &r1, &r2 );
-    /*-------*/  unit_vec3f( n, &nBig );
-}
-
-
-float get_tri_area( const vec3f* v0, const vec3f* v1, const vec3f* v2){
-    // Find the area of a triangle defined by vertices in R^3: {`v0`,`v1`,`v2`}
-    vec3f r1;    sub_vec3f( &r1, v1, v0 );
-    vec3f r2;    sub_vec3f( &r2, v2, v0 );
-    vec3f nBig;  cross_vec3f( &nBig, &r1, &r2 );
-    return /**/  norm_vec3f( &nBig )/2.0f;
-}
-
-
-void get_tri_lengths( vec3f* len, /*<<*/ const vec3f* v0, const vec3f* v1, const vec3f* v2){
-    // Find the length of the sides of a triangle defined by vertices in R^3: {`v0`,`v1`,`v2`}
-    (*len)[0] = diff_vec3f( v0, v1 );
-    (*len)[1] = diff_vec3f( v1, v2 );
-    (*len)[2] = diff_vec3f( v2, v0 );
-}
-
-
-////////// TRIGONOMETRY ////////////////////////////////////////////////////////////////////////////
-
-// Cosine and Sine in degrees
-// Author: Willem A. (Vlakkies) Schreüder  
-double Cos( double x ){  return cos( (x) * 3.1415927 / 180 );  }
-double Sin( double x ){  return sin( (x) * 3.1415927 / 180 );  }
-float  Cosf( float x ){  return (float)cos( (x) * 3.1415927 / 180 );  }
-float  Sinf( float x ){  return (float)sin( (x) * 3.1415927 / 180 );  }
 
 
 

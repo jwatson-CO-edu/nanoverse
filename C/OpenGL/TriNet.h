@@ -3,7 +3,7 @@
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
-#include "OGL_Geo.h"
+#include "OGL_Utils.h"
 
 ////////// GEOMETRY STRUCTS ////////////////////////////////////////////////////////////////////////
 
@@ -137,7 +137,7 @@ bool p_net_faces_outward_convex( uint Ntri_, uint Nvrt_, const matx_Nx3f* V, con
         load_vec3f_from_row( &nrm_i, N, i         );
         sub_vec3f( &ray_i, &v0_i, &centr );
         dTest = dot_vec3f( &ray_i, &nrm_i );
-        printf( "%f, ", dTest );
+        // printf( "%f, ", dTest );
         if( dTest < 0.0f ){
             printf( "Face %i should be REVERSED!\n", i );
             allOutward = false;

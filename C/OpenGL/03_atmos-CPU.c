@@ -4,6 +4,7 @@
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
 #include "TriNet.h"
+#include "OGL_Geo.h"
 
 
 ////////// SETTINGS ////////////////////////////////////////////////////////////////////////////////
@@ -150,7 +151,7 @@ void set_cell_geo( TriCell* cell, const vec3f* v0_3f, const vec3f* v1_3f, const 
     cell->v1_2f[1] = 0.0f;
     cell->v2_2f[0] = dot_vec3f( &(cell->xBasis), &v2delta );
     cell->v2_2f[1] = dot_vec3f( &(cell->yBasis), &v2delta );
-    printf( "%u: ", cell->ID );  print_vec2f( cell->v1_2f );  print_vec2f( cell->v2_2f );  nl();
+    // printf( "%u: ", cell->ID );  print_vec2f( cell->v1_2f );  print_vec2f( cell->v2_2f );  nl();
 
     // // 3. Check for particles that were initialized out of bounds
     // determine_particle_exits( cell );
@@ -303,6 +304,9 @@ void backfill_particles( TriCell* cell ){
 }
 
 
+void cell_flow_interaction( TriCell* recvCell, /*<<*/ TriCell* sendCell ){
+    
+}
 
 ///// Particle Atmosphere /////////////////////////////////////////////////
 
@@ -482,7 +486,8 @@ TriNet* create_icos_VFNA( float radius ){
 ///// Sphere from Divided Icos ////////////////////////////////////////////
 
 TriNet* create_icosphere_mesh_only( float radius, uint div ){
-    vec3f v0, v1, v2, xTri, yTri, vA, vB, vC, nA, nB, nC;
+    // Construct a sphere with `radius` from a subdivided icos (`div` rows) and center at {0,0,0}
+    vec3f v0, v1, v2, xTri, yTri, vA, vB, vC, nA, nB, nC, nT;
     vec2f   vct2f;
     uint    Ntri = 20 * (div*(div+1)/2 + (div-1)*(div)/2);
     uint    Nvrt = Ntri * 3;
@@ -490,6 +495,7 @@ TriNet* create_icosphere_mesh_only( float radius, uint div ){
     TriNet* sphr = alloc_net( Ntri, Nvrt );
     uint    k    = 0;
     uint    m    = 0;
+    uint    swap = 0;
     // 1. For every triangle in the icos, Load geo data
     for( ubyte i = 0; i < 20; ++i ){
         load_vec3f_from_row( &v0, icos->V, (*icos->F)[i][0] );
@@ -518,9 +524,17 @@ TriNet* create_icosphere_mesh_only( float radius, uint div ){
                 scale_vec3f( &vC, &nC, radius );
                 load_row_from_vec3f( sphr->V, k, &vA );  (*sphr->F)[m][0] = k;  ++k;
                 load_row_from_vec3f( sphr->V, k, &vB );  (*sphr->F)[m][1] = k;  ++k;
-                load_row_from_vec3f( sphr->V, k, &vC );  (*sphr->F)[m][2] = k;  ++k;  ++m; 
+                load_row_from_vec3f( sphr->V, k, &vC );  (*sphr->F)[m][2] = k;  ++k;
+                // 3. Enforce triangle convex
+                get_CCW_tri_norm( &nT, &vA, &vB, &vC );
+                if( dot_vec3f( &nT, &nA ) < 0.0f ){
+                    swap /*-------*/ = (*sphr->F)[m][2];
+                    (*sphr->F)[m][2] = (*sphr->F)[m][1];
+                    (*sphr->F)[m][1] = swap;
+                }
+                ++m; // Next triangle
             }
-            // 3. Construct the anti-v0-pointing triangles for this row
+            // 4. Construct the anti-v0-pointing triangles for this row
             for( ubyte j = row - 1 ; j > 0 ; j-- ){ 
                 vct2f[0] = (float) (j);
                 vct2f[1] = (float) (row-1-j);
@@ -539,11 +553,21 @@ TriNet* create_icosphere_mesh_only( float radius, uint div ){
                 scale_vec3f( &vC, &nC, radius );
                 load_row_from_vec3f( sphr->V, k, &vA );  (*sphr->F)[m][0] = k;  ++k;
                 load_row_from_vec3f( sphr->V, k, &vB );  (*sphr->F)[m][1] = k;  ++k;
-                load_row_from_vec3f( sphr->V, k, &vC );  (*sphr->F)[m][2] = k;  ++k;  ++m;
+                load_row_from_vec3f( sphr->V, k, &vC );  (*sphr->F)[m][2] = k;  ++k;
+                // 5. Enforce triangle convex
+                get_CCW_tri_norm( &nT, &vA, &vB, &vC );
+                if( dot_vec3f( &nT, &nA ) < 0.0f ){
+                    swap /*-------*/ = (*sphr->F)[m][2];
+                    (*sphr->F)[m][2] = (*sphr->F)[m][1];
+                    (*sphr->F)[m][1] = swap;
+                }
+                ++m; // Next triangle
             }
         }
     }
+    // 6. Erase base icos
     delete_net( icos );
+    // 7. Return mesh
     return sphr;
 }
 
@@ -554,13 +578,13 @@ TriNet* create_icosphere_VFNA( float radius, uint div ){
     TriNet* sphrNet = create_icosphere_mesh_only( radius, div );
     /// Normals ///
     N_from_VF( sphrNet->Ntri, sphrNet->V, sphrNet->F, sphrNet->N );
-    repair_net_faces_outward_convex( 
-        sphrNet->Ntri, 
-        sphrNet->Nvrt, 
-        sphrNet->V, 
-        sphrNet->F, 
-        sphrNet->N 
-    );
+    // repair_net_faces_outward_convex( 
+    //     sphrNet->Ntri, 
+    //     sphrNet->Nvrt, 
+    //     sphrNet->V, 
+    //     sphrNet->F, 
+    //     sphrNet->N 
+    // );
     /// Advacency ///
     populate_net_connectivity( sphrNet, 0.005 );
     /// Return ///

@@ -24,23 +24,33 @@
         * `[Y]` Each cell imparts a fixed accel per frame, 2024-04-27: They fly!
         * `[Y]` Clip particle vel at some appropriate value, 2024-04-27: They fly!
         * `[Y]` Animate, ignore cell bounds, 2024-04-27: They fly!
-
-    - `[>]` Track boundary-crossing
+    - `[Y]` Track boundary-crossing, 2024-04-28: Working! Some triangles still get starved
         * `[Y]` Membership test: Detect particle exit, 2024-04-28: Testing req'd
-        * `[>]` Particle transfer
-            - `[>]` Project R^3 position to R^2 for new cell
-            - `[ ]` Remember to wrap insertion indices --> If over limit, Then new particle writes over interior particle  
-            - `[ ]` Track lost particles
-        * `[ ]` Backfill lost particles
+        * `[Y]` Particle transfer, 2024-04-28: Working! Opposing triangle cause wonky fronts.
+            - `[Y]` Project R^3 position to R^2 for new cell, 2024-04-28: Working! Opposing triangle cause wonky fronts.
+            - `[Y]` Remember to wrap insertion indices --> If over limit, Then new particle writes over interior particle, 2024-04-28: Working! Opposing triangle cause wonky fronts.  
+            - `[Y]` Track lost particles, 2024-04-28: Working! Opposing triangle cause wonky fronts.
+        * `[Y]` Backfill lost particles, 2024-04-28: Working! Some triangles still get starved
 
-    - `{?}` Jetstream adjustment?
+    - `[>]` Cosmetic improvements
+        * `[Y]` Flip non-convex triangles *during* icosphere construction, 2024-04-29: Net was properly constructed!
+        * `[>]` {Diffusion, Perturbation} phase for natural current adjustment
+            - `[ ]` 200+ cycles at init to avoid wonky fronts
+        * `[ ]` Particle Generation
+            - `[ ]` Particle gen function, Apply some light clumping to encourage streams
+            - `[ ]` Account for net {Entry,Exit} in `lost` (in addition to overwrites)
+            - `[ ]` Only allow a *fraction* of `lost` to be replaced each frame to prevent "pop-in" (Rate of addition exponentially decays)
+        * `[ ]` Move specific nets {icos,icosphere,tetra} to "TriNet.h"
+
+* `[ ]` Any questions?
+    - `[ ]` DELETE CLASS ASSIGNMENT CODE
 * `[ ]` Compute shader test
     - `[ ]` ???
 * `[P]` Atmos particles on the GPU
     - `[Y]` Ask V: How to store persistent state on the GPU?, 2024-04-27: See adv'd graphics Example 20 @ prinmath.com
     - `[Y]` Ask V: Compute Shader --to-> Geometry Shader?, 2024-04-27: See adv'd graphics Example 20 @ prinmath.com
     - `[ ]` ???
-* `[ ]` DELETE CLASS ASSIGNMENT CODE
+
 
 
 ## `[ ]` Computer Graphics Blitz in Pure C + OpenGL + GLUT
