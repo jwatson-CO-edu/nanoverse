@@ -661,7 +661,7 @@ void display(){
     // Adapted from code provided by Willem Schreuder
     
     // vec3f icsClr = {1.0f,1.0f,1.0f};
-    vec3f atmClr = {0.0f,1.0f,0.0f};
+    vec3f atmClr = {1.0f,1.0f,1.0f};
     vec3f center = {0.0f,0.0f,0.0f};
     vec3f sphClr = {0.0, 14.0f/255.0f, 214.0f/255.0f};
     float FPS;
