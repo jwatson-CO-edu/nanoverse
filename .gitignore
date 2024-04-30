@@ -1,4 +1,5 @@
 # Custom
+ZZ_Proprietary-Ignored/*
 .vscode/
 build/
 .ipynb_checkpoints/

@@ -31,23 +31,24 @@
             - `[Y]` Remember to wrap insertion indices --> If over limit, Then new particle writes over interior particle, 2024-04-28: Working! Opposing triangle cause wonky fronts.  
             - `[Y]` Track lost particles, 2024-04-28: Working! Opposing triangle cause wonky fronts.
         * `[Y]` Backfill lost particles, 2024-04-28: Working! Some triangles still get starved
-
-    - `[>]` Cosmetic improvements
+    - `[Y]` Cosmetic improvements, 2024-04-30: It's fucking **GPU TIME**
         * `[Y]` Flip non-convex triangles *during* icosphere construction, 2024-04-29: Net was properly constructed!
         * `[Y]` {Diffusion, Perturbation} phase for natural current adjustment, 2024-04-29: Added a warm-up period to init
             - `[Y]` 20+ cycles at init to avoid wonky fronts, 2024-04-29: Added a warm-up period to init
             - `[Y]` 60+ frames at init to avoid triangular clouds, 2024-04-29: Added a warm-up period to init
         * `[Y]` Particle Generation
             - `[Y]` Particle gen function, Apply some light clumping to encourage streams, 2024-04-29: After about a second of running time this starts to produce appealing streams. Added a warm-up period to init
-            - `[>]` Account for net {Entry,Exit} in `lost` (in addition to overwrites)
-            - `[ ]` Only allow a *fraction* of `lost` to be replaced each frame to prevent "pop-in" (Rate of addition exponentially decays)
-        * `[ ]` Move specific nets {icos,icosphere,tetra} to "TriNet.h"
+            - `[Y]` Account for net {Entry,Exit} in `lost` (in addition to overwrites), 2024-04-30: Cell starvation **averted**!
+            - `[Y]` Only allow a *fraction* of `lost` to be replaced each frame to prevent "pop-in" (Rate of addition exponentially decays), 2024-04-30: 1/96 per frame seems to prevent overcrouding
+        * `[Y]` Move specific nets {icos,icosphere,tetra} to "TriNet.h", 2024-04-30: Moved for safe keeping
 
-* `[ ]` Prep for GPU
-    - `[ ]` See adv'd graphics Example 20 @ prinmath.com
+* `[>]` Prep for GPU
+    - `[>]` See adv'd graphics Example 20 @ prinmath.com
+        * https://www.prinmath.com/csci5229/Sp24/programs/index.html
     - `[ ]` Any questions?
         - `[ ]` DELETE CLASS ASSIGNMENT CODE
     - `[ ]` Move init params to program globals, there is only one simulation running!
+
 * `[ ]` Compute shader test
     - `[ ]` ???
 * `[P]` Atmos particles on the GPU

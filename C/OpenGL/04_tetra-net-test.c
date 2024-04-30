@@ -1,47 +1,17 @@
 // gcc -O3 -Wall 04_tetra-net-test.c -lglut -lGLU -lGL -lm -o tetra.out
 // 2024-04-27, WARNING: THIS FILE HAS NOT BEEN UPDATED TO THE L2R ARGUMENT CONVENTION, NON-FUNCTIONAL!
 // 2024-04-27, WARNING: THIS FILE HAS NOT BEEN UPDATED TO THE L2R NAMING   CONVENTION, NON-FUNCTIONAL!
+// 2024-04-30, WARNING: TETRAHEDRON CONSTRUCTION MOVED TO "TriNet.h"
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
-#include "PolyNet.h"
+#include "TriNet.h"
 
 
 ////////// SETTINGS ////////////////////////////////////////////////////////////////////////////////
 const float _SCALE = 10.0; //- Scale Dimension
 
-///// Tetrahedron /////////////////////////////////////////////////////////
 
-void populate_tetra_vertices_and_faces( matx_Nx3f* V, matx_Nx3u* F, float radius ){
-	// Load geometry for an icosahedron onto matrices `V` and `F` 
-	/// Calc req'd constants ///
-    float a = radius;
-    float b = radius / sqrtf( 2.0f );
-	/// Load Vertices ///
-	// Assume `V` already allocated for *4* vertices
-    load_3f_to_row( V, 0,   a   , 0.0f,-b );
-    load_3f_to_row( V, 1,  -a   , 0.0f,-b );
-    load_3f_to_row( V, 2,   0.0f, a   , b );
-    load_3f_to_row( V, 3,   0.0f,-a   , b );
-	/// Load Faces ///
-	// Assume `F` already allocated for *4* faces
-	load_3u_to_row( F, 0,  0,1,2 );
-	load_3u_to_row( F, 1,  0,2,3 );
-	load_3u_to_row( F, 2,  0,3,1 );
-	load_3u_to_row( F, 3,  1,3,2 );
-}
-
-TriNet* create_tetra_mesh_only( float radius ){
-	// Create an regular icosahedron (*without* unfolded net data)
-	/// Allocate ///
-	TriNet* tetraNet = alloc_net( 4, 4 );
-	/// Vertices and Faces ///
-	populate_tetra_vertices_and_faces( tetraNet->vert, tetraNet->face, radius );
-	/// Normals ///
-	N_from_VF( tetraNet->Ntri, tetraNet->vert, tetraNet->face, tetraNet->norm );
-	/// Return ///
-	return tetraNet;
-}
 
 
 ////////// VIEW PROJECTION /////////////////////////////////////////////////////////////////////////
