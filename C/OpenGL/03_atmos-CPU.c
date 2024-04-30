@@ -111,29 +111,56 @@ void determine_particle_exits( TriCell* cell ){
 
 void generate_particle_at_row( TriCell* cell, uint row, /*<<*/ uint searchWidth ){
     // Generate a particle with a slight clumping tendency
-    float stretch  = 2.0f;
     vec2f position = {0.0f,0.0f};
-    vec2f velocity = {0.0f,0.0f};
+    vec2f posnDiff = {0.0f,0.0f};
+    vec2f posn_i   = {0.0f,0.0f};
+    vec2f velocity = {cell->accel[0]*2.0f, cell->accel[1]*2.0f};
+    vec2f velo_i   = {0.0f,0.0f};
     uint  accum    = 0;
+    uint  qDex     = 0;
+    uint  curID    = cell->ID;
+    float dimLim   = diff_vec2f( &(cell->v1_2f), &(cell->v2_2f) );
+    float stretch  = dimLim / 4.0f;
+    position[0] = randf()*dimLim;
+    position[1] = randf()*dimLim;
     for( uint i = 0; i < searchWidth; ++i ){
-        // FIXME, START HERE: GET KIND OF AN AVERAGE STATE
+        qDex = (uint) (randf() * (cell->Nmax));
+        if( cell->triDices[ qDex ] == curID ){
+            ++accum;
+
+            posn_i[0] = (*cell->prtLocVel)[ qDex ][0];
+            posn_i[1] = (*cell->prtLocVel)[ qDex ][1];
+            sub_vec2f( &posn_i  , &posn_i  , &position );
+            add_vec2f( &posnDiff, &posnDiff, &posn_i   );
+
+            velo_i[0] = (*cell->prtLocVel)[ qDex ][2];
+            velo_i[1] = (*cell->prtLocVel)[ qDex ][3];
+            add_vec2f( &velocity, &velocity, &velo_i );
+        }
     }
+    if( accum ){
+        div_vec2f( &posnDiff, &posnDiff, (float) accum );
+        scale_vec2f( &posnDiff, &posnDiff, stretch / norm_vec2f( &posnDiff ) );
+        add_vec2f( &position, &position, &posnDiff );
+
+        div_vec2f( &velocity, &velocity, (float) accum );
+    }
+    load_row_from_4f( cell->prtLocVel, row, position[0], position[1], velocity[0], velocity[1] );
 }
 
 
-void init_cell( TriCell* cell, uint Nadd, float dimLim, uint id, const vec3u* neighbors_, 
+void init_cell( TriCell* cell, uint id, const vec3u* neighbors_, 
                 float accelLim_, float speedLim_, float diffusProb_, float diffusRate_, float pertrbProb_, float pertrbRate_ ){
     // Populate particles with zero velocity, Set speed limit
     
     // 0. Init
-    uint actAdd = min_uint( cell->Nmax, Nadd );
-    uint i /**/ = 0;
+    
     vec2f acl = {0.0f,0.0f};
     acl[0] = randf_range( -accelLim_, accelLim_ );
     acl[1] = randf_range( -accelLim_, accelLim_ );
 
     // 1. Set static state
-    cell->insrtDex = actAdd; // ------------------- Index for next insert
+    
     cell->lost     = 0; // ------------------------ Count of missing particles
     set_vec2f( &(cell->accel), &acl ); // -------- Per-frame change in velocity
     cell->speedLim = fabsf( speedLim_ ); // ------- Max speed of any particle
@@ -143,20 +170,10 @@ void init_cell( TriCell* cell, uint Nadd, float dimLim, uint id, const vec3u* ne
     cell->diffusRate = diffusRate_;
     cell->pertrbProb = pertrbProb_;
     cell->pertrbRate = pertrbRate_;
-    
-    // 2. Set dynamic state: Particle position, speed, and membership
-    for( ; i < Nadd; ++i ){
-        load_row_from_4f( cell->prtLocVel, i, randf()*dimLim, randf()*dimLim, 0.0f, 0.0f );
-        cell->triDices[i] = id;
-    }
-    for( ; i < cell->Nmax; ++i ){
-        load_row_from_4f( cell->prtLocVel, i, 0.0f, 0.0f, 0.0f, 0.0f );
-        cell->triDices[i] = UINT32_MAX;
-    }
 }
 
 
-void set_cell_geo( TriCell* cell, const vec3f* v0_3f, const vec3f* v1_3f, const vec3f* v2_3f ){
+void set_cell_geo( TriCell* cell, uint Nadd, const vec3f* v0_3f, const vec3f* v1_3f, const vec3f* v2_3f ){
     // Construct the local coordinate frame && Locate the vertices of the 2D cell
     vec3f xSide;  
     vec3f n;  
@@ -175,10 +192,19 @@ void set_cell_geo( TriCell* cell, const vec3f* v0_3f, const vec3f* v1_3f, const 
     cell->v1_2f[1] = 0.0f;
     cell->v2_2f[0] = dot_vec3f( &(cell->xBasis), &v2delta );
     cell->v2_2f[1] = dot_vec3f( &(cell->yBasis), &v2delta );
-    // printf( "%u: ", cell->ID );  print_vec2f( cell->v1_2f );  print_vec2f( cell->v2_2f );  nl();
-
-    // // 3. Check for particles that were initialized out of bounds
-    // determine_particle_exits( cell );
+    
+    uint actAdd = min_uint( cell->Nmax, Nadd );
+    uint i /**/ = 0;
+    cell->insrtDex = actAdd; // ------------------- Index for next insert
+    // 2. Set dynamic state: Particle position, speed, and membership
+    for( ; i < actAdd; ++i ){
+        generate_particle_at_row( cell, i, 16 );
+        cell->triDices[i] = cell->ID;
+    }
+    for( ; i < cell->Nmax; ++i ){
+        load_row_from_4f( cell->prtLocVel, i, 0.0f, 0.0f, 0.0f, 0.0f );
+        cell->triDices[i] = UINT32_MAX;
+    }
 }
 
 
@@ -313,13 +339,16 @@ void transfer_particles( TriCell* recvCell, /*<<*/ TriCell* sendCell ){
 
 void backfill_particles( TriCell* cell ){
     // Attempt to backfill lost particles, Assume that departures have been handled
-    float dimLim = diff_vec2f( &(cell->v1_2f), &(cell->v2_2f) );
-    float vX, vY;
+    // float dimLim = diff_vec2f( &(cell->v1_2f), &(cell->v2_2f) );
+    // float vX, vY;
     for( uint i = 0; ((i < cell->Nmax ) && (cell->lost > 0)); ++i ){ 
         if( cell->triDices[i] == UINT32_MAX ){  
-            vX = (*cell->prtLocVel)[ (i+1) % (cell->Nmax) ][2];
-            vY = (*cell->prtLocVel)[ (i+1) % (cell->Nmax) ][3];
-            load_row_from_4f( cell->prtLocVel, i, randf()*dimLim, randf()*dimLim, vX, vY );
+
+            // vX = (*cell->prtLocVel)[ (i+1) % (cell->Nmax) ][2];
+            // vY = (*cell->prtLocVel)[ (i+1) % (cell->Nmax) ][3];
+            // load_row_from_4f( cell->prtLocVel, i, randf()*dimLim, randf()*dimLim, vX, vY );
+            generate_particle_at_row( cell, i, 8 );
+
             cell->triDices[i] = cell->ID;
             --(cell->lost);
             cell->insrtDex = (i+1) % (cell->Nmax);
@@ -330,6 +359,7 @@ void backfill_particles( TriCell* cell ){
 
 void cell_flow_interaction( TriCell* recvCell, /*<<*/ TriCell* sendCell ){
     // Perturb and diffuse per-cell wind acceleration 
+    // WARNING: IF A CELL ACCEL EVER REACHES ZERO THE ATMOSPHERE ERASES ITSELF!
     vec2f acl /**/ = {0.0f,0.0f};
     vec2f tempSend = {0.0f,0.0f};
     vec2f tempRecv = {0.0f,0.0f};
@@ -337,16 +367,24 @@ void cell_flow_interaction( TriCell* recvCell, /*<<*/ TriCell* sendCell ){
         acl[0] = randf_range( -(sendCell->accelLim), sendCell->accelLim );
         acl[1] = randf_range( -(sendCell->accelLim), sendCell->accelLim );
         blend_vec2f( &(sendCell->accel), &acl, sendCell->pertrbRate, &(sendCell->accel), 1.0f-(sendCell->pertrbRate)  );
+        scale_vec2f( &(sendCell->accel), &(sendCell->accel), 
+                     1.0f + randf_range( -0.0625, 0.125 ) );
     }
     if( randf() <= sendCell->diffusProb ){
         set_vec2f( &tempSend, &(sendCell->accel) );
         set_vec2f( &tempRecv, &(recvCell->accel) );
+
         blend_vec2f( &(sendCell->accel), 
                      &tempRecv, sendCell->diffusRate, 
                      &tempSend, 1.0f-(sendCell->diffusRate)  );
+        scale_vec2f( &(sendCell->accel), &(sendCell->accel), 
+                     fmaxf( norm_vec2f( &tempSend ), 0.00012 ) / norm_vec2f( &(sendCell->accel) ) );
+
         blend_vec2f( &(recvCell->accel), 
                      &tempSend, recvCell->diffusRate, 
                      &tempRecv, 1.0f-(recvCell->diffusRate)  );
+        scale_vec2f( &(recvCell->accel), &(recvCell->accel), 
+                     fmaxf( norm_vec2f( &tempRecv ), 0.00012 ) /norm_vec2f( &(recvCell->accel) ) );
     }
 }
 
@@ -405,10 +443,10 @@ void init_atmos( Atmos* atmos, TriNet* filledNet, uint Nadd,
         load_vec3f_from_row( &v2    , atmos->net->V, (*atmos->net->F)[i][2] );
         load_vec3u_from_row( &nghbrs, atmos->net->A, i                      );
         // 5. Init cell
-        init_cell( atmos->cells[i], Nadd, diff_vec3f( &v0, &v1 ), i, &nghbrs, 
+        init_cell( atmos->cells[i], i, &nghbrs, 
                    accelLim_, speedLim_, diffusProb_, diffusRate_, pertrbProb_, pertrbRate_ );
         // 6. Setup cell geometry
-        set_cell_geo( atmos->cells[i], &v0, &v1, &v2 );
+        set_cell_geo( atmos->cells[i], Nadd, &v0, &v1, &v2 );
         // print_vec3f( v0 );  print_vec3f( v1 );  print_vec3f( v2 );  nl();
     }
 }
@@ -446,7 +484,9 @@ void tick_atmos( Atmos* atmos ){
         advance_particles( atmos->cells[i] );  
         
         perform_all_transfers_from_i( atmos, i );
+        
         determine_particle_exits( atmos->cells[i] );
+        
     }
     // for( uint i = 0; i < atmos->Ncell; ++i ){  
     //     backfill_particles( atmos->cells[i] );
@@ -681,8 +721,8 @@ float _ATMOS_RADIUS  =   2.25f;
 uint  _ICOS_SUBDIVID =   8;
 uint  _MAX_PRT_CELL  = 128; 
 uint  _INIT_PRT_CELL =  64; 
-float _SPEED_LIMIT   =   0.00125;
-float _ACCEL_LIMIT   =   0.00006;
+float _SPEED_LIMIT   =   0.0025;
+float _ACCEL_LIMIT   =   0.00012;
 float _DIFFUS_PROB   = 1.0f/500.0f;
 float _DIFFUS_RATE   = 0.125;
 float _PERTURB_PROB  = 1.0f/100.0f;

@@ -262,10 +262,31 @@ void set_vec2f( vec2f* lh, /*<<*/ const vec2f* rh ){
 }
 
 
+void add_vec2f( vec2f* r, /*<<*/ const vec2f* u, const vec2f* v ){
+    // Calc `u` + `v` = `r`, R^2
+    (*r)[0] = (*u)[0] + (*v)[0];
+    (*r)[1] = (*u)[1] + (*v)[1];
+}
+
+
 void sub_vec2f( vec2f* r, /*<<*/ const vec2f* u, const vec2f* v ){
     // Calc `u` - `v` = `r`, R^2
     (*r)[0] = (*u)[0] - (*v)[0];
     (*r)[1] = (*u)[1] - (*v)[1];
+}
+
+
+void div_vec2f( vec2f* r, /*<<*/ const vec2f* u, float d ){
+    // Calc `u` / `d` = `r`, R^2
+    (*r)[0] = (*u)[0] / d;
+    (*r)[1] = (*u)[1] / d;
+}
+
+
+void scale_vec2f( vec2f* r, /*<<*/ const vec2f* u, float f ){
+    // Calc `u` * `f` = `r`, R^2
+    (*r)[0] = (*u)[0] * f;
+    (*r)[1] = (*u)[1] * f;
 }
 
 
