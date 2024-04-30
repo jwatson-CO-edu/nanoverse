@@ -34,16 +34,20 @@
 
     - `[>]` Cosmetic improvements
         * `[Y]` Flip non-convex triangles *during* icosphere construction, 2024-04-29: Net was properly constructed!
-        * `[>]` {Diffusion, Perturbation} phase for natural current adjustment
-            - `[ ]` 200+ cycles at init to avoid wonky fronts
-        * `[ ]` Particle Generation
-            - `[ ]` Particle gen function, Apply some light clumping to encourage streams
-            - `[ ]` Account for net {Entry,Exit} in `lost` (in addition to overwrites)
+        * `[Y]` {Diffusion, Perturbation} phase for natural current adjustment, 2024-04-29: Added a warm-up period to init
+            - `[Y]` 20+ cycles at init to avoid wonky fronts, 2024-04-29: Added a warm-up period to init
+            - `[Y]` 60+ frames at init to avoid triangular clouds, 2024-04-29: Added a warm-up period to init
+        * `[Y]` Particle Generation
+            - `[Y]` Particle gen function, Apply some light clumping to encourage streams, 2024-04-29: After about a second of running time this starts to produce appealing streams. Added a warm-up period to init
+            - `[>]` Account for net {Entry,Exit} in `lost` (in addition to overwrites)
             - `[ ]` Only allow a *fraction* of `lost` to be replaced each frame to prevent "pop-in" (Rate of addition exponentially decays)
         * `[ ]` Move specific nets {icos,icosphere,tetra} to "TriNet.h"
 
-* `[ ]` Any questions?
-    - `[ ]` DELETE CLASS ASSIGNMENT CODE
+* `[ ]` Prep for GPU
+    - `[ ]` See adv'd graphics Example 20 @ prinmath.com
+    - `[ ]` Any questions?
+        - `[ ]` DELETE CLASS ASSIGNMENT CODE
+    - `[ ]` Move init params to program globals, there is only one simulation running!
 * `[ ]` Compute shader test
     - `[ ]` ???
 * `[P]` Atmos particles on the GPU

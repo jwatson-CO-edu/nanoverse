@@ -313,6 +313,8 @@ void transfer_particles( TriCell* recvCell, /*<<*/ TriCell* sendCell ){
     // 1. For every departed particle bound for `recvCell`, do ...
     for( uint i = 0; i < sendCell->Nmax; ++i ){ 
         if(sendCell->triDices[i] == recvCell->ID){
+            // 2. Count the departed particle
+            ++(sendCell->lost);
             // 2. Capture 3D state
             postn2f_i[0] = (*sendCell->prtLocVel)[i][0]; // pX
             postn2f_i[1] = (*sendCell->prtLocVel)[i][1]; // pY
@@ -328,7 +330,11 @@ void transfer_particles( TriCell* recvCell, /*<<*/ TriCell* sendCell ){
                               postn2f_j[0], postn2f_j[1], veloc2f_j[0], veloc2f_j[1] );
             // 5. If active, Then count overwrite, Else set particle active
             if( recvCell->triDices[ recvCell->insrtDex ] == recvCell->ID ){  ++(recvCell->lost);  }
-            else{  recvCell->triDices[ recvCell->insrtDex ] = recvCell->ID;  }
+            // 5. Else activated, count gain
+            else{  
+                recvCell->triDices[ recvCell->insrtDex ] = recvCell->ID;  
+                if( recvCell->lost ){  --(recvCell->lost);  }
+            }
             // 6. Advance the insertion index, making sure to wrap
             recvCell->insrtDex = (recvCell->insrtDex + 1) % (recvCell->Nmax);
             // 7. Deactivate departed particle
@@ -341,13 +347,16 @@ void backfill_particles( TriCell* cell ){
     // Attempt to backfill lost particles, Assume that departures have been handled
     // float dimLim = diff_vec2f( &(cell->v1_2f), &(cell->v2_2f) );
     // float vX, vY;
-    for( uint i = 0; ((i < cell->Nmax ) && (cell->lost > 0)); ++i ){ 
+    uint added = 0;
+    uint addLim = (uint)(1.0f * (cell->lost) / 96.0f);
+    for( uint i = 0; ((i < cell->Nmax ) && (added < addLim)); ++i ){ 
         if( cell->triDices[i] == UINT32_MAX ){  
 
             // vX = (*cell->prtLocVel)[ (i+1) % (cell->Nmax) ][2];
             // vY = (*cell->prtLocVel)[ (i+1) % (cell->Nmax) ][3];
             // load_row_from_4f( cell->prtLocVel, i, randf()*dimLim, randf()*dimLim, vX, vY );
             generate_particle_at_row( cell, i, 8 );
+            ++added;
 
             cell->triDices[i] = cell->ID;
             --(cell->lost);
@@ -453,6 +462,7 @@ void init_atmos( Atmos* atmos, TriNet* filledNet, uint Nadd,
 
 
 void perform_all_transfers_from_i( Atmos* atmos, uint i ){
+    // Transfer particles and flows between cell `i` and its neighbors
     uint n_j = 0;
     for( uint j = 0; j < 3; ++j ){
         n_j = atmos->cells[i]->neighbors[j];
@@ -462,35 +472,34 @@ void perform_all_transfers_from_i( Atmos* atmos, uint i ){
 }
 
 
-void naturalize_flows( Atmos* atmos, uint Nrun ){
-    // Attempt to even out awkward flows
-    uint n_j = 0;
-    for( uint k = 0; k < Nrun; ++k ){  
-        for( uint i = 0; i < atmos->Ncell; ++i ){  
+void tick_atmos( Atmos* atmos ){
+    // 2. For every cell, Step
+    for( uint i = 0; i < atmos->Ncell; ++i ){  
+        backfill_particles( atmos->cells[i] );
+        advance_particles( atmos->cells[i] );  
+        perform_all_transfers_from_i( atmos, i );
+        determine_particle_exits( atmos->cells[i] );
+    }
+}
+
+
+void naturalize_flows( Atmos* atmos, uint Nflo, uint Nsim ){
+    // Attempt to even out awkward flows & clouds
+    uint n_j  = 0;
+    uint Nact = max_uint( Nflo, Nsim );
+    // 0. For the max number of runs, Do ...
+    for( uint k = 0; k < Nact; ++k ){  
+        // 1. For `Nflo` iterations, Even out flows to reduce opposing fronts
+        for( uint i = 0; ((k < Nflo)&&(i < atmos->Ncell)); ++i ){  
             for( uint j = 0; j < 3; ++j ){
                 n_j = atmos->cells[i]->neighbors[j];
                 transfer_particles( atmos->cells[n_j], atmos->cells[i] );
                 cell_flow_interaction( atmos->cells[n_j], atmos->cells[i] );
             }
         }
+        // 1. For `Nsim` iterations, Advance sim to shear and dissipate init triangular clouds
+        if(k < Nsim){  tick_atmos( atmos );  }
     }
-}
-
-
-void tick_atmos( Atmos* atmos ){
-    // 2. For every cell, Step
-    for( uint i = 0; i < atmos->Ncell; ++i ){  
-        backfill_particles( atmos->cells[i] );
-        advance_particles( atmos->cells[i] );  
-        
-        perform_all_transfers_from_i( atmos, i );
-        
-        determine_particle_exits( atmos->cells[i] );
-        
-    }
-    // for( uint i = 0; i < atmos->Ncell; ++i ){  
-    //     backfill_particles( atmos->cells[i] );
-    // }
 }
 
 
@@ -728,6 +737,7 @@ float _DIFFUS_RATE   = 0.125;
 float _PERTURB_PROB  = 1.0f/100.0f;
 float _PERTURB_RATE  = 0.5;
 uint  _N_ATMOS_NATR  = 25;
+uint  _N_WARM_UP     = 65;
 
 
 ////////// WINDOW STATE & VIEW PROJECTION //////////////////////////////////////////////////////////
@@ -859,7 +869,7 @@ int main( int argc , char* argv[] ){
         _ATMOS_RADIUS, _ICOS_SUBDIVID, _MAX_PRT_CELL, _INIT_PRT_CELL, 
         _SPEED_LIMIT, _ACCEL_LIMIT, _DIFFUS_PROB, _DIFFUS_RATE, _PERTURB_PROB, _PERTURB_RATE
     );
-    naturalize_flows( simpleAtmos, _N_ATMOS_NATR );
+    naturalize_flows( simpleAtmos, _N_ATMOS_NATR, _N_WARM_UP );
 
 
     // p_net_faces_outward_convex( 

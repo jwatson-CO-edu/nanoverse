@@ -61,6 +61,7 @@ float  Sinf( float x ){  return (float)sin( (x) * 3.1415927 / 180 );  }
 
 ////////// MATH HELPERS ////////////////////////////////////////////////////////////////////////////
 uint min_uint( uint x, uint y ){  return ((x) < (y)) ? (x) : (y);  } 
+uint max_uint( uint x, uint y ){  return ((x) < (y)) ? (y) : (x);  } 
 
 
 ///// Random Numbers //////////////////////////////////////////////////////
