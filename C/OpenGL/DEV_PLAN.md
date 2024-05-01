@@ -64,6 +64,7 @@
     - `[Y]` Ask V: How to store persistent state on the GPU?, 2024-04-27: See adv'd graphics Example 20 @ prinmath.com
     - `[Y]` Ask V: Compute Shader --to-> Geometry Shader?, 2024-04-27: See adv'd graphics Example 20 @ prinmath.com
     - `[ ]` Program Reorg
+        * `[ ]` Copy minimal code from Modified Example
         * `[ ]` **ALL** tuning params as **GLOBALS**
         * `[ ]` **ALL** particle data as *FAT* arrays
     - `[ ]` Compute Shader
@@ -74,7 +75,13 @@
                 * `[ ]` Departure check in 3D
         * `{?}` Consider: One worker per *section*
 
-
+* `[P]` Post-Mortem
+    - `[ ]` Consider: Use the example `vec4` union struct
+        * `|+|` C functions can return structs
+        * `|+|` C functions can pass structs by value
+        * `|+|` Don't pay for dereference overhead
+        * `|+|` Easier to read, None of this --> `\*<<*\`
+        * `|-|` Pass by value uses stack space
 
 
 ## `[ ]` Computer Graphics Blitz in Pure C + OpenGL + GLUT
@@ -116,3 +123,9 @@
 
 ### ???
 * `[ ]` ??????
+
+# Far Future
+See also: Top-level plan
+## Raylib Improvements
+* `[ ]` Add computer shaders
+    - `[ ]` Pull Request!
