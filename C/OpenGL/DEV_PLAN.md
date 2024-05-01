@@ -8,7 +8,7 @@
 * `[Y]` Geo Shader Tut, 2024-04-22: Geo shader does not really store non-geo state, Not executed in particular order
     - `[N]` Choose a tut to implement, 2024-04-22: May not be the correct tool for the job
 * `[Y]` Left-to-Right Argument convention!, 2024-04-27: Implemented a consistent convention for naming functions and ordering function arguments that reflects C's Left-to-Right lexical flow of data for assignment.  Conventions should make thinking about the problem **easier**!
-* `[>]` Atmos particles on the CPU
+* `[Y]` Atmos particles on the CPU, 2024-04-29: Close enough!, As long as there are guards against zero accel then the simulation does not COLLAPSE. <-- Be careful of this while refactoring for the GPU
     - `[Y]` Icos, 2024-04-23: Drawn
         * `[Y]` Draw as wireframe, 2024-04-23: Drawn
     - `[Y]` Icos net, 2024-04-27: Issue solved!
@@ -43,18 +43,37 @@
         * `[Y]` Move specific nets {icos,icosphere,tetra} to "TriNet.h", 2024-04-30: Moved for safe keeping
 
 * `[>]` Prep for GPU
-    - `[>]` See adv'd graphics Example 20 @ prinmath.com
+    - `[Y]` DELETE CLASS ASSIGNMENT CODE, 2024-05-01: Done
+    - `[Y]` Move init params to program globals, there is only one simulation running!, 2024-05-01: This is already part of the example
+    - `[>]` Compute shader test, Simplest particle motion: See adv'd graphics Example 20 @ prinmath.com
         * https://www.prinmath.com/csci5229/Sp24/programs/index.html
-    - `[ ]` Any questions?
-        - `[ ]` DELETE CLASS ASSIGNMENT CODE
-    - `[ ]` Move init params to program globals, there is only one simulation running!
+        * `[>]` Copy minimal code from Example
+        * `[>]` Remove sphere
+        * `[>]` Change particle dynamics
 
-* `[ ]` Compute shader test
-    - `[ ]` ???
 * `[P]` Atmos particles on the GPU
+     - Concepts
+        * *DE*-compartmentalize!: **NO** more particle *exchange*
+        * Prefer lookups to copying
+            - Particles are *not* confined to their cell
+            - *NO* backill operation
+    - Ideas:
+        * Kill particles that reach zero velocity?
+    - `[>]` Any questions?
+        * `[ ]` Q: Is it better for a worker to work on a single point or a smallish collection of points?
     - `[Y]` Ask V: How to store persistent state on the GPU?, 2024-04-27: See adv'd graphics Example 20 @ prinmath.com
     - `[Y]` Ask V: Compute Shader --to-> Geometry Shader?, 2024-04-27: See adv'd graphics Example 20 @ prinmath.com
-    - `[ ]` ???
+    - `[ ]` Program Reorg
+        * `[ ]` **ALL** tuning params as **GLOBALS**
+        * `[ ]` **ALL** particle data as *FAT* arrays
+    - `[ ]` Compute Shader
+        * `[ ]` One worker per *particle* (Easiest adaptation)
+            - `[ ]` Dispatch for dynamics
+                * `[ ]` Membership lookup
+                * `[ ]` Advance particle in 3D
+                * `[ ]` Departure check in 3D
+        * `{?}` Consider: One worker per *section*
+
 
 
 
