@@ -41,50 +41,83 @@
             - `[Y]` Account for net {Entry,Exit} in `lost` (in addition to overwrites), 2024-04-30: Cell starvation **averted**!
             - `[Y]` Only allow a *fraction* of `lost` to be replaced each frame to prevent "pop-in" (Rate of addition exponentially decays), 2024-04-30: 1/96 per frame seems to prevent overcrouding
         * `[Y]` Move specific nets {icos,icosphere,tetra} to "TriNet.h", 2024-04-30: Moved for safe keeping
-
-* `[>]` Prep for GPU
+* `[Y]` Prep for GPU
     - `[Y]` DELETE CLASS ASSIGNMENT CODE, 2024-05-01: Done
     - `[Y]` Move init params to program globals, there is only one simulation running!, 2024-05-01: This is already part of the example
-    - `[>]` Compute shader test, Simplest particle motion: See adv'd graphics Example 20 @ prinmath.com
+    - `[Y]` Compute shader test, Simplest particle motion: See adv'd graphics Example 20 @ prinmath.com, 2024-05-01: It works!
         * https://www.prinmath.com/csci5229/Sp24/programs/index.html
-        * `[>]` Copy minimal code from Example
-        * `[>]` Remove sphere
-        * `[>]` Change particle dynamics
+        * `[Y]` Copy minimal code from Example, 2024-05-01: Stripped out GLFW
+        * `[Y]` Remove sphere, 2024-05-01: Sure why not
+        * `[N]` Change particle dynamics, 2024-05-01: Can't be bothered
 
 * `[P]` Atmos particles on the GPU
      - Concepts
-        * *DE*-compartmentalize!: **NO** more particle *exchange*
+        * *DE*-compartmentalize!, Prefer **arrays** over structs: **NO** more particle exchange *between* structs!
         * Prefer lookups to copying
             - Particles are *not* confined to their cell
             - *NO* backill operation
     - Ideas:
-        * Kill particles that reach zero velocity?
-    - `[>]` Any questions?
-        * `[ ]` Q: Is it better for a worker to work on a single point or a smallish collection of points?
-    - `[Y]` Ask V: How to store persistent state on the GPU?, 2024-04-27: See adv'd graphics Example 20 @ prinmath.com
-    - `[Y]` Ask V: Compute Shader --to-> Geometry Shader?, 2024-04-27: See adv'd graphics Example 20 @ prinmath.com
+        * Kill particles that reach zero velocity?, WARNING: REQUIRES BACKFILL
     - `[ ]` Program Reorg
         * `[ ]` Copy minimal code from Modified Example
         * `[ ]` **ALL** tuning params as **GLOBALS**
         * `[ ]` **ALL** particle data as *FAT* arrays
-    - `[ ]` Compute Shader
-        * `[ ]` One worker per *particle* (Easiest adaptation)
-            - `[ ]` Dispatch for dynamics
-                * `[ ]` Membership lookup
-                * `[ ]` Advance particle in 3D
-                * `[ ]` Departure check in 3D
+    - `[ ]` Draw sphere, Test
+    - `[ ]` Init Atmosphere
+    - `[ ]` Init particles
+        * `[ ]` Choose cell randomly, Choose size randomly
+        * `[ ]` Locate clump centroid
+        * `[ ]` Generate clump as Gaussian
+    - `[ ]` GPU: Data
+        * `[ ]` One Row per Particle
+            - `[ ]` Position
+            - `[ ]` Velocity
+            - `[ ]` Color
+            - `[ ]` Membership Index, `uint`
+        * `[ ]` One Row per Cell
+            - `[ ]` Origin
+            - `[ ]` Vertex 1
+            - `[ ]` Vertex 2
+            - `[ ]` X Basis
+            - `[ ]` Y Basis
+            - `[ ]` Acceleration, `vec2f`
+            - `[ ]` Neighbors
+    - `[ ]` GPU: Compute Shader, One worker per *particle* (Easiest adaptation), Dispatch for dynamics:
+        * `[ ]` Membership lookup
+        * `[ ]` Calc mass from color, Scale accel by `(r+g+b)/3.0f` (Most intense particles are fastest)
+        * `[ ]` Advance particle in 3D
+        * `[ ]` Departure check in 3D
+        * `[ ]` If departed, then update membership and project to new location
         * `{?}` Consider: One worker per *section*
+    - `[ ]` CPU: Wind Dynamics, Treat speed and direction *separately*
+        * `[ ]` Only ONE diffusion exchange per 4-neighborhood, Center modified ONCE
+            - `[ ]` Blend direction
+            - `[ ]` Blend speed
+        * `[ ]` Perturbation
+            - `[ ]` Nudge direction
+            - `[ ]` Nudge speed
+        * `[ ]` Enforce Nonzero Speed
+            - `[ ]` If diffusion cancels, Randomize
+        * `[ ]` Write wind direction array back to GPU
+    - `[ ]` Share
+        * `[ ]` Record video
+        * `[ ]` Post insta
+        * `[ ]` Q: Is it better for a worker to work on a single point or a smallish collection of points?
+        * `[ ]` Q: The advanced class example 20 seems to run less smoothly on maximum settings on my home machine.  Is it because I replaced GLFW with GLUT?
 
 * `[P]` Post-Mortem
+    - BUG: I *never* did a change of basis while blending accelerations in the CPU version!
+    - BUG: In the CPU version, if a cell ever has zero acceleration, then ALL PARTICLES DISAPPEAR!
     - `[ ]` Consider: Use the example `vec4` union struct
         * `|+|` C functions can return structs
         * `|+|` C functions can pass structs by value
         * `|+|` Don't pay for dereference overhead
         * `|+|` Easier to read, None of this --> `\*<<*\`
         * `|-|` Pass by value uses stack space
+    - `[ ]` Consider: Re-write utils as, considering above "OGL_Tools.h"
 
 
-## `[ ]` Computer Graphics Blitz in Pure C + OpenGL + GLUT
+## `[ ]` Computer Graphics Blitz in Pure C + OpenGL + GLUT, Morning Warmup and Weekend Project
 * Goal: Reinforce fluency in Pure C + Pure OpenGL. I have been spoiled by Raylib + C++!
 * C++ and Eigen are **DISALLOWED**!
 * Compile: `gcc -std=gnu17 -O3 -Wall <SOURCE FILE>.c -lglut -lGLU -lGL -lm -o <PROG NAME>.out`
@@ -128,4 +161,5 @@
 See also: Top-level plan
 ## Raylib Improvements
 * `[ ]` Add computer shaders
+    - `[ ]` Ask Ray **BEFORE** *starting*!
     - `[ ]` Pull Request!

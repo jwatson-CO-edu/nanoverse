@@ -6,11 +6,78 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <math.h>
+#include <time.h>
+#include <errno.h>  
 
+#define LEN 8192  // Maximum length of text string
 #define GL_GLEXT_PROTOTYPES
+
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
+
+int sleep_ms( long msec ){
+    // Pause main thread: implemented using nanosleep(), continuing the sleep if it is interrupted by a signal
+    // Author: Neuron, https://stackoverflow.com/a/1157217
+    struct timespec ts;
+    int res;
+
+    if(msec < 0){
+        errno = EINVAL;
+        return -1;
+    }
+
+    ts.tv_sec = msec / 1000;
+    ts.tv_nsec = (msec % 1000) * 1000000;
+    do{
+        res = nanosleep(&ts, &ts);
+    }while(res && errno == EINTR);
+    return res;
+}
+
+void ErrCheck( const char* where ){
+    // Author: Willem A. Schreüder  
+    int err = glGetError();
+    if (err) fprintf(stderr,"ERROR: %s [%s]\n",gluErrorString(err),where);
+}
+
+void Print( const char* format , ... ){
+    // Convenience routine to output raster text, Use VARARGS to make this more flexible   
+    // Author: Willem A. Schreüder  
+    char    buf[ LEN ];
+    char*   ch = buf;
+    va_list args;
+    //  Turn the parameters into a character string
+    va_start( args , format );
+    vsnprintf( buf , LEN , format , args );
+    va_end( args );
+    //  Display the characters one at a time at the current raster position
+    while( *ch )
+        glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18 , *ch++ );
+}
+
+void init_rand(){  srand( time( NULL ) );  }
+
+float randf(){
+    // Return a pseudo-random number between 0.0 and 1.0
+    return  1.0f * rand() / RAND_MAX;
+}
+
+float randf_range( float lo, float hi ){
+    // Return a pseudo-random number between `lo` and `hi`
+    // NOTE: This function assumes `hi > lo`
+    float span = hi - lo;
+    return lo + span * randf();
+}
+
+
+// Cosine and Sine in degrees
+// Author: Willem A. (Vlakkies) Schreüder  
+double Cos( double x ){  return cos( (x) * 3.1415927 / 180 );  }
+double Sin( double x ){  return sin( (x) * 3.1415927 / 180 );  }
+float  Cosf( float x ){  return (float)cos( (x) * 3.1415927 / 180 );  }
+float  Sinf( float x ){  return (float)sin( (x) * 3.1415927 / 180 );  }
 
 
 void Fatal( const char* format, ... ){
@@ -124,8 +191,8 @@ void Lighting( float x, float y, float z, float ambient, float diffuse, float sp
     float Position[] = {x,y,z,1};
 
     // Draw light position as ball before enabling lighting
-    SetColor( 1, 1, 1 );
-    Sphere( x, y, z, 0.1, 0, 8, 0 );
+    // SetColor( 1, 1, 1 );
+    // Sphere( x, y, z, 0.1, 0, 8, 0 );
 
     //  OpenGL should normalize normal vectors
     glEnable( GL_NORMALIZE );
@@ -133,12 +200,12 @@ void Lighting( float x, float y, float z, float ambient, float diffuse, float sp
     glEnable( GL_LIGHTING );
 
     //  Enable light 0
-    glEnable(GL_LIGHT0);
+    glEnable( GL_LIGHT0 );
     //  Set ambient, diffuse, specular components and position of light 0
-    glLightfv(GL_LIGHT0,GL_AMBIENT ,Ambient);
-    glLightfv(GL_LIGHT0,GL_DIFFUSE ,Diffuse);
-    glLightfv(GL_LIGHT0,GL_SPECULAR,Specular);
-    glLightfv(GL_LIGHT0,GL_POSITION,Position);
+    glLightfv( GL_LIGHT0, GL_AMBIENT , Ambient  );
+    glLightfv( GL_LIGHT0, GL_DIFFUSE , Diffuse  );
+    glLightfv( GL_LIGHT0, GL_SPECULAR, Specular );
+    glLightfv( GL_LIGHT0, GL_POSITION, Position );
 }
 
 

@@ -1,3 +1,5 @@
+// gcc -std=gnu17 -O3 -Wall 06_mini-comp.c -lglut -lGLU -lGL -lm -o compShaderEx.out
+
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 #include "AdvClass.h"
 
@@ -45,9 +47,9 @@ void ResetParticles(){
                                     GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
     // Load init positions into buffer
     for (int i = 0; i < N_prt; i++ ){
-        pos[i].x = frand(    0,  100 );
-        pos[i].y = frand( +400, +600 );
-        pos[i].z = frand(  -50,  +50 );
+        pos[i].x = randf_range(    0,  100 );
+        pos[i].y = randf_range( +400, +600 );
+        pos[i].z = randf_range(  -50,  +50 );
         pos[i].w = 1;
     }
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
@@ -59,9 +61,9 @@ void ResetParticles(){
                                     GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
     // Load init velocities into buffer
     for( int i = 0; i < N_prt; i++ ){
-        vel[i].x = frand( -10, +10 );
-        vel[i].y = frand( -10, +10 );
-        vel[i].z = frand( -10, +10 );
+        vel[i].x = randf_range( -10, +10 );
+        vel[i].y = randf_range( -10, +10 );
+        vel[i].z = randf_range( -10, +10 );
         vel[i].w = 0;
     }
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
@@ -73,9 +75,9 @@ void ResetParticles(){
                                     GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
     // Load colors into buffer
     for( int i = 0; i < N_prt; i++ ){
-        col[i].r = frand( 0.1, 1.0 );
-        col[i].g = frand( 0.1, 1.0 );
-        col[i].b = frand( 0.1, 1.0 );
+        col[i].r = randf_range( 0.1, 1.0 );
+        col[i].g = randf_range( 0.1, 1.0 );
+        col[i].b = randf_range( 0.1, 1.0 );
         col[i].a = 1.;
     }
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
@@ -98,7 +100,8 @@ void InitParticles( void ){
     glGetIntegeri_v( GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &N_groups      );
     glGetIntegeri_v( GL_MAX_COMPUTE_WORK_GROUP_SIZE , 0, &workGroupSize );
     if( N_groups > 8192 ) N_groups = 8192;
-    N_prt = workGroupSize * N_groups;
+    // N_prt = workGroupSize * N_groups;
+    N_prt = 1000000;
 
     // Initialize position buffer
     glGenBuffers( 1, &posbuf_ID );
@@ -147,6 +150,21 @@ void DrawParticles( void ){
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
 }
 
+float lastTime = 0.0f;
+
+float heartbeat( float targetFPS ){
+    // Attempt to maintain framerate no greater than target. (Period is rounded down to next ms)
+    float currTime   = 0.0f;
+    float framTime   = 0.0f;
+    float target_ms  = 1000.0f / targetFPS;
+    static float FPS = 0.0f;
+    framTime = (float) glutGet( GLUT_ELAPSED_TIME ) - lastTime;
+    if( framTime < target_ms ){ sleep_ms( (long) (target_ms - framTime) );  }
+    currTime = (float) glutGet( GLUT_ELAPSED_TIME );
+    FPS = (1000.0f / (currTime - lastTime)) * 0.125f + FPS * 0.875f; // Filter for readable number
+    lastTime = currTime;
+    return FPS;
+}
 
 void display(){
     // Draw one frame
@@ -206,7 +224,7 @@ void display(){
     glMemoryBarrier( GL_SHADER_STORAGE_BARRIER_BIT );
 
     //  Draw the particles
-    DrawPart();
+    DrawParticles();
 
     // //  Draw Axes
     // Axes(500);
@@ -214,8 +232,8 @@ void display(){
     //  Display parameters
     glDisable( GL_DEPTH_TEST );
     glWindowPos2i( 5, 5 );
-    Print( "%d,%d FPS=%d Dim=%.1f Size=%d Count=%d N=%d", 
-           th, ph, FramesPerSecond(), dim, workGroupSize, N_groups, N_prt );
+    Print( "%d,%f FPS=%d Dim=%.1f Size=%d Count=%d N=%d", 
+           th, ph, heartbeat( 60.0 ), dim, workGroupSize, N_groups, N_prt );
     
     // Check errors
     ErrCheck("display");
@@ -223,4 +241,90 @@ void display(){
     // Render the scene and make it visible: Flush and swap
     glFlush();
     glutSwapBuffers();
+}
+
+void Projection( float fov, float asp, float dim ){
+   //  Set projection matrix
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   //  Perspective transformation
+   gluPerspective( fov, asp, dim/16, 16*dim );
+   //  Reset modelview
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity();
+}
+
+////////// WINDOW STATE ////////////////////////////////////////////////////////////////////////////
+
+void reshape( int width , int height ){
+    // GLUT calls this routine when the window is resized
+    // Calc the aspect ratio: width to the height of the window
+    asp = ( height > 0 ) ? (float) width / height : 1;
+    // Set the viewport to the entire window
+    glViewport( 0 , 0 , width , height );
+    // Set projection
+    Projection( 55, asp, dim );
+}
+
+////////// SIMULATION LOOP /////////////////////////////////////////////////////////////////////////
+
+void tick(){
+    // Simulation updates in between repaints
+    // tick_atmos( simpleAtmos );
+
+    //  Tell GLUT it is necessary to redisplay the scene
+    glutPostRedisplay();
+}
+
+
+////////// WINDOW STATE ////////////////////////////////////////////////////////////////////////////
+
+
+int main( int argc, char* argv[] ){
+    init_rand();
+    // Initialize GLUT and process user parameters
+    glutInit( &argc , argv );
+
+    // Request window with size specified in pixels
+    glutInitWindowSize( 900, 900 );
+
+    // Create the window
+    glutCreateWindow( "!!! PARTICLES !!!" );
+
+    // NOTE: Set modes AFTER the window / graphics context has been created!
+    // Request double buffered, true color window 
+    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
+    glDepthRange( 0.0f , 1.0f ); // WARNING: NOT IN THE EXAMPLE
+
+
+    //  Compute shader
+    shader_ID = CreateShaderProgCompute( "shaders/06_Prtcl-Dyn.comp" );
+    
+    //  Initialize particles
+    InitParticles();
+
+    //  Tell GLUT to call "display" when the scene should be drawn
+    glutDisplayFunc( display );
+
+    // Tell GLUT to call "idle" when there is nothing else to do
+    glutIdleFunc( tick );
+    
+    //  Tell GLUT to call "reshape" when the window is resized
+    glutReshapeFunc( reshape );
+    
+    // //  Tell GLUT to call "special" when an arrow key is pressed
+    // glutSpecialFunc( special );
+    
+    // //  Tell GLUT to call "key" when a key is pressed
+    // glutKeyboardFunc( key );
+    
+    //  Pass control to GLUT so it can interact with the user
+    glutMainLoop();
+    
+    // // Free memory
+    // delete_net( icos );
+    // delete_atmos( simpleAtmos );
+    
+    //  Return code
+    return 0;
 }
