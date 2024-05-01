@@ -297,6 +297,25 @@ float norm_vec2f( const vec2f* vec ){
 } 
 
 
+void unit_vec2f( vec2f* unt, /*<<*/ const vec2f* vec ){
+    // Calc the unit direction of `vec` and store in `unt`, R^3
+    float mag = norm_vec2f( vec );
+    if( mag > 0.0 ){
+        (*unt)[0] = (*vec)[0] / mag;
+        (*unt)[1] = (*vec)[1] / mag;
+    }else{
+        set_vec2f( unt, vec );
+    }
+}
+
+
+void stretch_to_len_vec2f( vec2f* res, /*<<*/ const vec2f* vec, float len ){
+    // Set `res` to be the same direction as `vec` with `len` 
+    unit_vec2f( res, vec );
+    scale_vec2f( res, res, len );
+}
+
+
 float diff_vec2f( const vec2f* u, const vec2f* v ){  
     // Euclidean length of `u`-`v`
     vec2f r;  

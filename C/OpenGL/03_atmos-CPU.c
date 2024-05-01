@@ -348,7 +348,7 @@ void backfill_particles( TriCell* cell ){
     // float dimLim = diff_vec2f( &(cell->v1_2f), &(cell->v2_2f) );
     // float vX, vY;
     uint added = 0;
-    uint addLim = (uint)(1.0f * (cell->lost) / 96.0f);
+    uint addLim = (uint)(1.0f * (cell->lost) / 128.0f);
     for( uint i = 0; ((i < cell->Nmax ) && (added < addLim)); ++i ){ 
         if( cell->triDices[i] == UINT32_MAX ){  
 
@@ -372,28 +372,46 @@ void cell_flow_interaction( TriCell* recvCell, /*<<*/ TriCell* sendCell ){
     vec2f acl /**/ = {0.0f,0.0f};
     vec2f tempSend = {0.0f,0.0f};
     vec2f tempRecv = {0.0f,0.0f};
+    float prevLen  = 0.0f;
+    float epsilon  = 0.000075;
+    acl[0]  = randf_range( -(sendCell->accelLim), sendCell->accelLim );
+    acl[1]  = randf_range( -(sendCell->accelLim), sendCell->accelLim );
     if( randf() <= sendCell->pertrbProb ){
-        acl[0] = randf_range( -(sendCell->accelLim), sendCell->accelLim );
-        acl[1] = randf_range( -(sendCell->accelLim), sendCell->accelLim );
+        // prevLen = norm_vec2f( &(sendCell->accel) );    
         blend_vec2f( &(sendCell->accel), &acl, sendCell->pertrbRate, &(sendCell->accel), 1.0f-(sendCell->pertrbRate)  );
-        scale_vec2f( &(sendCell->accel), &(sendCell->accel), 
-                     1.0f + randf_range( -0.0625, 0.125 ) );
+        if( norm_vec2f( &(sendCell->accel) ) < epsilon ){
+            set_vec2f( &(sendCell->accel), &acl );
+        }
     }
     if( randf() <= sendCell->diffusProb ){
         set_vec2f( &tempSend, &(sendCell->accel) );
         set_vec2f( &tempRecv, &(recvCell->accel) );
-
+        
+        prevLen = norm_vec2f( &tempSend );
         blend_vec2f( &(sendCell->accel), 
                      &tempRecv, sendCell->diffusRate, 
                      &tempSend, 1.0f-(sendCell->diffusRate)  );
-        scale_vec2f( &(sendCell->accel), &(sendCell->accel), 
-                     fmaxf( norm_vec2f( &tempSend ), 0.00012 ) / norm_vec2f( &(sendCell->accel) ) );
+        if( norm_vec2f( &(sendCell->accel) ) < epsilon ){
+            // set_vec2f( &(sendCell->accel), &acl );
+            stretch_to_len_vec2f( &(sendCell->accel), &(sendCell->accel), randf_range( prevLen, 10.0*epsilon ) );
+        }
 
+        prevLen = norm_vec2f( &tempRecv );
         blend_vec2f( &(recvCell->accel), 
                      &tempSend, recvCell->diffusRate, 
                      &tempRecv, 1.0f-(recvCell->diffusRate)  );
-        scale_vec2f( &(recvCell->accel), &(recvCell->accel), 
-                     fmaxf( norm_vec2f( &tempRecv ), 0.00012 ) /norm_vec2f( &(recvCell->accel) ) );
+        if( norm_vec2f( &(recvCell->accel) ) < epsilon ){
+            // acl[0]  = randf_range( -(recvCell->accelLim), recvCell->accelLim );
+            // acl[1]  = randf_range( -(recvCell->accelLim), recvCell->accelLim );
+            // set_vec2f( &(recvCell->accel), &acl );
+            stretch_to_len_vec2f( &(sendCell->accel), &(sendCell->accel), randf_range( prevLen, 10.0*epsilon ) );
+        }
+    }
+    if( randf() <= (sendCell->pertrbProb)*4.0f ){
+        prevLen = norm_vec2f( &(recvCell->accel) );
+        stretch_to_len_vec2f( &(recvCell->accel), &(recvCell->accel), randf_range( prevLen, 10.0*epsilon ) );
+        prevLen = norm_vec2f( &(sendCell->accel) );
+        stretch_to_len_vec2f( &(sendCell->accel), &(sendCell->accel), randf_range( prevLen, 10.0*epsilon ) );
     }
 }
 
@@ -512,205 +530,6 @@ void draw_all_cells( Atmos* atmos, vec3f pntColor ){
 }
 
 
-///// Icosahedron /////////////////////////////////////////////////////////
-
-void populate_icos_vertices_and_faces( matx_Nx3f* V, matx_Nx3u* F, float radius ){
-    // Load geometry for an icosahedron onto matrices `V` and `F` 
-    /// Calc req'd constants ///
-    float sqrt5 = (float) sqrt( 5.0 ); // ----------------------------------- Square root of 5
-    float phi   = (float)( 1.0 + sqrt5 ) * 0.5; // ------------------------- The Golden Ratio
-    float ratio = (float)sqrt( 10.0 + ( 2.0 * sqrt5 ) ) / ( 4.0 * phi ); // ratio of edge length to radius
-    float a     = ( radius / ratio ) * 0.5;
-    float b     = ( radius / ratio ) / ( 2.0f * phi );
-    /// Load Vertices ///
-    // Assume `V` already allocated for *12* vertices
-    load_row_from_3f( V, 0,  0, b,-a ); 
-    load_row_from_3f( V, 1,  b, a, 0 );
-    load_row_from_3f( V, 2, -b, a, 0 );
-    load_row_from_3f( V, 3,  0, b, a );
-    load_row_from_3f( V, 4,  0,-b, a );
-    load_row_from_3f( V, 5, -a, 0, b );
-    load_row_from_3f( V, 6,  0,-b,-a );
-    load_row_from_3f( V, 7,  a, 0,-b );
-    load_row_from_3f( V, 8,  a, 0, b );
-    load_row_from_3f( V, 9, -a, 0,-b );
-    load_row_from_3f( V,10,  b,-a, 0 );
-    load_row_from_3f( V,11, -b,-a, 0 );
-    /// Load Faces ///
-    // Assume `F` already allocated for *20* faces
-    load_row_from_3u( F, 0,  2, 1, 0 );
-    load_row_from_3u( F, 1,  1, 2, 3 );
-    load_row_from_3u( F, 2,  5, 4, 3 );
-    load_row_from_3u( F, 3,  4, 8, 3 );
-    load_row_from_3u( F, 4,  7, 6, 0 );
-    load_row_from_3u( F, 5,  6, 9, 0 );
-    load_row_from_3u( F, 6, 11,10, 4 );
-    load_row_from_3u( F, 7, 10,11, 6 );
-    load_row_from_3u( F, 8,  9, 5, 2 );
-    load_row_from_3u( F, 9,  5, 9,11 );
-    load_row_from_3u( F,10,  8, 7, 1 );
-    load_row_from_3u( F,11,  7, 8,10 );
-    load_row_from_3u( F,12,  2, 5, 3 );
-    load_row_from_3u( F,13,  8, 1, 3 );
-    load_row_from_3u( F,14,  9, 2, 0 );
-    load_row_from_3u( F,15,  1, 7, 0 );
-    load_row_from_3u( F,16, 11, 9, 6 );
-    load_row_from_3u( F,17,  7,10, 6 );
-    load_row_from_3u( F,18,  5,11, 4 );
-    load_row_from_3u( F,19, 10, 8, 4 );
-}
-
-
-TriNet* create_icos_mesh_only( float radius ){
-    // Create an regular icosahedron (*without* unfolded net data)
-    /// Allocate ///
-    TriNet* icosNet = alloc_net( 20, 12 );
-    /// Vertices and Faces ///
-    populate_icos_vertices_and_faces( icosNet->V, icosNet->F, radius );
-    /// Normals ///
-    N_from_VF( icosNet->Ntri, icosNet->V, icosNet->F, icosNet->N );
-    /// Return ///
-    return icosNet;
-}
-
-
-TriNet* create_icos_VFNA( float radius ){
-    // Create an regular icosahedron (*without* unfolded net data)
-    /// Allocate ///
-    TriNet* icosNet = alloc_net( 20, 12 );
-    /// Vertices and Faces ///
-    populate_icos_vertices_and_faces( icosNet->V, icosNet->F, radius );
-    /// Normals ///
-    N_from_VF( icosNet->Ntri, icosNet->V, icosNet->F, icosNet->N );
-    /// Advacency ///
-    populate_net_connectivity( icosNet, 0.005 );
-    /// Return ///
-    return icosNet;
-}
-
-
-
-///// Sphere from Divided Icos ////////////////////////////////////////////
-
-TriNet* create_icosphere_mesh_only( float radius, uint div ){
-    // Construct a sphere with `radius` from a subdivided icos (`div` rows) and center at {0,0,0}
-    vec3f v0, v1, v2, xTri, yTri, vA, vB, vC, nA, nB, nC, nT;
-    vec2f   vct2f;
-    uint    Ntri = 20 * (div*(div+1)/2 + (div-1)*(div)/2);
-    uint    Nvrt = Ntri * 3;
-    TriNet* icos = create_icos_mesh_only( radius );
-    TriNet* sphr = alloc_net( Ntri, Nvrt );
-    uint    k    = 0;
-    uint    m    = 0;
-    uint    swap = 0;
-    // 1. For every triangle in the icos, Load geo data
-    for( ubyte i = 0; i < 20; ++i ){
-        load_vec3f_from_row( &v0, icos->V, (*icos->F)[i][0] );
-        load_vec3f_from_row( &v1, icos->V, (*icos->F)[i][1] );
-        load_vec3f_from_row( &v2, icos->V, (*icos->F)[i][2] );
-        sub_vec3f( &xTri, &v1, &v0 );  scale_vec3f( &xTri, &xTri, 1.0f/((float)div) );
-        sub_vec3f( &yTri, &v2, &v0 );  scale_vec3f( &yTri, &yTri, 1.0f/((float)div) );
-        // 1. For every subdivided row of this triangle, Do ...
-        for( uint row = 1; row <= div; ++row ){
-            // 2. Construct the v0-pointing triangles of this row
-            for( uint j = row ; j > 0 ; j-- ){ 
-                vct2f[0] = (float) (j  );
-                vct2f[1] = (float) (row-j);
-                lift_pnt_2D_to_3D( &vA, &vct2f, &v0, &xTri, &yTri );
-                vct2f[0] = (float) (j-1);
-                vct2f[1] = (float) (row-j+1);
-                lift_pnt_2D_to_3D( &vB, &vct2f, &v0, &xTri, &yTri );
-                vct2f[0] = (float) (j-1);
-                vct2f[1] = (float) (row-j);
-                lift_pnt_2D_to_3D( &vC, &vct2f, &v0, &xTri, &yTri );
-                unit_vec3f( &nA, &vA );
-                unit_vec3f( &nB, &vB );
-                unit_vec3f( &nC, &vC );
-                scale_vec3f( &vA, &nA, radius );
-                scale_vec3f( &vB, &nB, radius );
-                scale_vec3f( &vC, &nC, radius );
-                load_row_from_vec3f( sphr->V, k, &vA );  (*sphr->F)[m][0] = k;  ++k;
-                load_row_from_vec3f( sphr->V, k, &vB );  (*sphr->F)[m][1] = k;  ++k;
-                load_row_from_vec3f( sphr->V, k, &vC );  (*sphr->F)[m][2] = k;  ++k;
-                // 3. Enforce triangle convex
-                get_CCW_tri_norm( &nT, &vA, &vB, &vC );
-                if( dot_vec3f( &nT, &nA ) < 0.0f ){
-                    swap /*-------*/ = (*sphr->F)[m][2];
-                    (*sphr->F)[m][2] = (*sphr->F)[m][1];
-                    (*sphr->F)[m][1] = swap;
-                }
-                ++m; // Next triangle
-            }
-            // 4. Construct the anti-v0-pointing triangles for this row
-            for( ubyte j = row - 1 ; j > 0 ; j-- ){ 
-                vct2f[0] = (float) (j);
-                vct2f[1] = (float) (row-1-j);
-                lift_pnt_2D_to_3D( &vA, &vct2f, &v0, &xTri, &yTri );
-                vct2f[0] = (float) (j);
-                vct2f[1] = (float) (row-1-j+1);
-                lift_pnt_2D_to_3D( &vB, &vct2f, &v0, &xTri, &yTri );
-                vct2f[0] = (float) (j-1);
-                vct2f[1] = (float) (row-1-j+1);
-                lift_pnt_2D_to_3D( &vC, &vct2f, &v0, &xTri, &yTri );
-                unit_vec3f( &nA, &vA );
-                unit_vec3f( &nB, &vB );
-                unit_vec3f( &nC, &vC );
-                scale_vec3f( &vA, &nA, radius );
-                scale_vec3f( &vB, &nB, radius );
-                scale_vec3f( &vC, &nC, radius );
-                load_row_from_vec3f( sphr->V, k, &vA );  (*sphr->F)[m][0] = k;  ++k;
-                load_row_from_vec3f( sphr->V, k, &vB );  (*sphr->F)[m][1] = k;  ++k;
-                load_row_from_vec3f( sphr->V, k, &vC );  (*sphr->F)[m][2] = k;  ++k;
-                // 5. Enforce triangle convex
-                get_CCW_tri_norm( &nT, &vA, &vB, &vC );
-                if( dot_vec3f( &nT, &nA ) < 0.0f ){
-                    swap /*-------*/ = (*sphr->F)[m][2];
-                    (*sphr->F)[m][2] = (*sphr->F)[m][1];
-                    (*sphr->F)[m][1] = swap;
-                }
-                ++m; // Next triangle
-            }
-        }
-    }
-    // 6. Erase base icos
-    delete_net( icos );
-    // 7. Return mesh
-    return sphr;
-}
-
-
-TriNet* create_icosphere_VFNA( float radius, uint div ){
-    // Create an regular icosahedron (*without* unfolded net data)
-    /// Allocate Vertices and Faces ///
-    TriNet* sphrNet = create_icosphere_mesh_only( radius, div );
-    /// Normals ///
-    N_from_VF( sphrNet->Ntri, sphrNet->V, sphrNet->F, sphrNet->N );
-    // repair_net_faces_outward_convex( 
-    //     sphrNet->Ntri, 
-    //     sphrNet->Nvrt, 
-    //     sphrNet->V, 
-    //     sphrNet->F, 
-    //     sphrNet->N 
-    // );
-    /// Advacency ///
-    populate_net_connectivity( sphrNet, 0.005 );
-    /// Return ///
-    return sphrNet;
-}
-
-
-
-///// Icos Atmos //////////////////////////////////////////////////////////
-
-// Atmos* create_icos_atmos( float radius, uint prtclMax_, uint Nadd, float speedLim_, float accelLim_ ){
-//     // Allocate and initialize a toy atmosphere based on an icosahedron
-//     TriNet* icosNet   = create_icos_VFNA( radius );
-//     Atmos*  rtnStruct = alloc_atmos( icosNet->Ntri, prtclMax_ );
-//     init_atmos( rtnStruct, icosNet, Nadd, speedLim_, accelLim_ );
-//     return rtnStruct;
-// }
-
-
 ///// Spherical Atmos /////////////////////////////////////////////////////
 
 Atmos* create_icosphere_atmos( float radius, uint div, uint prtclMax_, uint Nadd, float speedLim_, 
@@ -727,15 +546,15 @@ Atmos* create_icosphere_atmos( float radius, uint div, uint prtclMax_, uint Nadd
 ////////// PROGRAM SETTINGS ////////////////////////////////////////////////////////////////////////
 float _SPHERE_RADIUS =   2.15f;
 float _ATMOS_RADIUS  =   2.25f;
-uint  _ICOS_SUBDIVID =   8;
-uint  _MAX_PRT_CELL  = 128; 
-uint  _INIT_PRT_CELL =  64; 
-float _SPEED_LIMIT   =   0.0025;
-float _ACCEL_LIMIT   =   0.00012;
-float _DIFFUS_PROB   = 1.0f/500.0f;
-float _DIFFUS_RATE   = 0.125;
-float _PERTURB_PROB  = 1.0f/100.0f;
-float _PERTURB_RATE  = 0.5;
+uint  _ICOS_SUBDIVID =   6;
+uint  _MAX_PRT_CELL  = 300; 
+uint  _INIT_PRT_CELL = 200; 
+float _SPEED_LIMIT   =   0.0075;
+float _ACCEL_LIMIT   =   0.00020;
+float _DIFFUS_PROB   = 1.0f/2000.0f;
+float _DIFFUS_RATE   = 0.0625;
+float _PERTURB_PROB  = 1.0f/25.0f;
+float _PERTURB_RATE  = 0.75;
 uint  _N_ATMOS_NATR  = 25;
 uint  _N_WARM_UP     = 65;
 
