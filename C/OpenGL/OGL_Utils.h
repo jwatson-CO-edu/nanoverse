@@ -79,10 +79,16 @@ float randf_range( float lo, float hi ){
     return lo + span * randf();
 }
 
-int randi( int lo, int hi ){
+int randi_range( int lo, int hi ){
     // Return a pseudo-random number between `lo` and `hi` (int)
     int span = hi - lo;
     return lo + (rand() % span);
+}
+
+uint randu_range( uint lo, uint hi ){
+    // Return a pseudo-random number between `lo` and `hi` (uint)
+    uint span = hi - lo;
+    return lo + ((uint) rand() % span);
 }
 
 ubyte rand_ubyte(){
@@ -367,21 +373,21 @@ bool p_pnt_positive_angle_from_seg( const vec2f* pnt, const vec2f* segOrg, const
 
 ///// 2D <---> 3D /////////////////////////////////////////////////////////
 
-void lift_pnt_2D_to_3D( vec3f* pnt3f, /*<<*/ vec2f* pnt2f, 
-                        const vec3f* origin, const vec3f* xBasis, const vec3f* yBasis ){
-    // Project the local 2D point to the global 3D frame
-    vec3f xLocal;  scale_vec3f( &xLocal, xBasis, (*pnt2f)[0] );
-    vec3f yLocal;  scale_vec3f( &yLocal, yBasis, (*pnt2f)[1] );
-    /*---------*/  add3_vec3f( pnt3f, origin, &xLocal, &yLocal );
-}
+// void lift_pnt_2D_to_3D( vec3f* pnt3f, /*<<*/ vec2f* pnt2f, 
+//                         const vec3f* origin, const vec3f* xBasis, const vec3f* yBasis ){
+//     // Project the local 2D point to the global 3D frame
+//     vec3f xLocal;  scale_vec3f( &xLocal, xBasis, (*pnt2f)[0] );
+//     vec3f yLocal;  scale_vec3f( &yLocal, yBasis, (*pnt2f)[1] );
+//     /*---------*/  add3_vec3f( pnt3f, origin, &xLocal, &yLocal );
+// }
 
 
-void lift_vec_2D_to_3D( vec3f* vct3f, /*<<*/ vec2f* vct2f, const vec3f* xBasis, const vec3f* yBasis ){
-    // Project the local 2D point to the global 3D frame
-    vec3f xLocal;  scale_vec3f( &xLocal, xBasis, (*vct2f)[0] );
-    vec3f yLocal;  scale_vec3f( &yLocal, yBasis, (*vct2f)[1] );
-    /*---------*/  add_vec3f( vct3f, &xLocal, &yLocal );
-}
+// void lift_vec_2D_to_3D( vec3f* vct3f, /*<<*/ vec2f* vct2f, const vec3f* xBasis, const vec3f* yBasis ){
+//     // Project the local 2D point to the global 3D frame
+//     vec3f xLocal;  scale_vec3f( &xLocal, xBasis, (*vct2f)[0] );
+//     vec3f yLocal;  scale_vec3f( &yLocal, yBasis, (*vct2f)[1] );
+//     /*---------*/  add_vec3f( vct3f, &xLocal, &yLocal );
+// }
 
 
 void project_pnt_3D_to_2D( vec2f* pnt2f, /*<<*/ vec3f* pnt3f,

@@ -63,12 +63,11 @@
         * `[ ]` **ALL** tuning params as **GLOBALS**
         * `[ ]` **ALL** particle data as *FAT* arrays
     - `[ ]` Draw sphere, Test
-    - `[ ]` Init Atmosphere
     - `[ ]` Init particles
         * `[ ]` Choose cell randomly, Choose size randomly
         * `[ ]` Locate clump centroid
         * `[ ]` Generate clump as Gaussian
-    - `[ ]` GPU: Data
+    - `[ ]` GPU Data: Init Atmosphere
         * `[ ]` One Row per Particle
             - `[ ]` Position
             - `[ ]` Velocity
@@ -114,7 +113,8 @@
         * `|+|` Don't pay for dereference overhead
         * `|+|` Easier to read, None of this --> `\*<<*\`
         * `|-|` Pass by value uses stack space
-    - `[ ]` Consider: Re-write utils as, considering above "OGL_Tools.h"
+    - `[ ]` Re-write utils as "OGL_Tools.h", considering above 
+    - `[ ]` Re-write "TriNet.h", considering above 
 
 
 ## `[ ]` Computer Graphics Blitz in Pure C + OpenGL + GLUT, Morning Warmup and Weekend Project
