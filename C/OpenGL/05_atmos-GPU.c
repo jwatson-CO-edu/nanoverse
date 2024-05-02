@@ -81,22 +81,25 @@ void allocate_cell_memory_at_GPU(){
     // Construct geo and move it to the GPU
     vec4*     target;
     GPtr_vec4 handle;
-    TriNet*   icosphere = create_icosphere_VFNA( _ATMOS_RADIUS, _ICOS_SUBDIVID );
-    vec4*     orgnArr   = NULL;
-    vec4*     v1_Arr    = NULL;
+    TriNet*   icosphr = create_icosphr_VFNA( _ATMOS_RADIUS, _ICOS_SUBDIVID );
+    vec4*     orgnArr = NULL;
+    vec4*     v1_Arr  = NULL;
+    vec4*     xBasArr = NULL;
+    vec4 /**/ norm_i  = {0.0f,0.0f,0.0f,1.0f};
 
-    N_cells = icosphere->Ntri;
+    N_cells = icosphr->Ntri;
     orgnArr = (vec4*) malloc( N_cells * sizeof( vec4 ) );
     v1_Arr  = (vec4*) malloc( N_cells * sizeof( vec4 ) );
+    xBasArr = (vec4*) malloc( N_cells * sizeof( vec4 ) );
 
     /// Origin ///
     handle = get_vec4_arr_from_buffer_obj( N_cells );
     origin_ID = handle.ID;
     target    = handle.arr;
     for( uint i = 0; i < N_cells; ++i ){
-        orgnArr[i].x = target[i].x = (*icosphere->V)[ (*icosphere->F)[i][0] ][0];
-        orgnArr[i].y = target[i].y = (*icosphere->V)[ (*icosphere->F)[i][0] ][1];
-        orgnArr[i].z = target[i].z = (*icosphere->V)[ (*icosphere->F)[i][0] ][2];
+        orgnArr[i].x = target[i].x = (*icosphr->V)[ (*icosphr->F)[i][0] ][0];
+        orgnArr[i].y = target[i].y = (*icosphr->V)[ (*icosphr->F)[i][0] ][1];
+        orgnArr[i].z = target[i].z = (*icosphr->V)[ (*icosphr->F)[i][0] ][2];
         orgnArr[i].w = target[i].w = 1.0f;
     }
     release_buffer_obj();
@@ -106,9 +109,9 @@ void allocate_cell_memory_at_GPU(){
     v1_ID  = handle.ID;
     target = handle.arr;
     for( uint i = 0; i < N_cells; ++i ){
-        v1_Arr[i].x = target[i].x = (*icosphere->V)[ (*icosphere->F)[i][1] ][0];
-        v1_Arr[i].y = target[i].y = (*icosphere->V)[ (*icosphere->F)[i][1] ][1];
-        v1_Arr[i].z = target[i].z = (*icosphere->V)[ (*icosphere->F)[i][1] ][2];
+        v1_Arr[i].x = target[i].x = (*icosphr->V)[ (*icosphr->F)[i][1] ][0];
+        v1_Arr[i].y = target[i].y = (*icosphr->V)[ (*icosphr->F)[i][1] ][1];
+        v1_Arr[i].z = target[i].z = (*icosphr->V)[ (*icosphr->F)[i][1] ][2];
         v1_Arr[i].w = target[i].w = 1.0f;
     }
     release_buffer_obj();
@@ -118,9 +121,9 @@ void allocate_cell_memory_at_GPU(){
     v2_ID  = handle.ID;
     target = handle.arr;
     for( uint i = 0; i < N_cells; ++i ){
-        target[i].x = (*icosphere->V)[ (*icosphere->F)[i][2] ][0];
-        target[i].y = (*icosphere->V)[ (*icosphere->F)[i][2] ][1];
-        target[i].z = (*icosphere->V)[ (*icosphere->F)[i][2] ][2];
+        target[i].x = (*icosphr->V)[ (*icosphr->F)[i][2] ][0];
+        target[i].y = (*icosphr->V)[ (*icosphr->F)[i][2] ][1];
+        target[i].z = (*icosphr->V)[ (*icosphr->F)[i][2] ][2];
         target[i].w = 1.0f;
     }
     release_buffer_obj();
@@ -130,7 +133,7 @@ void allocate_cell_memory_at_GPU(){
     v2_ID  = handle.ID;
     target = handle.arr;
     for( uint i = 0; i < N_cells; ++i ){
-        target[i] = unit_vec4( sub_vec4( v1_Arr[i], orgnArr[i] ) );
+        xBasArr[i] = target[i] = unit_vec4( sub_vec4( v1_Arr[i], orgnArr[i] ) );
     }
     release_buffer_obj();
 
@@ -138,7 +141,8 @@ void allocate_cell_memory_at_GPU(){
     // FIXME, START HERE: CALC Y BASIS
 
     // N. Cleanup
-    delete_net( icosphere );
+    delete_net( icosphr );
     free( orgnArr );
-    free( v1_Arr );
+    free( v1_Arr  );
+    free( xBasArr );
 }
