@@ -132,6 +132,7 @@ void allocate_cell_memory_at_GPU(){
     for( uint i = 0; i < N_cells; ++i ){
         target[i] = unit_vec4( sub_vec4( v1_Arr[i], orgnArr[i] ) );
     }
+    release_buffer_obj();
 
     /// Y Basis ///
     // FIXME, START HERE: CALC Y BASIS
