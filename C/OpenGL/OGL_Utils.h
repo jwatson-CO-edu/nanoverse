@@ -178,7 +178,7 @@ float diff_vec3f( const vec3f* u, const vec3f* v ){
 void unit_vec3f( vec3f* unt, /*<<*/ const vec3f* vec ){
     // Calc the unit direction of `vec` and store in `unt`, R^3
     float mag = norm_vec3f( vec );
-    if( mag > 0.0 ){
+    if( mag > 0.0f ){
         (*unt)[0] = (*vec)[0] / mag;
         (*unt)[1] = (*vec)[1] / mag;
         (*unt)[2] = (*vec)[2] / mag;
