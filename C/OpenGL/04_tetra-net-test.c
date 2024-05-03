@@ -5,7 +5,7 @@
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
-#include "TriNet.h"
+#include "ZZ_TriNet.h"
 
 
 ////////// SETTINGS ////////////////////////////////////////////////////////////////////////////////
@@ -51,10 +51,8 @@ void display(){
 	// Display the scene
 	// Adapted from code provided by Willem Schreuder
 	
-    vec3f netClr = {1.0f,1.0f,1.0f};
-    vec3f conClr = {0.0f,1.0f,0.0f};
-    // vec3f center = {0.0f,0.0f,0.0f};
-    // vec3f sphClr = {0.0, 14.0f/255.0f, 214.0f/255.0f};
+    vec4f netClr = {1.0f,1.0f,1.0f,1.0f};
+    vec4f conClr = {0.0f,1.0f,0.0f,1.0f};
 
 	//  Clear the image
 	glClearDepth( 1.0f );
@@ -97,9 +95,9 @@ int main( int argc , char* argv[] ){
 	
 	tetra = create_tetra_mesh_only( 2.00 );
 	// adjacency_from_VF( icos->Ntri, 0.01, icos->vert, icos->face, icos->adjc );
-	populate_net_connectivity_and_facet_frames( tetra, 0.01 );
+	populate_net_connectivity( tetra, 0.01 );
 
-	p_net_faces_outward_convex( tetra->Ntri, tetra->Nvrt, tetra->vert, tetra->face, tetra->norm );
+	p_net_faces_outward_convex( tetra->Ntri, tetra->Nvrt, tetra->V, tetra->F, tetra->N );
 	
 	//  Initialize GLUT and process user parameters
 	glutInit( &argc , argv );
@@ -108,7 +106,7 @@ int main( int argc , char* argv[] ){
 	glutInitWindowSize( 1000 , 750 );
 	
 	//  Create the window
-	glutCreateWindow( "LOOK AT THIS GODDAMN PLANET" );
+	glutCreateWindow( "LOOK AT THIS GODDAMN TETRAHEDRON" );
 
     // NOTE: Set modes AFTER the window / graphics context has been created!
     //  Request double buffered, true color window 

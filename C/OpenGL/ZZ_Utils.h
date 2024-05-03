@@ -1,7 +1,5 @@
-#pragma GCC diagnostic ignored "-Wimplicit-function-declaration" // UNKNOWN MAGIC
-
-#ifndef ADVCLASS_H // This pattern is to prevent symbols to be loaded multiple times
-#define ADVCLASS_H // from multiple imports
+#pragma GCC diagnostic ignored "-Wimplicit-function-declaration" 
+#pragma GCC diagnostic ignored "-Wmissing-braces" 
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -9,13 +7,17 @@
 #include <math.h>
 #include <time.h>
 #include <errno.h>  
-
-#define LEN 8192  // Maximum length of text string
-#define GL_GLEXT_PROTOTYPES
+#include <stdbool.h> // bool
 
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
+
+#ifndef ADVCLASS_H // This pattern is to prevent symbols to be loaded multiple times
+#define ADVCLASS_H // from multiple imports
+
+#define LEN 8192  // Maximum length of text string
+#define GL_GLEXT_PROTOTYPES
 
 typedef unsigned char ubyte;
 
@@ -27,10 +29,37 @@ typedef struct{
 } vec4f;
 
 typedef struct{
+  float x;
+  float y;
+} vec2f;
+
+typedef struct{
     union{ unsigned int v0; unsigned int f0; };
     union{ unsigned int v1; unsigned int f1; };
     union{ unsigned int v2; unsigned int f2; };
 } vec3u;
+
+////////// CAMERA //////////////////////////////////////////////////////////////////////////////////
+
+typedef struct {
+    // Camera state goes here
+
+    /// Members ///
+    vec4f eyeLoc; // ------------ Camera location (world frame)
+    vec4f lookPt; // ------------ Focus of camera (world frame)
+    vec4f upVctr; // ------------ Direction of "up"
+
+} Camera3D;
+
+
+/// Methods ///
+void look( Camera3D camera ){
+    // Set camera position, target, and orientation
+    gluLookAt( (double) camera.eyeLoc.x, (double) camera.eyeLoc.y, (double) camera.eyeLoc.z,  
+               (double) camera.lookPt.x, (double) camera.lookPt.y, (double) camera.lookPt.z,  
+               (double) camera.upVctr.x, (double) camera.upVctr.y, (double) camera.upVctr.z );
+}
+
 
 int sleep_ms( long msec ){
     // Pause main thread: implemented using nanosleep(), continuing the sleep if it is interrupted by a signal
