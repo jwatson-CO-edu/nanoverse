@@ -58,29 +58,30 @@
             - *NO* backill operation
     - Ideas:
         * Kill particles that reach zero velocity?, WARNING: REQUIRES BACKFILL
-    - `[ ]` Program Reorg
-        * `[ ]` Copy minimal code from Modified Example
-        * `[ ]` **ALL** tuning params as **GLOBALS**
-        * `[ ]` **ALL** particle data as *FAT* arrays
+    - `[>]` Program Reorg
+        * `[>]` Copy minimal code from Modified Example
+        * `[>]` **ALL** tuning params as **GLOBALS**
+        * `[>]` **ALL** particle data as *FAT* arrays
     - `[ ]` Draw sphere, Test
-    - `[ ]` Init particles
-        * `[ ]` Choose cell randomly, Choose size randomly
-        * `[ ]` Locate clump centroid
-        * `[ ]` Generate clump as Gaussian
-    - `[ ]` GPU Data: Init Atmosphere
-        * `[ ]` One Row per Particle
-            - `[ ]` Position
-            - `[ ]` Velocity
-            - `[ ]` Color
-            - `[ ]` Membership Index, `uint`
-        * `[ ]` One Row per Cell
-            - `[ ]` Origin
-            - `[ ]` Vertex 1
-            - `[ ]` Vertex 2
-            - `[ ]` X Basis
-            - `[ ]` Y Basis
-            - `[ ]` Acceleration, `vec2f`
-            - `[ ]` Neighbors
+    - `[Y]` Init particles
+        * `[Y]` Choose cell randomly, Choose size randomly
+        * `[Y]` Locate clump centroid
+        * `[Y]` Generate clump as Gaussian
+    - `[Y]` GPU Data: Init Atmosphere
+        * `[Y]` One Row per Particle
+            - `[Y]` Position, 2024-05-01: Allocated on GPU
+            - `[Y]` Velocity, 2024-05-01: Allocated on GPU
+            - `[Y]` Color, 2024-05-01: Allocated on GPU
+            - `[Y]` Membership Index, `uint`, 2024-05-01: Allocated on GPU
+        * `[Y]` One Row per Cell, 2024-05-01: Allocated on GPU
+            - `[Y]` Origin, 2024-05-01: Allocated on GPU
+            - `[Y]` Vertex 1, 2024-05-01: Allocated on GPU
+            - `[Y]` Vertex 2, 2024-05-01: Allocated on GPU
+            - `[Y]` X Basis, 2024-05-01: Allocated on GPU
+            - `[Y]` Y Basis, 2024-05-01: Allocated on GPU
+            - `[Y]` Acceleration, 2024-05-01: Allocated on GPU
+            - `[Y]` Neighbors, 2024-05-01: Allocated on GPU
+    - `[>]` Draw particles
     - `[ ]` GPU: Compute Shader, One worker per *particle* (Easiest adaptation), Dispatch for dynamics:
         * `[ ]` Membership lookup
         * `[ ]` Calc mass from color, Scale accel by `(r+g+b)/3.0f` (Most intense particles are fastest)

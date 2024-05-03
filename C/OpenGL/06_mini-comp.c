@@ -117,6 +117,12 @@ void InitParticles( void ){
     glGenBuffers( 1, &colbuf_ID );
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, colbuf_ID );
     glBufferData( GL_SHADER_STORAGE_BUFFER, N_prt * sizeof( vec4 ), NULL, GL_STATIC_DRAW );
+
+
+
+
+
+
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 );
 
     // Reset buffer positions
@@ -244,12 +250,12 @@ void display(){
 }
 
 void Projection( float fov, float asp, float dim ){
-   //  Set projection matrix
+   // Set projection matrix
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   //  Perspective transformation
+   // Perspective transformation
    gluPerspective( fov, asp, dim/16, 16*dim );
-   //  Reset modelview
+   // Reset modelview
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
 }
@@ -277,7 +283,7 @@ void tick(){
 }
 
 
-////////// WINDOW STATE ////////////////////////////////////////////////////////////////////////////
+////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
 
 int main( int argc, char* argv[] ){
@@ -298,7 +304,7 @@ int main( int argc, char* argv[] ){
 
 
     //  Compute shader
-    shader_ID = CreateShaderProgCompute( "shaders/06_Prtcl-Dyn.comp" );
+    shader_ID = CreateShaderProgCompute( "shaders/05_Prtcl-Dyn.comp" );
     
     //  Initialize particles
     InitParticles();

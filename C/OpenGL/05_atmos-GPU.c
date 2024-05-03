@@ -1,19 +1,8 @@
-// gcc -std=gnu17 -O3 -Wall 05_atmos-GPU.c -lglut -lGLU -lGL -lm -o atmosGPU.out
-#pragma GCC diagnostic ignored "-Wmissing-braces"
+// gcc -std=gnu17 -O3 -Wall 06_mini-comp.c -lglut -lGLU -lGL -lm -o compShaderEx.out
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
-
+#include "ZZ_Utils.h"
 #include "TriNet.h"
-#include "OGL_Geo.h"
-#include "OGL_Tools.h"
-
-
-////////// VIEW SETTINGS & WINDOW STATE ////////////////////////////////////////////////////////////
-const float _SCALE   = 10.0; //- Scale Dimension
-float /*-*/ w2h /**/ =  0.0f; // Aspect ratio
-int   /*-*/ fov /**/ = 55; // -- Field of view (for perspective)
-float /*-*/ lastTime = 0.0f; //- Time of last frame since GLUT start [s]
-
 
 
 ////////// PROGRAM SETTINGS ////////////////////////////////////////////////////////////////////////
@@ -22,11 +11,12 @@ float /*-*/ lastTime = 0.0f; //- Time of last frame since GLUT start [s]
 const float _SPHERE_RADIUS = 2.15f;
 const float _ATMOS_RADIUS  = 2.25f;
 const uint  _ICOS_SUBDIVID = 6;
+const ulong N_cells /*--*/ = 20 * (_ICOS_SUBDIVID*(_ICOS_SUBDIVID+1)/2 + (_ICOS_SUBDIVID-1)*(_ICOS_SUBDIVID)/2);
 
 /// Init ///
-const uint  _N_PARTICLES  = 2000000;
-const uint  _N_ATMOS_NATR =      25;
-const uint  _N_WARM_UP    =      65;
+const uint _N_PARTICLES  = 1000000;
+const uint _N_ATMOS_NATR =      25;
+const uint _N_WARM_UP    =      65;
 
 /// Dynamics ///
 const float _SPEED_LIMIT  =   0.0075;
@@ -38,10 +28,15 @@ const float _PERTURB_PROB = 1.0f/25.0f;
 const float _PERTURB_RATE = 0.75;
 
 
+////////// GLOBAL PROGRAM STATE ////////////////////////////////////////////////////////////////////
+int workGroupSize;
+int N_groups;
 
-////////// GLOBAL PROGRAM GEOMETRY & STATE /////////////////////////////////////////////////////////
-uint N_cells = 0;
-int  shader_ID; // Shader program
+/// Particle per Row ///
+uint posnArr_ID; //  Position buffer
+uint veloArr_ID; //  Velocity buffer
+uint colrArr_ID; //  Color buffer
+uint mmbrArr_ID;
 
 /// Cell per Row ///
 uint origin_ID;
@@ -52,236 +47,386 @@ uint yBasis_ID;
 uint accel_ID;
 uint nghbrs_ID;
 
-/// Particle per Row ///
-uint posnArr_ID; // Position array
-uint veloArr_ID; // Velocity array
-uint colrArr_ID; // Color    array
+///// CPU-Side State //////////////////////////////////////////////////////
+vec4f* orgnArr = NULL;
+vec4f* xBasArr = NULL;
+vec4f* yBasArr = NULL;
+vec4f* acclArr = NULL;
+
+
+int /*----*/ shader_ID; //  Shader program
+
+int    th  =    0; // Azimuth of view angle
+int    ph  =    0; // Elevation of view angle
+int    zh  =   30; // Light angle
+double asp =    1; // Aspect ratio
+double dim = 1000; // Size of world
 
 
 
-////////// GPU HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////
 
-GPtr_vec4 get_vec4_arr_from_buffer_obj( unsigned long int N ){
-    // Allocate space on the GPU for an array of `vec4` of length `N`
-    GPtr_vec4 handle = {0, NULL};
-    // Reset position
-    int res = glBindBuffer( GL_SHADER_STORAGE_BUFFER, handle.ID ); // Ask buffer object for a new buffer ID
-    // Get pointer to buffer and cast as a struct array
-    handle.arr = (vec4*) (long) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, N*sizeof( vec4 ),
-                                                  GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT );
-    printf( "Allocated %lu bytes on the GPU for `vec4`, Result: %i" , N*sizeof( vec4 ), res );
-    return handle;
-}
+////////// GPU SETUP ///////////////////////////////////////////////////////////////////////////////
 
-GPtr_vec3uu get_vec3uu_arr_from_buffer_obj( unsigned long int N ){
-    // Allocate space on the GPU for an array of `vec4` of length `N`
-    GPtr_vec3uu handle = {0, NULL};
-    // Reset position
-    int res = glBindBuffer( GL_SHADER_STORAGE_BUFFER, handle.ID ); // Ask buffer object for a new buffer ID
-    // Get pointer to buffer and cast as a struct array
-    handle.arr = (vec3uu*) (long) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, N*sizeof( vec3uu ),
-                                                    GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT );
-    printf( "Allocated %lu bytes on the GPU for `vec3uu`, Result: %i" , N*sizeof( vec3uu ), res );
-    return handle;
-}
+void ResetParticles(){
+    // Write init data to buffers on the GPU
+    // Author: Willem A. (Vlakkies) Schreüder
 
-void release_buffer_obj(){  glUnmapBuffer( GL_SHADER_STORAGE_BUFFER );  } // Release buffer object
-
-void halt_buffer_obj(){  glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 );  } // Stop talking to the buffer object?
-
-
-
-////////// INIT HELPERS ////////////////////////////////////////////////////////////////////////////
-
-float Box_Muller_normal_sample( float mu, float sigma ){
-    // Transform 2 uniform samples into a zero-mean normal sample
-    // Source: https://www.baeldung.com/cs/uniform-to-normal-distribution
-    float u1 = randf();
-    float u2 = randf();
-    return mu + sqrtf( -2.0 * log( u1 ) ) * cos( 2.0 * M_PI * u2 ) * sigma;
-}
-
-
-uint* distribute_particles_init( vec4* prtArr, vec4* orgnArr, vec4* xBasArr, vec4* yBasArr, float scale,
-                                uint groupSizeMin, uint groupSizeMax ){
-    // Place particles in the atmosphere
-    // 0. Init
-    uint* rtnArr  = (uint*) malloc( _N_PARTICLES * sizeof( uint ) );
-    uint  cellDex = 0;
-    uint  grpSize = 0;
-    uint  j /*-*/ = 0;
-    bool  onGroup = false;
-    vec4  v0 /**/ = {0.0f,0.0f,0.0f,1.0f};
-    vec4  v1 /**/ = {0.0f,0.0f,0.0f,1.0f};
-    vec2  posn2f  = {0.0f,0.0f};
-    vec2  center  = {0.0f,0.0f};
-    // 1. For each particle in the simulation
-    for( uint i = 0; i < _N_PARTICLES; ++i ){
-        // 2. If there is no active cluster, then start one
-        if( !onGroup ){
-            cellDex  = randu_range( 0, N_cells-1 );
-            grpSize  = randu_range( groupSizeMin, groupSizeMax );
-            j /*--*/ = 0;
-            center.x = randf() * scale;
-            center.y = randf() * scale;
-            onGroup  = true;
-        }
-        // 3. Distribute point about cluster center w/ 2D Gaussian
-        posn2f.x = Box_Muller_normal_sample( 0.0f, scale/8.0f );
-        posn2f.y = Box_Muller_normal_sample( 0.0f, scale/8.0f );
-        posn2f   = add_vec2( center, posn2f );
-        // 4. Place point in 3D
-        prtArr[i] = lift_pnt_2D_to_3D( posn2f, orgnArr[ cellDex ], xBasArr[ cellDex ], yBasArr[ cellDex ] );
-        rtnArr[i] = cellDex;
-        // 5. Increment group counter and check if group is done
-        ++j;
-        if( j >= grpSize ){  onGroup = false;  }
-    }
-}
-
-
-
-////////// ATMOSPHERE CONSTRUCTION & GPU MEMORY OPS ////////////////////////////////////////////////
-
-void allocate_cell_memory_at_GPU(){
-    // Construct geo and move it to the GPU
-    vec4* /*-*/ target;
-    vec3uu*     targetU;
-    GPtr_vec4   handle;
-    GPtr_vec3uu handleU;
+    vec4f *pos, *vel, *col;
+    vec4f* /*-*/ v1_Arr    = NULL;
     TriNet*     icosphr   = create_icosphere_VFNA( _ATMOS_RADIUS, _ICOS_SUBDIVID );
-    vec4* /*-*/ orgnArr   = NULL;
-    vec4* /*-*/ v1_Arr    = NULL;
-    vec4* /*-*/ xBasArr   = NULL;
-    vec4* /*-*/ yBasArr   = NULL;
-    uint* /*-*/ memberDex = NULL;
-    vec4 /*--*/ norm_i    = {0.0f,0.0f,0.0f,1.0f};
-    vec2 /*--*/ accl_i    = {0.0f,0.0f};
 
-    N_cells = icosphr->Ntri;
-    orgnArr = (vec4*) malloc( N_cells * sizeof( vec4 ) );
-    v1_Arr  = (vec4*) malloc( N_cells * sizeof( vec4 ) );
-    xBasArr = (vec4*) malloc( N_cells * sizeof( vec4 ) );
-    yBasArr = (vec4*) malloc( N_cells * sizeof( vec4 ) );
+    printf( "About to allocate CPU array memory ...\n" );
+    orgnArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
+    v1_Arr  = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
+    xBasArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
+    yBasArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
+    acclArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
 
-
-    ///// Cell per Row ////////////////////////////////////////////////////
-
-    /// Origin ///
-    handle    = get_vec4_arr_from_buffer_obj( N_cells );
-    origin_ID = handle.ID;
-    target    = handle.arr;
-    for( uint i = 0; i < N_cells; ++i ){
-        orgnArr[i].x = target[i].x = (*icosphr->V)[ (*icosphr->F)[i][0] ][0];
-        orgnArr[i].y = target[i].y = (*icosphr->V)[ (*icosphr->F)[i][0] ][1];
-        orgnArr[i].z = target[i].z = (*icosphr->V)[ (*icosphr->F)[i][0] ][2];
-        orgnArr[i].w = target[i].w = 1.0f;
+    //  Reset position
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, posnArr_ID ); // Set buffer object to point to this ID, for writing
+    // Get pointer to buffer and cast as a struct array
+    pos = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, _N_PARTICLES * sizeof( vec4f ),
+                                    GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
+    // Load init positions into buffer
+    for (int i = 0; i < _N_PARTICLES; i++ ){
+        pos[i].x = randf_range(    0,  100 );
+        pos[i].y = randf_range( +400, +600 );
+        pos[i].z = randf_range(  -50,  +50 );
+        pos[i].w = 1;
     }
-    release_buffer_obj();
+    glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
-    /// Vertex 1 ///
-    handle = get_vec4_arr_from_buffer_obj( N_cells );
-    v1_ID  = handle.ID;
-    target = handle.arr;
-    for( uint i = 0; i < N_cells; ++i ){
-        v1_Arr[i].x = target[i].x = (*icosphr->V)[ (*icosphr->F)[i][1] ][0];
-        v1_Arr[i].y = target[i].y = (*icosphr->V)[ (*icosphr->F)[i][1] ][1];
-        v1_Arr[i].z = target[i].z = (*icosphr->V)[ (*icosphr->F)[i][1] ][2];
-        v1_Arr[i].w = target[i].w = 1.0f;
+    //  Reset velocities
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, veloArr_ID ); // Set buffer object to point to this ID, for writing
+    // Get pointer to buffer and cast as a struct array
+    vel = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, _N_PARTICLES * sizeof( vec4f ), 
+                                    GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
+    // Load init velocities into buffer
+    for( int i = 0; i < _N_PARTICLES; i++ ){
+        vel[i].x = randf_range( -10, +10 );
+        vel[i].y = randf_range( -10, +10 );
+        vel[i].z = randf_range( -10, +10 );
+        vel[i].w = 0;
     }
-    release_buffer_obj();
+    glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
-    /// Vertex 2 ///
-    handle = get_vec4_arr_from_buffer_obj( N_cells );
-    v2_ID  = handle.ID;
-    target = handle.arr;
-    for( uint i = 0; i < N_cells; ++i ){
-        target[i].x = (*icosphr->V)[ (*icosphr->F)[i][2] ][0];
-        target[i].y = (*icosphr->V)[ (*icosphr->F)[i][2] ][1];
-        target[i].z = (*icosphr->V)[ (*icosphr->F)[i][2] ][2];
-        target[i].w = 1.0f;
+    //  Reset colors
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, colrArr_ID ); // Set buffer object to point to this ID, for writing
+    // Get pointer to buffer and cast as a struct array
+    col = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, _N_PARTICLES * sizeof( vec4f ), 
+                                    GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
+    // Load colors into buffer
+    for( int i = 0; i < _N_PARTICLES; i++ ){
+        col[i].r = randf_range( 0.1, 1.0 );
+        col[i].g = randf_range( 0.1, 1.0 );
+        col[i].b = randf_range( 0.1, 1.0 );
+        col[i].a = 1.;
     }
-    release_buffer_obj();
+    glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
-    /// X Basis ///
-    handle    = get_vec4_arr_from_buffer_obj( N_cells );
-    xBasis_ID = handle.ID;
-    target    = handle.arr;
-    for( uint i = 0; i < N_cells; ++i ){
-        xBasArr[i] = target[i] = unit_vec4( sub_vec4( v1_Arr[i], orgnArr[i] ) );
+
+    //  Reset origin
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, origin_ID ); // Set buffer object to point to this ID, for writing
+    // Get pointer to buffer and cast as a struct array
+    col = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, N_cells * sizeof( vec4f ), 
+                                    GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
+    // Load colors into buffer
+    for( ulong i = 0; i < N_cells; ++i ){
+        printf( "%f\n", orgnArr[i].x );
+        printf( "%f\n", (*icosphr->V)[ (*icosphr->F)[i][0] ][0]  );
+        printf( "%f\n", col[i].x  );
+        
+        orgnArr[i].x = col[i].x = (*icosphr->V)[ (*icosphr->F)[i][0] ][0];
+        orgnArr[i].y = col[i].y = (*icosphr->V)[ (*icosphr->F)[i][0] ][1];
+        orgnArr[i].z = col[i].z = (*icosphr->V)[ (*icosphr->F)[i][0] ][2];
+        orgnArr[i].w = col[i].w = 1.0f;
     }
-    release_buffer_obj();
+    glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
-    /// Y Basis ///
-    handle    = get_vec4_arr_from_buffer_obj( N_cells );
-    yBasis_ID = handle.ID;
-    target    = handle.arr;
-    for( uint i = 0; i < N_cells; ++i ){
-        norm_i.x = (*icosphr->N)[i][0];
-        norm_i.y = (*icosphr->N)[i][1];
-        norm_i.z = (*icosphr->N)[i][2];
-        yBasArr[i] = target[i] = unit_vec4( cross_vec4( norm_i, xBasArr[i] ) );
-    }
-    release_buffer_obj();
+    // Associate buffer ID on GPU side with buffer ID on CPU side
+    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 4, posnArr_ID );
+    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 5, veloArr_ID );
+    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 6, colrArr_ID );
 
-    /// Acceleration ///
-    handle   = get_vec4_arr_from_buffer_obj( N_cells );
-    accel_ID = handle.ID;
-    target   = handle.arr;
-    for( uint i = 0; i < N_cells; ++i ){
-        accl_i.x = randf_range( -_ACCEL_LIMIT, +_ACCEL_LIMIT );
-        accl_i.y = randf_range( -_ACCEL_LIMIT, +_ACCEL_LIMIT );
-        if( norm_vec2( accl_i ) < _ACCEL_MIN ){  accl_i = stretch_vec2_to_len( accl_i, _ACCEL_MIN );  }
-        target[i] = lift_vec_2D_to_3D( accl_i, xBasArr[i], yBasArr[i] );
-    }
-    release_buffer_obj();
-
-    /// Neighbors ///
-    handleU   = get_vec3uu_arr_from_buffer_obj( N_cells );
-    nghbrs_ID = handleU.ID;
-    targetU   = handleU.arr;
-    for( uint i = 0; i < N_cells; ++i ){
-        targetU[i].f0 = (*icosphr->A)[i][0];
-        targetU[i].f1 = (*icosphr->A)[i][1];
-        targetU[i].f2 = (*icosphr->A)[i][2];
-    }
-    release_buffer_obj();
+    // Stop talking to the buffer object?
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 );
+}
 
 
-    ///// Particle per Row ////////////////////////////////////////////////
+void InitParticles( void ){
+    // Get compute shader_ID info and allocate buffer space on the GPU
+    // Author: Willem A. (Vlakkies) Schreüder
 
-    /// Position ///
-    handle     = get_vec4_arr_from_buffer_obj( _N_PARTICLES );
-    posnArr_ID = handle.ID;
-    target     = handle.arr;
-    memberDex  = distribute_particles_init( 
-        target, orgnArr, xBasArr, yBasArr, diff_vec4( orgnArr[0], v1_Arr[0] ), 200, _N_PARTICLES/1000 
+    // Get max workgroup size and count
+    glGetIntegeri_v( GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &N_groups      );
+    glGetIntegeri_v( GL_MAX_COMPUTE_WORK_GROUP_SIZE , 0, &workGroupSize );
+    if( N_groups > 8192 ) N_groups = 8192;
+    // _N_PARTICLES = workGroupSize * N_groups;
+
+    // Initialize position buffer
+    glGenBuffers( 1, &posnArr_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, posnArr_ID );
+    glBufferData( GL_SHADER_STORAGE_BUFFER, _N_PARTICLES * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
+
+    // Initialize velocity buffer
+    glGenBuffers( 1, &veloArr_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, veloArr_ID);
+    glBufferData( GL_SHADER_STORAGE_BUFFER, _N_PARTICLES * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
+
+    // Initialize color buffer
+    glGenBuffers( 1, &colrArr_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, colrArr_ID );
+    glBufferData( GL_SHADER_STORAGE_BUFFER, _N_PARTICLES * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
+
+    // Initialize member buffer
+    glGenBuffers( 1, &mmbrArr_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, mmbrArr_ID );
+    glBufferData( GL_SHADER_STORAGE_BUFFER, _N_PARTICLES * sizeof( uint ), NULL, GL_STATIC_DRAW );
+
+    // Initialize origin buffer
+    glGenBuffers( 1, &origin_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, origin_ID );
+    glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
+
+    // Initialize v1 buffer
+    glGenBuffers( 1, &v1_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, v1_ID );
+    glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
+
+    // Initialize v2 buffer
+    glGenBuffers( 1, &v2_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, v2_ID );
+    glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
+
+    // Initialize X Basis buffer
+    glGenBuffers( 1, &xBasis_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, xBasis_ID );
+    glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
+
+    // Initialize Y Basis buffer
+    glGenBuffers( 1, &yBasis_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, yBasis_ID );
+    glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
+
+    // Initialize acceleration buffer
+    glGenBuffers( 1, &accel_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, accel_ID );
+    glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
+
+    // Initialize acceleration buffer
+    glGenBuffers( 1, &nghbrs_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, nghbrs_ID );
+    glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec3u ), NULL, GL_STATIC_DRAW );
+
+
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 );
+
+    // Reset buffer positions
+    ResetParticles();
+}
+
+
+
+////////// RENDERING ///////////////////////////////////////////////////////////////////////////////
+
+void DrawParticles( void ){
+    // Render all particles after the compute shader_ID has moved them
+    // Author: Willem A. (Vlakkies) Schreüder
+    // Set particle size
+    glPointSize(1);
+    // Vertex array
+    glBindBuffer( GL_ARRAY_BUFFER, posnArr_ID );
+    glVertexPointer( 4, GL_FLOAT, 0, (void*) 0 );
+    // Color array
+    glBindBuffer( GL_ARRAY_BUFFER, colrArr_ID );
+    glColorPointer( 4, GL_FLOAT, 0, (void*) 0 );
+    // Enable arrays used by DrawArrays
+    glEnableClientState( GL_VERTEX_ARRAY );
+    glEnableClientState( GL_COLOR_ARRAY  );
+    // Draw arrays
+    glDrawArrays( GL_POINTS, 0, _N_PARTICLES );
+    // Disable arrays
+    glDisableClientState( GL_VERTEX_ARRAY );
+    glDisableClientState( GL_COLOR_ARRAY  );
+    // Reset buffer
+    glBindBuffer( GL_ARRAY_BUFFER, 0 );
+}
+
+float lastTime = 0.0f;
+
+float heartbeat( float targetFPS ){
+    // Attempt to maintain framerate no greater than target. (Period is rounded down to next ms)
+    float currTime   = 0.0f;
+    float framTime   = 0.0f;
+    float target_ms  = 1000.0f / targetFPS;
+    static float FPS = 0.0f;
+    framTime = (float) glutGet( GLUT_ELAPSED_TIME ) - lastTime;
+    if( framTime < target_ms ){ sleep_ms( (long) (target_ms - framTime) );  }
+    currTime = (float) glutGet( GLUT_ELAPSED_TIME );
+    FPS = (1000.0f / (currTime - lastTime)) * 0.125f + FPS * 0.875f; // Filter for readable number
+    lastTime = currTime;
+    return FPS;
+}
+
+void display(){
+    // Draw one frame
+    // Adapted from work by Willem A. (Vlakkies) Schreüder
+
+    const float SphereY = -500;
+    const float SphereR = +600;
+    int /*---*/ id = 0;
+
+    // Erase the window and the depth buffer
+    glClear( GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT );
+    glEnable( GL_DEPTH_TEST );
+    
+    // Set eye position
+    View( th, ph, 55, dim );
+    
+    // // Enable lighting
+    // Lighting( dim * Cos( zh ), dim, dim * Sin(zh), 0.3, 0.5, 0.5 );
+
+    // // Draw sphere
+    // SetColor( 0.8, 0.8, 0 );
+    // glPushMatrix();
+    // glTranslatef( 0, SphereY, 0 );
+    // glRotatef( -90, 1, 0, 0 );
+    // glScaled( SphereR, SphereR, SphereR );
+    // SolidSphere( 32 );
+    // glPopMatrix();
+
+    // Disable lighting before particles
+    glDisable( GL_LIGHTING );
+
+    // Launch compute `shader_ID`
+    glUseProgram( shader_ID ); // GPU state points to the compute shader
+
+    // Fetch ID of var that holds sphere center location, and set the location
+    id = glGetUniformLocation( shader_ID, "xyz" );
+    glUniform3f( id, 0, SphereY, 0 );
+
+    // Fetch ID of var that holds sphere radius, and set the radius
+    id = glGetUniformLocation( shader_ID, "dim" );
+    glUniform1f( id, SphereR );
+    
+    // Launch workers to perform tasks, Each task is defined by the shader program
+    glDispatchComputeGroupSizeARB( 
+        // Array of Worker Groups //
+        _N_PARTICLES/workGroupSize, // Number of groups, Dim 0
+        1, // ----------------- Number of groups, Dim 1
+        1, // ----------------- Number of groups, Dim 2
+        // Array of Workers within each Group //
+        workGroupSize, // Group size, Dim 0
+        1, // ----------- Group size, Dim 1
+        1 // ------------ Group size, Dim 2
     );
-    release_buffer_obj();
+    glUseProgram(0); // GPU state no longer points to a shader program
 
-    /// Velocity ///
-    handle     = get_vec4_arr_from_buffer_obj( _N_PARTICLES );
-    veloArr_ID = handle.ID;
-    target     = handle.arr;
-    for( uint i = 0; i < N_cells; ++i ){
+    //  Wait for compute shader_ID
+    glMemoryBarrier( GL_SHADER_STORAGE_BARRIER_BIT );
 
-    }
+    //  Draw the particles
+    DrawParticles();
 
-    halt_buffer_obj();
+    // //  Draw Axes
+    // Axes(500);
 
-    // N. Cleanup
-    delete_net( icosphr );
-    free( orgnArr   );
-    free( v1_Arr    );
-    free( xBasArr   );
-    free( yBasArr   );
-    free( memberDex );
+    //  Display parameters
+    glDisable( GL_DEPTH_TEST );
+    glWindowPos2i( 5, 5 );
+    Print( "%d,%f FPS=%d Dim=%.1f Size=%d Count=%d N=%d", 
+           th, ph, heartbeat( 60.0 ), dim, workGroupSize, N_groups, _N_PARTICLES );
+    
+    // Check errors
+    ErrCheck("display");
+
+    // Render the scene and make it visible: Flush and swap
+    glFlush();
+    glutSwapBuffers();
+}
+
+void Projection( float fov, float asp, float dim ){
+   // Set projection matrix
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   // Perspective transformation
+   gluPerspective( fov, asp, dim/16, 16*dim );
+   // Reset modelview
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity();
+}
+
+////////// WINDOW STATE ////////////////////////////////////////////////////////////////////////////
+
+void reshape( int width , int height ){
+    // GLUT calls this routine when the window is resized
+    // Calc the aspect ratio: width to the height of the window
+    asp = ( height > 0 ) ? (float) width / height : 1;
+    // Set the viewport to the entire window
+    glViewport( 0 , 0 , width , height );
+    // Set projection
+    Projection( 55, asp, dim );
+}
+
+////////// SIMULATION LOOP /////////////////////////////////////////////////////////////////////////
+
+void tick(){
+    // Simulation updates in between repaints
+    // tick_atmos( simpleAtmos );
+
+    //  Tell GLUT it is necessary to redisplay the scene
+    glutPostRedisplay();
 }
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
-int main( int argc , char* argv[] ){
-    init_rand();
 
+int main( int argc, char* argv[] ){
+    init_rand();
+    // Initialize GLUT and process user parameters
+    glutInit( &argc , argv );
+
+    // Request window with size specified in pixels
+    glutInitWindowSize( 900, 900 );
+
+    // Create the window
+    glutCreateWindow( "!!! PARTICLES !!!" );
+
+    // NOTE: Set modes AFTER the window / graphics context has been created!
+    // Request double buffered, true color window 
+    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
+    glDepthRange( 0.0f , 1.0f ); // WARNING: NOT IN THE EXAMPLE
+
+
+    //  Compute shader
+    shader_ID = CreateShaderProgCompute( "shaders/06_Prtcl-Dyn.comp" );
+    
+    //  Initialize particles
+    InitParticles();
+
+    //  Tell GLUT to call "display" when the scene should be drawn
+    glutDisplayFunc( display );
+
+    // Tell GLUT to call "idle" when there is nothing else to do
+    glutIdleFunc( tick );
+    
+    //  Tell GLUT to call "reshape" when the window is resized
+    glutReshapeFunc( reshape );
+    
+    // //  Tell GLUT to call "special" when an arrow key is pressed
+    // glutSpecialFunc( special );
+    
+    // //  Tell GLUT to call "key" when a key is pressed
+    // glutKeyboardFunc( key );
+    
+    //  Pass control to GLUT so it can interact with the user
+    glutMainLoop();
+    
+    // // Free memory
+    // delete_net( icos );
+    // delete_atmos( simpleAtmos );
+    
+    //  Return code
+    return 0;
 }

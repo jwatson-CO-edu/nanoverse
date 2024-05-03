@@ -17,6 +17,21 @@
 #include <GL/glu.h>
 #include <GL/glut.h>
 
+typedef unsigned char ubyte;
+
+typedef struct{
+  union{ float x; float r; };
+  union{ float y; float g; };
+  union{ float z; float b; };
+  union{ float w; float a; };
+} vec4f;
+
+typedef struct{
+    union{ unsigned int v0; unsigned int f0; };
+    union{ unsigned int v1; unsigned int f1; };
+    union{ unsigned int v2; unsigned int f2; };
+} vec3u;
+
 int sleep_ms( long msec ){
     // Pause main thread: implemented using nanosleep(), continuing the sleep if it is interrupted by a signal
     // Author: Neuron, https://stackoverflow.com/a/1157217

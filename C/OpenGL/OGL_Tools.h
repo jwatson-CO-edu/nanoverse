@@ -17,10 +17,15 @@
 /// Defines ///
 #define LEN 8192  // Maximum length of text string
 #define GL_GLEXT_PROTOTYPES
+
+
 /// OpenGL & GLUT ///
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
+
+///// Aliases /////////////////////////////////////////////////////////////
+typedef unsigned long ulong;
 
 ////////// MATH STRUCTS ////////////////////////////////////////////////////////////////////////////
 
@@ -41,16 +46,6 @@ typedef struct{
     union{ unsigned int v1; unsigned int f1; };
     union{ unsigned int v2; unsigned int f2; };
 } vec3uu; // TODO: SHORTEN SUFFIX
-
-typedef struct{
-    unsigned int ID;
-    vec4* /*--*/ arr;
-} GPtr_vec4; // TODO: ADD "f" SUFFIX
-
-typedef struct{
-    unsigned int ID;
-    vec3uu* /**/ arr;
-} GPtr_vec3uu; // TODO: SHORTEN SUFFIX
 
 ////////// 3D GEOMETRY /////////////////////////////////////////////////////////////////////////////
 
@@ -207,6 +202,33 @@ vec4 lift_vec_2D_to_3D( const vec2 vct2f, const vec4 xBasis, const vec4 yBasis )
         scale_vec4( xBasis, vct2f.x ), 
         scale_vec4( yBasis, vct2f.y )
     );
+}
+
+
+////////// ANIMATION HELPERS ///////////////////////////////////////////////////////////////////////
+
+float heartbeat_FPS( float targetFPS ){
+    // Attempt to maintain framerate no greater than target. (Period is rounded down to next ms)
+    float /*--*/ currTime  = 0.0f;
+    float /*--*/ framTime  = 0.0f;
+    float /*--*/ target_ms = 1000.0f / targetFPS;
+    static float FPS /*-*/ = 0.0f;
+    static float lastTime  = 0.0f;
+    if( lastTime > 0.0f ){
+        framTime = (float) glutGet( GLUT_ELAPSED_TIME ) - lastTime;
+        if( framTime < target_ms ){ sleep_ms( (long) (target_ms - framTime) );  }
+        currTime = (float) glutGet( GLUT_ELAPSED_TIME );
+        FPS /**/ = (1000.0f / (currTime - lastTime)) * 0.125f + FPS * 0.875f; // Filter for readable number
+        lastTime = currTime;
+    }
+    return FPS;
+}
+
+
+void ErrCheck( const char* where ){
+    // Author: Willem A. Schreüder  
+    int err = glGetError();
+    if (err) fprintf(stderr,"ERROR: %s [%s]\n",gluErrorString(err),where);
 }
 
 
