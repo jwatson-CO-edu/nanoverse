@@ -1,6 +1,7 @@
 //
 //  Particle compute shader
-//
+// Author: Willem A. (Vlakkies) Schreüder  
+
 #version 440 compatibility
 #extension GL_ARB_compute_variable_group_size : enable
 
