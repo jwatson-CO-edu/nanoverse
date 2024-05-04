@@ -1,7 +1,7 @@
 // gcc -std=gnu17 -O3 -Wall 06_mini-comp.c -lglut -lGLU -lGL -lm -o compShaderEx.out
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
-#include "AdvClass.h"
+#include "ZZ_Utils.h"
 
 
 
@@ -40,9 +40,12 @@ void ResetParticles(){
 
     vec4 *pos, *vel, *col;
 
+    ErrCheck( "Before map buffer" );
+    printf( "About the populate buffer %u", posbuf_ID );
     //  Reset position
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, posbuf_ID ); // Set buffer object to point to this ID, for writing
     // Get pointer to buffer and cast as a struct array
+    
     pos = (vec4*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, N_prt * sizeof( vec4 ),
                                     GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
     // Load init positions into buffer
@@ -287,25 +290,36 @@ void tick(){
 
 
 int main( int argc, char* argv[] ){
+    fflush( stdout );
+    printf( "About to init rand ...\n" );
     init_rand();
+
     // Initialize GLUT and process user parameters
+    printf( "About to init GLUT ...\n" );
     glutInit( &argc , argv );
 
+
     // Request window with size specified in pixels
+    printf( "About to create window ...\n" );
     glutInitWindowSize( 900, 900 );
 
-    // Create the window
-    glutCreateWindow( "!!! PARTICLES !!!" );
+    // // Create the window
+    // glutCreateWindow( "!!! PARTICLES !!!" );
 
     // NOTE: Set modes AFTER the window / graphics context has been created!
     // Request double buffered, true color window 
-    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
-    glDepthRange( 0.0f , 1.0f ); // WARNING: NOT IN THE EXAMPLE
+    // printf( "About to set modes ...\n" );
+    // glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
 
+    // printf( "About to set depth range ...\n" );
+    // glDepthRange( 0.0, 1.0 ); // WARNING: NOT IN THE EXAMPLE
 
+    printf( "About to create shader program ...\n" );
+    ErrCheck( "BEFORE compiling shader:" );
     //  Compute shader
-    shader_ID = CreateShaderProgCompute( "shaders/05_Prtcl-Dyn.comp" );
+    shader_ID = CreateShaderProgCompute( "shaders/06_Prtcl-Dyn.comp" );
     
+    printf( "About to init particles ..." );
     //  Initialize particles
     InitParticles();
 

@@ -9,23 +9,27 @@
 #include <errno.h>  
 #include <stdbool.h> // bool
 
-#include <GL/gl.h>
-#include <GL/glu.h>
 #include <GL/glut.h>
+#include <GL/glu.h>
+#include <GL/gl.h>
+
 
 #ifndef ADVCLASS_H // This pattern is to prevent symbols to be loaded multiple times
 #define ADVCLASS_H // from multiple imports
+
 
 #define LEN 8192  // Maximum length of text string
 #define GL_GLEXT_PROTOTYPES
 
 typedef unsigned char ubyte;
+typedef unsigned int  uint;
+typedef unsigned long ulong;
 
 typedef struct{
-  union{ float x; float r; };
-  union{ float y; float g; };
-  union{ float z; float b; };
-  union{ float w; float a; };
+    union{ float x; float r; };
+    union{ float y; float g; };
+    union{ float z; float b; };
+    union{ float w; float a; };
 } vec4f;
 
 typedef struct{
@@ -41,24 +45,24 @@ typedef struct{
 
 ////////// CAMERA //////////////////////////////////////////////////////////////////////////////////
 
-typedef struct {
-    // Camera state goes here
+// typedef struct {
+//     // Camera state goes here
 
-    /// Members ///
-    vec4f eyeLoc; // ------------ Camera location (world frame)
-    vec4f lookPt; // ------------ Focus of camera (world frame)
-    vec4f upVctr; // ------------ Direction of "up"
+//     /// Members ///
+//     vec4f eyeLoc; // ------------ Camera location (world frame)
+//     vec4f lookPt; // ------------ Focus of camera (world frame)
+//     vec4f upVctr; // ------------ Direction of "up"
 
-} Camera3D;
+// } Camera3D;
 
 
 /// Methods ///
-void look( Camera3D camera ){
-    // Set camera position, target, and orientation
-    gluLookAt( (double) camera.eyeLoc.x, (double) camera.eyeLoc.y, (double) camera.eyeLoc.z,  
-               (double) camera.lookPt.x, (double) camera.lookPt.y, (double) camera.lookPt.z,  
-               (double) camera.upVctr.x, (double) camera.upVctr.y, (double) camera.upVctr.z );
-}
+// void look( Camera3D camera ){
+//     // Set camera position, target, and orientation
+//     gluLookAt( (double) camera.eyeLoc.x, (double) camera.eyeLoc.y, (double) camera.eyeLoc.z,  
+//                (double) camera.lookPt.x, (double) camera.lookPt.y, (double) camera.lookPt.z,  
+//                (double) camera.upVctr.x, (double) camera.upVctr.y, (double) camera.upVctr.z );
+// }
 
 
 int sleep_ms( long msec ){
