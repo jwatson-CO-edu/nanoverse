@@ -2,7 +2,7 @@
 // Matrices are interpreted as column major order using OpenGL convention
 // Author: Willem A. (Vlakkies) Schreüder  
 
-#include "Matrix4x4f.h"
+#include "matrix4x4f.h"
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
