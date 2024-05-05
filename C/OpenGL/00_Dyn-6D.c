@@ -6,11 +6,14 @@
 ////////// PROGRAM SETTINGS ////////////////////////////////////////////////////////////////////////
 
 /// Simulation Settings ///
-const uint _N_ATTRCTR = 1; // Number of attractor ribbons
+const uint  _N_ATTRCTR  =     5; // -- Number of attractor ribbons
+const float _DIM_KILL   = 20000.0f; // If {X,Y,Z} state wanders outside of this box, then consider it unstable
+const float _TIMESTEP_S =     0.001f; // Number of seconds to advance in integreation
+const float _HLF_1_SCL  =     0.1f; // Scaling factor for second half of state
 
 /// View Settings ///
-const float _SCALE   = 10.0; // Scale Dimension
-const int   _FOV_DEG = 55; // - Field of view (for perspective)
+const float _SCALE   = 200.0; // Scale Dimension
+const int   _FOV_DEG =  55; // - Field of view (for perspective)
 
 
 
@@ -122,6 +125,29 @@ Attractor6D* make_6D_attractor( float sigma_, float r_, float b_, L6DStatef init
     return rtnStruct;
 }
 
+Attractor6D* make_rand_6D_attractor( void ){
+    // Start an attractor in the stable region shown in Figure 7
+    L6DStatef initState = {
+        randf_range( -0.5f , +0.5f  ),
+        randf_range( -0.5f , +0.5f  ),
+        randf_range( -0.5f , +0.5f  ),
+        0.0f, // randf_range( -0.01f, +0.01f ),
+        0.0f, // randf_range( -0.01f, +0.01f ),
+        0.0f //- randf_range( -0.01f, +0.01f )
+    };
+    vec4f rbbnClr = rand_vec4f();
+    Attractor6D* rtnPtr = make_6D_attractor(
+        randf_range(  25.0f ,  50.0f ),
+        randf_range( 200.0f , 300.0f ),
+        randf_range(   1.0f,    2.0f ),
+        initState,
+        _TIMESTEP_S,
+        50,
+        rbbnClr,
+        _HLF_1_SCL
+    );
+    return rtnPtr;
+}
 
 void delete_6D_attractor( Attractor6D* attractor ){
     // Free attractor memory
@@ -182,7 +208,12 @@ void draw_6D_attractor( Attractor6D* attractor ){
 ////////// PROGRAM GLOBALS /////////////////////////////////////////////////////////////////////////
 
 Attractor6D** attractors = NULL;
-Camera3D /**/ cam = { {4.0f, 2.0f, 2.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f} };
+ubyte* /*--*/ active     = NULL;
+Camera3D /**/ cam = { 
+    {750.0f, 750.0f, 350.0f}, // Cam loc
+    {0.0f, 0.0f, 200.0f}, // Look at
+    {0.0f, 0.0f, 1.0f} 
+};
 
 
 
@@ -226,9 +257,21 @@ void reshape( int width , int height ){
 
 void idle(){
 	// Simulation updates in between repaints
-	
+    vec4f h0_i, h1_i;
+    
     for( uint i = 0; i < _N_ATTRCTR; ++i ){
         step_6D_attractor( attractors[i] );
+        h0_i = attractors[i]->edge0[ attractors[i]->bgnDx ];
+        h1_i = attractors[i]->edge1[ attractors[i]->bgnDx ];
+        print_vec4f( h0_i );
+        print_vec4f( h1_i );
+        nl();
+        // If this attractor is unstable, then replace it with new
+        if((norm_vec4f( h0_i ) > _DIM_KILL) || (norm_vec4f( h1_i ) > _DIM_KILL)){
+            printf( "!! UNSTABLE !!\n" );
+            delete_6D_attractor( attractors[i] );
+            attractors[i] = make_rand_6D_attractor();
+        }
     }
 
 	// Tell GLUT it is necessary to redisplay the scene
@@ -274,27 +317,8 @@ int main( int argc , char* argv[] ){
 
     cam.eyeLoc = make_vec4f( 20.0, 20.0, 20.0 );
 
-    L6DStatef initState = {
-        randf_range( -0.5f, +0.5f ),
-        randf_range( -0.5f, +0.5f ),
-        randf_range( -0.5f, +0.5f ),
-        0.0f,
-        0.0f,
-        0.0f
-    };
-    vec4f rbbnClr = {0.0f,1.0f,0.0f,1.0f};
-
     for( uint i = 0; i < _N_ATTRCTR; ++i ){
-        attractors[i] = make_6D_attractor(
-            randf_range(  1.0f ,  50.0f ),
-            randf_range( 50.0f , 300.0f ),
-            randf_range(  0.01f,   5.0f ),
-            initState,
-            0.05,
-            50,
-            rbbnClr,
-            0.5
-        );
+        attractors[i] = make_rand_6D_attractor();
     }
 
 

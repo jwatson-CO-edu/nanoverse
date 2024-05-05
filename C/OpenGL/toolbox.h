@@ -110,9 +110,13 @@ float heartbeat_FPS( float targetFPS );
 void look( const Camera3D camera ); // Set camera position, target, and orientation
 
 
-////////// OpenGL System ///////////////////////////////////////////////////////////////////////////
+////////// OPENGL SYSTEM ///////////////////////////////////////////////////////////////////////////
 
 void ErrCheck( const char* where );
+
+
+////////// PRINTING HELPERS ////////////////////////////////////////////////////////////////////////
+void nl( void ); // Emit a newline to console
 
 
 
@@ -125,6 +129,7 @@ void ErrCheck( const char* where );
 
 vec4f make_vec4f( float x, float y, float z ); // Make a 3D float vector with scale = 1.0 from three floats
 vec4f make_0_vec4f( void ); // ------------------ Make a 3D zero float vector with scale = 1.0
+vec4f rand_vec4f( void ); // -------------------- Make a random 3D float vector with each of {X,Y,Z} on (0.0, 1.0]
 
 vec4f sub_vec4f( const vec4f u, const vec4f v ); // - Calc `u` - `v` = `r`, R^3
 vec4f add_vec4f( const vec4f u, const vec4f v ); // - Calc `u` + `v` = `r`, R^3
@@ -161,6 +166,13 @@ vec4f lift_vec_2D_to_3D( const vec2f vct2f, const vec4f xBasis, const vec4f yBas
 ////////// UINT VECTORS ////////////////////////////////////////////////////////////////////////////
 
 vec3u make_vec3u( uint u0, uint u1, uint u2 ); // Create a 3D uint vector
+
+
+////////// VECTOR PRINTING /////////////////////////////////////////////////////////////////////////
+
+void print_vec4f( const vec4f vec );
+void print_vec2f( const vec2f vec );
+void print_vec3u( const vec3u vec );
 
 
 ////////// OPENGL HELPERS //////////////////////////////////////////////////////////////////////////

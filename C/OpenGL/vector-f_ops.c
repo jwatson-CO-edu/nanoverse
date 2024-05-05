@@ -16,6 +16,13 @@ vec4f make_0_vec4f( void ){
 }
 
 
+vec4f rand_vec4f( void ){
+    // Make a random 3D float vector with each of {X,Y,Z} on (0.0, 1.0]
+    vec4f rtnVec = {randf(), randf(), randf(), 1.0f};
+    return rtnVec;
+}
+
+
 vec4f sub_vec4f( const vec4f u, const vec4f v ){
     // Calc `u` - `v` = `r`, R^3
     vec4f rtnVec = {
@@ -190,6 +197,13 @@ vec4f lift_vec_2D_to_3D( const vec2f vct2f, const vec4f xBasis, const vec4f yBas
         scale_vec4f( yBasis, vct2f.y )
     );
 }
+
+
+////////// VECTOR PRINTING /////////////////////////////////////////////////////////////////////////
+
+void print_vec4f( const vec4f vec ){  printf( "[%f, %f, %f]", vec.x, vec.y, vec.z );  }
+void print_vec2f( const vec2f vec ){  printf( "[%f, %f]", vec.x, vec.y );  }
+void print_vec3u( const vec3u vec ){  printf( "[%u, %u, %u]", vec.v0, vec.v1, vec.v2 );  }
 
 
 ////////// OPENGL HELPERS //////////////////////////////////////////////////////////////////////////
