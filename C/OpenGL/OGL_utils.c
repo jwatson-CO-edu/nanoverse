@@ -98,3 +98,12 @@ void look( const Camera3D camera ){
                (double) camera.lookPt.x, (double) camera.lookPt.y, (double) camera.lookPt.z,  
                (double) camera.upVctr.x, (double) camera.upVctr.y, (double) camera.upVctr.z );
 }
+
+
+////////// OpenGL System ///////////////////////////////////////////////////////////////////////////
+
+void ErrCheck( const char* where ){
+    // Author: Willem A. Schreüder  
+    int err = glGetError();
+    if (err) fprintf(stderr,"ERROR: %s [%s]\n",gluErrorString(err),where);
+}

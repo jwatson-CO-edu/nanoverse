@@ -9,7 +9,7 @@
 const uint _N_ATTRCTR = 1; // Number of attractor ribbons
 
 /// View Settings ///
-const float _SCALE   =  2.0; // Scale Dimension
+const float _SCALE   = 10.0; // Scale Dimension
 const int   _FOV_DEG = 55; // - Field of view (for perspective)
 
 
@@ -267,9 +267,12 @@ void display(){
 
 // Start up GLUT and tell it what to do
 int main( int argc , char* argv[] ){
-	rand_init(); // initialize random seed based on system clock
+	init_rand(); // initialize random seed based on system clock
 
     ///// Construct Geometry & Set Params /////////////////////////////////
+    attractors = (Attractor6D**) malloc( _N_ATTRCTR * sizeof( Attractor6D ) );
+
+    cam.eyeLoc = make_vec4f( 20.0, 20.0, 20.0 );
 
     L6DStatef initState = {
         randf_range( -0.5f, +0.5f ),
@@ -333,8 +336,17 @@ int main( int argc , char* argv[] ){
 	
 	//  Pass control to GLUT so it can interact with the user
 	glutMainLoop();
-	
-	//  Return code
+
+
+    ///// Free ALL Allocated Heap Memory //////////////////////////////////
+
+    for( uint i = 0; i < _N_ATTRCTR; ++i ){
+        delete_6D_attractor( attractors[i] );
+    }
+    free( attractors );
+
+
+	///// End /////////////////////////////////////////////////////////////
 	return 0;
 
 }

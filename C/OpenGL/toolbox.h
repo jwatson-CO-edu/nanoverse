@@ -21,6 +21,9 @@
 #include <GL/glu.h>
 #include <GL/gl.h>
 
+/// Local ////
+#include "matrix4x4f.h"
+
 ///// Defines & Flags /////////////////////////////////////////////////////
 #define LEN 8192  // Maximum length of text string
 #define GL_GLEXT_PROTOTYPES
@@ -107,6 +110,11 @@ float heartbeat_FPS( float targetFPS );
 void look( const Camera3D camera ); // Set camera position, target, and orientation
 
 
+////////// OpenGL System ///////////////////////////////////////////////////////////////////////////
+
+void ErrCheck( const char* where );
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////// vector-f_ops.c /////////////////////////////////////////////////////////////////////
@@ -160,6 +168,9 @@ vec3u make_vec3u( uint u0, uint u1, uint u2 ); // Create a 3D uint vector
 void glVtx4f( const vec4f v ); // Set vertex with a vector
 void glNrm4f( const vec4f n ); // Set normal with a vector
 void glClr4f( const vec4f c ); // Set color with a vector
+
+
+#include "matrix4x4f.h"
 
 
 #endif
