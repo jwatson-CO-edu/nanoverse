@@ -7,8 +7,10 @@
 // Author: Willem A. (Vlakkies) Schreüder  
 double Cos( double x ){  return cos( (x) * 3.1415927 / 180 );  }
 double Sin( double x ){  return sin( (x) * 3.1415927 / 180 );  }
-float  Cosf( float x ){  return (float)cos( (x) * 3.1415927 / 180 );  }
-float  Sinf( float x ){  return (float)sin( (x) * 3.1415927 / 180 );  }
+double Tan( double x ){  return tan( (x) * 3.1415927 / 180 );  }
+float  Cosf( float x ){  return cosf( (x) * 3.1415927f / 180.0f );  }
+float  Sinf( float x ){  return sinf( (x) * 3.1415927f / 180.0f );  }
+float  Tanf( float x ){  return tanf( (x) * 3.1415927f / 180.0f );  }
 
 
 

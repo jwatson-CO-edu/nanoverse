@@ -7,12 +7,13 @@
 
 /// Simulation Settings ///
 const uint  _N_ATTRCTR  =     5; // -- Number of attractor ribbons
+const uint  _N_STATES   =   200; // -- Number of attractor states to store 
 const float _DIM_KILL   = 20000.0f; // If {X,Y,Z} state wanders outside of this box, then consider it unstable
-const float _TIMESTEP_S =     0.001f; // Number of seconds to advance in integreation
+const float _TIMESTEP_S =     0.0005f; // Number of seconds to advance in integreation
 const float _HLF_1_SCL  =     0.1f; // Scaling factor for second half of state
 
 /// View Settings ///
-const float _SCALE   = 200.0; // Scale Dimension
+const float _SCALE   = 750.0; // Scale Dimension
 const int   _FOV_DEG =  55; // - Field of view (for perspective)
 
 
@@ -115,6 +116,11 @@ Attractor6D* make_6D_attractor( float sigma_, float r_, float b_, L6DStatef init
     // Alloc Mem //
     rtnStruct->edge0 = (vec4f*) malloc( Nstates * sizeof( vec4f ) );
     rtnStruct->edge1 = (vec4f*) malloc( Nstates * sizeof( vec4f ) );
+    // Set to zero for when we calc centroid early on
+    for( uint i = 1; i < Nstates; ++i ){
+        rtnStruct->edge0[i] = make_0_vec4f();    
+        rtnStruct->edge1[i] = make_0_vec4f();
+    }
     // Set Display Params //
     rtnStruct->color = color_;
     rtnStruct->h1scl = h1scl_;
@@ -142,7 +148,7 @@ Attractor6D* make_rand_6D_attractor( void ){
         randf_range(   1.0f,    2.0f ),
         initState,
         _TIMESTEP_S,
-        50,
+        _N_STATES,
         rbbnClr,
         _HLF_1_SCL
     );
@@ -186,7 +192,7 @@ void draw_6D_attractor( Attractor6D* attractor ){
     glBegin( GL_TRIANGLE_STRIP );
     for( uint i = 0; i < Ntot; ++i ){
         ndx   = (bgn + i) % len;
-        alpha = (Ntot - i)*1.0f/Ntot;
+        alpha = 1.0f - 1.0f*(Ntot - i)/Ntot;
         glColor4f( attractor->color.r , attractor->color.g , attractor->color.b, alpha );
         if( i < 1 ){  glNrm4f( get_CCW_tri_norm(  
             attractor->edge1[ ndx ],
@@ -203,17 +209,82 @@ void draw_6D_attractor( Attractor6D* attractor ){
     glEnd();
 }
 
+void centroid_AABB_attractor( Attractor6D* attractor, vec4f* centroid, vec4f* bbLo, vec4f* bbHi ){
+    // Set the centroid and Axis Aligned Boudning Box of the points in the first edge
+    *bbLo = make_vec4f(  1e9f,  1e9f,  1e9f );
+    *bbHi = make_vec4f( -1e9f, -1e9f, -1e9f );
+    uint  N   = attractor->Nstat;
+    vec4f tot = make_0_vec4f();
+    vec4f v_i = make_0_vec4f();
+    for( uint i = 0; i < N; ++i ){  
+        v_i = attractor->edge0[i];
+        tot = add_vec4f( tot, v_i ); 
+        if( v_i.x < bbLo->x )  bbLo->x = v_i.x;
+        if( v_i.y < bbLo->y )  bbLo->y = v_i.y;
+        if( v_i.z < bbLo->z )  bbLo->z = v_i.z;
+        if( v_i.x > bbHi->x )  bbHi->x = v_i.x;
+        if( v_i.y > bbHi->y )  bbHi->y = v_i.y;
+        if( v_i.z > bbHi->z )  bbHi->z = v_i.z;
+    }
+    *centroid = div_vec4f( tot, 1.0f*N );
+}
+
+
+///// Smoothed Follow Camera //////////////////////////////////////////////
+
+typedef struct{
+    // Camera intended to somewhat smoothly follow quickly moving targets
+    /// Basic Camera ///
+    vec4f eyeLoc; // Current camera location (world frame)
+    vec4f lookPt; // Current focus of camera (world frame)
+    vec4f upVctr; // Direction of "up"
+    /// Smoothing ///
+    vec4f eyeTgt; // Target camera location
+    vec4f lukTgt; // Target focus of camera
+    float alpha; //- Blending rate for targets on [0.0, 1.0]
+}FollowCameraSmooth;
+
+
+FollowCameraSmooth get_smooth_camera( const vec4f eyeLoc_, const vec4f lookPt_, float alpha_ ){
+    // Return a smoothed camera with blending factor set
+    FollowCameraSmooth rtnCam = {
+        eyeLoc_,
+        lookPt_,
+        {0.0f,0.0f,1.0f,1.0f},
+        eyeLoc_,
+        lookPt_,
+        alpha_
+    };
+    return rtnCam;
+}
+
+
+void cam_smooth_update( FollowCameraSmooth* cam ){
+    /// Approach, but never reach, the intended targets
+    cam->eyeLoc = blend_vec4f( cam->eyeTgt, cam->alpha, cam->eyeLoc, 1.0f-(cam->alpha) );
+    cam->lookPt = blend_vec4f( cam->lukTgt, cam->alpha, cam->lookPt, 1.0f-(cam->alpha) );
+    cam->upVctr = cross_vec4f(
+        unit_vec4f( sub_vec4f( cam->lookPt, cam->eyeLoc ) ),
+        make_vec4f( 1.0f, 0.0f, 0.0f )
+    );
+}
+
+
+void look_smooth( const FollowCameraSmooth* camera ){
+    // Set camera position, target, and orientation
+    // cam_smooth_update( camera );
+    gluLookAt( (double) camera->eyeLoc.x, (double) camera->eyeLoc.y, (double) camera->eyeLoc.z,  
+               (double) camera->lookPt.x, (double) camera->lookPt.y, (double) camera->lookPt.z,  
+               (double) camera->upVctr.x, (double) camera->upVctr.y, (double) camera->upVctr.z );
+}
+
 
 
 ////////// PROGRAM GLOBALS /////////////////////////////////////////////////////////////////////////
 
-Attractor6D** attractors = NULL;
-ubyte* /*--*/ active     = NULL;
-Camera3D /**/ cam = { 
-    {750.0f, 750.0f, 350.0f}, // Cam loc
-    {0.0f, 0.0f, 200.0f}, // Look at
-    {0.0f, 0.0f, 1.0f} 
-};
+Attractor6D** /**/ attractors = NULL;
+ubyte* /*-------*/ active     = NULL;
+FollowCameraSmooth cam;
 
 
 
@@ -258,21 +329,46 @@ void reshape( int width , int height ){
 void idle(){
 	// Simulation updates in between repaints
     vec4f h0_i, h1_i;
+    vec4f attrCntr, aabbLo, aabbHi;
+    // vec4f totCntr = make_0_vec4f();
+    // vec4f totLo   = make_0_vec4f();
+    // vec4f totHi   = make_0_vec4f();
+    // float factor  = 1.0f*_N_ATTRCTR;
+    float width;
+    vec4f camOfst = make_vec4f( 1.0f, 1.0f, 0.0f );
     
     for( uint i = 0; i < _N_ATTRCTR; ++i ){
         step_6D_attractor( attractors[i] );
+        // If this attractor is unstable, then replace it with new
         h0_i = attractors[i]->edge0[ attractors[i]->bgnDx ];
         h1_i = attractors[i]->edge1[ attractors[i]->bgnDx ];
-        print_vec4f( h0_i );
-        print_vec4f( h1_i );
-        nl();
-        // If this attractor is unstable, then replace it with new
         if((norm_vec4f( h0_i ) > _DIM_KILL) || (norm_vec4f( h1_i ) > _DIM_KILL)){
             printf( "!! UNSTABLE !!\n" );
             delete_6D_attractor( attractors[i] );
             attractors[i] = make_rand_6D_attractor();
         }
+        // centroid_AABB_attractor( attractors[i], &attrCntr, &aabbLo, &aabbHi );
+        // totCntr = add_vec4f( totCntr, attrCntr );
+        // totLo   = add_vec4f( totLo, aabbLo );
+        // totHi   = add_vec4f( totHi, aabbHi );
     }
+    // totCntr = div_vec4f( totCntr, factor );
+    // totLo   = div_vec4f( totLo  , factor );
+    // totHi   = div_vec4f( totHi  , factor );
+    centroid_AABB_attractor( attractors[0], &attrCntr, &aabbLo, &aabbHi );
+    width   = norm_vec4f( sub_vec4f( aabbLo  , aabbHi  ) );
+    // camOfst = sub_vec4f( cam.lookPt, cam.eyeLoc );
+    
+    // Set camera targets
+    if( width < (_DIM_KILL/12.5f) ){
+        cam.lukTgt = attrCntr;
+        cam.eyeTgt = add_vec4f(
+            attrCntr,
+            // stretch_to_len_vec4f( camOfst, (width/2.0f)/Tanf(1.0f*_FOV_DEG/2.0f) )
+            stretch_to_len_vec4f( camOfst, width/Tanf(1.0f*_FOV_DEG/2.0f) )
+        );
+    }
+    cam_smooth_update( &cam );
 
 	// Tell GLUT it is necessary to redisplay the scene
 	glutPostRedisplay();
@@ -292,7 +388,7 @@ void display(){
 	// Reset previous transforms to the identity matrix
 	glLoadIdentity();
 
-    look( cam );
+    look_smooth( &cam );
 
     for( uint i = 0; i < _N_ATTRCTR; ++i ){
         draw_6D_attractor( attractors[i] );
@@ -315,7 +411,9 @@ int main( int argc , char* argv[] ){
     ///// Construct Geometry & Set Params /////////////////////////////////
     attractors = (Attractor6D**) malloc( _N_ATTRCTR * sizeof( Attractor6D ) );
 
-    cam.eyeLoc = make_vec4f( 20.0, 20.0, 20.0 );
+    vec4f eyeBgn = {750.0f, 750.0f, 350.0f, 1.0f};
+    vec4f lukBgn = {  0.0f,   0.0f, 200.0f, 1.0f};
+    /*-*/ cam    = get_smooth_camera( eyeBgn, lukBgn, 1.0f/180.0f );
 
     for( uint i = 0; i < _N_ATTRCTR; ++i ){
         attractors[i] = make_rand_6D_attractor();
@@ -342,7 +440,9 @@ int main( int argc , char* argv[] ){
 	// Enable z-testing at the full ranger
 	glEnable( GL_DEPTH_TEST );
 	glDepthRange( 0.0f , 1.0f );
-	
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+    glEnable( GL_BLEND );
+
 	// Tell GLUT to call "display" when the scene should be drawn
 	glutDisplayFunc( display );
 	

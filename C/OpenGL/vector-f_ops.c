@@ -118,7 +118,20 @@ vec4f scale_vec4f( const vec4f u, float f ){
     return rtnVec;
 }
 
+vec4f blend_vec4f( const vec4f u, float fU, const vec4f v, float fV ){
+    // Return the weighted sum of the two verctors, R^3
+    vec4f rtnVec = add_vec4f(
+        scale_vec4f( u, fU ),
+        scale_vec4f( v, fV )
+    );
+    return rtnVec;
+}
 
+
+vec4f stretch_to_len_vec4f( const vec4f vec, float len ){
+    // Stretch `vec` to `len` and return
+    return scale_vec4f( unit_vec4f( vec ), len );
+}
 
 ///// 3D Segments & Triangles /////////////////////////////////////////////
 

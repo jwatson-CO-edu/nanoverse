@@ -78,8 +78,10 @@ typedef struct {
 // Author: Willem A. (Vlakkies) Schreüder  
 double Cos( double x );
 double Sin( double x );
+double Tan( double x );
 float  Cosf( float x );
 float  Sinf( float x );
+float  Tanf( float x );
 
 
 ////////// MATH HELPERS ////////////////////////////////////////////////////////////////////////////
@@ -131,15 +133,18 @@ vec4f make_vec4f( float x, float y, float z ); // Make a 3D float vector with sc
 vec4f make_0_vec4f( void ); // ------------------ Make a 3D zero float vector with scale = 1.0
 vec4f rand_vec4f( void ); // -------------------- Make a random 3D float vector with each of {X,Y,Z} on (0.0, 1.0]
 
-vec4f sub_vec4f( const vec4f u, const vec4f v ); // - Calc `u` - `v` = `r`, R^3
-vec4f add_vec4f( const vec4f u, const vec4f v ); // - Calc `u` + `v` = `r`, R^3
-float dot_vec4f( const vec4f u, const vec4f v ); // - Calc `u` * `v` = `r`, R^3
-float norm_vec4f( const vec4f vec ); // ------------- Euclidean length of an R^3
-float diff_vec4f( const vec4f u, const vec4f v ); //- Euclidean length of `u`-`v`
-vec4f unit_vec4f( const vec4f vec ); // ------------- Calc the unit direction of `vec` and return it, R^3
-vec4f cross_vec4f( const vec4f u, const vec4f v ); // Calc `u` X `v` = `p`, R^3
-vec4f div_vec4f( const vec4f u, float d ); // ------- Calc `u` / `f` = `r`, R^3
-vec4f scale_vec4f( const vec4f u, float f ); // ----- Calc `u` * `f` = `r`, R^3
+vec4f sub_vec4f( const vec4f u, const vec4f v ); // --------------------- Calc `u` - `v` = `r`, R^3
+vec4f add_vec4f( const vec4f u, const vec4f v ); // --------------------- Calc `u` + `v` = `r`, R^3
+float dot_vec4f( const vec4f u, const vec4f v ); // --------------------- Calc `u` * `v` = `r`, R^3
+float norm_vec4f( const vec4f vec ); // --------------------------------- Euclidean length of an R^3
+float diff_vec4f( const vec4f u, const vec4f v ); // -------------------- Euclidean length of `u`-`v`
+vec4f unit_vec4f( const vec4f vec ); // --------------------------------- Calc the unit direction of `vec` and return it, R^3
+vec4f cross_vec4f( const vec4f u, const vec4f v ); // ------------------- Calc `u` X `v` = `p`, R^3
+vec4f div_vec4f( const vec4f u, float d ); // --------------------------- Calc `u` / `f` = `r`, R^3
+vec4f scale_vec4f( const vec4f u, float f ); // ------------------------- Calc `u` * `f` = `r`, R^3
+vec4f blend_vec4f( const vec4f u, float fU, const vec4f v, float fV ); // Return the weighted sum of the two verctors, R^3
+vec4f stretch_to_len_vec4f( const vec4f vec, float len ); // ------------ Stretch `vec` to `len` and return
+    
 
 
 ///// 3D Segments & Triangles /////////////////////////////////////////////
