@@ -363,7 +363,7 @@ void idle(){
     // totLo   = div_vec4f( totLo  , factor );
     // totHi   = div_vec4f( totHi  , factor );
     centroid_AABB_attractor( attractors[0], &attrCntr, &aabbLo, &aabbHi );
-    width = norm_vec4f( sub_vec4f( aabbLo  , aabbHi  ) );
+    width   = norm_vec4f( sub_vec4f( aabbLo  , aabbHi  ) );
     // camOfst = sub_vec4f( cam.lookPt, cam.eyeLoc );
     
     // Set camera targets

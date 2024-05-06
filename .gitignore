@@ -20,6 +20,10 @@ C++/OpenCV/data/*
 */*.out
 */*/*.out
 */*/*/*.out
+*.zip
+*/*.zip
+*/*/*.zip
+*/*/*/*.zip
 
 # Prerequisites
 
