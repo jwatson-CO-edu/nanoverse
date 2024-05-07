@@ -82,13 +82,13 @@ void ResetParticles(){
     acclArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
 
     //  Reset position
-    printf( "About to set bind buffer ...\n" );
+    printf( "About to set bind buffer %u ...\n", posnArr_ID );
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, posnArr_ID ); // Set buffer object to point to this ID, for writing
     // Get pointer to buffer and cast as a struct array
-    printf( "About to set map buffer %u ...\n", posnArr_ID );
+    printf( "About to map buffer %u ...\n", posnArr_ID );
     ErrCheck( "ResetParticles" );
     pos = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, _N_PARTICLES * sizeof( vec4f ),
-                                              GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
+                                     GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
     printf( "Sending particles to %p ...\n", pos );
     // Load init positions into buffer
     for (int i = 0; i < _N_PARTICLES; i++ ){

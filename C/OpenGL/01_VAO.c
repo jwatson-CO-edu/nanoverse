@@ -6,6 +6,8 @@
 
 
 ////////// CONSTANTS & PROGRAM STATE ///////////////////////////////////////////////////////////////
+const int RES = 1; // Resolution???
+int shader[]  = {0,0,0}; //  Shader programs
 
 ///// Light colors /////
 const float Emission[]  = {0.0,0.0,0.0,1.0};
@@ -20,9 +22,37 @@ float ViewMatrix[16];
 //  Set lighting parameters using uniforms
 float Position[4];
 
-///// Loaded Resources ////////////////////////////////////////////////////
-int pi=0; //  Pi texture
 
+///// Loaded Resources & Program State ////////////////////////////////////
+int    pi     =  0; // - Pi texture
+int    axes   =  1; // - Display axes
+int    move   =  1; // - Move light
+int    proj   =  1; // - Projection type
+int    th     =  0; // - Azimuth of view angle
+int    ph     =  0; // - Elevation of view angle
+int    fov    = 55; // - Field of view (for perspective)
+int    font   =  0; // - Font texture
+double asp    =  1; // - Aspect ratio
+double dim    =  3.0; // Size of world
+int    zh     = 90; // - Light azimuth
+float  Ylight =  2; // - Light elevation
+
+
+///// Window State ////////////////////////////////////////////////////////
+
+void reshape( int width, int height ){
+    // Runs when the user resizes the window
+    // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
+
+    //  Ratio of the width to the height of the window
+    asp = (height > 0) ? ((double) width / height) : 1;
+    //  Set the viewport to the entire window
+    glViewport( 0, 0, RES*width, RES*height );
+    //  Set projection
+    Project( proj ? fov : 0, asp, dim );
+}
+
+////////// CUBE VAO EXAMPLE ////////////////////////////////////////////////////////////////////////
 
 ///// Vertex Array Object (VAO) Geometry //////////////////////////////////
 
@@ -80,7 +110,7 @@ static void Cube( double x , double y , double z,
                   double dx, double dy, double dz,
                   double th, int shader ){
     // Draw a cube as a VAO
-    // Author: Willem A. (Vlakkies) Schreüder  
+    // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
     static unsigned int cube_vao = 0; // VAO ID on the GPU
 
     //  Select shader
@@ -124,15 +154,15 @@ static void Cube( double x , double y , double z,
 
     //  Set Projection and View Matrix
     int id = glGetUniformLocation( shader, "ProjectionMatrix" );
-    glUniformMatrix4fv(id,1,0,ProjectionMatrix);
-    id = glGetUniformLocation(shader,"ViewMatrix");
-    glUniformMatrix4fv(id,1,0,ViewMatrix);
+    glUniformMatrix4fv( id, 1, 0, ProjectionMatrix );
+    id = glGetUniformLocation( shader, "ViewMatrix" );
+    glUniformMatrix4fv( id, 1, 0, ViewMatrix );
 
     //  Create ModelView matrix
     float ModelViewMatrix[16];
     mat4copy( ModelViewMatrix, ViewMatrix );
     mat4translate( ModelViewMatrix, x, y, z );
-    mat4rotate( ModelViewMatrix, th,0,1,0);
+    mat4rotate( ModelViewMatrix, th, 0, 1, 0 );
     mat4scale( ModelViewMatrix, dx, dy, dz );
     id = glGetUniformLocation( shader, "ModelViewMatrix" );
     glUniformMatrix4fv( id, 1, 0, ModelViewMatrix );
@@ -170,3 +200,169 @@ static void Cube( double x , double y , double z,
     glBindBuffer( GL_ARRAY_BUFFER, 0 );
 }
 
+
+
+////////// RENDERING ///////////////////////////////////////////////////////////////////////////////
+
+
+void display(){
+    // Draw the frame
+    // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
+
+    // 1. Erase the window and the depth buffer
+    glClear( GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT );
+
+    // 2. Enable Z-buffering in OpenGL
+    glEnable( GL_DEPTH_TEST );
+
+    // 3. Create Projection matrix
+    mat4identity(ProjectionMatrix);
+    if( proj )
+        mat4perspective( ProjectionMatrix , fov, asp, dim/16, 16*dim );
+    else
+        mat4ortho( ProjectionMatrix , -dim*asp, +dim*asp, -dim, +dim, -dim, +dim );
+    //  Create View matrix
+    mat4identity( ViewMatrix );
+    if( proj ){
+        double Ex = -2*dim*Sin(th)*Cos(ph);
+        double Ey = +2*dim        *Sin(ph);
+        double Ez = +2*dim*Cos(th)*Cos(ph);
+        mat4lookAt( ViewMatrix , Ex, Ey, Ez , 0,0,0 , 0, Cos( ph ), 0 );
+    }else{
+        mat4rotate( ViewMatrix, ph, 1, 0, 0 );
+        mat4rotate( ViewMatrix, th, 0, 1, 0 );
+    }
+    //  Light position
+    Position[0] = 4*Cos(zh);
+    Position[1] = Ylight;
+    Position[2] = 4*Sin(zh);
+    Position[3] = 1;
+
+    //  Now draw the scene (just a cube for now)
+    //  To do other objects create a VBO and VAO for each object
+    Cube( 0,0,0, 
+          1,1,1, 
+          0, shader[0] );
+
+    //  Draw axes
+    //    if (axes) Axes();
+
+    //  Revert to fixed pipeline for labels
+    glUseProgram(0);
+
+    //  Display parameters
+    glWindowPos2i( 5, 5 );
+    Print( "Angle=%d,%d  Dim=%.1f Projection=%s", th, ph, dim, proj ? "Perpective":"Orthogonal" );
+    //  Render the scene and make it visible
+    ErrCheck("display");
+    glFlush();
+    glutSwapBuffers();
+}
+
+
+
+////////// ANIMATION ///////////////////////////////////////////////////////////////////////////////
+
+void idle(){
+   //  Elapsed time in seconds
+   double t = glutGet( GLUT_ELAPSED_TIME ) / 1000.0;
+   if( move )  zh = fmod(90*t,360.0);
+   //  Tell GLUT it is necessary to redisplay the scene
+   glutPostRedisplay();
+}
+
+
+
+////////// USER INTERACTION ////////////////////////////////////////////////////////////////////////
+
+void special(int key,int x,int y){
+    // Handle arrow and other special keys
+    // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
+    //  Right arrow key - increase angle by 5 degrees
+    if (key == GLUT_KEY_RIGHT)
+        th += 5;
+    //  Left arrow key - decrease angle by 5 degrees
+    else if (key == GLUT_KEY_LEFT)
+        th -= 5;
+    //  Up arrow key - increase elevation by 5 degrees
+    else if (key == GLUT_KEY_UP)
+        ph += 5;
+    //  Down arrow key - decrease elevation by 5 degrees
+    else if (key == GLUT_KEY_DOWN)
+        ph -= 5;
+    //  PageUp key - increase dim
+    else if (key == GLUT_KEY_PAGE_DOWN)
+        dim += 0.1;
+    //  PageDown key - decrease dim
+    else if (key == GLUT_KEY_PAGE_UP && dim>1)
+        dim -= 0.1;
+    //  Keep angles to +/-360 degrees
+    th %= 360;
+    ph %= 360;
+    //  Update projection
+    Project(proj?fov:0,asp,dim);
+    //  Tell GLUT it is necessary to redisplay the scene
+    glutPostRedisplay();
+}
+
+
+void key( unsigned char ch, int x, int y ){
+    // Handle main alphanumeric keys
+    // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
+    //  Exit on ESC
+    if (ch == 27)
+        exit(0);
+    //  Reset view angle
+    else if (ch == '0')
+        th = ph = 0;
+    //  Toggle axes
+    else if (ch == 'a' || ch == 'A')
+        axes = 1-axes;
+    //  Toggle projection type
+    else if (ch == 'p' || ch == 'P')
+        proj = 1-proj;
+    //  Toggle light movement
+    else if (ch == 's' || ch == 'S')
+        move = 1-move;
+    //  Light elevation
+    else if (ch == '+')
+        Ylight += 0.1;
+    else if (ch == '-')
+        Ylight -= 0.1;
+    //  Reproject
+    Project(proj?fov:0,asp,dim);
+    //  Tell GLUT it is necessary to redisplay the scene
+    glutPostRedisplay();
+}
+
+
+int main(int argc,char* argv[])
+{
+   //  Initialize GLUT
+   glutInit(&argc,argv);
+   //  Request double buffered, true color window with Z buffering at 600x600
+   glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
+   glutInitWindowSize(600,600);
+   glutCreateWindow("Shaders - OpenGL4");
+
+   //  Set callbacks
+   glutDisplayFunc(display);
+   glutReshapeFunc(reshape);
+   glutSpecialFunc(special);
+   glutKeyboardFunc(key);
+   glutIdleFunc(idle);
+   //  Load textures
+   pi   = LoadTexBMP("pi.bmp");
+   font = LoadTexBMP("font.bmp");
+   //  Switch font to nearest
+   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+   //  Create Shader Programs
+   shader[0] = CreateShaderProg("gl4pix.vert","gl4pix.frag");
+   shader[1] = CreateShaderProg("gl4fix.vert","gl4fix.frag");
+   shader[2] = CreateShaderGeom("gl4tex.vert","gl4tex.geom","gl4tex.frag");
+   //  Pass control to GLUT so it can interact with the user
+   ErrCheck("init");
+   glutMainLoop();
+   return 0;
+}
