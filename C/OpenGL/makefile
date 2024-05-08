@@ -16,6 +16,7 @@ CLEAN=rm -f *.out *.o *.a
 toolbox.h: matrix4x4f.h
 vector-f_ops.o: vector-f_ops.c toolbox.h
 OGL_utils.o: OGL_utils.c toolbox.h
+shaders.o: shaders.c toolbox.h
 matrix4x4f.o: matrix4x4f.c toolbox.h
 
 
@@ -23,7 +24,7 @@ matrix4x4f.o: matrix4x4f.c toolbox.h
 ########## LIB & GENERAL RULES #####################################################################
 
 ### Create archive ###
-toolbox.a:vector-f_ops.o OGL_utils.o vector-f_ops.o matrix4x4f.o
+toolbox.a:vector-f_ops.o OGL_utils.o vector-f_ops.o shaders.o matrix4x4f.o
 	ar -rcs $@ $^
 
 ### Compile rules ###

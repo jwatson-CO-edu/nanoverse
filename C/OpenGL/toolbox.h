@@ -8,9 +8,10 @@
 
 ///// Includes ////////////////////////////////////////////////////////////
 /// Standard ////
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include <time.h>
 #include <errno.h>  
@@ -115,6 +116,10 @@ void look( const Camera3D camera ); // Set camera position, target, and orientat
 ////////// OPENGL SYSTEM ///////////////////////////////////////////////////////////////////////////
 
 void ErrCheck( const char* where );
+void Fatal( const char* format , ... ); // ----------- Scream and Run
+void Project( double fov, double asp, double dim ); // Set the projection matrix for perspective
+void Print( const char* format, ... ); // ------------ Print raster letters to the screen
+uint LoadTexBMP( const char* file ); // -------------- Load texture from BMP file
 
 
 ////////// PRINTING HELPERS ////////////////////////////////////////////////////////////////////////

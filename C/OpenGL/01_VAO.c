@@ -6,7 +6,9 @@
 
 
 ////////// CONSTANTS & PROGRAM STATE ///////////////////////////////////////////////////////////////
-const int RES = 1; // Resolution???
+#ifndef RES
+#define RES 1
+#endif
 int shader[]  = {0,0,0}; //  Shader programs
 
 ///// Light colors /////
@@ -106,98 +108,104 @@ const float cube_data[] = {
 /*
  *  Draw a cube
  */
-static void Cube( double x , double y , double z,
-                  double dx, double dy, double dz,
-                  double th, int shader ){
-    // Draw a cube as a VAO
-    // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
-    static unsigned int cube_vao = 0; // VAO ID on the GPU
+static unsigned int cube_vao = 0; // VAO ID on the GPU
+static void Cube(double x,double y,double z,
+                 double dx,double dy,double dz,
+                 double th)
+{
+   //  Select shader
+   glUseProgram(shader[0]);
 
-    //  Select shader
-    glUseProgram( shader );
+   //  Once initialized, just bind VAO
+   if (cube_vao)
+      glBindVertexArray(cube_vao);
+   //  Initialize VAO and VBO
+   else
+   {
+      //  Create cube VAO to bind attribute arrays
+      glGenVertexArrays(1,&cube_vao);
+      glBindVertexArray(cube_vao);
 
-    //  Once initialized, just bind VAO
-    if( cube_vao )
-        glBindVertexArray( cube_vao );
-    //  Initialize VAO and VBO
-    else{
-        //  Create cube VAO to bind attribute arrays
-        glGenVertexArrays( 1, &cube_vao );
-        glBindVertexArray( cube_vao );
+      //  Get buffer name
+      unsigned int vbo=0;
+      glGenBuffers(1,&vbo);
+      //  Bind VBO
+      glBindBuffer(GL_ARRAY_BUFFER,vbo);
+      //  Copy cube data to VBO
+      glBufferData(GL_ARRAY_BUFFER,sizeof(cube_data),cube_data,GL_STATIC_DRAW);
 
-        //  Get buffer name
-        unsigned int vbo = 0;
-        glGenBuffers( 1, &vbo );
-        //  Bind VBO
-        glBindBuffer( GL_ARRAY_BUFFER, vbo );
-        //  Copy cube data to VBO
-        glBufferData( GL_ARRAY_BUFFER, sizeof( cube_data ), cube_data, GL_STATIC_DRAW );
+      //  Bind arrays
+      //  Vertex
+      int loc = glGetAttribLocation(shader[0],"Vertex");
+      glVertexAttribPointer(loc,4,GL_FLOAT,0,52,(void*) 0);
+      glEnableVertexAttribArray(loc);
+      //  Normal
+      loc = glGetAttribLocation(shader[0],"Normal");
+      glVertexAttribPointer(loc,3,GL_FLOAT,0,52,(void*)16);
+      glEnableVertexAttribArray(loc);
+      //  Color
+      loc  = glGetAttribLocation(shader[0],"Color");
+      glVertexAttribPointer(loc,4,GL_FLOAT,0,52,(void*)28);
+      glEnableVertexAttribArray(loc);
+      //  Texture
+      loc  = glGetAttribLocation(shader[0],"Texture");
+      glVertexAttribPointer(loc,2,GL_FLOAT,0,52,(void*)44);
+      glEnableVertexAttribArray(loc);
+   }
 
-        //  Bind arrays
-        //  Vertex
-        int loc = glGetAttribLocation( shader, "Vertex" );
-        glVertexAttribPointer( loc, 4, GL_FLOAT, 0, 52, (void*) 0 );
-        glEnableVertexAttribArray( loc );
-        //  Normal
-        loc = glGetAttribLocation( shader, "Normal" );
-        glVertexAttribPointer( loc, 3, GL_FLOAT, 0, 52, (void*) 16 );
-        glEnableVertexAttribArray( loc );
-        //  Color
-        loc = glGetAttribLocation( shader, "Color" );
-        glVertexAttribPointer( loc, 4, GL_FLOAT, 0, 52, (void*) 28 );
-        glEnableVertexAttribArray( loc );
-        //  Texture
-        loc = glGetAttribLocation( shader, "Texture" );
-        glVertexAttribPointer( loc, 2, GL_FLOAT, 0, 52, (void*) 44 );
-        glEnableVertexAttribArray( loc );
-    }
+   //  Set Projection and View Matrix
+   int id = glGetUniformLocation(shader[0],"ProjectionMatrix");
+   glUniformMatrix4fv(id,1,0,ProjectionMatrix);
+   id = glGetUniformLocation(shader[0],"ViewMatrix");
+   glUniformMatrix4fv(id,1,0,ViewMatrix);
 
-    //  Set Projection and View Matrix
-    int id = glGetUniformLocation( shader, "ProjectionMatrix" );
-    glUniformMatrix4fv( id, 1, 0, ProjectionMatrix );
-    id = glGetUniformLocation( shader, "ViewMatrix" );
-    glUniformMatrix4fv( id, 1, 0, ViewMatrix );
+   //  Create ModelView matrix
+   float ModelViewMatrix[16];
+   mat4copy(ModelViewMatrix , ViewMatrix);
+   mat4translate(ModelViewMatrix , x,y,z);
+   mat4rotate(ModelViewMatrix , th,0,1,0);
+   mat4scale(ModelViewMatrix , dx,dy,dz);
+   id = glGetUniformLocation(shader[0],"ModelViewMatrix");
+   glUniformMatrix4fv(id,1,0,ModelViewMatrix);
+   //  Create Normal matrix
+   float NormalMatrix[9];
+   mat3normalMatrix(ModelViewMatrix , NormalMatrix);
+   id = glGetUniformLocation(shader[0],"NormalMatrix");
+   glUniformMatrix3fv(id,1,0,NormalMatrix);
 
-    //  Create ModelView matrix
-    float ModelViewMatrix[16];
-    mat4copy( ModelViewMatrix, ViewMatrix );
-    mat4translate( ModelViewMatrix, x, y, z );
-    mat4rotate( ModelViewMatrix, th, 0, 1, 0 );
-    mat4scale( ModelViewMatrix, dx, dy, dz );
-    id = glGetUniformLocation( shader, "ModelViewMatrix" );
-    glUniformMatrix4fv( id, 1, 0, ModelViewMatrix );
-    //  Create Normal matrix
-    float NormalMatrix[9];
-    mat3normalMatrix( ModelViewMatrix , NormalMatrix );
-    id = glGetUniformLocation( shader, "NormalMatrix" );
-    glUniformMatrix3fv( id, 1, 0, NormalMatrix );
+   //  Set lighting parameters using uniforms
+   id = glGetUniformLocation(shader[0],"Position");
+   glUniform4fv(id,1,Position);
+   id = glGetUniformLocation(shader[0],"Ambient");
+   glUniform4fv(id,1,Ambient);
+   id = glGetUniformLocation(shader[0],"Diffuse");
+   glUniform4fv(id,1,Diffuse);
+   id = glGetUniformLocation(shader[0],"Specular");
+   glUniform4fv(id,1,Specular);
 
-    //  Set lighting parameters using uniforms
-    id = glGetUniformLocation( shader, "Position" );
-    glUniform4fv( id, 1, Position );
-    id = glGetUniformLocation( shader, "Ambient" );
-    glUniform4fv( id, 1, Ambient );
-    id = glGetUniformLocation( shader, "Diffuse" );
-    glUniform4fv( id, 1, Diffuse );
-    id = glGetUniformLocation( shader, "Specular" );
-    glUniform4fv(id,1,Specular);
+   //  Set material properties as uniforms
 
-    //  Set material properties as uniforms
-    id = glGetUniformLocation( shader, "Ks" );
-    glUniform4fv( id, 1, Specular );
-    id = glGetUniformLocation( shader, "Ke" );
-    glUniform4fv( id, 1, Emission );
-    id = glGetUniformLocation( shader, "Shinyness" );
-    glUniform1f( id, Shinyness );
+   const float White[] = {1,1,1,1};
+   id = glGetUniformLocation(shader[1],"Kd");
+   glUniform4fv(id,1,White);
+   id = glGetUniformLocation(shader[2],"Kd");
+   glUniform4fv(id,1,White);
 
-    //  Bind Pi texture
-    glBindTexture( GL_TEXTURE_2D, pi );
-    //  Draw Cube
-    glDrawArrays( GL_TRIANGLES, 0, 36 );
+   id = glGetUniformLocation(shader[0],"Ks");
+   glUniform4fv(id,1,Specular);
+   id = glGetUniformLocation(shader[0],"Ke");
+   glUniform4fv(id,1,Emission);
+   id = glGetUniformLocation(shader[0],"Shinyness");
+   glUniform1f(id,Shinyness[0]);
 
-    //  Release VAO and VBO
-    glBindVertexArray(0);
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
+   //  Bind Pi texture
+   glBindTexture(GL_TEXTURE_2D,pi);
+   //  Draw Cube
+   glDrawArrays(GL_TRIANGLES,0,36);
+
+   //  Release VAO and VBO
+   glBindVertexArray(0);
+   glBindBuffer(GL_ARRAY_BUFFER,0);
 }
 
 
@@ -209,11 +217,16 @@ void display(){
     // Draw the frame
     // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
 
+    // Clear the image
+	
+	
+
     // 1. Erase the window and the depth buffer
+    glClearDepth( 1.0f );
     glClear( GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT );
 
     // 2. Enable Z-buffering in OpenGL
-    glEnable( GL_DEPTH_TEST );
+    // glEnable( GL_DEPTH_TEST );
 
     // 3. Create Projection matrix
     mat4identity(ProjectionMatrix);
@@ -233,16 +246,16 @@ void display(){
         mat4rotate( ViewMatrix, th, 0, 1, 0 );
     }
     //  Light position
-    Position[0] = 4*Cos(zh);
+    Position[0] = 4.0*Cos(zh);
     Position[1] = Ylight;
-    Position[2] = 4*Sin(zh);
-    Position[3] = 1;
+    Position[2] = 4.0*Sin(zh);
+    Position[3] = 1.0f;
 
     //  Now draw the scene (just a cube for now)
     //  To do other objects create a VBO and VAO for each object
     Cube( 0,0,0, 
           1,1,1, 
-          0, shader[0] );
+          0 );
 
     //  Draw axes
     //    if (axes) Axes();
@@ -351,16 +364,23 @@ int main(int argc,char* argv[])
    glutSpecialFunc(special);
    glutKeyboardFunc(key);
    glutIdleFunc(idle);
+
+    // Enable z-testing at the full ranger
+	glEnable( GL_DEPTH_TEST );
+	glDepthRange( 0.0f , 1.0f );
+	// glEnable( GL_CULL_FACE );  
+    
+
    //  Load textures
-   pi   = LoadTexBMP("pi.bmp");
-   font = LoadTexBMP("font.bmp");
-   //  Switch font to nearest
-   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
-   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+   pi   = LoadTexBMP("resources/pi.bmp");
+//    font = LoadTexBMP("resources/font.bmp");
+//    //  Switch font to nearest
+//    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
    //  Create Shader Programs
-   shader[0] = CreateShaderProg("gl4pix.vert","gl4pix.frag");
-   shader[1] = CreateShaderProg("gl4fix.vert","gl4fix.frag");
-   shader[2] = CreateShaderGeom("gl4tex.vert","gl4tex.geom","gl4tex.frag");
+   shader[0] = CreateShaderProg("shaders/gl4pix.vert","shaders/gl4pix.frag");
+   shader[1] = CreateShaderProg("shaders/gl4fix.vert","shaders/gl4fix.frag");
+   shader[2] = CreateShaderGeom("shaders/gl4tex.vert","shaders/gl4tex.geom","shaders/gl4tex.frag");
    //  Pass control to GLUT so it can interact with the user
    ErrCheck("init");
    glutMainLoop();
