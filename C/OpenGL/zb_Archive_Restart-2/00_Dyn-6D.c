@@ -9,7 +9,7 @@
 const uint  _N_ATTRCTR  =     5; // -- Number of attractor ribbons
 const uint  _N_STATES   =   300; // -- Number of attractor states to store 
 const float _DIM_KILL   = 20000.0f; // If {X,Y,Z} state wanders outside of this box, then consider it unstable
-const float _TIMESTEP_S =     0.00025f; // Number of seconds to advance in integration
+const float _TIMESTEP_S =     0.0005f; // Number of seconds to advance in integreation
 const float _HLF_1_SCL  =     0.1f; // Scaling factor for second half of state
 // const float _CAM_ROT_DG =     0.00f; // Amount to rotate camera per frame
 

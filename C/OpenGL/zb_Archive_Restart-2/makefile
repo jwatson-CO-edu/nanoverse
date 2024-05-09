@@ -10,29 +10,23 @@ CLEAN=rm -f *.out *.o *.a
 
 ### Prog Dependencies ###
 00_Dyn-6D.o: 00_Dyn-6D.c toolbox.h
+01_VAO.o: 01_VAO.c toolbox.h
 
-### Float Matrix Math ###
-matrix4x4f.o: matrix4x4f.c matrix4x4f.h
-
-### OpenGL Toolbox ###
-OGL_utils.o: OGL_utils.c toolbox.h
-load_assets.o: load_assets.c toolbox.h
+### Lib Dependencies ###
+toolbox.h: matrix4x4f.h
 vector-f_ops.o: vector-f_ops.c toolbox.h
-
-### Geometry Construction ###
-TriNet.o: TriNet.c geometry.h
-
+OGL_utils.o: OGL_utils.c toolbox.h
+matrix4x4f.o: matrix4x4f.c toolbox.h
 
 
-########## ARCHIVES & GENERAL RULES ################################################################
 
-toolbox.a: OGL_utils.o load_assets.o vector-f_ops.o
+########## LIB & GENERAL RULES #####################################################################
+
+### Create archive ###
+toolbox.a:vector-f_ops.o OGL_utils.o vector-f_ops.o matrix4x4f.o
 	ar -rcs $@ $^
 
-geometry.a: TriNet.o
-	ar -rcs $@ $^
-
-# Compile rules
+### Compile rules ###
 .c.o:
 	gcc -c $(CFLG)  $<
 
@@ -45,9 +39,11 @@ geometry.a: TriNet.o
 00_Dyn-6D:00_Dyn-6D.o toolbox.a
 	gcc $(CFLG) -o $@.out $^ $(LIBS)
 
+01_VAO:01_VAO.o toolbox.a
+	gcc $(CFLG) -o $@.out $^ $(LIBS)
+	
 
 ##### Clean Rule ##########################################################
 
-#  Clean
 clean:
 	$(CLEAN)

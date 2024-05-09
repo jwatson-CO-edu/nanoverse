@@ -1,8 +1,5 @@
-//  CSCIx239 library
-//  Willem A. (Vlakkies) Schreuder
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 #include "toolbox.h"
-
-
 
 ////////// TRIGONOMETRY ////////////////////////////////////////////////////////////////////////////
 
@@ -109,58 +106,13 @@ void look( const Camera3D camera ){
 
 ////////// OPENGL SYSTEM ///////////////////////////////////////////////////////////////////////////
 
-
 void ErrCheck( const char* where ){
-   // Check for OpenGL errors and print to stderr
-   int err = glGetError();
-   if (err) fprintf(stderr,"ERROR: %s [%s]\n",gluErrorString(err),where);
+    // Author: Willem A. Schreüder  
+    int err = glGetError();
+    if (err) fprintf(stderr,"ERROR: %s [%s]\n",gluErrorString(err),where);
 }
 
 
-void Fatal( const char* format , ... ){
-   // Print message to stderr and exit
-   va_list args;
-   va_start(args,format);
-   vfprintf(stderr,format,args);
-   va_end(args);
-   exit(1);
-}
-
-
-void Print(const char* format , ...){
-   // Print raster letters to the viewport
-   char    buf[LEN];
-   char*   ch=buf;
-   va_list args;
-   //  Turn the parameters into a character string
-   va_start(args,format);
-   vsnprintf(buf,LEN,format,args);
-   va_end(args);
-   //  Display the characters one at a time at the current raster position
-   while (*ch)
-      glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18,*ch++);
-}
-
-
-
-//
-void Project(double fov,double asp,double dim){
-   // Set projection
-   //  Tell OpenGL we want to manipulate the projection matrix
-   glMatrixMode(GL_PROJECTION);
-   //  Undo previous transformations
-   glLoadIdentity();
-   //  Perspective transformation
-   if (fov)
-      gluPerspective(fov,asp,dim/16,16*dim);
-   //  Orthogonal transformation
-   else
-      glOrtho(-asp*dim,asp*dim,-dim,+dim,-dim,+dim);
-   //  Switch to manipulating the model matrix
-   glMatrixMode(GL_MODELVIEW);
-   //  Undo previous transformations
-   glLoadIdentity();
-}
 
 ////////// PRINTING HELPERS ////////////////////////////////////////////////////////////////////////
 void nl( void ){  printf("\n");  } // Emit a newline to console
