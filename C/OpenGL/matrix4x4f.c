@@ -1,7 +1,9 @@
 //
 //  4x4 matrix functions
 //  Matrices are interpreted as column major order using OpenGL convention
+//  Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
 //
+
 #include "matrix4x4f.h"
 #include <stdio.h>
 #include <string.h>

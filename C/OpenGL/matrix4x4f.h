@@ -1,6 +1,7 @@
 //
 //  4x4 matrix functions
 //  Matrices are interpreted as column major order using OpenGL convention
+//  Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
 //
 void mat4vulkan(int k);
 void mat4identity(float mat[]);

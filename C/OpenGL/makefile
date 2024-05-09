@@ -10,6 +10,7 @@ CLEAN=rm -f *.out *.o *.a
 
 ### Prog Dependencies ###
 00_Dyn-6D.o: 00_Dyn-6D.c toolbox.h
+01_Planet-Geom.o: 01_Planet-Geom.c toolbox.h geometry.h
 
 ### Float Matrix Math ###
 matrix4x4f.o: matrix4x4f.c matrix4x4f.h
@@ -20,7 +21,7 @@ load_assets.o: load_assets.c toolbox.h
 vector-f_ops.o: vector-f_ops.c toolbox.h
 
 ### Geometry Construction ###
-TriNet.o: TriNet.c geometry.h
+TriNet.o: TriNet.c toolbox.h geometry.h
 
 
 
@@ -29,7 +30,7 @@ TriNet.o: TriNet.c geometry.h
 toolbox.a: OGL_utils.o load_assets.o vector-f_ops.o
 	ar -rcs $@ $^
 
-geometry.a: TriNet.o
+geometry.a: toolbox.a TriNet.o
 	ar -rcs $@ $^
 
 # Compile rules
@@ -42,7 +43,10 @@ geometry.a: TriNet.o
 
 ##### Program Rules #######################################################
 
-00_Dyn-6D:00_Dyn-6D.o toolbox.a
+00_Dyn-6D: 00_Dyn-6D.o toolbox.a
+	gcc $(CFLG) -o $@.out $^ $(LIBS)
+
+01_Planet-Geom: 01_Planet-Geom.o toolbox.a geometry.a
 	gcc $(CFLG) -o $@.out $^ $(LIBS)
 
 

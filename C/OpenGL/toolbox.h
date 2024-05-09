@@ -1,12 +1,18 @@
 #pragma GCC diagnostic ignored "-Wmissing-braces" 
 
-
 #ifndef TOOLBOX_H // This pattern is to prevent symbols to be loaded multiple times
 #define TOOLBOX_H // from multiple imports
 
 ////////// INCLUDES & DEFINES //////////////////////////////////////////////////////////////////////
 
+///// Defines /////////////////////////////////////////////////////////////
+// NOTE: It's just a good idea to put `#define`s before `#include`s because they might trigger important macros
+#define GL_GLEXT_PROTOTYPES // REQUIRED HERE: Get all GL prototypes // WARNING: MUST appear BEFORE ALL GL includes!
+#define LEN 8192 // ---------- Maximum length of text string
+
+
 ///// Includes ////////////////////////////////////////////////////////////
+
 /// Standard ////
 #include <stdlib.h>
 #include <stdarg.h>
@@ -18,15 +24,9 @@
 #include <stdbool.h> // bool
 
 /// OpenGL + GLUT ////
-#define GL_GLEXT_PROTOTYPES // REQUIRED HERE: Get all GL prototypes // WARNING: MUST appear BEFORE ALL GL includes!
 #include <GL/glut.h>
 #include <GL/glu.h>
 #include <GL/gl.h>
-
-#define LEN 8192  //  Maximum length of text string
-
-//  Default resolution
-//  For Retina displays compile with -DRES=2
 
 
 
@@ -116,20 +116,22 @@ void look( const Camera3D camera ); // Set camera position, target, and orientat
 
 
 ////////// OPENGL SYSTEM ///////////////////////////////////////////////////////////////////////////
+// Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
 
-void ErrCheck(const char* where); // Check for OpenGL errors and print to stderr
-void Fatal(const char* format , ...); // Print message to stderr and exit
-void Print(const char* format , ...); // Print raster letters to the viewport
-void Project(double fov,double asp,double dim); // Set projection
+void ErrCheck( const char* where ); // --------------- Check for OpenGL errors and print to stderr
+void Fatal( const char* format, ... ); // ------------ Print message to stderr and exit
+void Print( const char* format, ... ); // ------------ Print raster letters to the viewport
+void Project( double fov, double asp, double dim ); // Set projection
 
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////// load_assets.c //////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
 
-unsigned int LoadTexBMP(const char* file);
-int  LoadOBJ(const char* file);
+unsigned int LoadTexBMP( const char* file );
+int  LoadOBJ( const char* file );
 
 
 ////////// PRINTING HELPERS ////////////////////////////////////////////////////////////////////////

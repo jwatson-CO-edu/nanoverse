@@ -4,7 +4,7 @@
 ////////// TRIGONOMETRY ////////////////////////////////////////////////////////////////////////////
 
 // Cosine and Sine in degrees
-// Author: Willem A. (Vlakkies) Schreüder  
+// Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
 double Cos( double x ){  return cos( (x) * 3.1415927 / 180 );  }
 double Sin( double x ){  return sin( (x) * 3.1415927 / 180 );  }
 double Tan( double x ){  return tan( (x) * 3.1415927 / 180 );  }
@@ -107,7 +107,7 @@ void look( const Camera3D camera ){
 ////////// OPENGL SYSTEM ///////////////////////////////////////////////////////////////////////////
 
 void ErrCheck( const char* where ){
-    // Author: Willem A. Schreüder  
+    // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
     int err = glGetError();
     if (err) fprintf(stderr,"ERROR: %s [%s]\n",gluErrorString(err),where);
 }

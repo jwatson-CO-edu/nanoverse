@@ -19,7 +19,7 @@ const float _HLF_1_SCL  =     0.1f; // --- Scaling factor for second half of sta
 const float _MAX_AGE_S  =    30.0f; // --- Number of seconds a ribbon can stay unchanged
 const ubyte _N_STP_FRM  =     3; // ------ Number of simulation steps to run per frame
 const uint  _MAX_AGE_T  = (uint) (_MAX_AGE_S * _TARGET_FPS * _N_STP_FRM); // Number of timesteps a ribbon can stay unchanged
-const float _DEL_FACT0R = 0.10; // Degree to which params can change after `_MAX_AGE_S` has elapsed
+const float _DEL_FACTOR = 0.10; // Degree to which params can change after `_MAX_AGE_S` has elapsed
 
 ////////// PROGRAM STRUCTS /////////////////////////////////////////////////////////////////////////
 
@@ -186,9 +186,9 @@ void step_6D_attractor( Attractor6D* attractor ){
     // Increment age, and if the attractor is older than max age, then perturb params and reset age
     ++(attractor->age);
     if( attractor->age >= _MAX_AGE_T ){
-        attractor->sigma += randf_range( -(attractor->sigma)*_DEL_FACT0R, (attractor->sigma)*_DEL_FACT0R );
-        attractor->r     += randf_range( -(attractor->r)*_DEL_FACT0R    , (attractor->r)*_DEL_FACT0R     );
-        attractor->b     += randf_range( -(attractor->b)*_DEL_FACT0R    , (attractor->b)*_DEL_FACT0R     );
+        attractor->sigma += randf_range( -(attractor->sigma)*_DEL_FACTOR, (attractor->sigma)*_DEL_FACTOR );
+        attractor->r     += randf_range( -(attractor->r)*_DEL_FACTOR    , (attractor->r)*_DEL_FACTOR     );
+        attractor->b     += randf_range( -(attractor->b)*_DEL_FACTOR    , (attractor->b)*_DEL_FACTOR     );
         attractor->age   = 0;
         printf( "Attractor at %p is OLD!\n", attractor );
     }
