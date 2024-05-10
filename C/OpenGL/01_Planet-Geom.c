@@ -1,10 +1,15 @@
-// gcc -std=c17 -O3 -Wall 05_atmos-GPU.c -lglut -lGLU -lGL -lm -o atmosGPU.out
-
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
-#include "ZZ_Utils.h"
+
+#include "geometry.h"
+
 
 
 ////////// PROGRAM SETTINGS ////////////////////////////////////////////////////////////////////////
+
+/// View Settings ///
+const float _SCALE /**/ = 750.0; // Scale Dimension
+const int   _FOV_DEG    =  55; // - Field of view (for perspective)
+const float _TARGET_FPS =  60.0f; // Desired framerate
 
 /// Geometry ///
 const float _SPHERE_RADIUS = 2.15f;
@@ -53,30 +58,19 @@ vec4f* yBasArr = NULL;
 vec4f* acclArr = NULL;
 
 
-int /*----*/ shader_ID; //  Shader program
-
-int    th  =    0; // Azimuth of view angle
-int    ph  =    0; // Elevation of view angle
-int    zh  =   30; // Light angle
-double asp =    1; // Aspect ratio
-double dim = 1000; // Size of world
-
-
-
-
 ////////// GPU SETUP ///////////////////////////////////////////////////////////////////////////////
 
 void ResetParticles(){
     // Write init data to buffers on the GPU
-    // Author: Willem A. (Vlakkies) Schreüder
+    // Adapted from code by Willem A. (Vlakkies) Schreüder
 
     vec4f *pos, *vel, *col;
-    vec4f* v1_Arr    = NULL;
-    // TriNet*     icosphr   = create_icosphere_VFNA( _ATMOS_RADIUS, _ICOS_SUBDIVID );
+    // vec4f* v1_Arr    = NULL;
+    TriNet* icosphr = create_icosphere_VFNA( _ATMOS_RADIUS, _ICOS_SUBDIVID );
 
     printf( "About to allocate CPU array memory ...\n" );
     orgnArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
-    v1_Arr  = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
+    // v1_Arr  = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
     xBasArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
     yBasArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
     acclArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
@@ -100,7 +94,7 @@ void ResetParticles(){
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
     //  Reset velocities
-    printf( "About to set particle velocity ...\n" );
+    printf( "About to set particle velocity, buffer %u ...\n", veloArr_ID );
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, veloArr_ID ); // Set buffer object to point to this ID, for writing
     // Get pointer to buffer and cast as a struct array
     vel = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, _N_PARTICLES * sizeof( vec4f ), 
@@ -115,6 +109,7 @@ void ResetParticles(){
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
     //  Reset colors
+    printf( "About to set particle colors, buffer %u ...\n", colrArr_ID );
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, colrArr_ID ); // Set buffer object to point to this ID, for writing
     // Get pointer to buffer and cast as a struct array
     col = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, _N_PARTICLES * sizeof( vec4f ), 
@@ -136,10 +131,10 @@ void ResetParticles(){
                                      GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
     // Load colors into buffer
     for( ulong i = 0; i < N_cells; ++i ){
-        // printf( "%f\n", orgnArr[i].x );
-        // printf( "%f\n", icosphr->V[ icosphr->F[i].v0 ].x  );
-        // printf( "%f\n", col[i].x  );
-        // orgnArr[i] = col[i] = icosphr->V[ icosphr->F[i].v0 ];
+        printf( "%f\n", orgnArr[i].x );
+        printf( "%f\n", icosphr->V[ icosphr->F[i].v0 ].x  );
+        printf( "%f\n", col[i].x  );
+        orgnArr[i] = col[i] = icosphr->V[ icosphr->F[i].v0 ];
     }
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
@@ -151,8 +146,10 @@ void ResetParticles(){
 
     // Stop talking to the buffer object?
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 );
-}
 
+    // Cleanup
+    delete_net( icosphr );
+}
 
 void InitParticles( void ){
     // Get compute shader_ID info and allocate buffer space on the GPU
@@ -222,163 +219,17 @@ void InitParticles( void ){
 
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 );
 
+    
+
     // Reset buffer positions
     ResetParticles();
 }
 
-
-
 ////////// RENDERING ///////////////////////////////////////////////////////////////////////////////
-
-void DrawParticles( void ){
-    // Render all particles after the compute shader_ID has moved them
-    // Author: Willem A. (Vlakkies) Schreüder
-    // Set particle size
-    glPointSize(1);
-    // Vertex array
-    glBindBuffer( GL_ARRAY_BUFFER, posnArr_ID );
-    glVertexPointer( 4, GL_FLOAT, 0, (void*) 0 );
-    // Color array
-    glBindBuffer( GL_ARRAY_BUFFER, colrArr_ID );
-    glColorPointer( 4, GL_FLOAT, 0, (void*) 0 );
-    // Enable arrays used by DrawArrays
-    glEnableClientState( GL_VERTEX_ARRAY );
-    glEnableClientState( GL_COLOR_ARRAY  );
-    // Draw arrays
-    glDrawArrays( GL_POINTS, 0, _N_PARTICLES );
-    // Disable arrays
-    glDisableClientState( GL_VERTEX_ARRAY );
-    glDisableClientState( GL_COLOR_ARRAY  );
-    // Reset buffer
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
-}
-
-float lastTime = 0.0f;
-
-float heartbeat( float targetFPS ){
-    // Attempt to maintain framerate no greater than target. (Period is rounded down to next ms)
-    float currTime   = 0.0f;
-    float framTime   = 0.0f;
-    float target_ms  = 1000.0f / targetFPS;
-    static float FPS = 0.0f;
-    framTime = (float) glutGet( GLUT_ELAPSED_TIME ) - lastTime;
-    if( framTime < target_ms ){ sleep_ms( (long) (target_ms - framTime) );  }
-    currTime = (float) glutGet( GLUT_ELAPSED_TIME );
-    FPS = (1000.0f / (currTime - lastTime)) * 0.125f + FPS * 0.875f; // Filter for readable number
-    lastTime = currTime;
-    return FPS;
-}
-
-void display(){
-    // Draw one frame
-    // Adapted from work by Willem A. (Vlakkies) Schreüder
-
-    const float SphereY = -500;
-    const float SphereR = +600;
-    int /*---*/ id = 0;
-
-    // Erase the window and the depth buffer
-    glClear( GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT );
-    glEnable( GL_DEPTH_TEST );
-    
-    // Set eye position
-    View( th, ph, 55, dim );
-    
-    // // Enable lighting
-    // Lighting( dim * Cos( zh ), dim, dim * Sin(zh), 0.3, 0.5, 0.5 );
-
-    // // Draw sphere
-    // SetColor( 0.8, 0.8, 0 );
-    // glPushMatrix();
-    // glTranslatef( 0, SphereY, 0 );
-    // glRotatef( -90, 1, 0, 0 );
-    // glScaled( SphereR, SphereR, SphereR );
-    // SolidSphere( 32 );
-    // glPopMatrix();
-
-    // Disable lighting before particles
-    glDisable( GL_LIGHTING );
-
-    // Launch compute `shader_ID`
-    glUseProgram( shader_ID ); // GPU state points to the compute shader
-
-    // Fetch ID of var that holds sphere center location, and set the location
-    id = glGetUniformLocation( shader_ID, "xyz" );
-    glUniform3f( id, 0, SphereY, 0 );
-
-    // Fetch ID of var that holds sphere radius, and set the radius
-    id = glGetUniformLocation( shader_ID, "dim" );
-    glUniform1f( id, SphereR );
-    
-    // Launch workers to perform tasks, Each task is defined by the shader program
-    glDispatchComputeGroupSizeARB( 
-        // Array of Worker Groups //
-        _N_PARTICLES/workGroupSize, // Number of groups, Dim 0
-        1, // ----------------- Number of groups, Dim 1
-        1, // ----------------- Number of groups, Dim 2
-        // Array of Workers within each Group //
-        workGroupSize, // Group size, Dim 0
-        1, // ----------- Group size, Dim 1
-        1 // ------------ Group size, Dim 2
-    );
-    glUseProgram(0); // GPU state no longer points to a shader program
-
-    //  Wait for compute shader_ID
-    glMemoryBarrier( GL_SHADER_STORAGE_BARRIER_BIT );
-
-    //  Draw the particles
-    DrawParticles();
-
-    // //  Draw Axes
-    // Axes(500);
-
-    //  Display parameters
-    glDisable( GL_DEPTH_TEST );
-    glWindowPos2i( 5, 5 );
-    Print( "%d,%f FPS=%d Dim=%.1f Size=%d Count=%d N=%d", 
-           th, ph, heartbeat( 60.0 ), dim, workGroupSize, N_groups, _N_PARTICLES );
-    
-    // Check errors
-    ErrCheck("display");
-
-    // Render the scene and make it visible: Flush and swap
-    glFlush();
-    glutSwapBuffers();
-}
-
-void Projection( float fov, float asp, float dim ){
-   // Set projection matrix
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
-   // Perspective transformation
-   gluPerspective( fov, asp, dim/16, 16*dim );
-   // Reset modelview
-   glMatrixMode(GL_MODELVIEW);
-   glLoadIdentity();
-}
 
 ////////// WINDOW STATE ////////////////////////////////////////////////////////////////////////////
 
-void reshape( int width , int height ){
-    // GLUT calls this routine when the window is resized
-    // Calc the aspect ratio: width to the height of the window
-    asp = ( height > 0 ) ? (float) width / height : 1;
-    // Set the viewport to the entire window
-    glViewport( 0 , 0 , width , height );
-    // Set projection
-    Projection( 55, asp, dim );
-}
-
 ////////// SIMULATION LOOP /////////////////////////////////////////////////////////////////////////
-
-void tick(){
-    // Simulation updates in between repaints
-    // tick_atmos( simpleAtmos );
-
-    //  Tell GLUT it is necessary to redisplay the scene
-    glutPostRedisplay();
-}
-
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
@@ -400,20 +251,20 @@ int main( int argc, char* argv[] ){
     glDepthRange( 0.0f , 1.0f ); // WARNING: NOT IN THE EXAMPLE
 
 
-    //  Compute shader
-    shader_ID = CreateShaderProgCompute( "shaders/06_Prtcl-Dyn.comp" );
+    // //  Compute shader
+    // shader_ID = CreateShaderProgCompute( "shaders/06_Prtcl-Dyn.comp" );
     
     //  Initialize particles
     InitParticles();
 
-    //  Tell GLUT to call "display" when the scene should be drawn
-    glutDisplayFunc( display );
+    // //  Tell GLUT to call "display" when the scene should be drawn
+    // glutDisplayFunc( display );
 
-    // Tell GLUT to call "idle" when there is nothing else to do
-    glutIdleFunc( tick );
+    // // Tell GLUT to call "idle" when there is nothing else to do
+    // glutIdleFunc( tick );
     
-    //  Tell GLUT to call "reshape" when the window is resized
-    glutReshapeFunc( reshape );
+    // //  Tell GLUT to call "reshape" when the window is resized
+    // glutReshapeFunc( reshape );
     
     // //  Tell GLUT to call "special" when an arrow key is pressed
     // glutSpecialFunc( special );
@@ -422,11 +273,19 @@ int main( int argc, char* argv[] ){
     // glutKeyboardFunc( key );
     
     //  Pass control to GLUT so it can interact with the user
-    glutMainLoop();
+    // glutMainLoop();
     
     // // Free memory
-    // delete_net( icos );
-    // delete_atmos( simpleAtmos );
+
+    printf( "Cleanup!\n" );
+    free( orgnArr );
+    // free( v1_Arr  );
+    free( xBasArr );
+    free( yBasArr );
+    free( acclArr );
+
+
+
     
     //  Return code
     return 0;

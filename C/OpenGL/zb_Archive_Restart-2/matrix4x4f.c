@@ -1,13 +1,13 @@
-//
-//  4x4 matrix functions
-//  Matrices are interpreted as column major order using OpenGL convention
-//  Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
-//
+// 4x4 matrix functions
+// Matrices are interpreted as column major order using OpenGL convention
+// Author: Willem A. (Vlakkies) Schreüder  
 
 #include "matrix4x4f.h"
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+
+// #define _USE_MATH_DEFINES
 
 //  OpenGL or Vulkan
 static int vulkan=0;

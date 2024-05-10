@@ -5,21 +5,20 @@
 
 ////////// PROGRAM SETTINGS ////////////////////////////////////////////////////////////////////////
 
+/// Simulation Settings ///
+const uint  _N_ATTRCTR  =     5; // -- Number of attractor ribbons
+const uint  _N_STATES   =   300; // -- Number of attractor states to store 
+const float _DIM_KILL   = 20000.0f; // If {X,Y,Z} state wanders outside of this box, then consider it unstable
+const float _TIMESTEP_S =     0.0005f; // Number of seconds to advance in integreation
+const float _HLF_1_SCL  =     0.1f; // Scaling factor for second half of state
+// const float _CAM_ROT_DG =     0.00f; // Amount to rotate camera per frame
+
 /// View Settings ///
 const float _SCALE /**/ = 750.0; // Scale Dimension
 const int   _FOV_DEG    =  55; // - Field of view (for perspective)
 const float _TARGET_FPS =  60.0f; // Desired framerate
 
-/// Simulation Settings ///
-const uint  _N_ATTRCTR  =     5; // ------ Number of attractor ribbons
-const uint  _N_STATES   =   300; // ------ Number of attractor states to store 
-const float _DIM_KILL   = 20000.0f; // --- If {X,Y,Z} state wanders outside of this box, then consider it unstable
-const float _TIMESTEP_S =     0.00025f; // Number of seconds to advance in integration
-const float _HLF_1_SCL  =     0.1f; // --- Scaling factor for second half of state
-const float _MAX_AGE_S  =    30.0f; // --- Number of seconds a ribbon can stay unchanged
-const ubyte _N_STP_FRM  =     3; // ------ Number of simulation steps to run per frame
-const uint  _MAX_AGE_T  = (uint) (_MAX_AGE_S * _TARGET_FPS * _N_STP_FRM); // Number of timesteps a ribbon can stay unchanged
-const float _DEL_FACTOR = 0.10; // Degree to which params can change after `_MAX_AGE_S` has elapsed
+
 
 ////////// PROGRAM STRUCTS /////////////////////////////////////////////////////////////////////////
 
@@ -99,7 +98,6 @@ typedef struct{
     vec4f*    edge1;
     vec4f     color;
     float     h1scl;
-    uint /**/ age;
 }Attractor6D;
 
 
@@ -117,7 +115,6 @@ Attractor6D* make_6D_attractor( float sigma_, float r_, float b_, L6DStatef init
     rtnStruct->Nstat = Nstates;
     rtnStruct->bgnDx = 0;
     rtnStruct->endDx = 1;
-    rtnStruct->age   = 0;
     // Alloc Mem //
     rtnStruct->edge0 = (vec4f*) malloc( Nstates * sizeof( vec4f ) );
     rtnStruct->edge1 = (vec4f*) malloc( Nstates * sizeof( vec4f ) );
@@ -183,15 +180,6 @@ void step_6D_attractor( Attractor6D* attractor ){
     attractor->edge1[ end ] = add_vec4f( h0, scale_vec4f( h1, attractor->h1scl ) );
     attractor->endDx = (end+1)%(attractor->Nstat);
     if( attractor->bgnDx == end ){  attractor->bgnDx = attractor->endDx;  }
-    // Increment age, and if the attractor is older than max age, then perturb params and reset age
-    ++(attractor->age);
-    if( attractor->age >= _MAX_AGE_T ){
-        attractor->sigma += randf_range( -(attractor->sigma)*_DEL_FACTOR, (attractor->sigma)*_DEL_FACTOR );
-        attractor->r     += randf_range( -(attractor->r)*_DEL_FACTOR    , (attractor->r)*_DEL_FACTOR     );
-        attractor->b     += randf_range( -(attractor->b)*_DEL_FACTOR    , (attractor->b)*_DEL_FACTOR     );
-        attractor->age   = 0;
-        printf( "Attractor at %p is OLD!\n", attractor );
-    }
 }
 
 
@@ -357,12 +345,12 @@ void idle(){
     // camOfstDir = make_vec4f( Cosf( thetaCam ), Sinf( thetaCam ), 0.0f );
     
     for( uint i = 0; i < _N_ATTRCTR; ++i ){
-        for( ubyte j = 0; j < _N_STP_FRM; ++j ){  step_6D_attractor( attractors[i] );  }
+        step_6D_attractor( attractors[i] );
         // If this attractor is unstable, then replace it with new
         h0_i = attractors[i]->edge0[ attractors[i]->bgnDx ];
         h1_i = attractors[i]->edge1[ attractors[i]->bgnDx ];
         if((norm_vec4f( h0_i ) > _DIM_KILL) || (norm_vec4f( h1_i ) > _DIM_KILL)){
-            printf( "!! UNSTABLE %p !!\n", attractors[i] );
+            printf( "!! UNSTABLE !!\n" );
             delete_6D_attractor( attractors[i] );
             attractors[i] = make_rand_6D_attractor();
         }

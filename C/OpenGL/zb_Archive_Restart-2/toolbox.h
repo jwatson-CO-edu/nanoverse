@@ -1,3 +1,4 @@
+#pragma GCC diagnostic ignored "-Wimplicit-function-declaration" 
 #pragma GCC diagnostic ignored "-Wmissing-braces" 
 
 #ifndef TOOLBOX_H // This pattern is to prevent symbols to be loaded multiple times
@@ -5,20 +6,11 @@
 
 ////////// INCLUDES & DEFINES //////////////////////////////////////////////////////////////////////
 
-///// Defines /////////////////////////////////////////////////////////////
-// NOTE: It's just a good idea to put `#define`s before `#include`s because they might trigger important macros
-#define GL_GLEXT_PROTOTYPES // REQUIRED HERE: Get all GL prototypes // WARNING: MUST appear BEFORE ALL GL includes!
-#define LEN 8192 // ---------- Maximum length of text string
-
-
 ///// Includes ////////////////////////////////////////////////////////////
-
 /// Standard ////
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include <string.h>
 #include <math.h>
 #include <time.h>
 #include <errno.h>  
@@ -29,6 +21,12 @@
 #include <GL/glu.h>
 #include <GL/gl.h>
 
+/// Local ////
+#include "matrix4x4f.h"
+
+///// Defines & Flags /////////////////////////////////////////////////////
+#define LEN 8192  // Maximum length of text string
+#define GL_GLEXT_PROTOTYPES
 
 
 ////////// TYPE DEFINES ////////////////////////////////////////////////////////////////////////////
@@ -69,7 +67,6 @@ typedef struct {
 } Camera3D;
 
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////// OGL_utils.c ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -101,7 +98,6 @@ uint  randu_range( uint lo, uint hi ); //- Return a pseudo-random uint  between 
 ubyte rand_ubyte(); // ------------------- Return a pseudo-random ubyte
 
 
-
 ////////// SIMULATION & TIMING /////////////////////////////////////////////////////////////////////
 
 // Pause main thread: implemented using nanosleep(), continuing the sleep if it is interrupted by a signal
@@ -117,22 +113,8 @@ void look( const Camera3D camera ); // Set camera position, target, and orientat
 
 
 ////////// OPENGL SYSTEM ///////////////////////////////////////////////////////////////////////////
-// Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
 
-void ErrCheck( const char* where ); // --------------- Check for OpenGL errors and print to stderr
-void Fatal( const char* format, ... ); // ------------ Print message to stderr and exit
-void Print( const char* format, ... ); // ------------ Print raster letters to the viewport
-void Project( double fov, double asp, double dim ); // Set projection
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////// load_assets.c //////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
-
-unsigned int LoadTexBMP( const char* file );
-int  LoadOBJ( const char* file );
+void ErrCheck( const char* where );
 
 
 ////////// PRINTING HELPERS ////////////////////////////////////////////////////////////////////////
@@ -204,6 +186,39 @@ void glNrm4f( const vec4f n ); // Set normal with a vector
 void glClr4f( const vec4f c ); // Set color with a vector
 
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////// shaders.c //////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
+
+////////// FILE OPERATIONS /////////////////////////////////////////////////////////////////////////
+
+char* ReadText( char *file ); // Read the contents of a text file
+
+
+////////// SHADER STATUS ///////////////////////////////////////////////////////////////////////////
+
+void PrintShaderLog( int obj, char* file ); // Attempt to retrieve compilation status of the shader program
+void PrintProgramLog( int obj ); // ---------- Print Program Log
+
+
+////////// SHADER INSTANTIATION ////////////////////////////////////////////////////////////////////
+
+int CreateShader( GLenum type,char* file ); // Create the shader program and return its ID
+// Create the shader program, check it for errors, and return the ID
+int CreateShaderProg( char* VertFile, char* FragFile ); 
+// Create a complete Vertex --> Geometry --> Fragment shader pipeline
+int CreateShaderGeom( char* VertFile, char* GeomFile, char* FragFile );
+    
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////// matrix4x4f.c ///////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
+
+#include "matrix4x4f.h"
 
 
 #endif

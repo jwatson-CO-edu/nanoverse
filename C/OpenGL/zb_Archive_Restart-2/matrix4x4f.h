@@ -1,8 +1,10 @@
-//
-//  4x4 matrix functions
-//  Matrices are interpreted as column major order using OpenGL convention
-//  Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
-//
+#ifndef MATRIX4x4_H
+#define MATRIX4x4_H
+
+// 4x4 matrix functions
+// Matrices are interpreted as column major order using OpenGL convention
+// Author: Willem A. (Vlakkies) Schreüder  
+
 void mat4vulkan(int k);
 void mat4identity(float mat[]);
 void mat4copy(float mat[],float m[]);
@@ -17,3 +19,5 @@ void mat4ortho(float mat[],float left,float right,float bottom,float top,float z
 void mat4perspective(float mat[],float fovy,float asp,float zNear,float zFar);
 void mat4print(const char* text,float m[16]);
 void mat3print(const char* text,float m[9]);
+
+#endif

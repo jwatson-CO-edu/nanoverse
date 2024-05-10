@@ -1,13 +1,10 @@
-//  CSCIx239 library
-//  Willem A. (Vlakkies) Schreuder
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 #include "toolbox.h"
-
-
 
 ////////// TRIGONOMETRY ////////////////////////////////////////////////////////////////////////////
 
 // Cosine and Sine in degrees
-// Author: Willem A. (Vlakkies) Schreüder  
+// Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
 double Cos( double x ){  return cos( (x) * 3.1415927 / 180 );  }
 double Sin( double x ){  return sin( (x) * 3.1415927 / 180 );  }
 double Tan( double x ){  return tan( (x) * 3.1415927 / 180 );  }
@@ -109,59 +106,13 @@ void look( const Camera3D camera ){
 
 ////////// OPENGL SYSTEM ///////////////////////////////////////////////////////////////////////////
 
-
 void ErrCheck( const char* where ){
-   // Check for OpenGL errors and print to stderr
-   // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
-   int err = glGetError();
-   if (err) fprintf( stderr, "ERROR: %s [%s]\n", gluErrorString(err), where );
-}
-
-
-void Fatal( const char* format , ... ){
-   // Print message to stderr and exit
-   // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
-   va_list args;
-   va_start( args, format );
-   vfprintf( stderr, format, args );
-   va_end( args );
-   exit(1);
-}
-
-
-void Print(const char* format , ...){
-    // Print raster letters to the viewport
     // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
-    char    buf[LEN];
-    char*   ch = buf;
-    va_list args;
-    // 1. Turn the parameters into a character string
-    va_start( args, format );
-    vsnprintf( buf, LEN, format, args );
-    va_end( args );
-    // 2. Display the characters one at a time at the current raster position
-    while( *ch ){  glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18, *ch++ );  }
+    int err = glGetError();
+    if (err) fprintf(stderr,"ERROR: %s [%s]\n",gluErrorString(err),where);
 }
 
 
-void Project( double fov, double asp, double dim ){
-    // Set projection
-    // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
-    // 1. Tell OpenGL we want to manipulate the projection matrix
-    glMatrixMode( GL_PROJECTION );
-    // 2. Undo previous transformations
-    glLoadIdentity();
-    // 3. Perspective transformation
-    if( fov )
-        gluPerspective( fov, asp, dim/16, 16*dim );
-    // 4. Orthogonal transformation
-    else
-        glOrtho( -asp*dim, asp*dim, -dim, +dim, -dim, +dim );
-    //  Switch to manipulating the model matrix
-    glMatrixMode( GL_MODELVIEW );
-    //  Undo previous transformations
-    glLoadIdentity();
-}
 
 ////////// PRINTING HELPERS ////////////////////////////////////////////////////////////////////////
 void nl( void ){  printf("\n");  } // Emit a newline to console
