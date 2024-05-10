@@ -178,6 +178,16 @@ vec2f make_vec2f( float x, float y ){
 }
 
 
+vec2f add_vec2f( const vec2f u, const vec2f v ){
+    // Calc `u` + `v` = `r`, R^2
+    vec2f rtnVec = {
+        u.x + v.x,
+        u.y + v.y
+    };
+    return rtnVec;
+}
+
+
 
 ////////// UINT VECTORS ////////////////////////////////////////////////////////////////////////////
 

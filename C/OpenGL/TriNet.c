@@ -160,6 +160,23 @@ void populate_net_connectivity( TriNet* net, float eps ){
 }
 
 
+float avg_edge_len( TriNet* net ){
+    // Return the average edge length in the polyhedron, Useful for getting the "scale" of the faces
+    uint  Nt     = net->Ntri;
+    uint  Ne     = 0;
+    float totLen = 0.0f;
+    vec4f v0, v1, v2;
+    for( uint i; i < Nt; ++i ){
+        v0 /**/ = net->V[ net->F[i].v0 ];
+        v1 /**/ = net->V[ net->F[i].v1 ];
+        v2 /**/ = net->V[ net->F[i].v2 ];
+        totLen += diff_vec4f( v0, v1 ) + diff_vec4f( v1, v2 ) + diff_vec4f( v2, v0 );
+        Ne     += 3;
+    }
+    return totLen / (1.0f*Ne);
+}
+
+
 void draw_net_wireframe( TriNet* net, vec4f lineColor ){
     // Draw the net as a wireframe, NOTE: Only `V` and `F` data req'd
     glClr4f( lineColor );

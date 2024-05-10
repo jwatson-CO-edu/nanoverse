@@ -25,6 +25,8 @@ typedef struct{
 
 ////////// POLYHEDRAL NET //////////////////////////////////////////////////////////////////////////
 
+///// Construction & Queries //////////////////////////////////////////////
+
 // Allocate mem for a `TriNet` with `Ntri_` faces and `Nvrt_` vertices (shared vertices allowed)
 TriNet* alloc_net( uint Ntri_, uint Nvrt_ );
 void delete_net( TriNet* net ); // Free mem for a `TriNet` 
@@ -35,6 +37,11 @@ void A_from_VF( vec3u* A, /*<<*/ uint Ntri_, float eps, const vec4f* V, const ve
 // Return true if the face normals N of an (assumed convex) net all point away from the centroid of vertices
 bool p_net_faces_outward_convex( uint Ntri_, uint Nvrt_, const vec4f* V, const vec3u* F, const vec4f* N );
 void populate_net_connectivity( TriNet* net, float eps ); // Get facet neighborhoods 
+// Return the average edge length in the polyhedron, Useful for getting the "scale" of the faces
+float avg_edge_len( TriNet* net );
+
+///// Rendering ///////////////////////////////////////////////////////////
+    
 void draw_net_wireframe( TriNet* net, vec4f lineColor ); // Draw the net as a wireframe, NOTE: Only `V` and `F` data req'd
 void draw_net_connectivity( TriNet* net, vec4f lineColor ); // Draw the net neighbors as a wireframe
 

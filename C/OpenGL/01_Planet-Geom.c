@@ -58,6 +58,77 @@ vec4f* yBasArr = NULL;
 vec4f* acclArr = NULL;
 
 
+
+////////// SCRATCH SPACE ///////////////////////////////////////////////////////////////////////////
+
+bool p_pnt_vertical_of_face( const vec4f q, const vec4f cntr, const vec4f v0, const vec4f v1, const vec4f v2 ){
+    // For a convex poyhedron with `cntr`, Return true if `q` is above/below/on the triangle {`v0`,`v1`,`v2`}
+    vec4f seg0, seg1, seg2, segCen0, segCen1, segCen2, norm0, norm1, norm2, diff0, diff1, diff2;
+    seg0    = sub_vec4f( v1, v0 );
+    seg1    = sub_vec4f( v2, v1 );
+    seg1    = sub_vec4f( v0, v2 );
+    segCen0 = sub_vec4f( seg_center( v0, v1 ), cntr );
+    segCen1 = sub_vec4f( seg_center( v1, v2 ), cntr );
+    segCen1 = sub_vec4f( seg_center( v2, v0 ), cntr );
+    norm0   = cross_vec4f( segCen0, seg0 );
+    norm1   = cross_vec4f( segCen1, seg1 );
+    norm2   = cross_vec4f( segCen1, seg1 );
+    diff0   = sub_vec4f( sub_vec4f( q, cntr ), segCen0 );
+    diff1   = sub_vec4f( sub_vec4f( q, cntr ), segCen1 );
+    diff2   = sub_vec4f( sub_vec4f( q, cntr ), segCen1 );
+    return (  
+        (dot_vec4f( diff0, norm0 ) >= 0.0f) && (dot_vec4f( diff1, norm1 ) >= 0.0f) && (dot_vec4f( diff2, norm2 ) >= 0.0f) 
+    );
+}
+
+
+////////// INIT HELPERS ////////////////////////////////////////////////////////////////////////////
+
+float Box_Muller_normal_sample( float mu, float sigma ){
+    // Transform 2 uniform samples into a zero-mean normal sample
+    // Source: https://www.baeldung.com/cs/uniform-to-normal-distribution
+    float u1 = randf();
+    float u2 = randf();
+    return mu + sqrtf( -2.0 * log( u1 ) ) * cos( 2.0 * M_PI * u2 ) * sigma;
+}
+
+
+uint* distribute_particles_init( vec4f* prtArr, vec4f* orgnArr, vec4f* xBasArr, vec4f* yBasArr, float scale,
+                                 uint groupSizeMin, uint groupSizeMax ){
+    // Place particles in the atmosphere
+    // 0. Init
+    uint* rtnArr  = (uint*) malloc( _N_PARTICLES * sizeof( uint ) );
+    uint  cellDex = 0;
+    uint  grpSize = 0;
+    uint  j /*-*/ = 0;
+    bool  onGroup = false;
+    vec2f  posn2f  = {0.0f,0.0f};
+    vec2f  center  = {0.0f,0.0f};
+    // 1. For each particle in the simulation
+    for( uint i = 0; i < _N_PARTICLES; ++i ){
+        // 2. If there is no active cluster, then start one
+        if( !onGroup ){
+            cellDex  = randu_range( 0, N_cells-1 );
+            grpSize  = randu_range( groupSizeMin, groupSizeMax );
+            j /*--*/ = 0;
+            center.x = randf() * scale;
+            center.y = randf() * scale;
+            onGroup  = true;
+        }
+        // 3. Distribute point about cluster center w/ 2D Gaussian
+        posn2f.x = Box_Muller_normal_sample( 0.0f, scale/8.0f );
+        posn2f.y = Box_Muller_normal_sample( 0.0f, scale/8.0f );
+        posn2f   = add_vec2f( center, posn2f );
+        // 4. Place point in 3D
+        prtArr[i] = lift_pnt_2D_to_3D( posn2f, orgnArr[ cellDex ], xBasArr[ cellDex ], yBasArr[ cellDex ] );
+        rtnArr[i] = cellDex;
+        // 5. Increment group counter and check if group is done
+        ++j;
+        if( j >= grpSize ){  onGroup = false;  }
+    }
+    return rtnArr;
+}
+
 ////////// GPU SETUP ///////////////////////////////////////////////////////////////////////////////
 
 void ResetParticles(){
@@ -67,36 +138,23 @@ void ResetParticles(){
     float red_i, grn_i, blu_i;
     vec4f norm_i;
     vec4f *pos, *vel, *col, *trgtVf;
+    vec3u* trgtVu;
     vec4f* v1_Arr    = NULL;
     vec4f* v2_Arr    = NULL;
-    TriNet* icosphr = create_icosphere_VFNA( _ATMOS_RADIUS, _ICOS_SUBDIVID );
+    TriNet* icosphr  = create_icosphere_VFNA( _ATMOS_RADIUS, _ICOS_SUBDIVID );
+    float   edgScale = avg_edge_len( icosphr );
+    uint*   mmbrArr  = NULL;
 
     printf( "About to allocate CPU array memory ...\n" );
     orgnArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
     xBasArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
     yBasArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
     acclArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
-
+    printf( "About to allocate CPU temp init memory ...\n" );
     v1_Arr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
     v2_Arr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
 
-    //  Reset position
-    printf( "About to set bind buffer %u ...\n", posnArr_ID );
-    glBindBuffer( GL_SHADER_STORAGE_BUFFER, posnArr_ID ); // Set buffer object to point to this ID, for writing
-    // Get pointer to buffer and cast as a struct array
-    printf( "About to map buffer %u ...\n", posnArr_ID );
-    ErrCheck( "ResetParticles" );
-    pos = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, _N_PARTICLES * sizeof( vec4f ),
-                                     GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
-    printf( "Sending particles to %p ...\n", pos );
-    // Load init positions into buffer
-    for (int i = 0; i < _N_PARTICLES; i++ ){
-        pos[i].x = randf_range(    0,  100 );
-        pos[i].y = randf_range( +400, +600 );
-        pos[i].z = randf_range(  -50,  +50 );
-        pos[i].w = 1;
-    }
-    glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
+    
 
     //  Reset velocities
     printf( "About to set particle velocity, buffer %u ...\n", veloArr_ID );
@@ -118,7 +176,7 @@ void ResetParticles(){
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, colrArr_ID ); // Set buffer object to point to this ID, for writing
     // Get pointer to buffer and cast as a struct array
     col = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, _N_PARTICLES * sizeof( vec4f ), 
-                                    GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
+                                     GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
     // Load colors into buffer
     for( int i = 0; i < _N_PARTICLES; i++ ){
         grn_i = randf_range( 0.1f, 1.0f );
@@ -132,7 +190,8 @@ void ResetParticles(){
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
 
-    //  Reset origin
+    ///// Cell Origin ////////////////////////////
+
     printf( "About to set cell origins, buffer %u ...\n", origin_ID );
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, origin_ID ); // Set buffer object to point to this ID, for writing
     // Get pointer to buffer and cast as a struct array
@@ -144,7 +203,9 @@ void ResetParticles(){
     }
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
-    //  Reset origin
+
+    ///// Cell V1 ////////////////////////////////
+
     printf( "About to set cell v1, buffer %u ...\n", v1_ID );
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, v1_ID ); // Set buffer object to point to this ID, for writing
     // Get pointer to buffer and cast as a struct array
@@ -156,7 +217,9 @@ void ResetParticles(){
     }
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
-    //  Reset origin
+
+    ///// Cell V2 ////////////////////////////////
+
     printf( "About to set cell v2, buffer %u ...\n", v2_ID );
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, v2_ID ); // Set buffer object to point to this ID, for writing
     // Get pointer to buffer and cast as a struct array
@@ -168,7 +231,9 @@ void ResetParticles(){
     }
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
-    //  Reset origin
+
+    ///// Cell X Basis ///////////////////////////
+    
     printf( "About to set cell X Basis, buffer %u ...\n", xBasis_ID );
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, xBasis_ID ); // Set buffer object to point to this ID, for writing
     // Get pointer to buffer and cast as a struct array
@@ -181,7 +246,8 @@ void ResetParticles(){
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
 
-    //  Reset origin
+    ///// Cell Y Basis ///////////////////////////
+
     printf( "About to set cell y Basis, buffer %u ...\n", yBasis_ID );
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, yBasis_ID ); // Set buffer object to point to this ID, for writing
     // Get pointer to buffer and cast as a struct array
@@ -194,7 +260,22 @@ void ResetParticles(){
     }
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
+
+    ///// Particle Positions /////////////////////
+
+    printf( "About to set bind buffer %u ...\n", posnArr_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, posnArr_ID ); // Set buffer object to point to this ID, for writing
+    // Get pointer to buffer and cast as a struct array
+    printf( "About to map buffer %u ...\n", posnArr_ID );
+    ErrCheck( "ResetParticles" );
+    pos = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, _N_PARTICLES * sizeof( vec4f ),
+                                     GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
+    printf( "Sending particles to %p ...\n", pos );
     
+    // Load init positions into buffer
+    mmbrArr = distribute_particles_init( pos, orgnArr, xBasArr, yBasArr, edgScale, 
+                                         100, (uint) (_N_PARTICLES / N_cells) );
+    glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
     // Associate buffer ID on GPU side with buffer ID on CPU side
     glBindBufferBase( GL_SHADER_STORAGE_BUFFER,  4, posnArr_ID );
@@ -210,9 +291,11 @@ void ResetParticles(){
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 );
 
     // Cleanup
+    printf( "Cleanup particle init ...\n" );
     delete_net( icosphr );
     free( v1_Arr );
     free( v2_Arr );
+    free( mmbrArr );
 }
 
 void InitParticles( void ){
@@ -240,10 +323,10 @@ void InitParticles( void ){
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, colrArr_ID );
     glBufferData( GL_SHADER_STORAGE_BUFFER, _N_PARTICLES * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
 
-    // // Initialize member buffer
-    // glGenBuffers( 1, &mmbrArr_ID );
-    // glBindBuffer( GL_SHADER_STORAGE_BUFFER, mmbrArr_ID );
-    // glBufferData( GL_SHADER_STORAGE_BUFFER, _N_PARTICLES * sizeof( uint ), NULL, GL_STATIC_DRAW );
+    // Initialize member buffer
+    glGenBuffers( 1, &mmbrArr_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, mmbrArr_ID );
+    glBufferData( GL_SHADER_STORAGE_BUFFER, _N_PARTICLES * sizeof( uint ), NULL, GL_STATIC_DRAW );
 
     // Initialize origin buffer
     glGenBuffers( 1, &origin_ID );

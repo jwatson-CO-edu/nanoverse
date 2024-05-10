@@ -7,6 +7,7 @@
 
 ///// Defines /////////////////////////////////////////////////////////////
 // NOTE: It's just a good idea to put `#define`s before `#include`s because they might trigger important macros
+#define _USE_MATH_DEFINES 
 #define GL_GLEXT_PROTOTYPES // REQUIRED HERE: Get all GL prototypes // WARNING: MUST appear BEFORE ALL GL includes!
 #define LEN 8192 // ---------- Maximum length of text string
 
@@ -188,6 +189,8 @@ vec4f lift_vec_2D_to_3D( const vec2f vct2f, const vec4f xBasis, const vec4f yBas
 ////////// UINT VECTORS ////////////////////////////////////////////////////////////////////////////
 
 vec3u make_vec3u( uint u0, uint u1, uint u2 ); // Create a 3D uint vector
+
+vec2f add_vec2f( const vec2f u, const vec2f v ); // Calc `u` + `v` = `r`, R^2
 
 
 ////////// VECTOR PRINTING /////////////////////////////////////////////////////////////////////////
