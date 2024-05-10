@@ -64,16 +64,21 @@ void ResetParticles(){
     // Write init data to buffers on the GPU
     // Adapted from code by Willem A. (Vlakkies) Schreüder
 
-    vec4f *pos, *vel, *col;
-    // vec4f* v1_Arr    = NULL;
+    float red_i, grn_i, blu_i;
+    vec4f norm_i;
+    vec4f *pos, *vel, *col, *trgtVf;
+    vec4f* v1_Arr    = NULL;
+    vec4f* v2_Arr    = NULL;
     TriNet* icosphr = create_icosphere_VFNA( _ATMOS_RADIUS, _ICOS_SUBDIVID );
 
     printf( "About to allocate CPU array memory ...\n" );
     orgnArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
-    // v1_Arr  = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
     xBasArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
     yBasArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
     acclArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
+
+    v1_Arr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
+    v2_Arr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
 
     //  Reset position
     printf( "About to set bind buffer %u ...\n", posnArr_ID );
@@ -116,39 +121,98 @@ void ResetParticles(){
                                     GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
     // Load colors into buffer
     for( int i = 0; i < _N_PARTICLES; i++ ){
-        col[i].r = randf_range( 0.1, 1.0 );
-        col[i].g = randf_range( 0.1, 1.0 );
-        col[i].b = randf_range( 0.1, 1.0 );
-        col[i].a = 1.;
+        grn_i = randf_range( 0.1f, 1.0f );
+        blu_i = randf_range( 0.1f, 1.0f );
+        red_i = (grn_i + blu_i)/2.0f;
+        col[i].r = red_i;
+        col[i].g = grn_i;
+        col[i].b = blu_i;
+        col[i].a = 1.0f;
     }
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
 
     //  Reset origin
+    printf( "About to set cell origins, buffer %u ...\n", origin_ID );
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, origin_ID ); // Set buffer object to point to this ID, for writing
     // Get pointer to buffer and cast as a struct array
-    col = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, N_cells * sizeof( vec4f ), 
-                                     GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
+    trgtVf = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, N_cells * sizeof( vec4f ), 
+                                        GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
     // Load colors into buffer
     for( ulong i = 0; i < N_cells; ++i ){
-        printf( "%f\n", orgnArr[i].x );
-        printf( "%f\n", icosphr->V[ icosphr->F[i].v0 ].x  );
-        printf( "%f\n", col[i].x  );
-        orgnArr[i] = col[i] = icosphr->V[ icosphr->F[i].v0 ];
+        orgnArr[i] = trgtVf[i] = icosphr->V[ icosphr->F[i].v0 ];
     }
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
+    //  Reset origin
+    printf( "About to set cell v1, buffer %u ...\n", v1_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, v1_ID ); // Set buffer object to point to this ID, for writing
+    // Get pointer to buffer and cast as a struct array
+    trgtVf = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, N_cells * sizeof( vec4f ), 
+                                        GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
+    // Load colors into buffer
+    for( ulong i = 0; i < N_cells; ++i ){
+        v1_Arr[i] = trgtVf[i] = icosphr->V[ icosphr->F[i].v1 ];
+    }
+    glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
+
+    //  Reset origin
+    printf( "About to set cell v2, buffer %u ...\n", v2_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, v2_ID ); // Set buffer object to point to this ID, for writing
+    // Get pointer to buffer and cast as a struct array
+    trgtVf = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, N_cells * sizeof( vec4f ), 
+                                        GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
+    // Load colors into buffer
+    for( ulong i = 0; i < N_cells; ++i ){
+        v2_Arr[i] = trgtVf[i] = icosphr->V[ icosphr->F[i].v2 ];
+    }
+    glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
+
+    //  Reset origin
+    printf( "About to set cell X Basis, buffer %u ...\n", xBasis_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, xBasis_ID ); // Set buffer object to point to this ID, for writing
+    // Get pointer to buffer and cast as a struct array
+    trgtVf = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, N_cells * sizeof( vec4f ), 
+                                        GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
+    // Load colors into buffer
+    for( ulong i = 0; i < N_cells; ++i ){
+        xBasArr[i] = trgtVf[i] = unit_vec4f( sub_vec4f( v1_Arr[i], orgnArr[i] ) );
+    }
+    glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
+
+
+    //  Reset origin
+    printf( "About to set cell y Basis, buffer %u ...\n", yBasis_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, yBasis_ID ); // Set buffer object to point to this ID, for writing
+    // Get pointer to buffer and cast as a struct array
+    trgtVf = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, N_cells * sizeof( vec4f ), 
+                                        GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
+    // Load colors into buffer
+    for( ulong i = 0; i < N_cells; ++i ){
+        norm_i = get_CCW_tri_norm( orgnArr[i], v1_Arr[i], v2_Arr[i] );
+        yBasArr[i] = trgtVf[i] = cross_vec4f( norm_i, xBasArr[i] );
+    }
+    glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
+
+    
+
     // Associate buffer ID on GPU side with buffer ID on CPU side
-    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 4, posnArr_ID );
-    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 5, veloArr_ID );
-    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 6, colrArr_ID );
-    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 7, origin_ID  );
+    glBindBufferBase( GL_SHADER_STORAGE_BUFFER,  4, posnArr_ID );
+    glBindBufferBase( GL_SHADER_STORAGE_BUFFER,  5, veloArr_ID );
+    glBindBufferBase( GL_SHADER_STORAGE_BUFFER,  6, colrArr_ID );
+    glBindBufferBase( GL_SHADER_STORAGE_BUFFER,  7, origin_ID  );
+    glBindBufferBase( GL_SHADER_STORAGE_BUFFER,  8, v1_ID      );
+    glBindBufferBase( GL_SHADER_STORAGE_BUFFER,  9, v2_ID      );
+    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 10, xBasis_ID  );
+    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 11, yBasis_ID  );
 
     // Stop talking to the buffer object?
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 );
 
     // Cleanup
     delete_net( icosphr );
+    free( v1_Arr );
+    free( v2_Arr );
 }
 
 void InitParticles( void ){
@@ -181,30 +245,30 @@ void InitParticles( void ){
     // glBindBuffer( GL_SHADER_STORAGE_BUFFER, mmbrArr_ID );
     // glBufferData( GL_SHADER_STORAGE_BUFFER, _N_PARTICLES * sizeof( uint ), NULL, GL_STATIC_DRAW );
 
-    // // Initialize origin buffer
-    // glGenBuffers( 1, &origin_ID );
-    // glBindBuffer( GL_SHADER_STORAGE_BUFFER, origin_ID );
-    // glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
+    // Initialize origin buffer
+    glGenBuffers( 1, &origin_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, origin_ID );
+    glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
 
-    // // Initialize v1 buffer
-    // glGenBuffers( 1, &v1_ID );
-    // glBindBuffer( GL_SHADER_STORAGE_BUFFER, v1_ID );
-    // glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
+    // Initialize v1 buffer
+    glGenBuffers( 1, &v1_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, v1_ID );
+    glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
 
-    // // Initialize v2 buffer
-    // glGenBuffers( 1, &v2_ID );
-    // glBindBuffer( GL_SHADER_STORAGE_BUFFER, v2_ID );
-    // glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
+    // Initialize v2 buffer
+    glGenBuffers( 1, &v2_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, v2_ID );
+    glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
 
-    // // Initialize X Basis buffer
-    // glGenBuffers( 1, &xBasis_ID );
-    // glBindBuffer( GL_SHADER_STORAGE_BUFFER, xBasis_ID );
-    // glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
+    // Initialize X Basis buffer
+    glGenBuffers( 1, &xBasis_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, xBasis_ID );
+    glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
 
-    // // Initialize Y Basis buffer
-    // glGenBuffers( 1, &yBasis_ID );
-    // glBindBuffer( GL_SHADER_STORAGE_BUFFER, yBasis_ID );
-    // glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
+    // Initialize Y Basis buffer
+    glGenBuffers( 1, &yBasis_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, yBasis_ID );
+    glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
 
     // // Initialize acceleration buffer
     // glGenBuffers( 1, &accel_ID );

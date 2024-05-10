@@ -30,7 +30,7 @@ TriNet.o: TriNet.c toolbox.h geometry.h
 toolbox.a: OGL_utils.o load_assets.o vector-f_ops.o
 	ar -rcs $@ $^
 
-geometry.a: toolbox.a TriNet.o
+geometry.a: TriNet.o
 	ar -rcs $@ $^
 
 # Compile rules
@@ -46,7 +46,7 @@ geometry.a: toolbox.a TriNet.o
 00_Dyn-6D: 00_Dyn-6D.o toolbox.a
 	gcc $(CFLG) -o $@.out $^ $(LIBS)
 
-01_Planet-Geom: 01_Planet-Geom.o toolbox.a geometry.a
+01_Planet-Geom: 01_Planet-Geom.o geometry.a toolbox.a 
 	gcc $(CFLG) -o $@.out $^ $(LIBS)
 
 
