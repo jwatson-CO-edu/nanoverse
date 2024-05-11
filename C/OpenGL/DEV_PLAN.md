@@ -81,7 +81,7 @@
             - `[Y]` Y Basis, 2024-05-01: Allocated on GPU
             - `[Y]` Acceleration, 2024-05-01: Allocated on GPU
             - `[Y]` Neighbors, 2024-05-01: Allocated on GPU
-            
+
     - `[>]` Draw particles
 
     - `[ ]` GPU: Compute Shader, One worker per *particle* (Easiest adaptation), Dispatch for dynamics:
@@ -104,6 +104,7 @@
         * `[ ]` Enforce Nonzero Speed
             - `[ ]` If diffusion cancels, Randomize
         * `[ ]` Write wind direction array back to GPU
+    - `[ ]` Enable lighting
     - `[ ]` Share
         * `[ ]` Record video
         * `[ ]` Post insta
