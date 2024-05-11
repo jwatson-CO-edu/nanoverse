@@ -13,9 +13,9 @@ layout(binding=5) buffer velbuf {vec4 vel[];};
 //  Work group size
 layout(local_size_variable) in;
 
-//  Sphere
-uniform vec3 xyz;
-uniform float dim;
+// //  Sphere
+// uniform vec3 xyz;
+// uniform float dim;
 
 
 ////////// SHADER CONSTANTS ////////////////////////////////////////////////////////////////////////

@@ -35,8 +35,6 @@ const float _PERTURB_RATE = 0.75;
 ////////// GLOBAL PROGRAM STATE & GEOMETRY /////////////////////////////////////////////////////////
 
 ///// CPU-Side State //////////////////////////////////////////////////////
-int /**/ workGroupSize;
-int /**/ N_groups;
 Camera3D cam = { {4.0f, 2.0f, 2.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f} };
 
 vec4f* orgnArr = NULL;
@@ -46,6 +44,10 @@ vec4f* acclArr = NULL;
 
 
 ///// GPU-Side State //////////////////////////////////////////////////////
+int workGroupSize;
+int N_groups;
+int shaderDyna_ID;
+int shaderUpdt_ID;
 
 /// Particle per Row ///
 uint posnArr_ID; //  Position buffer
@@ -457,27 +459,31 @@ void display(){
     // glDisable(GL_LIGHTING);
 
     //  Launch compute shader
-    glUseProgram(shader);
-    int id = glGetUniformLocation(shader,"xyz");
-    glUniform3f(id,0,SphereY,0);
-    id = glGetUniformLocation(shader,"dim");
-    glUniform1f(id,SphereR);
-    glDispatchComputeGroupSizeARB(n/nw,1,1,nw,1,1);
+    glUseProgram( shaderDyna_ID );
+    glDispatchComputeGroupSizeARB(
+        N_groups, // ---- GLuint num_groups_x // FIXME: CHECK THAT THE # OF GROUPS IS CORRECT
+        1, // ----------- GLuint num_groups_y
+        1, // ----------- GLuint num_groups_z
+        workGroupSize, // GLuint group_size_x
+        1, // ----------- GLuint group_size_y
+        1 // ------------ GLuint group_size_z
+    );
     glUseProgram(0);
 
     //  Wait for compute shader
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    glMemoryBarrier( GL_SHADER_STORAGE_BARRIER_BIT );
 
     //  Draw the particles
     DrawPart();
 
     //  Draw Axes
-    Axes(500);
+    Axes( 500 );
 
     //  Display parameters
     glDisable(GL_DEPTH_TEST);
     glWindowPos2i(5,5);
-    Print("%d,%d FPS=%d Dim=%.1f Size=%d Count=%d N=%d",th,ph,FramesPerSecond(),dim,nw,ng,n);
+    // FIXME: DISPLAY FPS W HEARTBEAT FUNC
+    // Print("%d,%d FPS=%d Dim=%.1f Size=%d Count=%d N=%d",th,ph,FramesPerSecond(),dim,nw,ng,n);
     //  Render the scene and make it visible
     ErrCheck("display");
     glFlush();
