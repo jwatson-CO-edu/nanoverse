@@ -32,9 +32,20 @@ const float _PERTURB_PROB = 1.0f/25.0f;
 const float _PERTURB_RATE = 0.75;
 
 
-////////// GLOBAL PROGRAM STATE ////////////////////////////////////////////////////////////////////
-int workGroupSize;
-int N_groups;
+////////// GLOBAL PROGRAM STATE & GEOMETRY /////////////////////////////////////////////////////////
+
+///// CPU-Side State //////////////////////////////////////////////////////
+int /**/ workGroupSize;
+int /**/ N_groups;
+Camera3D cam = { {4.0f, 2.0f, 2.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f} };
+
+vec4f* orgnArr = NULL;
+vec4f* xBasArr = NULL;
+vec4f* yBasArr = NULL;
+vec4f* acclArr = NULL;
+
+
+///// GPU-Side State //////////////////////////////////////////////////////
 
 /// Particle per Row ///
 uint posnArr_ID; //  Position buffer
@@ -50,12 +61,6 @@ uint xBasis_ID;
 uint yBasis_ID;
 uint accel_ID;
 uint nghbrs_ID;
-
-///// CPU-Side State //////////////////////////////////////////////////////
-vec4f* orgnArr = NULL;
-vec4f* xBasArr = NULL;
-vec4f* yBasArr = NULL;
-vec4f* acclArr = NULL;
 
 
 
@@ -308,30 +313,44 @@ void ResetParticles(){
 
     ///// Cell Acceleration //////////////////////
 
-    printf( "About to set cell acceleration, buffer %u ...\n", yBasis_ID );
-    glBindBuffer( GL_SHADER_STORAGE_BUFFER, yBasis_ID ); // Set buffer object to point to this ID, for writing
+    vec2f acl = {0.0f,0.0f};
+
+    printf( "About to set cell acceleration, buffer %u ...\n", accel_ID );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, accel_ID ); // Set buffer object to point to this ID, for writing
     // Get pointer to buffer and cast as a struct array
     trgtVf = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, N_cells * sizeof( vec4f ), 
                                         GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
     // Load colors into buffer
     for( ulong i = 0; i < N_cells; ++i ){
-        norm_i = get_CCW_tri_norm( orgnArr[i], v1_Arr[i], v2_Arr[i] );
-        yBasArr[i] = trgtVf[i] = cross_vec4f( norm_i, xBasArr[i] );
+
+        acl.x = randf_range( -_ACCEL_LIMIT, +_ACCEL_LIMIT );
+        acl.y = randf_range( -_ACCEL_LIMIT, +_ACCEL_LIMIT );
+
+        acclArr[i] = trgtVf[i] = lift_vec_2D_to_3D( acl, xBasArr[i], yBasArr[i] );
     }
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
-    // Associate buffer ID on GPU side with buffer ID on CPU side
+
+    ///// GPU ALLOC COMPLETE /////////////////////
+
+
+    ///// Associate buffer ID on GPU side with buffer ID on CPU side //////
+    
+    ///// Row per Particle ///////////////////////
     glBindBufferBase( GL_SHADER_STORAGE_BUFFER,  4, posnArr_ID );
     glBindBufferBase( GL_SHADER_STORAGE_BUFFER,  5, veloArr_ID );
     glBindBufferBase( GL_SHADER_STORAGE_BUFFER,  6, colrArr_ID );
-    glBindBufferBase( GL_SHADER_STORAGE_BUFFER,  7, origin_ID  );
-    glBindBufferBase( GL_SHADER_STORAGE_BUFFER,  8, v1_ID      );
-    glBindBufferBase( GL_SHADER_STORAGE_BUFFER,  9, v2_ID      );
-    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 10, xBasis_ID  );
-    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 11, yBasis_ID  );
-    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 12, posnArr_ID );
-    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 13, mmbrArr_ID );
+    glBindBufferBase( GL_SHADER_STORAGE_BUFFER,  7, mmbrArr_ID );
+
+    ///// Row per Cell ///////////////////////////
+    glBindBufferBase( GL_SHADER_STORAGE_BUFFER,  8, origin_ID  );
+    glBindBufferBase( GL_SHADER_STORAGE_BUFFER,  9, v1_ID      );
+    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 10, v2_ID      );
+    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 11, xBasis_ID  );
+    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 12, yBasis_ID  );
+    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 13, posnArr_ID );
     glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 14, nghbrs_ID  );
+    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 15, accel_ID   );
 
     // Stop talking to the buffer object?
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 );
@@ -409,18 +428,61 @@ void InitParticles( void ){
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, accel_ID );
     glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
 
-    
-
-
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 );
 
     
-
     // Reset buffer positions
     ResetParticles();
 }
 
 ////////// RENDERING ///////////////////////////////////////////////////////////////////////////////
+
+void display(){
+    // Refresh display
+
+    //  Erase the window and the depth buffer
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    glEnable( GL_DEPTH_TEST );
+
+    // Set view 
+    look( cam );
+
+    // //  Enable lighting
+    // Lighting(dim*Cos(zh),dim,dim*Sin(zh) , 0.3,0.5,0.5);
+
+    //  Draw sphere
+
+
+    // //  Disable lighting before particles
+    // glDisable(GL_LIGHTING);
+
+    //  Launch compute shader
+    glUseProgram(shader);
+    int id = glGetUniformLocation(shader,"xyz");
+    glUniform3f(id,0,SphereY,0);
+    id = glGetUniformLocation(shader,"dim");
+    glUniform1f(id,SphereR);
+    glDispatchComputeGroupSizeARB(n/nw,1,1,nw,1,1);
+    glUseProgram(0);
+
+    //  Wait for compute shader
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    //  Draw the particles
+    DrawPart();
+
+    //  Draw Axes
+    Axes(500);
+
+    //  Display parameters
+    glDisable(GL_DEPTH_TEST);
+    glWindowPos2i(5,5);
+    Print("%d,%d FPS=%d Dim=%.1f Size=%d Count=%d N=%d",th,ph,FramesPerSecond(),dim,nw,ng,n);
+    //  Render the scene and make it visible
+    ErrCheck("display");
+    glFlush();
+    glfwSwapBuffers(window);
+}
 
 ////////// WINDOW STATE ////////////////////////////////////////////////////////////////////////////
 

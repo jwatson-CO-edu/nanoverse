@@ -81,14 +81,19 @@
             - `[Y]` Y Basis, 2024-05-01: Allocated on GPU
             - `[Y]` Acceleration, 2024-05-01: Allocated on GPU
             - `[Y]` Neighbors, 2024-05-01: Allocated on GPU
+            
     - `[>]` Draw particles
+
     - `[ ]` GPU: Compute Shader, One worker per *particle* (Easiest adaptation), Dispatch for dynamics:
-        * `[ ]` Membership lookup
         * `[ ]` Calc mass from color, Scale accel by `(r+g+b)/3.0f` (Most intense particles are fastest)
+        * `[ ]` Membership lookup
         * `[ ]` Advance particle in 3D
+
+    - `[ ]` GPU: Compute Shader, One worker per *particle* (Easiest adaptation), Dispatch for dynamics:
         * `[ ]` Departure check in 3D
         * `[ ]` If departed, then update membership and project to new location
         * `{?}` Consider: One worker per *section*
+
     - `[ ]` CPU: Wind Dynamics, Treat speed and direction *separately*
         * `[ ]` Only ONE diffusion exchange per 4-neighborhood, Center modified ONCE
             - `[ ]` Blend direction
