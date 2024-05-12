@@ -1,7 +1,7 @@
 # `DEV PLAN`
 
-## `[>]` Planet Atmosphere + Compute Shader 
-
+## `[Y]` Planet Atmosphere + Compute Shader 
+* 2024-05-12: Done!
 * `[Y]` Orthogonal  Cuboid, 2024-04-22: HELL YES
 * `[Y]` Perspective Cuboid, 2024-04-22: FUCK YES
 * `[Y]` Sphere, 2024-04-22: LET'S FUCKING GOOOOO
@@ -49,7 +49,6 @@
         * `[Y]` Copy minimal code from Example, 2024-05-01: Stripped out GLFW
         * `[Y]` Remove sphere, 2024-05-01: Sure why not
         * `[N]` Change particle dynamics, 2024-05-01: Can't be bothered
-
 * `[P]` Atmos particles on the GPU
      - Concepts
         * *DE*-compartmentalize!, Prefer **arrays** over structs: **NO** more particle exchange *between* structs!
@@ -81,61 +80,76 @@
             - `[Y]` Y Basis, 2024-05-01: Allocated on GPU
             - `[Y]` Acceleration, 2024-05-01: Allocated on GPU
             - `[Y]` Neighbors, 2024-05-01: Allocated on GPU
-
-    - `[>]` Draw particles
-
-    - `[ ]` GPU: Compute Shader, One worker per *particle* (Easiest adaptation), Dispatch for dynamics:
-        * `[ ]` Calc mass from color, Scale accel by `(r+g+b)/3.0f` (Most intense particles are fastest)
-        * `[ ]` Membership lookup
-        * `[ ]` Advance particle in 3D
-
-    - `[ ]` GPU: Compute Shader, One worker per *particle* (Easiest adaptation), Dispatch for dynamics:
-        * `[ ]` Departure check in 3D
-        * `[ ]` If departed, then update membership and project to new location
-        * `{?}` Consider: One worker per *section*
-
-    - `[ ]` CPU: Wind Dynamics, Treat speed and direction *separately*
-        * `[ ]` Only ONE diffusion exchange per 4-neighborhood, Center modified ONCE
-            - `[ ]` Blend direction
-            - `[ ]` Blend speed
-        * `[ ]` Perturbation
-            - `[ ]` Nudge direction
-            - `[ ]` Nudge speed
-        * `[ ]` Enforce Nonzero Speed
-            - `[ ]` If diffusion cancels, Randomize
-        * `[ ]` Write wind direction array back to GPU
-    - `[ ]` Enable lighting
-    - `[ ]` Share
-        * `[ ]` Record video
-        * `[ ]` Post insta
-        * `[ ]` Q: Is it better for a worker to work on a single point or a smallish collection of points?
-        * `[ ]` Q: The advanced class example 20 seems to run less smoothly on maximum settings on my home machine.  Is it because I replaced GLFW with GLUT?
-
-* `[P]` Post-Mortem
+    - `[Y]` Draw particles, 2024-05-12: Drawn!
+    - `[Y]` GPU: Compute Shader, One worker per *particle* (Easiest adaptation), Dispatch for dynamics:, 2024-05-12: Drawn!
+        * `[Y]` Calc mass from color, Scale accel by `(r+g+b)/3.0f` (Most intense particles are fastest), 2024-05-12: Drawn!
+        * `[Y]` Membership lookup, 2024-05-12: Drawn!
+        * `[Y]` Advance particle in 3D, 2024-05-12: Drawn!
+    - `[Y]` GPU: Compute Shader, One worker per *particle* (Easiest adaptation), Dispatch for dynamics:, 2024-05-12: Drawn!
+        * `[Y]` Departure check in 3D, 2024-05-12: Drawn!
+        * `[Y]` If departed, then update membership and project to new location, 2024-05-12: Drawn!
+        * `{N}` Consider: One worker per *section*, 2024-05-12: No, just move on ...
+    - `[Y]` CPU: Wind Dynamics, Treat speed and direction *separately*, 2024-05-12: Drawn!
+        * `[Y]` Only ONE diffusion exchange per 4-neighborhood, Center modified ONCE, 2024-05-12: Drawn!
+            - `[Y]` Blend direction, 2024-05-12: Drawn!
+            - `[Y]` Blend speed, 2024-05-12: Drawn!
+        * `[Y]` Perturbation, 2024-05-12: Drawn!
+            - `[Y]` Nudge direction, 2024-05-12: Drawn!
+            - `[Y]` Nudge speed, 2024-05-12: Drawn!
+        * `[Y]` Enforce Nonzero Speed, 2024-05-12: Drawn!
+            - `[Y]` If diffusion cancels, Randomize, 2024-05-12: Drawn!
+        * `[Y]` Write wind direction array back to GPU, 2024-05-12: Drawn!
+    - `[Y]` Enable lighting, 2024-05-12: Drawn!
+    - `[Y]` Share, 2024-05-12: Done!
+        * `[Y]` Record video, 2024-05-12: Compression has NO IDEA what to do with 1.5M particles, lol!
+        * `[Y]` Post insta, 2024-05-12: Compression has NO IDEA what to do with 1.5M particles, lol!
+* `[Y]` Post-Mortem, 2024-05-12: Done!
     - BUG: I *never* did a change of basis while blending accelerations in the CPU version!
     - BUG: In the CPU version, if a cell ever has zero acceleration, then ALL PARTICLES DISAPPEAR!
-    - `[ ]` Consider: Use the example `vec4` union struct
+    - `[Y]` Consider: Use the example `vec4f` union struct, 2024-05-12: Done!
         * `|+|` C functions can return structs
         * `|+|` C functions can pass structs by value
         * `|+|` Don't pay for dereference overhead
         * `|+|` Easier to read, None of this --> `\*<<*\`
         * `|-|` Pass by value uses stack space
-    - `[ ]` Re-write utils as "OGL_Tools.h", considering above 
-    - `[ ]` Re-write "TriNet.h", considering above 
+    - `[Y]` Re-write utils as "OGL_Tools.h", considering above , 2024-05-12: Done!
+    - `[Y]` Re-write "TriNet.h", considering above , 2024-05-12: Done!
 
+    - `[ ]` Add a starfield
+    - `[ ]` Camera orbits the planet slowly
+    - `[ ]` Add lighting to planet
 
-## `[ ]` Computer Graphics Blitz in Pure C + OpenGL + GLUT, Morning Warmup and Weekend Project
+* `[ ]` Q: Is it better for a worker to work on a single point or a smallish collection of points?
+* `[ ]` Q: How to add shading to the atmosphere to match the planet?
+
+## `[>]` Computer Graphics Blitz in Pure C + OpenGL + GLUT, Morning Warmup and Weekend Project
 * Goal: Reinforce fluency in Pure C + Pure OpenGL. I have been spoiled by Raylib + C++!
 * C++ and Eigen are **DISALLOWED**!
 * Compile: `gcc -std=gnu17 -O3 -Wall <SOURCE FILE>.c -lglut -lGLU -lGL -lm -o <PROG NAME>.out`
 
-### HW2: Lorenz Attractor
-* `[ ]` Multiple, Chasing Traces of System State
-    - `[ ]` Different starting state, Different eq. params
-    - `{?}` Are there versions of the attractor with higher-dimensional state?
+### `[Y]` HW2: Lorenz Attractor
+* `[Y]` Multiple, Chasing Traces of System State, 2024-05-0X: 6D Lorenz attractor completed and tuned!
+    - `[Y]` Different starting state, Different eq. params, 2024-05-0X: 6D Lorenz attractor completed and tuned!
+    - `{Y}` Are there versions of the attractor with higher-dimensional state?, 2024-05-0X: 6D Lorenz attractor completed and tuned!
 
-### HW3: Nested References Frames with `glPushMatrix`/`glPopMatrix`
-* `[ ]` View newer class material
+### `[>]` HW3: Nested References Frames with `glPushMatrix`/`glPopMatrix`
+* `[Y]` Simple VAO struct with vertex coloring, 2024-05-12: Needs testing
+* `[>]` Render a cube
+* `[ ]` Stress Test
+    - `[ ]` VAO Method (See Song Ho Ahn code)
+    - `[ ]` VBO Method (See Song Ho Ahn code)
+* `[ ]` Render rotating cubes in nested reference frames
+* `[ ]` Add VAO shapes
+    - `[ ]` VAO Icos
+    - `[ ]` VAO Tetra
+* `[ ]` X-Y Grid
+    - `{?}` As VAO?
+* `[ ]` TetraTank rolling on icos wheels
+    - `[ ]` kb movement
+    - `[ ]` mouse: look + steer, 3rd person view
+    - `{?}` Joystick control
+* `{?}` Use a shader to construct lines at edges
+    - `{?}` GLSL: How to compute distance from a triangle edge?  Sounds like a geometry shader to me?
 
 ### HW4: First-Person View in a Scene
 * `[ ]` View newer class material
