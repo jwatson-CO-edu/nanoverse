@@ -414,7 +414,10 @@ void display(){
         draw_6D_attractor( attractors[i] );
     }
 
-    heartbeat_FPS( _TARGET_FPS );
+    //  Display parameters
+    // glDisable( GL_DEPTH_TEST );
+    glWindowPos2i( 5, 5 );
+    Print( "FPS=%d", heartbeat_FPS( _TARGET_FPS ) );
 
     // Check for errors, Flush, and swap
 	ErrCheck( "display" );

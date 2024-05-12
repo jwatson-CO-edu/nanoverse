@@ -166,7 +166,7 @@ float avg_edge_len( TriNet* net ){
     uint  Ne     = 0;
     float totLen = 0.0f;
     vec4f v0, v1, v2;
-    for( uint i; i < Nt; ++i ){
+    for( uint i = 0; i < Nt; ++i ){
         v0 /**/ = net->V[ net->F[i].v0 ];
         v1 /**/ = net->V[ net->F[i].v1 ];
         v2 /**/ = net->V[ net->F[i].v2 ];

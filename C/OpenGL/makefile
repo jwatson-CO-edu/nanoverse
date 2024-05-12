@@ -19,18 +19,20 @@ matrix4x4f.o: matrix4x4f.c matrix4x4f.h
 OGL_utils.o: OGL_utils.c toolbox.h
 load_assets.o: load_assets.c toolbox.h
 vector-f_ops.o: vector-f_ops.c toolbox.h
+shaders.o: shaders.c toolbox.h
 
 ### Geometry Construction ###
 TriNet.o: TriNet.c toolbox.h geometry.h
+draw_geo.o: draw_geo.c toolbox.h geometry.h
 
 
 
 ########## ARCHIVES & GENERAL RULES ################################################################
 
-toolbox.a: OGL_utils.o load_assets.o vector-f_ops.o
+toolbox.a: OGL_utils.o load_assets.o vector-f_ops.o shaders.o
 	ar -rcs $@ $^
 
-geometry.a: TriNet.o
+geometry.a: TriNet.o draw_geo.o
 	ar -rcs $@ $^
 
 # Compile rules

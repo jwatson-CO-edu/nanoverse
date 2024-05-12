@@ -89,7 +89,7 @@ float heartbeat_FPS( float targetFPS ){
         currTime = (float) glutGet( GLUT_ELAPSED_TIME );
         FPS /**/ = (1000.0f / (currTime - lastTime)) * 0.125f + FPS * 0.875f; // Filter for readable number
         lastTime = currTime;
-    }
+    }else{  lastTime = (float) glutGet( GLUT_ELAPSED_TIME );  }
     return FPS;
 }
 

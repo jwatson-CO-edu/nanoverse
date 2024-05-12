@@ -17,9 +17,9 @@ vec4f make_0_vec4f( void ){
 
 
 vec4f rand_vec4f( void ){
-    // Make a random 3D float vector with each of {X,Y,Z} on (0.0, 1.0]
+    // Make a random unit 3D float vector with each of {X,Y,Z} on (0.0, 1.0]
     vec4f rtnVec = {randf(), randf(), randf(), 1.0f};
-    return rtnVec;
+    return unit_vec4f( rtnVec );
 }
 
 

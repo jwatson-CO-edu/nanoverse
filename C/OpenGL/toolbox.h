@@ -208,5 +208,34 @@ void glClr4f( const vec4f c ); // Set color with a vector
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////// shaders.c //////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
+
+////////// FILE OPERATIONS /////////////////////////////////////////////////////////////////////////
+
+char* ReadText( const char *file ); // Read the contents of a text file
+
+
+////////// SHADER STATUS ///////////////////////////////////////////////////////////////////////////
+
+void PrintShaderLog( int obj, const char* file ); // Attempt to retrieve compilation status of the shader program
+void PrintProgramLog( int obj ); // ---------- Print Program Log
+
+
+////////// SHADER INSTANTIATION ////////////////////////////////////////////////////////////////////
+
+int CreateShader(int prog, const GLenum type, const char* file); // Create the shader program and return its ID
+// Create the shader program, check it for errors, and return the ID
+int CreateShaderProg( const char* VertFile, const char* FragFile ); 
+// Create a complete Vertex --> Geometry --> Fragment shader pipeline
+int CreateShaderGeom( const char* VertFile, const char* GeomFile, const char* FragFile );
+int CreateShaderProgCompute( const char* file ); // Create a comput shader
+    
+
+
+
+
 
 #endif

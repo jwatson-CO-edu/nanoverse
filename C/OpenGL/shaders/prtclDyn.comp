@@ -1,0 +1,54 @@
+//
+// Particle compute shader
+// Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
+//
+#version 440 compatibility
+#extension GL_ARB_compute_variable_group_size : enable
+
+////////// SHADER INPUTS ///////////////////////////////////////////////////////////////////////////
+
+// Array positions
+
+layout(binding= 4) buffer posbuf { vec4 posnArr[]; };
+layout(binding= 5) buffer velbuf { vec4 veloArr[]; };
+layout(binding= 6) buffer colbuf { vec4 colrArr[]; };
+layout(binding= 7) buffer membuf { uint mmbrArr[]; };
+layout(binding=15) buffer aclbuf { vec4 cellAcl[]; };
+
+//  Work group size
+layout(local_size_variable) in;
+
+uniform float speedLim;
+
+// Sphere
+uniform float radius;
+
+
+////////// SHADER CONSTANTS ////////////////////////////////////////////////////////////////////////
+
+//  Gravity
+// const vec3   G = vec3(0.0,-9.8,0.0);
+//  Time step
+// const float  dt = 0.1;
+
+//  Compute shader
+void main(){
+   //  Global Thread ID
+   uint  gid = gl_GlobalInvocationID.x;
+
+   //  Get position and velocity
+   vec3 ac = cellAcl[ mmbrArr[gid] ].xyz;
+   vec3 p0 = posnArr[gid].xyz;
+   vec3 v0 = veloArr[gid].xyz;
+   vec3 cl = colrArr[gid].rgb;
+
+   //  Compute new position and velocity
+   vec3 p = normalize(p0 + v0) * radius;
+   vec3 v = v0 + ac * (cl.r + cl.g + cl.b)/3.0;
+
+   if( length( v ) > speedLim ){  v = normalize( v ) * speedLim;  }
+
+   //  Update position and velocity
+   posnArr[gid].xyz = p;
+   veloArr[gid].xyz = v;
+}

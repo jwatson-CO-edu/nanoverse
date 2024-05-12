@@ -7,7 +7,7 @@
 ////////// PROGRAM SETTINGS ////////////////////////////////////////////////////////////////////////
 
 /// View Settings ///
-const float _SCALE /**/ = 750.0; // Scale Dimension
+const float _SCALE /**/ =  10.0; // Scale Dimension
 const int   _FOV_DEG    =  55; // - Field of view (for perspective)
 const float _TARGET_FPS =  60.0f; // Desired framerate
 
@@ -18,7 +18,7 @@ const uint  _ICOS_SUBDIVID = 6;
 const ulong N_cells /*--*/ = 20 * (_ICOS_SUBDIVID*(_ICOS_SUBDIVID+1)/2 + (_ICOS_SUBDIVID-1)*(_ICOS_SUBDIVID)/2);
 
 /// Init ///
-const uint _N_PARTICLES  = 1024;
+const uint _N_PARTICLES  = 600000;
 const uint _N_ATMOS_NATR =      25;
 const uint _N_WARM_UP    =      65;
 
@@ -41,6 +41,7 @@ vec4f* orgnArr = NULL;
 vec4f* xBasArr = NULL;
 vec4f* yBasArr = NULL;
 vec4f* acclArr = NULL;
+vec3u* ngbrArr = NULL;
 
 
 ///// GPU-Side State //////////////////////////////////////////////////////
@@ -59,8 +60,8 @@ uint mmbrArr_ID;
 uint origin_ID;
 uint v1_ID;
 uint v2_ID;
-uint xBasis_ID;
-uint yBasis_ID;
+// uint xBasis_ID;
+// uint yBasis_ID;
 uint accel_ID;
 uint nghbrs_ID;
 
@@ -68,25 +69,25 @@ uint nghbrs_ID;
 
 ////////// SCRATCH SPACE ///////////////////////////////////////////////////////////////////////////
 
-bool p_pnt_vertical_of_face( const vec4f q, const vec4f cntr, const vec4f v0, const vec4f v1, const vec4f v2 ){
-    // For a convex poyhedron with `cntr`, Return true if `q` is above/below/on the triangle {`v0`,`v1`,`v2`}
-    vec4f seg0, seg1, seg2, segCen0, segCen1, segCen2, norm0, norm1, norm2, diff0, diff1, diff2;
-    seg0    = sub_vec4f( v1, v0 );
-    seg1    = sub_vec4f( v2, v1 );
-    seg2    = sub_vec4f( v0, v2 );
-    segCen0 = sub_vec4f( seg_center( v0, v1 ), cntr );
-    segCen1 = sub_vec4f( seg_center( v1, v2 ), cntr );
-    segCen2 = sub_vec4f( seg_center( v2, v0 ), cntr );
-    norm0   = cross_vec4f( segCen0, seg0 );
-    norm1   = cross_vec4f( segCen1, seg1 );
-    norm2   = cross_vec4f( segCen2, seg2 );
-    diff0   = sub_vec4f( sub_vec4f( q, cntr ), segCen0 );
-    diff1   = sub_vec4f( sub_vec4f( q, cntr ), segCen1 );
-    diff2   = sub_vec4f( sub_vec4f( q, cntr ), segCen2 );
-    return (  
-        (dot_vec4f( diff0, norm0 ) >= 0.0f) && (dot_vec4f( diff1, norm1 ) >= 0.0f) && (dot_vec4f( diff2, norm2 ) >= 0.0f) 
-    );
-}
+// bool p_pnt_vertical_of_face( const vec4f q, const vec4f cntr, const vec4f v0, const vec4f v1, const vec4f v2 ){
+//     // For a convex poyhedron with `cntr`, Return true if `q` is above/below/on the triangle {`v0`,`v1`,`v2`}
+//     vec4f seg0, seg1, seg2, segCen0, segCen1, segCen2, norm0, norm1, norm2, diff0, diff1, diff2;
+//     seg0    = sub_vec4f( v1, v0 );
+//     seg1    = sub_vec4f( v2, v1 );
+//     seg2    = sub_vec4f( v0, v2 );
+//     segCen0 = sub_vec4f( seg_center( v0, v1 ), cntr );
+//     segCen1 = sub_vec4f( seg_center( v1, v2 ), cntr );
+//     segCen2 = sub_vec4f( seg_center( v2, v0 ), cntr );
+//     norm0   = cross_vec4f( segCen0, seg0 );
+//     norm1   = cross_vec4f( segCen1, seg1 );
+//     norm2   = cross_vec4f( segCen2, seg2 );
+//     diff0   = sub_vec4f( sub_vec4f( q, cntr ), segCen0 );
+//     diff1   = sub_vec4f( sub_vec4f( q, cntr ), segCen1 );
+//     diff2   = sub_vec4f( sub_vec4f( q, cntr ), segCen2 );
+//     return (  
+//         (dot_vec4f( diff0, norm0 ) >= 0.0f) && (dot_vec4f( diff1, norm1 ) >= 0.0f) && (dot_vec4f( diff2, norm2 ) >= 0.0f) 
+//     );
+// }
 
 
 ////////// INIT HELPERS ////////////////////////////////////////////////////////////////////////////
@@ -104,11 +105,11 @@ uint* distribute_particles_init( vec4f* prtArr, vec4f* orgnArr, vec4f* xBasArr, 
                                  uint groupSizeMin, uint groupSizeMax ){
     // Place particles in the atmosphere
     // 0. Init
-    uint* rtnArr  = (uint*) malloc( _N_PARTICLES * sizeof( uint ) );
-    uint  cellDex = 0;
-    uint  grpSize = 0;
-    uint  j /*-*/ = 0;
-    bool  onGroup = false;
+    uint*  rtnArr  = (uint*) malloc( _N_PARTICLES * sizeof( uint ) );
+    uint   cellDex = 0;
+    uint   grpSize = 0;
+    uint   j /*-*/ = 0;
+    bool   onGroup = false;
     vec2f  posn2f  = {0.0f,0.0f};
     vec2f  center  = {0.0f,0.0f};
     // 1. For each particle in the simulation
@@ -129,9 +130,12 @@ uint* distribute_particles_init( vec4f* prtArr, vec4f* orgnArr, vec4f* xBasArr, 
         // 4. Place point in 3D
         prtArr[i] = lift_pnt_2D_to_3D( posn2f, orgnArr[ cellDex ], xBasArr[ cellDex ], yBasArr[ cellDex ] );
         rtnArr[i] = cellDex;
+        // print_vec4f( prtArr[i] );
         // 5. Increment group counter and check if group is done
         ++j;
-        if( j >= grpSize ){  onGroup = false;  }
+        if( j >= grpSize ){  
+            onGroup = false;  
+        }
     }
     return rtnArr;
 }
@@ -158,6 +162,7 @@ void ResetParticles(){
     xBasArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
     yBasArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
     acclArr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
+    ngbrArr = (vec3u*) malloc( N_cells * sizeof( vec3u ) );
     printf( "About to allocate CPU temp init memory ...\n" );
     v1_Arr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
     v2_Arr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
@@ -191,6 +196,7 @@ void ResetParticles(){
         col[i].g = grn_i;
         col[i].b = blu_i;
         col[i].a = 1.0f;
+        // print_vec4f( col[i] );
     }
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
@@ -239,31 +245,31 @@ void ResetParticles(){
 
     ///// Cell X Basis ///////////////////////////
     
-    printf( "About to set cell X Basis, buffer %u ...\n", xBasis_ID );
-    glBindBuffer( GL_SHADER_STORAGE_BUFFER, xBasis_ID ); // Set buffer object to point to this ID, for writing
-    // Get pointer to buffer and cast as a struct array
-    trgtVf = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, N_cells * sizeof( vec4f ), 
-                                        GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
+    // printf( "About to set cell X Basis, buffer %u ...\n", xBasis_ID );
+    // glBindBuffer( GL_SHADER_STORAGE_BUFFER, xBasis_ID ); // Set buffer object to point to this ID, for writing
+    // // Get pointer to buffer and cast as a struct array
+    // trgtVf = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, N_cells * sizeof( vec4f ), 
+    //                                     GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
     // Load colors into buffer
     for( ulong i = 0; i < N_cells; ++i ){
-        xBasArr[i] = trgtVf[i] = unit_vec4f( sub_vec4f( v1_Arr[i], orgnArr[i] ) );
+        xBasArr[i] = unit_vec4f( sub_vec4f( v1_Arr[i], orgnArr[i] ) );
     }
-    glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
+    // glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
 
     ///// Cell Y Basis ///////////////////////////
 
-    printf( "About to set cell y Basis, buffer %u ...\n", yBasis_ID );
-    glBindBuffer( GL_SHADER_STORAGE_BUFFER, yBasis_ID ); // Set buffer object to point to this ID, for writing
-    // Get pointer to buffer and cast as a struct array
-    trgtVf = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, N_cells * sizeof( vec4f ), 
-                                        GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
-    // Load colors into buffer
+    // printf( "About to set cell y Basis, buffer %u ...\n", yBasis_ID );
+    // glBindBuffer( GL_SHADER_STORAGE_BUFFER, yBasis_ID ); // Set buffer object to point to this ID, for writing
+    // // Get pointer to buffer and cast as a struct array
+    // trgtVf = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, N_cells * sizeof( vec4f ), 
+    //                                     GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
+    // // Load colors into buffer
     for( ulong i = 0; i < N_cells; ++i ){
         norm_i = get_CCW_tri_norm( orgnArr[i], v1_Arr[i], v2_Arr[i] );
-        yBasArr[i] = trgtVf[i] = cross_vec4f( norm_i, xBasArr[i] );
+        yBasArr[i] = cross_vec4f( norm_i, xBasArr[i] );
     }
-    glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
+    // glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
 
     ///// Particle Positions /////////////////////
@@ -278,7 +284,8 @@ void ResetParticles(){
     printf( "Sending particles to %p ...\n", pos );
     // Load init positions into buffer
     mmbrArr = distribute_particles_init( pos, orgnArr, xBasArr, yBasArr, edgScale, 
-                                         100, (uint) (_N_PARTICLES / N_cells) );
+                                         50, 200 );
+                                        //  10, 20 );
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
 
@@ -308,7 +315,7 @@ void ResetParticles(){
                                         GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
     // Load colors into buffer
     for( ulong i = 0; i < N_cells; ++i ){
-        trgtVu[i] = icosphr->A[i];
+        ngbrArr[i] = trgtVu[i] = icosphr->A[i];
     }
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
@@ -348,8 +355,8 @@ void ResetParticles(){
     glBindBufferBase( GL_SHADER_STORAGE_BUFFER,  8, origin_ID  );
     glBindBufferBase( GL_SHADER_STORAGE_BUFFER,  9, v1_ID      );
     glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 10, v2_ID      );
-    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 11, xBasis_ID  );
-    glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 12, yBasis_ID  );
+    // glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 11, xBasis_ID  );
+    // glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 12, yBasis_ID  );
     glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 13, posnArr_ID );
     glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 14, nghbrs_ID  );
     glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 15, accel_ID   );
@@ -410,15 +417,15 @@ void InitParticles( void ){
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, v2_ID );
     glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
 
-    // Initialize X Basis buffer
-    glGenBuffers( 1, &xBasis_ID );
-    glBindBuffer( GL_SHADER_STORAGE_BUFFER, xBasis_ID );
-    glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
+    // // Initialize X Basis buffer
+    // glGenBuffers( 1, &xBasis_ID );
+    // glBindBuffer( GL_SHADER_STORAGE_BUFFER, xBasis_ID );
+    // glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
 
-    // Initialize Y Basis buffer
-    glGenBuffers( 1, &yBasis_ID );
-    glBindBuffer( GL_SHADER_STORAGE_BUFFER, yBasis_ID );
-    glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
+    // // Initialize Y Basis buffer
+    // glGenBuffers( 1, &yBasis_ID );
+    // glBindBuffer( GL_SHADER_STORAGE_BUFFER, yBasis_ID );
+    // glBufferData( GL_SHADER_STORAGE_BUFFER, N_cells * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
 
     // Initialize neighbors buffer
     glGenBuffers( 1, &nghbrs_ID );
@@ -437,29 +444,76 @@ void InitParticles( void ){
     ResetParticles();
 }
 
-////////// RENDERING ///////////////////////////////////////////////////////////////////////////////
+////////// SIMULATION //////////////////////////////////////////////////////////////////////////////
 
-void display(){
-    // Refresh display
+void cell_flow_interaction( void ){
+    // Perturb and diffuse per-cell wind acceleration 
+    uint ngbrDex;
+    vec4f acl_i;
+    vec4f acl_n;
+    bool changed = false;
+    for( uint i = 0; i < N_cells; ++i ){
+        if( randf() < _DIFFUS_PROB ){
+            ngbrDex = randu_range( 0, 2 );
+            switch( ngbrDex ){
+                case 0:
+                    ngbrDex = ngbrArr[i].f0;
+                    break;
+                case 1:
+                    ngbrDex = ngbrArr[i].f1;
+                    break;
+                case 2:
+                    ngbrDex = ngbrArr[i].f2;
+                    break;
+                default:
+                    printf( "THIS SHOULD NOT HAVE HAPPENED!" );
+                    break;
+            }
+            acl_i = acclArr[i];
+            acl_n = acclArr[ ngbrDex ];
+            acclArr[i] /*---*/ = blend_vec4f( acl_n, _DIFFUS_RATE, acl_i, (1.0f-_DIFFUS_RATE) );
+            acclArr[ ngbrDex ] = blend_vec4f( acl_i, _DIFFUS_RATE, acl_n, (1.0f-_DIFFUS_RATE) );
+            if( norm_vec4f( acclArr[i] ) > _ACCEL_LIMIT ){  
+                acclArr[i] = stretch_to_len_vec4f( acclArr[i], _ACCEL_LIMIT );  
+            }
+            if( norm_vec4f( acclArr[ ngbrDex ] ) > _ACCEL_LIMIT ){  
+                acclArr[ ngbrDex ] = stretch_to_len_vec4f( acclArr[ ngbrDex ], _ACCEL_LIMIT );  
+            }
+            changed = true;
+        }
+        if( randf() < _PERTURB_PROB ){
+            acclArr[i] = add_vec4f( acclArr[i], scale_vec4f( rand_vec4f(), randf_range( _ACCEL_MIN, _ACCEL_LIMIT ) ) );
+            if( norm_vec4f( acclArr[i] ) > _ACCEL_LIMIT ){  
+                acclArr[i] = stretch_to_len_vec4f( acclArr[i], _ACCEL_LIMIT );  
+            }
+            changed = true;
+        }
+    }
+    
+}
 
-    //  Erase the window and the depth buffer
-    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-    glEnable( GL_DEPTH_TEST );
+void tick(){
+    // Background work
 
-    // Set view 
-    look( cam );
-
-    // //  Enable lighting
-    // Lighting(dim*Cos(zh),dim,dim*Sin(zh) , 0.3,0.5,0.5);
-
-    //  Draw sphere
-
-
-    // //  Disable lighting before particles
-    // glDisable(GL_LIGHTING);
-
-    //  Launch compute shader
+    // Launch compute shader
     glUseProgram( shaderDyna_ID );
+
+    int id = glGetUniformLocation( shaderDyna_ID, "radius" );
+    glUniform1f( id, _ATMOS_RADIUS );
+    id = glGetUniformLocation( shaderDyna_ID, "speedLim" );
+    glUniform1f( id, _SPEED_LIMIT );
+
+    glDispatchComputeGroupSizeARB(
+        N_groups, // ---- GLuint num_groups_x // FIXME: CHECK THAT THE # OF GROUPS IS CORRECT
+        1, // ----------- GLuint num_groups_y
+        1, // ----------- GLuint num_groups_z
+        workGroupSize, // GLuint group_size_x
+        1, // ----------- GLuint group_size_y
+        1 // ------------ GLuint group_size_z
+    );
+    // glUseProgram(0);
+
+    glUseProgram( shaderUpdt_ID );
     glDispatchComputeGroupSizeARB(
         N_groups, // ---- GLuint num_groups_x // FIXME: CHECK THAT THE # OF GROUPS IS CORRECT
         1, // ----------- GLuint num_groups_y
@@ -473,24 +527,114 @@ void display(){
     //  Wait for compute shader
     glMemoryBarrier( GL_SHADER_STORAGE_BARRIER_BIT );
 
-    //  Draw the particles
-    DrawPart();
+    // printf( "tick, " );
 
-    //  Draw Axes
-    Axes( 500 );
-
-    //  Display parameters
-    glDisable(GL_DEPTH_TEST);
-    glWindowPos2i(5,5);
-    // FIXME: DISPLAY FPS W HEARTBEAT FUNC
-    // Print("%d,%d FPS=%d Dim=%.1f Size=%d Count=%d N=%d",th,ph,FramesPerSecond(),dim,nw,ng,n);
-    //  Render the scene and make it visible
-    ErrCheck("display");
-    glFlush();
-    glfwSwapBuffers(window);
+    // Tell GLUT it is necessary to redisplay the scene
+	glutPostRedisplay();
 }
 
-////////// WINDOW STATE ////////////////////////////////////////////////////////////////////////////
+
+
+////////// RENDERING ///////////////////////////////////////////////////////////////////////////////
+
+void draw_particles( void ){
+    // 1. Set particle size
+    glPointSize(2);
+    // 2. Vertex array
+    glBindBuffer( GL_ARRAY_BUFFER, posnArr_ID );
+    glVertexPointer( 4, GL_FLOAT, 0, (void*) 0 );
+    // 3. Color array
+    glBindBuffer( GL_ARRAY_BUFFER, colrArr_ID );
+    glColorPointer( 4, GL_FLOAT, 0, (void*) 0 );
+    // 4. Enable arrays used by DrawArrays
+    glEnableClientState( GL_VERTEX_ARRAY );
+    glEnableClientState( GL_COLOR_ARRAY );
+    // 5. Draw arrays
+    glDrawArrays( GL_POINTS, 0, _N_PARTICLES );
+    //  Disable arrays
+    glDisableClientState( GL_VERTEX_ARRAY );
+    glDisableClientState( GL_COLOR_ARRAY );
+    //  Reset buffer
+    glBindBuffer( GL_ARRAY_BUFFER, 0 );
+}
+
+
+void display(){
+    // Refresh display
+
+    vec4f center = {0.0f,0.0f,0.0f,1.0f};
+    vec4f sphClr = {0.0, 14.0f/255.0f, (214.0f-75.0f)/255.0f,1.0f};
+
+    //  Erase the window and the depth buffer
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    glEnable( GL_DEPTH_TEST );
+
+    glLoadIdentity();
+
+    // Set view 
+    look( cam );
+
+    // //  Enable lighting
+    // Lighting(dim*Cos(zh),dim,dim*Sin(zh) , 0.3,0.5,0.5);
+
+    //  Draw sphere
+    draw_sphere( center, _SPHERE_RADIUS, sphClr );
+
+    // //  Disable lighting before particles
+    // glDisable(GL_LIGHTING);
+
+    
+
+    //  Draw the particles
+    draw_particles();
+
+    //  Draw Axes
+    // Axes( 500 );
+
+    //  Display parameters
+    glDisable( GL_DEPTH_TEST );
+    glWindowPos2i( 5, 5 );
+    Print( "FPS=%f", heartbeat_FPS( _TARGET_FPS ) );
+
+    // Check for errors, Flush, and swap
+	ErrCheck( "display" );
+	glFlush();
+	glutSwapBuffers();
+}
+
+////////// WINDOW & VIEW STATE /////////////////////////////////////////////////////////////////////
+float w2h = 0.0f; // Aspect ratio
+
+
+static void project(){
+	// Set projection
+	// Adapted from code provided by Willem A. (Vlakkies) Schreüder  
+	// NOTE: This function assumes that aspect rario will be computed by 'resize'
+	// 1. Tell OpenGL we want to manipulate the projection matrix
+	glMatrixMode( GL_PROJECTION );
+	//  Undo previous transformations
+	glLoadIdentity();
+	gluPerspective( _FOV_DEG , //- Field of view angle, in degrees, in the y direction.
+					w2h , // ----- Aspect ratio , the field of view in the x direction. Ratio of x (width) to y (height).
+					_SCALE/4 , //- Specifies the distance from the viewer to the near clipping plane (always positive).
+					4*_SCALE ); // Specifies the distance from the viewer to the far clipping plane (always positive).
+	// 2. Switch back to manipulating the model matrix
+	glMatrixMode( GL_MODELVIEW );
+	// 3. Undo previous transformations
+	glLoadIdentity();
+}
+
+
+void reshape( int width , int height ){
+	// GLUT calls this routine when the window is resized
+    // Adapted from code provided by Willem A. (Vlakkies) Schreüder  
+	// 1. Calc the aspect ratio: width to the height of the window
+	w2h = ( height > 0 ) ? (float) width / height : 1;
+	// 2. Set the viewport to the entire window
+	glViewport( 0 , 0 , width , height );
+	// 3. Set projection
+	project();
+}
 
 ////////// SIMULATION LOOP /////////////////////////////////////////////////////////////////////////
 
@@ -511,23 +655,25 @@ int main( int argc, char* argv[] ){
     // NOTE: Set modes AFTER the window / graphics context has been created!
     // Request double buffered, true color window 
     glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
+    glEnable( GL_DEPTH_TEST );
     glDepthRange( 0.0f , 1.0f ); // WARNING: NOT IN THE EXAMPLE
 
 
     // //  Compute shader
-    // shader_ID = CreateShaderProgCompute( "shaders/06_Prtcl-Dyn.comp" );
+    shaderDyna_ID = CreateShaderProgCompute( "shaders/prtclDyn.comp" );
+    shaderUpdt_ID = CreateShaderProgCompute( "shaders/prtclMem.comp" );
     
     //  Initialize particles
     InitParticles();
 
-    // //  Tell GLUT to call "display" when the scene should be drawn
-    // glutDisplayFunc( display );
+    //  Tell GLUT to call "display" when the scene should be drawn
+    glutDisplayFunc( display );
 
-    // // Tell GLUT to call "idle" when there is nothing else to do
-    // glutIdleFunc( tick );
+    // Tell GLUT to call "idle" when there is nothing else to do
+    glutIdleFunc( tick );
     
-    // //  Tell GLUT to call "reshape" when the window is resized
-    // glutReshapeFunc( reshape );
+    //  Tell GLUT to call "reshape" when the window is resized
+    glutReshapeFunc( reshape );
     
     // //  Tell GLUT to call "special" when an arrow key is pressed
     // glutSpecialFunc( special );
@@ -535,10 +681,10 @@ int main( int argc, char* argv[] ){
     // //  Tell GLUT to call "key" when a key is pressed
     // glutKeyboardFunc( key );
     
-    //  Pass control to GLUT so it can interact with the user
-    // glutMainLoop();
+    // Pass control to GLUT so it can interact with the user
+    glutMainLoop();
     
-    // // Free memory
+    // Free memory
 
     printf( "Cleanup!\n" );
     free( orgnArr );
@@ -546,9 +692,9 @@ int main( int argc, char* argv[] ){
     free( xBasArr );
     free( yBasArr );
     free( acclArr );
+    free( ngbrArr );
 
-
-
+    printf( "\n### DONE ###\n\n" );
     
     //  Return code
     return 0;
