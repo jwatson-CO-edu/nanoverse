@@ -22,6 +22,12 @@ void mat4vulkan(int k)
    vulkan = k;
 }
 
+float* make_identity( void ){
+    float* rtnMatx = (float*) malloc( sizeof( I ) );
+    mat4identity( rtnMatx );
+    return rtnMatx;
+}
+
 //
 //  Identity 4x4 matrix
 //

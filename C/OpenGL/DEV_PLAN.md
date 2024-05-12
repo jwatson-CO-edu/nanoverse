@@ -134,11 +134,8 @@
 
 ### `[>]` HW3: Nested References Frames with `glPushMatrix`/`glPopMatrix`
 * `[Y]` Simple VAO struct with vertex coloring, 2024-05-12: Needs testing
-* `[>]` Render a cube
-* `[ ]` Stress Test
-    - `[ ]` VAO Method (See Song Ho Ahn code)
-    - `[ ]` VBO Method (See Song Ho Ahn code)
-* `[ ]` Render rotating cubes in nested reference frames
+* `[Y]` Render a cube, 2024-05-12: Tested!
+* `[>]` Render rotating cubes in nested reference frames
 * `[ ]` Add VAO shapes
     - `[ ]` VAO Icos
     - `[ ]` VAO Tetra

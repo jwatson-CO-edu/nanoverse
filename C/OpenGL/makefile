@@ -10,8 +10,8 @@ CLEAN=rm -f *.out *.o *.a
 
 ### Prog Dependencies ###
 00_Dyn-6D.o: 00_Dyn-6D.c toolbox.h
-01_Planet-Geom.o: 01_Planet-Geom.c toolbox.h geometry.h
-02_VAO_VNC_f.o: 02_VAO_VNC_f.c geometry.h
+01_Planet-Geom.o: 01_Planet-Geom.c geometry.h toolbox.h 
+02_VAO_VNC_f.o: 02_VAO_VNC_f.c geometry.h toolbox.h
 
 ### Float Matrix Math ###
 matrix4x4f.o: matrix4x4f.c matrix4x4f.h
@@ -52,7 +52,7 @@ geometry.a: TriNet.o draw_geo.o
 01_Planet-Geom: 01_Planet-Geom.o geometry.a toolbox.a 
 	gcc $(CFLG) -o $@.out $^ $(LIBS)
 
-02_VAO_VNC_f: 02_VAO_VNC_f.o geometry.a toolbox.a 
+02_VAO_VNC_f: 02_VAO_VNC_f.o geometry.a toolbox.a matrix4x4f.o
 	gcc $(CFLG) -o $@.out $^ $(LIBS)
 
 ##### Clean Rule ##########################################################

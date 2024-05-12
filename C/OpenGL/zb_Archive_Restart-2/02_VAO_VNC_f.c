@@ -2,14 +2,13 @@
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
 #include "geometry.h"
-#include "matrix4x4f.h"
 
 
 
 ////////// PROGRAM SETTINGS ////////////////////////////////////////////////////////////////////////
 
 /// View Settings ///
-const float _SCALE /**/ =  10.0f; // Scale Dimension
+const float _SCALE /**/ =   5.0; // Scale Dimension
 const int   _FOV_DEG    =  55; // - Field of view (for perspective)
 const float _TARGET_FPS =  60.0f; // Desired framerate
 
@@ -19,121 +18,108 @@ const float _TARGET_FPS =  60.0f; // Desired framerate
 
 typedef struct{
     // Vertex Array Object meant to be drawn rapidly and simply
-
-    /// Geo Info ///
-    uint   Ntri; //- Number of triangles
-    float* V; // --- `Ntri` * 9: `float`
-    float* N; // --- `Ntri` * 9: `float`
-    float* C; // --- `Ntri` * 9: `float`
+    uint   Nvtx; //- Number of vertices
+    float* V; // --- `Nvtx` * 3: `float`
+    float* N; // --- `Nvtx` * 3: `float`
+    float* C; // --- `Nvtx` * 3: `float`
     uint   bufID; // Buffer ID at the GPU
-    uint   arSiz; // Array size in bytes
-    
-    /// Pose & Scale ///
-    float* relPose; // Static offset pose from parent pose (anchor)
-    float* ownPose; // Dynamic offset pose from `relPose`
-    vec4f  scale; // - Scale in each dimension
-    
-    /// Composite VAO ///
-    uint   Nprt; //- Number of sub-parts
-    void** parts; // Array of sub-part pointers
-
+    // FIXME: SUBPARTS AT A RELATIVE FRAME OF REF
 }VAO_VNC_f;
 
 
-VAO_VNC_f* make_VAO_VNC_f( uint Ntri_ ){
+VAO_VNC_f* make_VAO_VNC_f( uint Nvtx_ ){
     // Allocate the VAO at heap
-    uint /*-*/ arrSize = sizeof( float ) * 9 * Ntri_;
-    VAO_VNC_f* rtnVAO  = (VAO_VNC_f*) malloc( sizeof( VAO_VNC_f ) );
-    /// Geo Info ///
-    rtnVAO->Ntri  = Ntri_;
+    uint arrSize = sizeof( float ) * 9 * Nvtx_;
+    VAO_VNC_f* rtnVAO = (VAO_VNC_f*) malloc( sizeof( VAO_VNC_f ) );
+    rtnVAO->Nvtx  = Nvtx_;
     rtnVAO->V     = (float*) malloc( arrSize );
     rtnVAO->N     = (float*) malloc( arrSize );
     rtnVAO->C     = (float*) malloc( arrSize );
     rtnVAO->bufID = 0;
-    rtnVAO->arSiz = arrSize;
-    /// Pose & Scale ///
-    rtnVAO->relPose = make_identity();
-    rtnVAO->ownPose = make_identity();
-    rtnVAO->scale   = make_vec4f( 1.0f, 1.0f, 1.0f );
-    /// Composite VAO ///
-    rtnVAO->Nprt  = 0;
-    rtnVAO->parts = NULL;
-    /// Return ///
     return rtnVAO;
 }
 
 
-void allocate_N_VAO_VNC_parts( VAO_VNC_f* vao, uint N ){
-    // Make space for `N` sub-part pointers
-    vao->Nprt  = N;
-    vao->parts = (void**) malloc( N * sizeof( VAO_VNC_f* ) );
-}
-
-
 void delete_VAO_VNC_f( VAO_VNC_f* vao ){
-    // Erase the VAO (and parts) at heap and the GPU
+    // Erase the VAO at heap and the GPU
     if((vao->bufID) != 0){  glDeleteBuffersARB(1, &(vao->bufID));  }
     free( vao->V );
     free( vao->N );
     free( vao->C );
-    free( vao->relPose );
-    free( vao->ownPose );
-    for( uint i = 0; i < vao->Nprt; ++i ){   delete_VAO_VNC_f( (VAO_VNC_f*) (vao->parts[i]) );  }
     free( vao );
 }
 
 
 void load_VAO_VNC_from_full_arrays( VAO_VNC_f* vao, /*<<*/ const float* Vsto, const float* Nsto, const float* Csto ){
     // Copy {V,N,C} from the specified arrays
-    memcpy( vao->V, Vsto, vao->arSiz ); // Copy vertices
-    memcpy( vao->N, Nsto, vao->arSiz ); // Copy normals
-    memcpy( vao->C, Csto, vao->arSiz ); // Copy colors
+    uint arrSize = sizeof( float ) * 9 * vao->Nvtx;
+    printf( "About to copy vertices ...\n" );
+    memcpy( vao->V, Vsto, arrSize ); // Copy vertices
+    printf( "About to copy normals ...\n" );
+    memcpy( vao->N, Nsto, arrSize ); // Copy normals
+    printf( "About to copy colors ...\n" );
+    memcpy( vao->C, Csto, arrSize ); // Copy colors
 }
 
 
 void allocate_and_load_VAO_VNC_at_GPU( VAO_VNC_f* vao ){
     // Fetch & set buffer ID, and make space on the GPU for the VAO
+    uint arrSize = sizeof( float ) * 9 * (vao->Nvtx);
     glGenBuffersARB( 1, &(vao->bufID) );
     glBindBufferARB( GL_ARRAY_BUFFER_ARB, vao->bufID );
-    glBufferDataARB( GL_ARRAY_BUFFER_ARB, 3*(vao->arSiz), 0, GL_STATIC_DRAW_ARB );
-    glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, 0             , vao->arSiz, vao->V ); // copy vertices starting from 0 offest
-    glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vao->arSiz    , vao->arSiz, vao->N ); // copy normals after vertices
-    glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, 2*(vao->arSiz), vao->arSiz, vao->C ); // copy colours after normals
+    glBufferDataARB( GL_ARRAY_BUFFER_ARB, 3*arrSize, 0, GL_STATIC_DRAW_ARB );
+    glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, 0        , arrSize, vao->V ); // copy vertices starting from 0 offest
+    glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, arrSize  , arrSize, vao->N ); // copy normals after vertices
+    glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, 2*arrSize, arrSize, vao->C ); // copy colours after normals
 }
-
 
 void draw_VAO_VNC_f( VAO_VNC_f* vao ){
     // Draw using "VAO Method" (See Song Ho Ahn code)
     // printf( "About to draw VAO ...\n" );
-    uint arrSize = vao->arSiz;
+    uint arrSize = sizeof( float ) * 9 * (vao->Nvtx);
     uint dblSize = arrSize*2;
-    
+    // // bind VBOs with IDs and set the buffer offsets of the bound VBOs
+    // // When buffer object is bound with its ID, all pointers in gl*Pointer()
+    // // are treated as offset instead of real pointer.
+    // glBindBufferARB( GL_ARRAY_BUFFER_ARB, vao->bufID );
+
+    // // enable vertex arrays
+    // glEnableClientState( GL_NORMAL_ARRAY );
+    // glEnableClientState( GL_COLOR_ARRAY  );
+    // glEnableClientState( GL_VERTEX_ARRAY );
+
+    // // before draw, specify vertex and index arrays with their offsets
+    // glVertexPointer(3, GL_FLOAT, 0, 0);
+    // glNormalPointer(GL_FLOAT, 0, &arrSize);
+    // glColorPointer(3, GL_FLOAT, 0, &dblSize);
+
+    // glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    // glDisableClientState(GL_VERTEX_ARRAY);  // disable vertex arrays
+    // glDisableClientState(GL_COLOR_ARRAY);
+    // glDisableClientState(GL_NORMAL_ARRAY);
+
+    // // it is good idea to release VBOs with ID 0 after use.
+    // // Once bound with 0, all pointers in gl*Pointer() behave as real
+    // // pointer, so, normal vertex array operations are re-activated
+    // glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+
     // enable vertex arrays
-    glEnableClientState( GL_VERTEX_ARRAY );
-    glEnableClientState( GL_NORMAL_ARRAY );
-    glEnableClientState( GL_COLOR_ARRAY  );
-    
-    // bind VBOs with IDs and set the buffer offsets of the bound VBOs
-    // When buffer object is bound with its ID, all pointers in gl*Pointer()
-    // are treated as offset instead of real pointer.
-    glBindBufferARB( GL_ARRAY_BUFFER_ARB, vao->bufID );
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
 
-    // before draw, specify vertex and index arrays with their offsets
-    glVertexPointer( 3, GL_FLOAT, 0, 0               );
-    glNormalPointer(    GL_FLOAT, 0, (void*) arrSize );
-    glColorPointer(  3, GL_FLOAT, 0, (void*) dblSize );
-
-    glDrawArrays( GL_TRIANGLES, 0, 3*(vao->Ntri) );
-
-    glDisableClientState( GL_VERTEX_ARRAY );  // disable vertex arrays
-    glDisableClientState( GL_NORMAL_ARRAY );
-    glDisableClientState( GL_COLOR_ARRAY  );
+    // before draw, specify vertex arrays
+    glVertexPointer(3, GL_FLOAT, 0, vao->V);
+    glNormalPointer(GL_FLOAT, 0, vao->N);
+    glColorPointer(3, GL_FLOAT, 0, vao->C);
     
 
-    // it is good idea to release VBOs with ID 0 after use.
-    // Once bound with 0, all pointers in gl*Pointer() behave as real
-    // pointer, so, normal vertex array operations are re-activated
-    glBindBufferARB( GL_ARRAY_BUFFER_ARB, 0 );
+    glDrawArrays(GL_TRIANGLES, 0, vao->Nvtx*3);
+
+    glDisableClientState(GL_VERTEX_ARRAY);  // disable vertex arrays
+    glDisableClientState(GL_COLOR_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
 }
 
 
@@ -303,6 +289,10 @@ void reshape( int width , int height ){
 
 
 
+
+
+
+
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -311,7 +301,6 @@ int main( int argc, char* argv[] ){
     init_rand();
     // Initialize GLUT and process user parameters
     glutInit( &argc , argv );
-    // initGL();
 
     // Request window with size specified in pixels
     glutInitWindowSize( 900, 900 );
