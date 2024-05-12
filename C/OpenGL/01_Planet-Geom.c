@@ -18,9 +18,10 @@ const uint  _ICOS_SUBDIVID = 6;
 const ulong N_cells /*--*/ = 20 * (_ICOS_SUBDIVID*(_ICOS_SUBDIVID+1)/2 + (_ICOS_SUBDIVID-1)*(_ICOS_SUBDIVID)/2);
 
 /// Init ///
-const uint _N_PARTICLES  = 600000;
-const uint _N_ATMOS_NATR =      25;
-const uint _N_WARM_UP    =      65;
+const uint  _N_PARTICLES  = 4000000; //6000000; //1500000; //750000;
+const float _POINT_SIZE   =       1.0f;
+const uint  _N_ATMOS_NATR =      25;
+const uint  _N_WARM_UP    =      65;
 
 /// Dynamics ///
 const float _SPEED_LIMIT  =   0.0075;
@@ -101,6 +102,10 @@ float Box_Muller_normal_sample( float mu, float sigma ){
 }
 
 
+
+////////// ATMOSPHERE INIT & DYNAMICS //////////////////////////////////////////////////////////////
+
+
 uint* distribute_particles_init( vec4f* prtArr, vec4f* orgnArr, vec4f* xBasArr, vec4f* yBasArr, float scale,
                                  uint groupSizeMin, uint groupSizeMax ){
     // Place particles in the atmosphere
@@ -139,6 +144,70 @@ uint* distribute_particles_init( vec4f* prtArr, vec4f* orgnArr, vec4f* xBasArr, 
     }
     return rtnArr;
 }
+
+
+bool cell_flow_interaction( void ){
+    // Perturb and diffuse per-cell wind acceleration 
+    uint ngbrDex;
+    vec4f acl_i;
+    vec4f acl_n;
+    bool changed = false;
+    // For every cell in the atmosphere
+    for( uint i = 0; i < N_cells; ++i ){
+        // Chance to diffuse one vector into another
+        if( randf() < _DIFFUS_PROB ){
+            ngbrDex = randu_range( 0, 2 );
+            switch( ngbrDex ){
+                case 0:
+                    ngbrDex = ngbrArr[i].f0;
+                    break;
+                case 1:
+                    ngbrDex = ngbrArr[i].f1;
+                    break;
+                case 2:
+                    ngbrDex = ngbrArr[i].f2;
+                    break;
+                default:
+                    printf( "THIS SHOULD NOT HAVE HAPPENED!" );
+                    break;
+            }
+            acl_i = acclArr[i];
+            acl_n = acclArr[ ngbrDex ];
+            acclArr[i] /*---*/ = blend_vec4f( acl_n, _DIFFUS_RATE, acl_i, (1.0f-_DIFFUS_RATE) );
+            acclArr[ ngbrDex ] = blend_vec4f( acl_i, _DIFFUS_RATE, acl_n, (1.0f-_DIFFUS_RATE) );
+            if( norm_vec4f( acclArr[i] ) > _ACCEL_LIMIT ){  
+                acclArr[i] = stretch_to_len_vec4f( acclArr[i], _ACCEL_LIMIT );  
+            }
+            if( norm_vec4f( acclArr[ ngbrDex ] ) > _ACCEL_LIMIT ){  
+                acclArr[ ngbrDex ] = stretch_to_len_vec4f( acclArr[ ngbrDex ], _ACCEL_LIMIT );  
+            }
+            changed = true;
+        }
+        // Chance to perturb this vector
+        if( randf() < _PERTURB_PROB ){
+            acclArr[i] = add_vec4f( 
+                acclArr[i], 
+                add_vec4f(
+                    scale_vec4f( xBasArr[i], randf_range( -0.5f*_ACCEL_LIMIT, +0.5f*_ACCEL_LIMIT ) ),
+                    scale_vec4f( yBasArr[i], randf_range( -0.5f*_ACCEL_LIMIT, +0.5f*_ACCEL_LIMIT ) )
+                )
+            );
+            if( norm_vec4f( acclArr[i] ) > _ACCEL_LIMIT ){  
+                acclArr[i] = stretch_to_len_vec4f( acclArr[i], _ACCEL_LIMIT );  
+            }
+            changed = true;
+        }
+    }
+    return changed;
+}
+
+
+void naturalize_flows( uint N ){
+    // Attempt to even out awkward flows & clouds
+    for( uint i = 0; i < N; ++i ){  cell_flow_interaction();  }
+}
+
+
 
 ////////// GPU SETUP ///////////////////////////////////////////////////////////////////////////////
 
@@ -329,14 +398,18 @@ void ResetParticles(){
     // Get pointer to buffer and cast as a struct array
     trgtVf = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, N_cells * sizeof( vec4f ), 
                                         GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
-    // Load colors into buffer
+    
     for( ulong i = 0; i < N_cells; ++i ){
 
         acl.x = randf_range( -_ACCEL_LIMIT, +_ACCEL_LIMIT );
         acl.y = randf_range( -_ACCEL_LIMIT, +_ACCEL_LIMIT );
 
-        acclArr[i] = trgtVf[i] = lift_vec_2D_to_3D( acl, xBasArr[i], yBasArr[i] );
+        acclArr[i] = lift_vec_2D_to_3D( acl, xBasArr[i], yBasArr[i] );
     }
+
+    naturalize_flows( _N_ATMOS_NATR );
+
+    for( ulong i = 0; i < N_cells; ++i ){  trgtVf[i] = acclArr[i];  }
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 
 
@@ -446,54 +519,23 @@ void InitParticles( void ){
 
 ////////// SIMULATION //////////////////////////////////////////////////////////////////////////////
 
-void cell_flow_interaction( void ){
-    // Perturb and diffuse per-cell wind acceleration 
-    uint ngbrDex;
-    vec4f acl_i;
-    vec4f acl_n;
-    bool changed = false;
-    for( uint i = 0; i < N_cells; ++i ){
-        if( randf() < _DIFFUS_PROB ){
-            ngbrDex = randu_range( 0, 2 );
-            switch( ngbrDex ){
-                case 0:
-                    ngbrDex = ngbrArr[i].f0;
-                    break;
-                case 1:
-                    ngbrDex = ngbrArr[i].f1;
-                    break;
-                case 2:
-                    ngbrDex = ngbrArr[i].f2;
-                    break;
-                default:
-                    printf( "THIS SHOULD NOT HAVE HAPPENED!" );
-                    break;
-            }
-            acl_i = acclArr[i];
-            acl_n = acclArr[ ngbrDex ];
-            acclArr[i] /*---*/ = blend_vec4f( acl_n, _DIFFUS_RATE, acl_i, (1.0f-_DIFFUS_RATE) );
-            acclArr[ ngbrDex ] = blend_vec4f( acl_i, _DIFFUS_RATE, acl_n, (1.0f-_DIFFUS_RATE) );
-            if( norm_vec4f( acclArr[i] ) > _ACCEL_LIMIT ){  
-                acclArr[i] = stretch_to_len_vec4f( acclArr[i], _ACCEL_LIMIT );  
-            }
-            if( norm_vec4f( acclArr[ ngbrDex ] ) > _ACCEL_LIMIT ){  
-                acclArr[ ngbrDex ] = stretch_to_len_vec4f( acclArr[ ngbrDex ], _ACCEL_LIMIT );  
-            }
-            changed = true;
-        }
-        if( randf() < _PERTURB_PROB ){
-            acclArr[i] = add_vec4f( acclArr[i], scale_vec4f( rand_vec4f(), randf_range( _ACCEL_MIN, _ACCEL_LIMIT ) ) );
-            if( norm_vec4f( acclArr[i] ) > _ACCEL_LIMIT ){  
-                acclArr[i] = stretch_to_len_vec4f( acclArr[i], _ACCEL_LIMIT );  
-            }
-            changed = true;
-        }
-    }
-    
+void update_accel_at_GPU( void ){
+    // Move updated accels to the appropriate buffer on the GPU
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, accel_ID ); // Set buffer object to point to this ID, for writing
+    // Get pointer to buffer and cast as a struct array
+    vec4f* trgtVf = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, N_cells * sizeof( vec4f ), 
+                                               GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT      );
+    // Load colors into buffer
+    for( ulong i = 0; i < N_cells; ++i ){  trgtVf[i] = acclArr[i];  }
+    glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
+    // Stop talking to the buffer object?
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 );
 }
+
 
 void tick(){
     // Background work
+    // bool accelBufferDirty = false;
 
     // Launch compute shader
     glUseProgram( shaderDyna_ID );
@@ -527,7 +569,8 @@ void tick(){
     //  Wait for compute shader
     glMemoryBarrier( GL_SHADER_STORAGE_BARRIER_BIT );
 
-    // printf( "tick, " );
+    if( cell_flow_interaction() ){  update_accel_at_GPU();  }
+
 
     // Tell GLUT it is necessary to redisplay the scene
 	glutPostRedisplay();
@@ -539,7 +582,7 @@ void tick(){
 
 void draw_particles( void ){
     // 1. Set particle size
-    glPointSize(2);
+    glPointSize( _POINT_SIZE );
     // 2. Vertex array
     glBindBuffer( GL_ARRAY_BUFFER, posnArr_ID );
     glVertexPointer( 4, GL_FLOAT, 0, (void*) 0 );
@@ -650,7 +693,7 @@ int main( int argc, char* argv[] ){
     glutInitWindowSize( 900, 900 );
 
     // Create the window
-    glutCreateWindow( "!!! PARTICLES !!!" );
+    glutCreateWindow( "!!! LOOK AT THIS GODDAMN PLANET !!!" );
 
     // NOTE: Set modes AFTER the window / graphics context has been created!
     // Request double buffered, true color window 
