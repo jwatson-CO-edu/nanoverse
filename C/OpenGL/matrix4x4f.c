@@ -2,7 +2,15 @@
 //  4x4 matrix functions
 //  Matrices are interpreted as column major order using OpenGL convention
 //  Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
-//
+/*
+ | [m0  [m4  [ m8  [m12
+ |
+ V  m1   m5    m9   m13
+
+    m2   m6   m10   m14
+
+    m3]  m7]  m11]  m15]
+*/
 
 #include "matrix4x4f.h"
 #include <stdio.h>
@@ -17,11 +25,15 @@ static const float I[] = {1,0,0,0 , 0,1,0,0 , 0,0,1,0 , 0,0,0,1};
 
 //
 //  Set mat4 mode to OpenGL or Vulkan
+//
 void mat4vulkan(int k)
 {
    vulkan = k;
 }
 
+//
+//  Allocate and return Identity 4x4 matrix
+//
 float* make_identity( void ){
     float* rtnMatx = (float*) malloc( sizeof( I ) );
     mat4identity( rtnMatx );
@@ -289,3 +301,5 @@ void mat3print(const char* text,float m[9])
    for (int i=0;i<3;i++)
       fprintf(stderr,"%10.6f %10.6f %10.6f\n",m[i],m[i+3],m[i+6]);
 }
+
+

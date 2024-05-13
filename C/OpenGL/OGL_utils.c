@@ -14,6 +14,7 @@ double Tan( double x ){  return tan( (x) * 3.1415927 / 180 );  }
 float  Cosf( float x ){  return cosf( (x) * 3.1415927f / 180.0f );  }
 float  Sinf( float x ){  return sinf( (x) * 3.1415927f / 180.0f );  }
 float  Tanf( float x ){  return tanf( (x) * 3.1415927f / 180.0f );  }
+float  Atan2f( float y, float x ){  return (atan2f( y, x ) * 3.1415927f / 180.0f);  }
 
 
 
@@ -103,6 +104,17 @@ void look( const Camera3D camera ){
     gluLookAt( (double) camera.eyeLoc.x, (double) camera.eyeLoc.y, (double) camera.eyeLoc.z,  
                (double) camera.lookPt.x, (double) camera.lookPt.y, (double) camera.lookPt.z,  
                (double) camera.upVctr.x, (double) camera.upVctr.y, (double) camera.upVctr.z );
+}
+
+
+void orbit_target_about_Z( Camera3D* camera, float delTheta_deg ){
+    // Move the `camera` in a circular arc by `delTheta_deg` in the X-Y plane w/ `camera.lookPt` as the center
+    vec4f vcDiff = sub_vec4f( camera->lookPt, camera->eyeLoc );
+    float theta  = Atan2f( vcDiff.y, vcDiff.x ) + delTheta_deg;
+    float radius = sqrtf( (vcDiff.y)*(vcDiff.y) + (vcDiff.x)*(vcDiff.x) );
+    vcDiff.x = radius * Cosf( theta );
+    vcDiff.y = radius * Sinf( theta );
+    camera->eyeLoc = add_vec4f( camera->lookPt, vcDiff );
 }
 
 

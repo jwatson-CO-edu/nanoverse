@@ -7,9 +7,9 @@
 ////////// PROGRAM SETTINGS ////////////////////////////////////////////////////////////////////////
 
 /// View Settings ///
-const float _SCALE /**/ =  10.0; // Scale Dimension
-const int   _FOV_DEG    =  55; // - Field of view (for perspective)
-const float _TARGET_FPS =  60.0f; // Desired framerate
+const float _SCALE /*---*/ =  10.0; // Scale Dimension
+const int   _FOV_DEG /*-*/ =  55; // - Field of view (for perspective)
+const float _TARGET_FPS    =  60.0f; // Desired framerate
 
 /// Geometry ///
 const float _SPHERE_RADIUS = 2.15f;
@@ -18,10 +18,10 @@ const uint  _ICOS_SUBDIVID = 6;
 const ulong N_cells /*--*/ = 20 * (_ICOS_SUBDIVID*(_ICOS_SUBDIVID+1)/2 + (_ICOS_SUBDIVID-1)*(_ICOS_SUBDIVID)/2);
 
 /// Init ///
-const uint  _N_PARTICLES  = 4000000; //6000000; //1500000; //750000;
+const uint  _N_PARTICLES  = 3000000; // 4000000; //6000000; //1500000; //750000;
 const float _POINT_SIZE   =       1.0f;
 const uint  _N_ATMOS_NATR =      25;
-const uint  _N_WARM_UP    =      65;
+const uint  _N_WARM_UP    =     130;
 
 /// Dynamics ///
 const float _SPEED_LIMIT  =   0.0075;
@@ -33,17 +33,24 @@ const float _PERTURB_PROB = 1.0f/25.0f;
 const float _PERTURB_RATE = 0.75;
 
 
+/// Dynamics ///
+const float _FRM_CAM_ROT_D =    1.0f;
+const uint  _N_STARS       = 1000;
+const float _STAR_SIZE     =    3.0f;
+
+
 ////////// GLOBAL PROGRAM STATE & GEOMETRY /////////////////////////////////////////////////////////
 
 ///// CPU-Side State //////////////////////////////////////////////////////
-Camera3D cam = { {4.0f, 2.0f, 2.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f} };
+Camera3D cam = { {4.9f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f} };
 
 vec4f* orgnArr = NULL;
 vec4f* xBasArr = NULL;
 vec4f* yBasArr = NULL;
 vec4f* acclArr = NULL;
 vec3u* ngbrArr = NULL;
-
+vec4f* starLoc = NULL;
+float* starSiz = NULL;
 
 ///// GPU-Side State //////////////////////////////////////////////////////
 int workGroupSize;
@@ -69,26 +76,8 @@ uint nghbrs_ID;
 
 
 ////////// SCRATCH SPACE ///////////////////////////////////////////////////////////////////////////
+// 2024-05-13: Cell membership check was moved to "shaders/prtclMem.comp"
 
-// bool p_pnt_vertical_of_face( const vec4f q, const vec4f cntr, const vec4f v0, const vec4f v1, const vec4f v2 ){
-//     // For a convex poyhedron with `cntr`, Return true if `q` is above/below/on the triangle {`v0`,`v1`,`v2`}
-//     vec4f seg0, seg1, seg2, segCen0, segCen1, segCen2, norm0, norm1, norm2, diff0, diff1, diff2;
-//     seg0    = sub_vec4f( v1, v0 );
-//     seg1    = sub_vec4f( v2, v1 );
-//     seg2    = sub_vec4f( v0, v2 );
-//     segCen0 = sub_vec4f( seg_center( v0, v1 ), cntr );
-//     segCen1 = sub_vec4f( seg_center( v1, v2 ), cntr );
-//     segCen2 = sub_vec4f( seg_center( v2, v0 ), cntr );
-//     norm0   = cross_vec4f( segCen0, seg0 );
-//     norm1   = cross_vec4f( segCen1, seg1 );
-//     norm2   = cross_vec4f( segCen2, seg2 );
-//     diff0   = sub_vec4f( sub_vec4f( q, cntr ), segCen0 );
-//     diff1   = sub_vec4f( sub_vec4f( q, cntr ), segCen1 );
-//     diff2   = sub_vec4f( sub_vec4f( q, cntr ), segCen2 );
-//     return (  
-//         (dot_vec4f( diff0, norm0 ) >= 0.0f) && (dot_vec4f( diff1, norm1 ) >= 0.0f) && (dot_vec4f( diff2, norm2 ) >= 0.0f) 
-//     );
-// }
 
 
 ////////// INIT HELPERS ////////////////////////////////////////////////////////////////////////////
@@ -530,6 +519,8 @@ void update_accel_at_GPU( void ){
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
     // Stop talking to the buffer object?
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 );
+
+    
 }
 
 
@@ -571,6 +562,8 @@ void tick(){
 
     if( cell_flow_interaction() ){  update_accel_at_GPU();  }
 
+    orbit_target_about_Z( &cam, _FRM_CAM_ROT_D );
+
 
     // Tell GLUT it is necessary to redisplay the scene
 	glutPostRedisplay();
@@ -602,6 +595,18 @@ void draw_particles( void ){
 }
 
 
+void draw_stars( void ){
+    // Draw starfield in the BG for parallax effect
+    glColor3f( 1.0f, 1.0f, 1.0f );
+    glBegin( GL_POINTS );
+    for( uint i = 0; i < _N_STARS; ++i ){
+        glPointSize( starSiz[i] );
+        glVtx4f( starLoc[i] );
+    }
+    glEnd();
+}
+
+
 void display(){
     // Refresh display
 
@@ -622,6 +627,9 @@ void display(){
 
     //  Draw sphere
     draw_sphere( center, _SPHERE_RADIUS, sphClr );
+
+    //  Draw starfield
+    // draw_stars();
 
     // //  Disable lighting before particles
     // glDisable(GL_LIGHTING);
@@ -682,12 +690,32 @@ void reshape( int width , int height ){
 }
 
 
+void init_stars( void ){
+    // Set up the stars in the sky
+    starLoc = (vec4f*) malloc( _N_STARS * sizeof( vec4f ) );
+    starSiz = (float*) malloc( _N_STARS * sizeof( float ) );
+    vec4f loc_i;
+    float dMin = 2.0f * norm_vec4f( cam.eyeLoc );
+    float dMax = 4.0f * _SCALE;
+    for( uint i = 0; i < _N_STARS; ++i ){
+        loc_i = scale_vec4f( rand_vec4f(), dMax*randf() );
+        while((norm_vec4f( loc_i ) < dMin) || (norm_vec4f( loc_i ) > dMax)){
+            loc_i = scale_vec4f( rand_vec4f(), dMax*randf() );
+        }
+        starLoc[i] = loc_i;
+        starSiz[i] = randf_range( 1.0, _STAR_SIZE );
+    }
+}
+
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
 
 int main( int argc, char* argv[] ){
     init_rand();
+
+    
+
     // Initialize GLUT and process user parameters
     glutInit( &argc , argv );
 
@@ -710,6 +738,7 @@ int main( int argc, char* argv[] ){
     
     //  Initialize particles
     InitParticles();
+    init_stars();
 
     //  Tell GLUT to call "display" when the scene should be drawn
     glutDisplayFunc( display );
@@ -725,6 +754,9 @@ int main( int argc, char* argv[] ){
     
     // //  Tell GLUT to call "key" when a key is pressed
     // glutKeyboardFunc( key );
+
+    // Warm up the atmosphere to get rid of triangular "tears" in the clouds
+    for( uint i = 0; i < _N_WARM_UP; ++i ){  tick();  }
     
     // Pass control to GLUT so it can interact with the user
     glutMainLoop();
@@ -738,6 +770,8 @@ int main( int argc, char* argv[] ){
     free( yBasArr );
     free( acclArr );
     free( ngbrArr );
+    free( starLoc );
+    free( starSiz );
 
     printf( "\n### DONE ###\n\n" );
     

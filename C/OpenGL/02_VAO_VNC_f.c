@@ -2,7 +2,6 @@
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
 #include "geometry.h"
-#include "matrix4x4f.h"
 
 
 
@@ -32,6 +31,7 @@ typedef struct{
     float* relPose; // Static offset pose from parent pose (anchor)
     float* ownPose; // Dynamic offset pose from `relPose`
     vec4f  scale; // - Scale in each dimension
+    float* totPose; // Total pose relative to parent frame, Accounting for {`relPose`, `ownPose`, `scale`}
     
     /// Composite VAO ///
     uint   Nprt; //- Number of sub-parts
@@ -103,7 +103,7 @@ void allocate_and_load_VAO_VNC_at_GPU( VAO_VNC_f* vao ){
 
 
 void draw_VAO_VNC_f( VAO_VNC_f* vao ){
-    // Draw using "VAO Method" (See Song Ho Ahn code)
+    // Draw using "VBO Method" (See Song Ho Ahn code)
     // printf( "About to draw VAO ...\n" );
     uint arrSize = vao->arSiz;
     uint dblSize = arrSize*2;
@@ -135,6 +135,15 @@ void draw_VAO_VNC_f( VAO_VNC_f* vao ){
     // pointer, so, normal vertex array operations are re-activated
     glBindBufferARB( GL_ARRAY_BUFFER_ARB, 0 );
 }
+
+
+vec4f get_posn( VAO_VNC_f* vao ){
+    // Get the position components of the homogeneous coordinates as a vector
+    return make_vec4f( vao->totPose[12], vao->totPose[13], vao->totPose[14] );
+}
+
+// FIXME, START HERE: FINISH FETCHING POSE FUNCTIONS FROM "rl_toybox.hpp"
+// FIXME: FUNCTION TO COMPUTE "VAO_VNC_f.totPose" BEFORE RENDERING
 
 
 ///// cube ////////////////////////////////////////////////////////////////

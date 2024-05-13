@@ -86,6 +86,7 @@ double Tan( double x );
 float  Cosf( float x );
 float  Sinf( float x );
 float  Tanf( float x );
+float  Atan2f( float y, float x );
 
 
 ////////// MATH HELPERS ////////////////////////////////////////////////////////////////////////////
@@ -115,6 +116,9 @@ float heartbeat_FPS( float targetFPS );
 ////////// CAMERA //////////////////////////////////////////////////////////////////////////////////
 
 void look( const Camera3D camera ); // Set camera position, target, and orientation
+// Move the `camera` in a circular arc by `delTheta_deg` in the X-Y plane w/ `camera.lookPt` as the center
+void orbit_target_about_Z( Camera3D* camera, float delTheta_deg );
+    
 
 
 ////////// OPENGL SYSTEM ///////////////////////////////////////////////////////////////////////////

@@ -23,6 +23,7 @@ vector-f_ops.o: vector-f_ops.c toolbox.h
 shaders.o: shaders.c toolbox.h
 
 ### Geometry Construction ###
+transform.o: transform.c toolbox.h geometry.h matrix4x4f.h
 TriNet.o: TriNet.c toolbox.h geometry.h
 draw_geo.o: draw_geo.c toolbox.h geometry.h
 
@@ -33,7 +34,7 @@ draw_geo.o: draw_geo.c toolbox.h geometry.h
 toolbox.a: OGL_utils.o load_assets.o vector-f_ops.o shaders.o
 	ar -rcs $@ $^
 
-geometry.a: TriNet.o draw_geo.o
+geometry.a: transform.o TriNet.o draw_geo.o
 	ar -rcs $@ $^
 
 # Compile rules
