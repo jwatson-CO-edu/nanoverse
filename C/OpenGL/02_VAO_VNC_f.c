@@ -128,7 +128,6 @@ void draw_VAO_VNC_f( VAO_VNC_f* vao ){
     glDisableClientState( GL_VERTEX_ARRAY );  // disable vertex arrays
     glDisableClientState( GL_NORMAL_ARRAY );
     glDisableClientState( GL_COLOR_ARRAY  );
-    
 
     // it is good idea to release VBOs with ID 0 after use.
     // Once bound with 0, all pointers in gl*Pointer() behave as real
@@ -140,6 +139,14 @@ void draw_VAO_VNC_f( VAO_VNC_f* vao ){
 vec4f get_posn( VAO_VNC_f* vao ){
     // Get the position components of the homogeneous coordinates as a vector
     return make_vec4f( vao->totPose[12], vao->totPose[13], vao->totPose[14] );
+}
+
+
+void set_posn( VAO_VNC_f* vao, const vec4f posn ){
+    // Set the position components of the homogeneous coordinates
+    vao->ownPose[12] = posn.x;
+    vao->ownPose[13] = posn.y;
+    vao->ownPose[14] = posn.z;
 }
 
 // FIXME, START HERE: FINISH FETCHING POSE FUNCTIONS FROM "rl_toybox.hpp"

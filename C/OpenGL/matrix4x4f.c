@@ -23,98 +23,94 @@ static int vulkan=0;
 //  Identity matrix
 static const float I[] = {1,0,0,0 , 0,1,0,0 , 0,0,1,0 , 0,0,0,1};
 
+
 //
 //  Set mat4 mode to OpenGL or Vulkan
 //
-void mat4vulkan(int k)
-{
-   vulkan = k;
-}
+void mat4vulkan( int k ){  vulkan = k;  }
+
 
 //
 //  Allocate and return Identity 4x4 matrix
 //
-float* make_identity( void ){
+float* make_identity_mtx44f( void ){
     float* rtnMatx = (float*) malloc( sizeof( I ) );
-    mat4identity( rtnMatx );
+    identity_mtx44f( rtnMatx );
     return rtnMatx;
 }
+
 
 //
 //  Identity 4x4 matrix
 //
-void mat4identity(float mat[])
-{
-   memcpy(mat,I,sizeof(I));
-}
+void identity_mtx44f( float mat[] ){  memcpy( mat, I, sizeof(I) );  }
+
 
 //
 //  Copy 4x4 matrix
 //
-void mat4copy(float mat[],float m[])
-{
-   memcpy(mat,m,sizeof(I));
+void copy_mtx44f( float mat[], float m[] ){
+    memcpy( mat, m, sizeof(I) );
 }
+
 
 //
 //  Right multiply 4x4 matrix
 //
-void mat4multMatrix(float mat[],float m[])
-{
-   //  res = mat*m
-   float res[16];
-   for (int i=0;i<4;i++)
-      for (int j=0;j<4;j++)
-         res[4*i+j] = mat[j]*m[4*i] + mat[4+j]*m[4*i+1] + mat[8+j]*m[4*i+2] + mat[12+j]*m[4*i+3];
-   //  Copy matrix back
-   memcpy(mat,res,sizeof(res));
+void mult_mtx44f( float mat[], float m[] ){
+    //  res = mat*m
+    float res[16];
+    for( int i = 0; i < 4; i++ )
+        for( int j = 0; j < 4; j++ )
+            res[ 4*i+j ] = mat[j]*m[4*i] + mat[4+j]*m[4*i+1] + mat[8+j]*m[4*i+2] + mat[12+j]*m[4*i+3];
+    //  Copy matrix back
+    memcpy( mat, res, sizeof( res ) );
 }
 
 //
 //  Rotate
 //
-void mat4rotate(float mat[],float th,float x,float y,float z)
-{
-   //  Normalize axis
-   float l = sqrt(x*x+y*y+z*z);
-   if (l==0) return;
-   x /= l;
-   y /= l;
-   z /= l;
-   //  Calculate sin and cos
-   float s = sin(th*M_PI/180);
-   float c = cos(th*M_PI/180);
-   //  Rotation matrix
-   float R[16] =
-   {
-      (1-c)*x*x+c   , (1-c)*x*y+z*s , (1-c)*z*x-y*s , 0 ,
-      (1-c)*x*y-z*s , (1-c)*y*y+c   , (1-c)*y*z+x*s , 0 ,
-      (1-c)*z*x+y*s , (1-c)*y*z-x*s , (1-c)*z*z+c   , 0 ,
+void rot_angle_axis_mtx44f( float mat[], float th, float x, float y, float z ){
+    //  Normalize axis
+    float l = sqrt( x*x + y*y + z*z );
+    if(l==0) return;
+    x /= l;
+    y /= l;
+    z /= l;
+    //  Calculate sin and cos
+    float s = sin(th*M_PI/180);
+    float c = cos(th*M_PI/180);
+    //  Rotation matrix
+    float R[16] =
+    {
+        (1-c)*x*x+c   , (1-c)*x*y+z*s , (1-c)*z*x-y*s , 0 ,
+        (1-c)*x*y-z*s , (1-c)*y*y+c   , (1-c)*y*z+x*s , 0 ,
+        (1-c)*z*x+y*s , (1-c)*y*z-x*s , (1-c)*z*z+c   , 0 ,
             0       ,       0       ,       0       , 1 ,
-   };
-   //  Multiply
-   mat4multMatrix(mat,R);
+    };
+    //  Multiply
+    mult_mtx44f(mat,R);
 }
 
 //
 //  Translate
 //
-void mat4translate(float mat[],float dx,float dy,float dz)
+void translate_mtx44f(float mat[],float dx,float dy,float dz)
 {
    //  Scale matrix
    float T[16];
-   mat4identity(T);
+   identity_mtx44f(T);
    T[12] = dx;
    T[13] = dy;
    T[14] = dz;
    //  Multiply
-   mat4multMatrix(mat,T);
+   mult_mtx44f(mat,T);
 }
 
 //
 //  Scale
 //
-void mat4scale(float mat[],float Sx,float Sy,float Sz)
+void scale_mtx44f(float mat[],float Sx,float Sy,float Sz)
 {
    //  Scale matrix
    float S[16];
@@ -124,7 +120,7 @@ void mat4scale(float mat[],float Sx,float Sy,float Sz)
    S[10] = Sz;
    S[15] = 1;
    //  Multiply
-   mat4multMatrix(mat,S);
+   mult_mtx44f(mat,S);
 }
 
 //
@@ -167,9 +163,9 @@ void mat4lookAt(float mat[16] , float Ex,float Ey,float Ez , float Cx,float Cy,f
     Sz, Uz, -Fz, 0,
     0,  0,    0, 1,
    };
-   mat4multMatrix(mat,R);
+   mult_mtx44f(mat,R);
    //  Set eye at the origin
-   mat4translate(mat,-Ex,-Ey,-Ez);
+   translate_mtx44f(mat,-Ex,-Ey,-Ez);
 }
 
 //
@@ -248,7 +244,7 @@ void mat4ortho(float mat[],float left,float right,float bottom,float top,float z
       P[14] = -(zFar+zNear)/(zFar-zNear);
    }
    //  Multiply
-   mat4multMatrix(mat,P);
+   mult_mtx44f(mat,P);
 }
 
 //
@@ -279,7 +275,7 @@ void mat4perspective(float mat[],float fovy,float asp,float zNear,float zFar)
       P[14] = -2*zNear*zFar/(zFar-zNear);
    }
    //  Multiply
-   mat4multMatrix(mat,P);
+   mult_mtx44f(mat,P);
 }
 
 //
