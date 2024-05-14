@@ -149,8 +149,32 @@ void set_posn( VAO_VNC_f* vao, const vec4f posn ){
     vao->ownPose[14] = posn.z;
 }
 
+void translate( VAO_VNC_f* vao, const vec4f delta ){
+    // Increment the position components of the homogeneous coordinates by the associated `delta` components
+    vao->ownPose[12] += delta.x;
+    vao->ownPose[13] += delta.y;
+    vao->ownPose[14] += delta.z;
+}
+
+void rotate_RPY_vehicle( VAO_VNC_f* vao, float r_, float p_, float y_ ){
+    // Increment the world Roll, Pitch, Yaw of the model
+    // NOTE: This is for airplanes that move forward in their own Z and have a wingspan across X
+    float op1[16];
+    rot_RPY_vehicle_mtx44f( op1, r_, p_, y_ );
+    mult_mtx44f( op1, vao->ownPose );
+    copy_mtx44f( vao->ownPose, op1 );
+}
+
 // FIXME, START HERE: FINISH FETCHING POSE FUNCTIONS FROM "rl_toybox.hpp"
 // FIXME: FUNCTION TO COMPUTE "VAO_VNC_f.totPose" BEFORE RENDERING
+
+// void thrust_Z_vehicle( VAO_VNC_f* vao, float dZ ){
+//     // Move in the local Z direction by `dZ` 
+//     Matrix R = set_posn( xfrm, Vector3Zero() );
+//     return translate( xfrm, Vector3Scale( Vector3Transform( Vector3{0.0,0.0,1.0}, R ) , dZ ) );
+// }
+
+
 
 
 ///// cube ////////////////////////////////////////////////////////////////

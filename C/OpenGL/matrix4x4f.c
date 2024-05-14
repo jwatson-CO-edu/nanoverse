@@ -67,8 +67,50 @@ void mult_mtx44f( float mat[], float m[] ){
     memcpy( mat, res, sizeof( res ) );
 }
 
+
+void rot_x_mtx44f( float mat[], /*<<*/ float theta_rad ){
+    // Load `mat` from R_x( `theta_rad` ) 
+    mat[ 0] = 1.0f;  mat[ 4] = 0.0f; /*--------*/  mat[ 8] = 0.0f; /*---------*/  mat[12] = 0.0f;
+    mat[ 1] = 0.0f;  mat[ 5] = cosf( theta_rad );  mat[ 9] = -sinf( theta_rad );  mat[13] = 0.0f;
+    mat[ 2] = 0.0f;  mat[ 6] = sinf( theta_rad );  mat[10] =  cosf( theta_rad );  mat[14] = 0.0f;
+    mat[ 3] = 0.0f;  mat[ 7] = 0.0f; /*--------*/  mat[11] = 0.0f; /*---------*/  mat[15] = 1.0f;
+}
+
+
+void rot_y_mtx44f( float mat[], /*<<*/ float theta_rad ){
+    // Load `mat` from R_y( `theta_rad` ) 
+    mat[ 0] =  cosf( theta_rad );  mat[ 4] = 0.0f;  mat[ 8] = sinf( theta_rad );  mat[12] = 0.0f;
+    mat[ 1] = 0.0f; /*---------*/  mat[ 5] = 1.0f;  mat[ 9] = 0.0f; /*--------*/  mat[13] = 0.0f;
+    mat[ 2] = -sinf( theta_rad );  mat[ 6] = 0.0f;  mat[10] = cosf( theta_rad );  mat[14] = 0.0f;
+    mat[ 3] = 0.0f; /*---------*/  mat[ 7] = 0.0f;  mat[11] = 0.0f; /*--------*/  mat[15] = 1.0f;
+}
+
+
+void rot_z_mtx44f( float mat[], /*<<*/ float theta_rad ){
+    // Load `mat` from R_z( `theta_rad` ) 
+    mat[ 0] = cosf( theta_rad );  mat[ 4] = -sinf( theta_rad ); mat[ 8] = 0.0f;  mat[12] = 0.0f;
+    mat[ 1] = sinf( theta_rad );  mat[ 5] =  cosf( theta_rad ); mat[ 9] = 0.0f;  mat[13] = 0.0f;
+    mat[ 2] = 0.0f; /*--------*/  mat[ 6] = 0.0f; /*--------*/  mat[10] = 1.0f;  mat[14] = 0.0f;
+    mat[ 3] = 0.0f; /*--------*/  mat[ 7] = 0.0f;  /*-------*/  mat[11] = 0.0f;  mat[15] = 1.0f;
+}
+
+
+void rot_RPY_vehicle_mtx44f( float mat[], /*<<*/ float r_, float p_, float y_ ){
+    // Get a matrix to increment the world Roll, Pitch, Yaw of the model
+    // NOTE: This is for airplanes that move forward in their own Z and have a wingspan across X
+    float op2[16];
+    // Mult 1: M = Ry( Y ) * Rx( P )
+    rot_y_mtx44f( mat, y_ );
+    rot_x_mtx44f( op2, p_ );
+    mult_mtx44f( mat, op2 );
+    // Mult 1: M = M * Rz( R )
+    rot_z_mtx44f( op2, r_ );
+    mult_mtx44f( mat, op2 );
+}
+
+
 //
-//  Rotate
+//  Rotate Angle-Axis
 //
 void rot_angle_axis_mtx44f( float mat[], float th, float x, float y, float z ){
     //  Normalize axis
