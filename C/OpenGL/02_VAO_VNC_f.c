@@ -12,6 +12,9 @@ const float _SCALE /**/ =  10.0f; // Scale Dimension
 const int   _FOV_DEG    =  55; // - Field of view (for perspective)
 const float _TARGET_FPS =  60.0f; // Desired framerate
 
+/// Animation Settings ///
+const float _DEL_THETA_RAD = M_PI/30.0f;
+const vec4f _ROT_AXIS /**/ = {1.0f, 1.0f, 1.0f, 1.0f};
 
 
 ////////// PROGRAM STRUCTS /////////////////////////////////////////////////////////////////////////
@@ -55,6 +58,7 @@ VAO_VNC_f* make_VAO_VNC_f( uint Ntri_ ){
     rtnVAO->relPose = make_identity();
     rtnVAO->ownPose = make_identity();
     rtnVAO->scale   = make_vec4f( 1.0f, 1.0f, 1.0f );
+    rtnVAO->totPose = make_identity();
     /// Composite VAO ///
     rtnVAO->Nprt  = 0;
     rtnVAO->parts = NULL;
@@ -149,12 +153,23 @@ void set_posn( VAO_VNC_f* vao, const vec4f posn ){
     vao->ownPose[14] = posn.z;
 }
 
+
 void translate( VAO_VNC_f* vao, const vec4f delta ){
     // Increment the position components of the homogeneous coordinates by the associated `delta` components
     vao->ownPose[12] += delta.x;
     vao->ownPose[13] += delta.y;
     vao->ownPose[14] += delta.z;
 }
+
+
+void rotate_angle_axis_rad( VAO_VNC_f* vao, float angle_rad, const vec4f axis ){
+    // Rotate the object by `angle_rad` about `axis`
+    float op1[16];
+    rot_angle_axis_mtx44f( op1, angle_rad*180/M_PI, axis.x, axis.y, axis.z );
+    mult_mtx44f( op1, vao->ownPose );
+    copy_mtx44f( vao->ownPose, op1 );
+}
+
 
 void rotate_RPY_vehicle( VAO_VNC_f* vao, float r_, float p_, float y_ ){
     // Increment the world Roll, Pitch, Yaw of the model
@@ -165,16 +180,22 @@ void rotate_RPY_vehicle( VAO_VNC_f* vao, float r_, float p_, float y_ ){
     copy_mtx44f( vao->ownPose, op1 );
 }
 
-// FIXME, START HERE: FINISH FETCHING POSE FUNCTIONS FROM "rl_toybox.hpp"
-// FIXME: FUNCTION TO COMPUTE "VAO_VNC_f.totPose" BEFORE RENDERING
 
-// void thrust_Z_vehicle( VAO_VNC_f* vao, float dZ ){
-//     // Move in the local Z direction by `dZ` 
-//     Matrix R = set_posn( xfrm, Vector3Zero() );
-//     return translate( xfrm, Vector3Scale( Vector3Transform( Vector3{0.0,0.0,1.0}, R ) , dZ ) );
-// }
+void thrust_Z_vehicle( VAO_VNC_f* vao, float dZ ){
+    // Move in the local Z direction by `dZ` 
+    vec4f disp = make_vec4f( 0.0f, 0.0f, dZ );
+    disp = mult_mtx44f_vec4f( vao->ownPose, disp );
+    translate( vao, disp );
+}
 
 
+void update_total_pose( VAO_VNC_f* vao ){
+    // Compose relative, ownship, and scale transformations into `totPose`, relative to parent frame
+    identity_mtx44f( vao->totPose );
+    scale_mtx44f( vao->totPose, vao->scale.x, vao->scale.y, vao->scale.z );
+    mult_mtx44f( vao->totPose, vao->ownPose );
+    mult_mtx44f( vao->totPose, vao->relPose );
+}
 
 
 ///// cube ////////////////////////////////////////////////////////////////
@@ -261,7 +282,7 @@ VAO_VNC_f* cube_VAO_VNC_f( void ){
 
 ////////// PROGRAM STATE ///////////////////////////////////////////////////////////////////////////
 VAO_VNC_f* cube = NULL;
-Camera3D   cam  = { {4.0f, 2.0f, 2.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f} };
+Camera3D   cam  = { {4.0f, 2.0f, 2.0f, 1.0f}, {0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f} };
 
 
 

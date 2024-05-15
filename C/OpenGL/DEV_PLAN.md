@@ -115,10 +115,6 @@
     - `[Y]` Re-write utils as "OGL_Tools.h", considering above , 2024-05-12: Done!
     - `[Y]` Re-write "TriNet.h", considering above , 2024-05-12: Done!
 
-    - `[ ]` Add a starfield
-    - `[ ]` Camera orbits the planet slowly
-    - `[ ]` Add lighting to planet
-
 * `[ ]` Q: Is it better for a worker to work on a single point or a smallish collection of points?
 * `[ ]` Q: How to add shading to the atmosphere to match the planet?
 
@@ -136,6 +132,8 @@
 * `[Y]` Simple VAO struct with vertex coloring, 2024-05-12: Needs testing
 * `[Y]` Render a cube, 2024-05-12: Tested!
 * `[>]` Render rotating cubes in nested reference frames
+    - `[ ]` Single rotating cubes
+    - `[ ]` Multiple levels rotating cubes
 * `[ ]` Add VAO shapes
     - `[ ]` VAO Icos
     - `[ ]` VAO Tetra

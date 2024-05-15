@@ -112,7 +112,7 @@ void rot_RPY_vehicle_mtx44f( float mat[], /*<<*/ float r_, float p_, float y_ ){
 //
 //  Rotate Angle-Axis
 //
-void rot_angle_axis_mtx44f( float mat[], float th, float x, float y, float z ){
+void rot_angle_axis_mtx44f( float mat[], float th_deg, float x, float y, float z ){
     //  Normalize axis
     float l = sqrt( x*x + y*y + z*z );
     if(l==0) return;
@@ -120,8 +120,8 @@ void rot_angle_axis_mtx44f( float mat[], float th, float x, float y, float z ){
     y /= l;
     z /= l;
     //  Calculate sin and cos
-    float s = sin(th*M_PI/180);
-    float c = cos(th*M_PI/180);
+    float s = sin(th_deg*M_PI/180);
+    float c = cos(th_deg*M_PI/180);
     //  Rotation matrix
     float R[16] =
     {
@@ -152,17 +152,16 @@ void translate_mtx44f(float mat[],float dx,float dy,float dz)
 //
 //  Scale
 //
-void scale_mtx44f(float mat[],float Sx,float Sy,float Sz)
-{
-   //  Scale matrix
+void scale_mtx44f( float mat[], float Sx, float Sy, float Sz ){
+   // 1. Scale matrix
    float S[16];
-   memset(S,0,sizeof(S));
-   S[0]  = Sx;
-   S[5]  = Sy;
+   memset( S, 0, sizeof(S) );
+   S[ 0] = Sx;
+   S[ 5] = Sy;
    S[10] = Sz;
    S[15] = 1;
-   //  Multiply
-   mult_mtx44f(mat,S);
+   // 2. Multiply
+   mult_mtx44f( mat, S );
 }
 
 //

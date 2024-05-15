@@ -25,8 +25,9 @@ typedef struct{
 
 ////////// HOMOGENEOUS COORDINATES /////////////////////////////////////////////////////////////////
 
-float* set_matx_rot_axis_angle( float* matx, /*<<*/ const vec4f axis, float angle_rad );
-
+void  set_posn_mtx44f( float mat[], const vec4f posn ); // Set the position components of the homogeneous coordinates
+vec4f mult_mtx44f_vec4f( float mat[], const vec4f v ); // Transform `v` with `mat`
+    
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

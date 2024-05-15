@@ -33,7 +33,7 @@ const float _PERTURB_PROB = 1.0f/25.0f;
 const float _PERTURB_RATE = 0.75;
 
 
-/// Dynamics ///
+/// Stars /// // 2024-05-15: NOT USED
 const float _FRM_CAM_ROT_D =    1.0f;
 const uint  _N_STARS       = 1000;
 const float _STAR_SIZE     =    3.0f;
@@ -42,7 +42,7 @@ const float _STAR_SIZE     =    3.0f;
 ////////// GLOBAL PROGRAM STATE & GEOMETRY /////////////////////////////////////////////////////////
 
 ///// CPU-Side State //////////////////////////////////////////////////////
-Camera3D cam = { {4.9f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 1.0f} };
+Camera3D cam = { {4.9f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f} };
 
 vec4f* orgnArr = NULL;
 vec4f* xBasArr = NULL;
@@ -224,8 +224,6 @@ void ResetParticles(){
     printf( "About to allocate CPU temp init memory ...\n" );
     v1_Arr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
     v2_Arr = (vec4f*) malloc( N_cells * sizeof( vec4f ) );
-
-    
 
     //  Reset velocities
     printf( "About to set particle velocity, buffer %u ...\n", veloArr_ID );
@@ -519,8 +517,6 @@ void update_accel_at_GPU( void ){
     glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
     // Stop talking to the buffer object?
     glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 );
-
-    
 }
 
 
@@ -714,8 +710,6 @@ void init_stars( void ){
 int main( int argc, char* argv[] ){
     init_rand();
 
-    
-
     // Initialize GLUT and process user parameters
     glutInit( &argc , argv );
 
@@ -723,7 +717,7 @@ int main( int argc, char* argv[] ){
     glutInitWindowSize( 900, 900 );
 
     // Create the window
-    glutCreateWindow( "!!! LOOK AT THIS GODDAMN PLANET !!!" );
+    glutCreateWindow( "!!! LOOK AT THIS FREAKING PLANET !!!" );
 
     // NOTE: Set modes AFTER the window / graphics context has been created!
     // Request double buffered, true color window 
