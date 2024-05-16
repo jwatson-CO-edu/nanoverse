@@ -190,9 +190,50 @@ void thrust_Z_vehicle( VAO_VNC_f* vao, float dZ ){
 
 
 
+////////// CONSTRUCTION ////////////////////////////////////////////////////////////////////////////
+
+VAO_VNC_f* VAO_from_TriNet_solid_color( TriNet* net, const vec4f color ){
+    // Get a VAO from a `TriNet`
+    // NOTE: This function assumes that the normals of the `net` are populated
+    uint /*-*/ Nrows = net->Ntri;
+    VAO_VNC_f* rtnVAO = make_VAO_VNC_f( net->Ntri );
+    vec4f /**/ v0, v1, v2, n0, n1, n2;
+    for( uint i = 0; i < Nrows; ++i ){
+        v0 = net->V[ net->F[i].v0 ];
+        v1 = net->V[ net->F[i].v1 ];
+        v2 = net->V[ net->F[i].v2 ];
+        n0 = net->N[ net->F[i].v0 ];
+        n1 = net->N[ net->F[i].v1 ];
+        n2 = net->N[ net->F[i].v2 ];
+
+        rtnVAO->V[ i*9   ] = v0.x;
+        rtnVAO->V[ i*9+1 ] = v0.y;
+        rtnVAO->V[ i*9+2 ] = v0.z;
+        rtnVAO->V[ i*9+3 ] = v1.x;
+        rtnVAO->V[ i*9+4 ] = v1.y;
+        rtnVAO->V[ i*9+5 ] = v1.z;
+        rtnVAO->V[ i*9+6 ] = v2.x;
+        rtnVAO->V[ i*9+7 ] = v2.y;
+        rtnVAO->V[ i*9+8 ] = v2.z;
+
+        rtnVAO->C[ i*9   ] = color.r;
+        rtnVAO->C[ i*9+1 ] = color.g;
+        rtnVAO->C[ i*9+2 ] = color.b;
+        rtnVAO->C[ i*9+3 ] = color.r;
+        rtnVAO->C[ i*9+4 ] = color.g;
+        rtnVAO->C[ i*9+5 ] = color.b;
+        rtnVAO->C[ i*9+6 ] = color.r;
+        rtnVAO->C[ i*9+7 ] = color.g;
+        rtnVAO->C[ i*9+8 ] = color.b;
+    }
+}
+
+
+
 ////////// SPECIFIC VAO ////////////////////////////////////////////////////////////////////////////
 
-///// cube ////////////////////////////////////////////////////////////////
+///// Cube ////////////////////////////////////////////////////////////////
+
 //    v6----- v5
 //   /|      /|
 //  v1------v0|
@@ -271,3 +312,8 @@ VAO_VNC_f* colorspace_cube_VAO_VNC_f( void ){
     load_VAO_VNC_from_full_arrays( rtnVAO, cubeV, cubeN, cubeC );
     return rtnVAO;
 }
+
+
+///// Tetrahedron /////////////////////////////////////////////////////////
+
+

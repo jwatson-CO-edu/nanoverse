@@ -1,0 +1,13 @@
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
+
+#include "geometry.h"
+#include "matrix4x4f.h"
+
+
+
+////////// PROGRAM SETTINGS ////////////////////////////////////////////////////////////////////////
+
+/// View Settings ///
+const float _SCALE /**/ =  10.0f; // Scale Dimension
+const int   _FOV_DEG    =  55; // - Field of view (for perspective)
+const float _TARGET_FPS =  60.0f; // Desired framerate
