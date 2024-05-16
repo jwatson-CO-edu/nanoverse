@@ -18,6 +18,31 @@ typedef struct{
 }TriNet;
 
 
+///// Vertex Array Object (VAO, Nested) ///////////////////////////////////
+
+typedef struct{
+    // Vertex Array Object meant to be drawn rapidly and simply
+
+    /// Geo Info ///
+    uint   Ntri; //- Number of triangles
+    float* V; // --- `Ntri` * 9: `float`
+    float* N; // --- `Ntri` * 9: `float`
+    float* C; // --- `Ntri` * 9: `float`
+    uint   bufID; // Buffer ID at the GPU
+    uint   arSiz; // Array size in bytes
+    
+    /// Pose & Scale ///
+    float* relPose; // Static offset pose from parent pose (anchor)
+    float* ownPose; // Dynamic offset pose from `relPose`
+    vec4f  scale; // - Scale in each dimension
+    float* totPose; // Total pose relative to parent frame, Accounting for {`relPose`, `ownPose`, `scale`}
+    
+    /// Composite VAO ///
+    uint   Nprt; //- Number of sub-parts
+    void** parts; // Array of sub-part pointers
+
+}VAO_VNC_f;
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////// transform.c ////////////////////////////////////////////////////////////////////////
@@ -74,7 +99,38 @@ TriNet* create_icos_VFNA( float radius ); // Create an regular icosahedron (*wit
 // Construct a sphere with `radius` from a subdivided icos (`div` rows) and center at {0,0,0}
 TriNet* create_icosphere_mesh_only( float radius, uint div );
 TriNet* create_icosphere_VFNA( float radius, uint div ); // Create an regular icosahedron (*with* unfolded net data)
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////// VAO_VNC_f.c ////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
     
+////////// VERTEX ARRAY OBJECTS (NESTED) ///////////////////////////////////////////////////////////
+
+VAO_VNC_f* make_VAO_VNC_f( uint Ntri_ ); // Allocate the VAO at heap
+void /*-*/ allocate_N_VAO_VNC_parts( VAO_VNC_f* vao, uint N ); // Make space for `N` sub-part pointers
+VAO_VNC_f* get_part_i( VAO_VNC_f* vao, uint i ); // Fetch sub-VAO
+void /*-*/ delete_VAO_VNC_f( VAO_VNC_f* vao ); // Erase the VAO (and parts) at heap and the GPU
+// Copy {V,N,C} from the specified arrays
+void /*-*/ load_VAO_VNC_from_full_arrays( VAO_VNC_f* vao, /*<<*/ const float* Vsto, const float* Nsto, const float* Csto );
+void /*-*/ allocate_and_load_VAO_VNC_at_GPU( VAO_VNC_f* vao ); // Fetch & set buffer ID, and make space on the GPU for the VAO
+// Compose relative, ownship, and scale transformations into `totPose`, relative to parent frame
+void /*-*/ update_total_pose( VAO_VNC_f* vao );
+void /*-*/ draw_VAO_VNC_f( VAO_VNC_f* vao ); // Draw VAO and all subparts
+vec4f /**/ get_posn( VAO_VNC_f* vao ); // Get the position components of the homogeneous coordinates as a vector
+void /*-*/ set_posn( VAO_VNC_f* vao, const vec4f posn ); // Set the position components of the homogeneous coordinates
+// Increment the position components of the homogeneous coordinates by the associated `delta` components
+void /*-*/ translate( VAO_VNC_f* vao, const vec4f delta );
+void /*-*/ rotate_angle_axis_rad( VAO_VNC_f* vao, float angle_rad, const vec4f axis ); // Rotate the object by `angle_rad` about `axis`
+void /*-*/ rotate_RPY_vehicle( VAO_VNC_f* vao, float r_, float p_, float y_ ); // Increment the world Roll, Pitch, Yaw of the model
+void /*-*/ thrust_Z_vehicle( VAO_VNC_f* vao, float dZ ); // Move in the local Z direction by `dZ` 
+
+////////// SPECIFIC VAO ////////////////////////////////////////////////////////////////////////////
+
+VAO_VNC_f* colorspace_cube_VAO_VNC_f( void ); // Make a colorful cube from the static array data
+    
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////// draw_geo.c /////////////////////////////////////////////////////////////////////////

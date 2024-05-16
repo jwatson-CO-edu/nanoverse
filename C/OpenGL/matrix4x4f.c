@@ -13,6 +13,7 @@
 */
 
 #include "matrix4x4f.h"
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -114,7 +115,7 @@ void rot_RPY_vehicle_mtx44f( float mat[], /*<<*/ float r_, float p_, float y_ ){
 //
 void rot_angle_axis_mtx44f( float mat[], float th_deg, float x, float y, float z ){
     //  Normalize axis
-    float l = sqrt( x*x + y*y + z*z );
+    float l = sqrtf( x*x + y*y + z*z );
     if(l==0) return;
     x /= l;
     y /= l;
@@ -122,13 +123,14 @@ void rot_angle_axis_mtx44f( float mat[], float th_deg, float x, float y, float z
     //  Calculate sin and cos
     float s = sin(th_deg*M_PI/180);
     float c = cos(th_deg*M_PI/180);
+   //  printf( "%f, %f, %f\n", s, c, l );
     //  Rotation matrix
     float R[16] =
     {
-        (1-c)*x*x+c   , (1-c)*x*y+z*s , (1-c)*z*x-y*s , 0 ,
-        (1-c)*x*y-z*s , (1-c)*y*y+c   , (1-c)*y*z+x*s , 0 ,
-        (1-c)*z*x+y*s , (1-c)*y*z-x*s , (1-c)*z*z+c   , 0 ,
-            0       ,       0       ,       0       , 1 ,
+        (1.0f-c)*x*x+c   , (1.0f-c)*x*y+z*s , (1.0f-c)*z*x-y*s , 0.0f ,
+        (1.0f-c)*x*y-z*s , (1.0f-c)*y*y+c   , (1.0f-c)*y*z+x*s , 0.0f ,
+        (1.0f-c)*z*x+y*s , (1.0f-c)*y*z-x*s , (1.0f-c)*z*z+c   , 0.0f ,
+        0.0f             , 0.0f             , 0.0f             , 1.0f ,
     };
     //  Multiply
     mult_mtx44f(mat,R);
@@ -137,16 +139,15 @@ void rot_angle_axis_mtx44f( float mat[], float th_deg, float x, float y, float z
 //
 //  Translate
 //
-void translate_mtx44f(float mat[],float dx,float dy,float dz)
-{
-   //  Scale matrix
+void translate_mtx44f( float mat[], float dx, float dy, float dz ){
+   // 1. Second operand
    float T[16];
-   identity_mtx44f(T);
+   identity_mtx44f( T );
    T[12] = dx;
    T[13] = dy;
    T[14] = dz;
-   //  Multiply
-   mult_mtx44f(mat,T);
+   // 2. Multiply
+   mult_mtx44f( mat, T );
 }
 
 //
@@ -322,7 +323,7 @@ void mat4perspective(float mat[],float fovy,float asp,float zNear,float zFar)
 //
 //  Print 4x4 matrix to stderr
 //
-void mat4print(const char* text,float m[16])
+void print_mtx44f(const char* text,float m[16])
 {
    fprintf(stderr,"%s %s\n",text,vulkan?"Vulkan":"OpenGL");
    for (int i=0;i<4;i++)

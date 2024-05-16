@@ -131,12 +131,13 @@
 ### `[>]` HW3: Nested References Frames with `glPushMatrix`/`glPopMatrix`
 * `[Y]` Simple VAO struct with vertex coloring, 2024-05-12: Needs testing
 * `[Y]` Render a cube, 2024-05-12: Tested!
-* `[>]` Render rotating cubes in nested reference frames
-    - `[ ]` Single rotating cubes
-    - `[ ]` Multiple levels rotating cubes
-* `[ ]` Add VAO shapes
-    - `[ ]` VAO Icos
-    - `[ ]` VAO Tetra
+* `[Y]` Render rotating cubes in nested reference frames, 2024-05-16: Nested rotating cubes!
+    - `[Y]` Single rotating cubes, 2024-05-16: Nested rotating cubes!
+    - `[Y]` Multiple levels of rotating cubes, 2024-05-16: Nested rotating cubes!
+* `[ ]` Promote "02_VAO_VNC_f.c" to a library  &&  Add VAO shapes
+    - `[ ]` Lib
+    - `[ ]` Add VAO Icos
+    - `[ ]` Add VAO Tetra
 * `[ ]` X-Y Grid
     - `{?}` As VAO?
 * `[ ]` TetraTank rolling on icos wheels
