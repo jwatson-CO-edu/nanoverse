@@ -167,6 +167,7 @@ vec4f div_vec4f( const vec4f u, float d ); // --------------------------- Calc `
 vec4f scale_vec4f( const vec4f u, float f ); // ------------------------- Calc `u` * `f` = `r`, R^3
 vec4f blend_vec4f( const vec4f u, float fU, const vec4f v, float fV ); // Return the weighted sum of the two verctors, R^3
 vec4f stretch_to_len_vec4f( const vec4f vec, float len ); // ------------ Stretch `vec` to `len` and return
+float angle_between_vec4f( const vec4f vec1, const vec4f vec2 ); // Get the angle between two R3 vectors, radians
     
 
 ///// 3D Segments & Triangles /////////////////////////////////////////////

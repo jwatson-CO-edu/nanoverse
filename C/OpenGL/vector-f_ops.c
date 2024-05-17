@@ -1,6 +1,7 @@
 #include "toolbox.h"
 
 ////////// SCALED 3D VECTORS ///////////////////////////////////////////////////////////////////////
+const float _EPSILON = 1e-9;
 
 vec4f make_vec4f( float x, float y, float z ){
     // Make a 3D float vector with scale = 1.0 from three floats
@@ -132,6 +133,28 @@ vec4f stretch_to_len_vec4f( const vec4f vec, float len ){
     // Stretch `vec` to `len` and return
     return scale_vec4f( unit_vec4f( vec ), len );
 }
+
+
+bool p_equal_vec4f( const vec4f vec1, const vec4f vec2 ){
+    // Return true if `vec1` and `vec2` are very nearly exactly equal
+    return (
+        (fabsf( vec1.x - vec2.x ) <= _EPSILON) &&
+        (fabsf( vec1.y - vec2.y ) <= _EPSILON) &&
+        (fabsf( vec1.z - vec2.z ) <= _EPSILON) &&
+        (fabsf( vec1.w - vec2.w ) <= _EPSILON)
+    );
+}
+
+
+float angle_between_vec4f( const vec4f vec1, const vec4f vec2 ){
+    // Get the angle between two R3 vectors, radians
+    float angle = acosf( dot_vec4f( unit_vec4f( vec1 ), unit_vec4f( vec2 ) ) ); // for now assume that there are no special cases
+    if( isnan( angle ) ){
+        if( p_equal_vec4f( unit_vec4f( vec1 ), unit_vec4f( vec2 ) ) ){  return 0.0f;  }
+        else{  return M_PI;  }
+    }else{  return angle;  }
+}
+
 
 ///// 3D Segments & Triangles /////////////////////////////////////////////
 

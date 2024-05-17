@@ -17,7 +17,10 @@ const float _TNK_BODY_SCL = 1.0f;
 const vec4f _TNK_BODY_CLR = {0.0f, 1.0f, 0.0f, 1.0f};
 const float _TNK_WHL_SCL  = 0.25f;
 const vec4f _TNK_WHL_CLR  = {0.0f, 0.0f, 1.0f, 1.0f};
-
+const float _GRID_UNIT    =  1.0f;
+const uint  _N_UNIT /*-*/ = 50;
+const vec4f _GRID_CLR     = {0.5f, 0.5f, 0.5f, 1.0f};
+const float _GRID_THICC   = 1.5f;
 
 
 ////////// PROGRAM STRUCTS /////////////////////////////////////////////////////////////////////////
@@ -36,7 +39,15 @@ TetraTank_mk0* make_TetraTank_mk0( float bodyRad_m, const vec4f bodyClr, float w
     TetraTank_mk0* rtnTank = (TetraTank_mk0*) malloc( sizeof( TetraTank_mk0 ) );
     // Body //
     rtnTank->body = tetrahedron_VAO_VNC_f( bodyRad_m, bodyClr ); 
-    // FIXME: ROTATE TETRAHEDRON
+    vec4f v0 /**/ = make_vec4f( rtnTank->body->V[0], rtnTank->body->V[1], rtnTank->body->V[2] );
+    vec4f v1 /**/ = make_vec4f( rtnTank->body->V[3], rtnTank->body->V[4], rtnTank->body->V[5] );
+    vec4f v2 /**/ = make_vec4f( rtnTank->body->V[6], rtnTank->body->V[7], rtnTank->body->V[8] );
+    vec4f segCntr = seg_center( v0, v1 );
+    float rotAngl = angle_between_vec4f( sub_vec4f( v2, segCntr ), make_vec4f( 0.0f, 0.0f, 1.0f ) );
+    float op2[16];
+    translate_mtx44f( rtnTank->body->relPose, 0.0f, 0.0f, bodyRad_m );
+    Rx_mtx44f( op2, -(M_PI/2.0f-rotAngl) );
+    mult_mtx44f( rtnTank->body->relPose, op2 );
     // Wheels //
     allocate_N_VAO_VNC_parts( rtnTank->body, 3 );
     for( ubyte i = 0; i < 3; ++i ){
@@ -44,11 +55,16 @@ TetraTank_mk0* make_TetraTank_mk0( float bodyRad_m, const vec4f bodyClr, float w
     }
     rtnTank->w0pose = get_part_i( rtnTank->body, 0 )->ownPose; 
     rtnTank->w1pose = get_part_i( rtnTank->body, 1 )->ownPose; 
-    rtnTank->w2pose = get_part_i( rtnTank->body, 2 )->ownPose; 
-    // FIXME: MOVE WHEELS TO BOTTOM 3 CORNERS
-
+    rtnTank->w2pose = get_part_i( rtnTank->body, 2 )->ownPose;
+    v0 = stretch_to_len_vec4f( v0, bodyRad_m + wheelRad_m*2.0f );
+    v1 = stretch_to_len_vec4f( v1, bodyRad_m + wheelRad_m*2.0f );
+    v2 = stretch_to_len_vec4f( v2, bodyRad_m + wheelRad_m*2.0f );
+    translate_mtx44f( get_part_i( rtnTank->body, 0 )->relPose, v0.x, v0.y, v0.z );
+    translate_mtx44f( get_part_i( rtnTank->body, 1 )->relPose, v1.x, v1.y, v1.z );
+    translate_mtx44f( get_part_i( rtnTank->body, 2 )->relPose, v2.x, v2.y, v2.z );
+    // Alloc All @ GPU //
     allocate_and_load_VAO_VNC_at_GPU( rtnTank->body );
-
+    // Return //
     return rtnTank;
 }
 
@@ -83,6 +99,9 @@ void display(){
 
     ///// DRAW LOOP BEGIN /////////////////////////////////////////////////
     look( cam );
+
+    draw_grid_org_XY( _GRID_UNIT, _N_UNIT, _N_UNIT, 
+                      _GRID_THICC, _GRID_CLR );
 
     draw_VAO_VNC_f( tank->body );
 

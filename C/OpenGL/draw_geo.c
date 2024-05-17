@@ -148,14 +148,14 @@ void draw_sphere( vec4f center, float radius, vec4f color ){
 }
 
 
-void draw_grid_org_XY( float gridSize , uint xPlusMinus , uint yPlusMinus , 
-                       float lineThic , vec4f color ){
+void draw_grid_org_XY( float gridSize, uint xPlusMinus, uint yPlusMinus, 
+                       float lineThic, vec4f color ){
     // Draw a square grid centered at the origin, extending 'xPlusMinus' units in X and 'yPlusMinus' units in Y
     
-    float xMin = - gridSize * xPlusMinus , 
-          xMax =   gridSize * xPlusMinus ,
-          yMin = - gridSize * yPlusMinus , 
-          yMax =   gridSize * yPlusMinus ;
+    float xMin = - gridSize * xPlusMinus, 
+          xMax =   gridSize * xPlusMinus,
+          yMin = - gridSize * yPlusMinus, 
+          yMax =   gridSize * yPlusMinus;
     
     glLineWidth( lineThic );
     glClr4f( color );
