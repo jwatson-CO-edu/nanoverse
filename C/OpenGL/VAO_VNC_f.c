@@ -198,14 +198,16 @@ VAO_VNC_f* VAO_from_TriNet_solid_color( TriNet* net, const vec4f color ){
     uint /*-*/ Nrows = net->Ntri;
     VAO_VNC_f* rtnVAO = make_VAO_VNC_f( net->Ntri );
     vec4f /**/ v0, v1, v2, n0, n1, n2;
+    // 1. For every triangle / row
     for( uint i = 0; i < Nrows; ++i ){
+        // 2. Fetch vertices and normals
         v0 = net->V[ net->F[i].v0 ];
         v1 = net->V[ net->F[i].v1 ];
         v2 = net->V[ net->F[i].v2 ];
         n0 = net->N[ net->F[i].v0 ];
         n1 = net->N[ net->F[i].v1 ];
         n2 = net->N[ net->F[i].v2 ];
-
+        // 3. Load vertices
         rtnVAO->V[ i*9   ] = v0.x;
         rtnVAO->V[ i*9+1 ] = v0.y;
         rtnVAO->V[ i*9+2 ] = v0.z;
@@ -215,7 +217,7 @@ VAO_VNC_f* VAO_from_TriNet_solid_color( TriNet* net, const vec4f color ){
         rtnVAO->V[ i*9+6 ] = v2.x;
         rtnVAO->V[ i*9+7 ] = v2.y;
         rtnVAO->V[ i*9+8 ] = v2.z;
-
+        // 4, Load normals
         rtnVAO->C[ i*9   ] = color.r;
         rtnVAO->C[ i*9+1 ] = color.g;
         rtnVAO->C[ i*9+2 ] = color.b;
@@ -316,4 +318,45 @@ VAO_VNC_f* colorspace_cube_VAO_VNC_f( void ){
 
 ///// Tetrahedron /////////////////////////////////////////////////////////
 
+VAO_VNC_f* tetrahedron_VAO_VNC_f( float radius, const vec4f color ){
+    // Construct a tetrahedron VAO with flat-shaded normals and one solid color
+    TriNet*    tetNet = create_tetra_mesh_only( radius );
+    VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color( tetNet, color );
+    delete_net( tetNet );
+    return tetNet;
+}
+
+
+///// Cube ////////////////////////////////////////////////////////////////
+
+VAO_VNC_f* cube_VAO_VNC_f( float sideLen, const vec4f color ){
+    // Construct a cube VAO with flat-shaded normals and one solid color
+    TriNet*    cubNet = create_cube_mesh_only( sideLen );
+    VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color( cubNet, color );
+    delete_net( cubNet );
+    return cubNet;
+}
+
+
+
+///// Icosahedron /////////////////////////////////////////////////////////
+
+VAO_VNC_f* icosahedron_VAO_VNC_f( float radius, const vec4f color ){
+    // Construct a icosahedron VAO with flat-shaded normals and one solid color
+    TriNet*    icsNet = create_icos_mesh_only( radius );
+    VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color( icsNet, color );
+    delete_net( icsNet );
+    return icsNet;
+}
+
+
+///// Icosphere ///////////////////////////////////////////////////////////
+
+VAO_VNC_f* icosphere_VAO_VNC_f( float radius, uint div, const vec4f color ){
+    // Construct a icosphere VAO with flat-shaded normals and one solid color
+    TriNet*    sphNet = create_icosphere_mesh_only( radius, div );
+    VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color( sphNet, color );
+    delete_net( sphNet );
+    return sphNet;
+}
 

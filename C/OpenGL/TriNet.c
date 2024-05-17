@@ -261,6 +261,50 @@ TriNet* create_tetra_mesh_only( float radius ){
 }
 
 
+///// Cube ////////////////////////////////////////////////////////////////
+
+void populate_cube_vertices_and_faces( vec4f* V, vec3u* F, float sideLen ){
+	// Load geometry for an icosahedron onto matrices `V` and `F` 
+    float hL = sideLen / 2.0f;
+    /// Load Vertices ///
+	// Assume `V` already allocated for *8* vertices
+    V[0] = make_vec4f( -hL, -hL, -hL );
+    V[1] = make_vec4f(  hL, -hL, -hL );
+    V[2] = make_vec4f(  hL,  hL, -hL );
+    V[3] = make_vec4f( -hL,  hL, -hL );
+    V[4] = make_vec4f( -hL, -hL,  hL );
+    V[5] = make_vec4f(  hL, -hL,  hL );
+    V[6] = make_vec4f(  hL,  hL,  hL );
+    V[7] = make_vec4f( -hL,  hL,  hL );
+    /// Load Faces ///
+	// Assume `F` already allocated for *12* faces
+    F[ 0] = make_vec3u( 0, 2, 1 );
+    F[ 1] = make_vec3u( 0, 3, 2 );
+    F[ 2] = make_vec3u( 0, 1, 5 );
+    F[ 3] = make_vec3u( 0, 5, 4 );
+    F[ 4] = make_vec3u( 0, 4, 3 );
+    F[ 5] = make_vec3u( 3, 4, 7 );
+    F[ 6] = make_vec3u( 3, 7, 2 );
+    F[ 7] = make_vec3u( 2, 7, 6 );
+    F[ 8] = make_vec3u( 2, 6, 1 );
+    F[ 9] = make_vec3u( 1, 6, 5 );
+    F[10] = make_vec3u( 6, 7, 5 );
+    F[11] = make_vec3u( 5, 7, 4 );
+}
+
+
+TriNet* create_cube_mesh_only( float sideLen ){
+	// Create an regular icosahedron (*without* unfolded net data)
+	/// Allocate ///
+	TriNet* net = alloc_net( 12, 8 );
+	/// Vertices and Faces ///
+	populate_cube_vertices_and_faces( net->V, net->F, sideLen );
+	/// Normals ///
+	N_from_VF( net->N, net->Ntri, net->V, net->F );
+	/// Return ///
+	return net;
+}
+
 
 ///// Icosahedron /////////////////////////////////////////////////////////
 
