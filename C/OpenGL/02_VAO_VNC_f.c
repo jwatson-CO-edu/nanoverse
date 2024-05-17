@@ -362,6 +362,8 @@ void display(){
 	glutSwapBuffers();
 }
 
+
+
 ////////// WINDOW & VIEW STATE /////////////////////////////////////////////////////////////////////
 float w2h = 0.0f; // Aspect ratio
 

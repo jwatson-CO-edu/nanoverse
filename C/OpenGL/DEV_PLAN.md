@@ -121,37 +121,41 @@
 ## `[>]` Computer Graphics Blitz in Pure C + OpenGL + GLUT, Morning Warmup and Weekend Project
 * Goal: Reinforce fluency in Pure C + Pure OpenGL. I have been spoiled by Raylib + C++!
 * C++ and Eigen are **DISALLOWED**!
-* Compile: `gcc -std=gnu17 -O3 -Wall <SOURCE FILE>.c -lglut -lGLU -lGL -lm -o <PROG NAME>.out`
 
 ### `[Y]` HW2: Lorenz Attractor
 * `[Y]` Multiple, Chasing Traces of System State, 2024-05-0X: 6D Lorenz attractor completed and tuned!
     - `[Y]` Different starting state, Different eq. params, 2024-05-0X: 6D Lorenz attractor completed and tuned!
     - `{Y}` Are there versions of the attractor with higher-dimensional state?, 2024-05-0X: 6D Lorenz attractor completed and tuned!
 
-### `[>]` HW3: Nested References Frames with `glPushMatrix`/`glPopMatrix`
+### `[>]` HW3: Nested Reference Frames with `glPushMatrix`/`glPopMatrix`
 * `[Y]` Simple VAO struct with vertex coloring, 2024-05-12: Needs testing
 * `[Y]` Render a cube, 2024-05-12: Tested!
 * `[Y]` Render rotating cubes in nested reference frames, 2024-05-16: Nested rotating cubes!
     - `[Y]` Single rotating cubes, 2024-05-16: Nested rotating cubes!
     - `[Y]` Multiple levels of rotating cubes, 2024-05-16: Nested rotating cubes!
-* `[ ]` Promote "02_VAO_VNC_f.c" to a library  &&  Add VAO shapes
-    - `[ ]` Lib
-    - `[ ]` Add VAO Icos
-    - `[ ]` Add VAO Tetra
-* `[ ]` X-Y Grid
-    - `{?}` As VAO?
-* `[ ]` TetraTank rolling on icos wheels
+* `[Y]` Promote "02_VAO_VNC_f.c" to a library  &&  Add VAO shapes, 2024-05-17: Added!
+    - `[Y]` Lib, 2024-05-16: Promoted!
+    - `[Y]` Add VAO Icos, 2024-05-17: Added!
+    - `[Y]` Add VAO Tetra, 2024-05-17: Added!
+* `[Y]` X-Y Grid, 2024-05-17: Ported from coursework, Needs testing
+    - `{P}` As VAO?, 2024-05-17: Do this later.  Add one thing at a time!
+* `[>]` TetraTank rolling on icos wheels
     - `[ ]` kb movement
-    - `[ ]` mouse: look + steer, 3rd person view
-    - `{?}` Joystick control
 * `{?}` Use a shader to construct lines at edges
     - `{?}` GLSL: How to compute distance from a triangle edge?  Sounds like a geometry shader to me?
 
+
 ### HW4: First-Person View in a Scene
-* `[ ]` View newer class material
+* `[ ]` TetraTank rolling on icos wheels
+    - `[ ]` mouse: look + steer, 3rd person view
+    - `{?}` Joystick control
+    - `{?}` Wireframe?
+        * `{?}` As VAO?
 
 ### HW5: Phong Shading + Moving Light Source(s)
 * `[ ]` View newer class material
+
+
 
 ### HW6: Shaded & Textured Models
 * `[ ]` View newer class material

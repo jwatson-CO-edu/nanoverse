@@ -160,6 +160,9 @@ VAO_VNC_f* icosphere_VAO_VNC_f( float radius, uint div, const vec4f color );
 /////////////// draw_geo.c /////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
     
-void draw_sphere( vec4f center, float radius, vec4f color );
+void draw_sphere( vec4f center, float radius, vec4f color ); // Draws a sphere divided on lat/long
+// Draw a square grid centered at the origin, extending 'xPlusMinus' units in X and 'yPlusMinus' units in Y
+void draw_grid_org_XY( float gridSize, uint xPlusMinus, uint yPlusMinus, float lineThic, vec4f color );
+    
 
 #endif

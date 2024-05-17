@@ -146,3 +146,48 @@ void draw_sphere( vec4f center, float radius, vec4f color ){
     //  Undo transformations
     glPopMatrix();
 }
+
+
+void draw_grid_org_XY( float gridSize , uint xPlusMinus , uint yPlusMinus , 
+                       float lineThic , vec4f color ){
+    // Draw a square grid centered at the origin, extending 'xPlusMinus' units in X and 'yPlusMinus' units in Y
+    
+    float xMin = - gridSize * xPlusMinus , 
+          xMax =   gridSize * xPlusMinus ,
+          yMin = - gridSize * yPlusMinus , 
+          yMax =   gridSize * yPlusMinus ;
+    
+    glLineWidth( lineThic );
+    glClr4f( color );
+    
+    glBegin( GL_LINES );
+    
+        // 1. Draw the axis , X
+        glVertex3d( 0 , yMin , 0 ); // Bgn
+        glVertex3d( 0 , yMax , 0 ); // End
+        // 2. Draw the axis , Y
+        glVertex3d( xMin , 0 , 0 ); // Bgn
+        glVertex3d( xMax , 0 , 0 ); // End
+        
+        // 3. Draw the grid , X
+        for( uint i = 0 ; i < xPlusMinus ; i++ ){
+            // Plus
+            glVertex3d(  gridSize * i , yMin , 0 ); // Bgn
+            glVertex3d(  gridSize * i , yMax , 0 ); // End
+            // Minus
+            glVertex3d( -gridSize * i , yMin , 0 ); // Bgn
+            glVertex3d( -gridSize * i , yMax , 0 ); // End
+        }
+        
+        // 3. Draw the grid , Y
+        for( uint i = 0 ; i < yPlusMinus ; i++ ){
+            // Plus
+            glVertex3d( xMin ,  gridSize * i , 0 ); // Bgn
+            glVertex3d( xMax ,  gridSize * i , 0 ); // End
+            // Minus
+            glVertex3d( xMin , -gridSize * i , 0 ); // Bgn
+            glVertex3d( xMax , -gridSize * i , 0 ); // End
+        }
+        
+    glEnd();
+}

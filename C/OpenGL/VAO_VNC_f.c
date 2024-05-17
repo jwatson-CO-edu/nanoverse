@@ -75,6 +75,7 @@ void allocate_and_load_VAO_VNC_at_GPU( VAO_VNC_f* vao ){
     glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, 0             , vao->arSiz, vao->V ); // copy vertices starting from 0 offest
     glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vao->arSiz    , vao->arSiz, vao->N ); // copy normals after vertices
     glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, 2*(vao->arSiz), vao->arSiz, vao->C ); // copy colours after normals
+    for( uint i = 0; i < vao->Nprt; ++i ){  allocate_and_load_VAO_VNC_at_GPU( get_part_i( vao, i ) );  }
 }
 
 
@@ -217,7 +218,17 @@ VAO_VNC_f* VAO_from_TriNet_solid_color( TriNet* net, const vec4f color ){
         rtnVAO->V[ i*9+6 ] = v2.x;
         rtnVAO->V[ i*9+7 ] = v2.y;
         rtnVAO->V[ i*9+8 ] = v2.z;
-        // 4, Load normals
+        // 3. Load normals
+        rtnVAO->N[ i*9   ] = n0.x;
+        rtnVAO->N[ i*9+1 ] = n0.y;
+        rtnVAO->N[ i*9+2 ] = n0.z;
+        rtnVAO->N[ i*9+3 ] = n1.x;
+        rtnVAO->N[ i*9+4 ] = n1.y;
+        rtnVAO->N[ i*9+5 ] = n1.z;
+        rtnVAO->N[ i*9+6 ] = n2.x;
+        rtnVAO->N[ i*9+7 ] = n2.y;
+        rtnVAO->N[ i*9+8 ] = n2.z;
+        // 4. Load colors
         rtnVAO->C[ i*9   ] = color.r;
         rtnVAO->C[ i*9+1 ] = color.g;
         rtnVAO->C[ i*9+2 ] = color.b;
@@ -228,6 +239,7 @@ VAO_VNC_f* VAO_from_TriNet_solid_color( TriNet* net, const vec4f color ){
         rtnVAO->C[ i*9+7 ] = color.g;
         rtnVAO->C[ i*9+8 ] = color.b;
     }
+    return rtnVAO;
 }
 
 
@@ -323,7 +335,7 @@ VAO_VNC_f* tetrahedron_VAO_VNC_f( float radius, const vec4f color ){
     TriNet*    tetNet = create_tetra_mesh_only( radius );
     VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color( tetNet, color );
     delete_net( tetNet );
-    return tetNet;
+    return rtnVAO;
 }
 
 
@@ -334,7 +346,7 @@ VAO_VNC_f* cube_VAO_VNC_f( float sideLen, const vec4f color ){
     TriNet*    cubNet = create_cube_mesh_only( sideLen );
     VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color( cubNet, color );
     delete_net( cubNet );
-    return cubNet;
+    return rtnVAO;
 }
 
 
@@ -346,7 +358,7 @@ VAO_VNC_f* icosahedron_VAO_VNC_f( float radius, const vec4f color ){
     TriNet*    icsNet = create_icos_mesh_only( radius );
     VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color( icsNet, color );
     delete_net( icsNet );
-    return icsNet;
+    return rtnVAO;
 }
 
 
@@ -357,6 +369,6 @@ VAO_VNC_f* icosphere_VAO_VNC_f( float radius, uint div, const vec4f color ){
     TriNet*    sphNet = create_icosphere_mesh_only( radius, div );
     VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color( sphNet, color );
     delete_net( sphNet );
-    return sphNet;
+    return rtnVAO;
 }
 
