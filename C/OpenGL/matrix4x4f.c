@@ -50,7 +50,7 @@ void identity_mtx44f( float mat[] ){  memcpy( mat, I, sizeof(I) );  }
 //
 //  Copy 4x4 matrix
 //
-void copy_mtx44f( float mat[], float m[] ){
+void copy_mtx44f( float mat[], const float m[] ){
     memcpy( mat, m, sizeof(I) );
 }
 

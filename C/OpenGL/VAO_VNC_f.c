@@ -244,7 +244,7 @@ VAO_VNC_f* VAO_from_TriNet_solid_color( TriNet* net, const vec4f color ){
 
 
 VAO_VNC_f* VAO_from_TriNet_solid_color_transformed( TriNet* net, const vec4f color, const float* xfrm ){
-    // Get a VAO from a `TriNet`
+    // Get a VAO from a `TriNet` with `xfrm` applied to all vertices and normals
     // NOTE: This function assumes that the normals of the `net` are populated
     uint /*-*/ Nrows = net->Ntri;
     VAO_VNC_f* rtnVAO = make_VAO_VNC_f( net->Ntri );

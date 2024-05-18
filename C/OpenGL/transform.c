@@ -16,15 +16,13 @@ void set_posn_mtx44f( float mat[], const vec4f posn ){
 }
 
 
-vec4f mult_mtx44f_vec4f( float mat[], const vec4f v ){
+vec4f mult_mtx44f_vec4f( const float mat[], const vec4f v ){
     // Transform `v` with `mat`
-    vec4f rtnV = make_0_vec4f();
-    for( int j = 0; j < 4; j++ ){
-        rtnV.x += mat[   j] * v.x;
-        rtnV.y += mat[ 4+j] * v.y;
-        rtnV.z += mat[ 8+j] * v.z;
-        rtnV.w += mat[12+j] * v.w;
-    }
+    vec4f rtnV;
+    rtnV.x = mat[0]*v.x + mat[4+0]*v.y + mat[8+0]*v.z + mat[12+0]*v.w;
+    rtnV.y = mat[1]*v.x + mat[4+1]*v.y + mat[8+1]*v.z + mat[12+1]*v.w;
+    rtnV.z = mat[2]*v.x + mat[4+2]*v.y + mat[8+2]*v.z + mat[12+2]*v.w;
+    rtnV.w = mat[3]*v.x + mat[4+3]*v.y + mat[8+3]*v.z + mat[12+3]*v.w;
     // Return
     return rtnV;
 }

@@ -52,7 +52,7 @@ typedef struct{
 ////////// HOMOGENEOUS COORDINATES /////////////////////////////////////////////////////////////////
 
 void  set_posn_mtx44f( float mat[], const vec4f posn ); // Set the position components of the homogeneous coordinates
-vec4f mult_mtx44f_vec4f( float mat[], const vec4f v ); // Transform `v` with `mat`
+vec4f mult_mtx44f_vec4f( const float mat[], const vec4f v ); // Transform `v` with `mat`
     
 
 
@@ -135,6 +135,8 @@ void /*-*/ thrust_Z_vehicle( VAO_VNC_f* vao, float dZ ); // Move in the local Z 
 ////////// CONSTRUCTION ////////////////////////////////////////////////////////////////////////////
 
 VAO_VNC_f* VAO_from_TriNet_solid_color( TriNet* net, const vec4f color ); // Get a VAO from a `TriNet`
+// Get a VAO from a `TriNet` with `xfrm` applied to all vertices and normals
+VAO_VNC_f* VAO_from_TriNet_solid_color_transformed( TriNet* net, const vec4f color, const float* xfrm );
 
 ////////// SPECIFIC VAO ////////////////////////////////////////////////////////////////////////////
 
