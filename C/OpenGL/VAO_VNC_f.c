@@ -243,6 +243,58 @@ VAO_VNC_f* VAO_from_TriNet_solid_color( TriNet* net, const vec4f color ){
 }
 
 
+VAO_VNC_f* VAO_from_TriNet_solid_color_transformed( TriNet* net, const vec4f color, const float* xfrm ){
+    // Get a VAO from a `TriNet`
+    // NOTE: This function assumes that the normals of the `net` are populated
+    uint /*-*/ Nrows = net->Ntri;
+    VAO_VNC_f* rtnVAO = make_VAO_VNC_f( net->Ntri );
+    float /**/ rota[16];  
+    vec4f /**/ v0, v1, v2, n0, n1, n2;
+    copy_mtx44f( rota, xfrm );
+    set_position_mtx44f( rota, 0.0f, 0.0f, 0.0f );
+    // 1. For every triangle / row
+    for( uint i = 0; i < Nrows; ++i ){
+        // 2. Fetch vertices and normals
+        v0 = mult_mtx44f_vec4f( xfrm, net->V[ net->F[i].v0 ] );
+        v1 = mult_mtx44f_vec4f( xfrm, net->V[ net->F[i].v1 ] );
+        v2 = mult_mtx44f_vec4f( xfrm, net->V[ net->F[i].v2 ] );
+        n0 = mult_mtx44f_vec4f( rota, net->N[ net->F[i].v0 ] );
+        n1 = mult_mtx44f_vec4f( rota, net->N[ net->F[i].v1 ] );
+        n2 = mult_mtx44f_vec4f( rota, net->N[ net->F[i].v2 ] );
+        // 3. Load vertices
+        rtnVAO->V[ i*9   ] = v0.x;
+        rtnVAO->V[ i*9+1 ] = v0.y;
+        rtnVAO->V[ i*9+2 ] = v0.z;
+        rtnVAO->V[ i*9+3 ] = v1.x;
+        rtnVAO->V[ i*9+4 ] = v1.y;
+        rtnVAO->V[ i*9+5 ] = v1.z;
+        rtnVAO->V[ i*9+6 ] = v2.x;
+        rtnVAO->V[ i*9+7 ] = v2.y;
+        rtnVAO->V[ i*9+8 ] = v2.z;
+        // 3. Load normals
+        rtnVAO->N[ i*9   ] = n0.x;
+        rtnVAO->N[ i*9+1 ] = n0.y;
+        rtnVAO->N[ i*9+2 ] = n0.z;
+        rtnVAO->N[ i*9+3 ] = n1.x;
+        rtnVAO->N[ i*9+4 ] = n1.y;
+        rtnVAO->N[ i*9+5 ] = n1.z;
+        rtnVAO->N[ i*9+6 ] = n2.x;
+        rtnVAO->N[ i*9+7 ] = n2.y;
+        rtnVAO->N[ i*9+8 ] = n2.z;
+        // 4. Load colors
+        rtnVAO->C[ i*9   ] = color.r;
+        rtnVAO->C[ i*9+1 ] = color.g;
+        rtnVAO->C[ i*9+2 ] = color.b;
+        rtnVAO->C[ i*9+3 ] = color.r;
+        rtnVAO->C[ i*9+4 ] = color.g;
+        rtnVAO->C[ i*9+5 ] = color.b;
+        rtnVAO->C[ i*9+6 ] = color.r;
+        rtnVAO->C[ i*9+7 ] = color.g;
+        rtnVAO->C[ i*9+8 ] = color.b;
+    }
+    return rtnVAO;
+}
+
 
 ////////// SPECIFIC VAO ////////////////////////////////////////////////////////////////////////////
 
@@ -334,6 +386,14 @@ VAO_VNC_f* tetrahedron_VAO_VNC_f( float radius, const vec4f color ){
     // Construct a tetrahedron VAO with flat-shaded normals and one solid color
     TriNet*    tetNet = create_tetra_mesh_only( radius );
     VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color( tetNet, color );
+    delete_net( tetNet );
+    return rtnVAO;
+}
+
+VAO_VNC_f* tetrahedron_transformed_VAO_VNC_f( float radius, const vec4f color, const float* xfrm ){
+    // Construct a tetrahedron VAO with flat-shaded normals and one solid color, with all vectors transformed
+    TriNet*    tetNet = create_tetra_mesh_only( radius );
+    VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color_transformed( tetNet, color, xfrm );
     delete_net( tetNet );
     return rtnVAO;
 }

@@ -175,6 +175,16 @@ void translate_mtx44f( float mat[], float dx, float dy, float dz ){
 }
 
 //
+//  Position
+//
+void set_position_mtx44f( float mat[], float x, float y, float z ){
+   // 1. Second operand
+   mat[12] = x;
+   mat[13] = y;
+   mat[14] = z;
+}
+
+//
 //  Scale
 //
 void scale_mtx44f( float mat[], float Sx, float Sy, float Sz ){

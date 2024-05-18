@@ -146,6 +146,8 @@ VAO_VNC_f* colorspace_cube_VAO_VNC_f( void ); // Make a colorful cube from the s
 ///// Tetrahedron /////////////////////////////////////////////////////////
 // Construct a tetrahedron VAO with flat-shaded normals and one solid color
 VAO_VNC_f* tetrahedron_VAO_VNC_f( float radius, const vec4f color ); 
+// Construct a tetrahedron VAO with flat-shaded normals and one solid color, with all vectors transformed
+VAO_VNC_f* tetrahedron_transformed_VAO_VNC_f( float radius, const vec4f color, const float* xfrm );
 
 ///// Icosahedron /////////////////////////////////////////////////////////
 // Construct a icosahedron VAO with flat-shaded normals and one solid color

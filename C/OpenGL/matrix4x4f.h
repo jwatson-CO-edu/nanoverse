@@ -18,6 +18,7 @@ void   rotate_z_mtx44f( float mat[], /*<<*/ float theta_rad ); // Rotate `mat` w
 void   R_RPY_vehicle_mtx44f( float mat[], /*<<*/ float r_, float p_, float y_ );
 void   R_angle_axis_mtx44f( float mat[], /*<<*/ float th_deg, float x, float y, float z );
 void   translate_mtx44f( float mat[], /*<<*/ float dx, float dy, float dz );
+void   set_position_mtx44f( float mat[], float x, float y, float z );
 void   scale_mtx44f( float mat[], float Sx, float Sy, float Sz );
 void   mat4lookAt(float mat[16] , float Ex,float Ey,float Ez , float Cx,float Cy,float Cz , float Ux,float Uy,float Uz);
 void   mat3normalMatrix(float mat[16],float inv[9]);

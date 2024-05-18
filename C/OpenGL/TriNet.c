@@ -1,8 +1,8 @@
 
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
-#include "toolbox.h"
 #include "geometry.h"
+#include "matrix4x4f.h"
 
 
 
@@ -122,6 +122,17 @@ void A_from_VF( vec3u* A, /*<<*/ uint Ntri_, float eps, const vec4f* V, const ve
     }
     printf( "##### There were %i total matches! #####\n", totMatch );
     printf( "\tThere were %i comparisons made! \n\n", totCompr );
+}
+
+
+void VN_transform_mtx44f( uint Nvrt_, vec4f* V, vec4f* N, const float* xfrm ){
+    // Transform all the vertices and normals using the homogeneous `xfrm`
+    float rota[16];  copy_mtx44f( rota, xfrm );
+    set_position_mtx44f( rota, 0.0f, 0.0f, 0.0f );
+    for( uint i = 0; i < Nvrt_; ++i ){
+        V[i] = mult_mtx44f_vec4f( xfrm, V[i] );
+        N[i] = mult_mtx44f_vec4f( rota, N[i] );
+    }
 }
 
 
