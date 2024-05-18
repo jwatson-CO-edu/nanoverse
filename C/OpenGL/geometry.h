@@ -90,6 +90,12 @@ void draw_net_connectivity( TriNet* net, vec4f lineColor ); // Draw the net neig
 void populate_tetra_vertices_and_faces( vec4f* V, vec3u* F, float radius );
 TriNet* create_tetra_mesh_only( float radius ); // Create an regular tetrahedron (*without* unfolded net data)
 
+///// Triangular Prism ////////////////////////////////////////////////////
+// Construct a triangular prism, with longitudinal direction aligned with Z
+void populate_triprism_vertices_and_faces( vec4f* V, vec3u* F, float height, float triRad );
+// Create an equilateral triangular prism (*without* unfolded net data)
+TriNet* create_triprism_mesh_only( float height, float triRad );
+
 ///// Cube ////////////////////////////////////////////////////////////////
 // Load geometry for a cube onto matrices `V` and `F` 
 void populate_cube_vertices_and_faces( vec4f* V, vec3u* F, float sideLen );

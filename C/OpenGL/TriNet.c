@@ -272,10 +272,51 @@ TriNet* create_tetra_mesh_only( float radius ){
 }
 
 
+///// Triangular Prism ////////////////////////////////////////////////////
+
+void populate_triprism_vertices_and_faces( vec4f* V, vec3u* F, float height, float triRad ){
+    // Construct a triangular prism, with longitudinal direction aligned with Z
+    float hH = height / 2.0f;
+    /// Load Vertices ///
+	// Assume `V` already allocated for *6* vertices
+    // Bottom Triangle //
+    V[0] = make_vec4f(  triRad /*------------------------*/ , 0.0f /*--------------------------*/ , -hH );
+    V[1] = make_vec4f(  triRad*cosf( 2.0f*M_PI*(1.0f/3.0f) ), triRad*sinf( 2.0f*M_PI*(1.0f/3.0f) ), -hH );
+    V[2] = make_vec4f(  triRad*cosf( 2.0f*M_PI*(2.0f/3.0f) ), triRad*sinf( 2.0f*M_PI*(2.0f/3.0f) ), -hH );
+    // Bottom Triangle //
+    V[3] = make_vec4f( V[0].x, V[0].y, hH );
+    V[4] = make_vec4f( V[2].x, V[2].y, hH );
+    V[5] = make_vec4f( V[1].x, V[1].y, hH );
+    /// Load Faces ///
+	// Assume `F` already allocated for *8* faces
+    F[0] = make_vec3u( 0, 1, 2 );
+    F[1] = make_vec3u( 3, 4, 5 );
+    F[2] = make_vec3u( 0, 3, 1 );
+    F[3] = make_vec3u( 5, 1, 3 );
+    F[4] = make_vec3u( 1, 5, 2 );
+    F[5] = make_vec3u( 4, 2, 5 );
+    F[6] = make_vec3u( 2, 4, 0 );
+    F[7] = make_vec3u( 3, 0, 4 );
+}
+
+
+TriNet* create_triprism_mesh_only( float height, float triRad ){
+	// Create an equilateral triangular prism (*without* unfolded net data)
+	/// Allocate ///
+	TriNet* net = alloc_net( 8, 6 );
+	/// Vertices and Faces ///
+	populate_triprism_vertices_and_faces( net->V, net->F, height, triRad );
+	/// Normals ///
+	N_from_VF( net->N, net->Ntri, net->V, net->F );
+	/// Return ///
+	return net;
+}
+
+
 ///// Cube ////////////////////////////////////////////////////////////////
 
 void populate_cube_vertices_and_faces( vec4f* V, vec3u* F, float sideLen ){
-	// Load geometry for an icosahedron onto matrices `V` and `F` 
+	// Load geometry for a cube onto matrices `V` and `F` 
     float hL = sideLen / 2.0f;
     /// Load Vertices ///
 	// Assume `V` already allocated for *8* vertices
@@ -305,7 +346,7 @@ void populate_cube_vertices_and_faces( vec4f* V, vec3u* F, float sideLen ){
 
 
 TriNet* create_cube_mesh_only( float sideLen ){
-	// Create an regular icosahedron (*without* unfolded net data)
+	// Create a cube (*without* unfolded net data)
 	/// Allocate ///
 	TriNet* net = alloc_net( 12, 8 );
 	/// Vertices and Faces ///

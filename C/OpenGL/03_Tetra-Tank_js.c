@@ -214,8 +214,7 @@ void tick(){
     identity_mtx44f( op1 );
     translate_mtx44f( op1, totMove.x, totMove.y, 0.0f );
     mult_mtx44f( tank->body->ownPose, op1 );
-    // copy_mtx44f( tank->body->relPose, op1 );
-    print_mtx44f( "Tank Body:", tank->body->ownPose );
+    // print_mtx44f( "Tank Body:", tank->body->ownPose );
 
     // 3. Set projection
 	project();
