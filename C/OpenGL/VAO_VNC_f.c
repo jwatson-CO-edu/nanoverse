@@ -165,7 +165,7 @@ void translate( VAO_VNC_f* vao, const vec4f delta ){
 void rotate_angle_axis_rad( VAO_VNC_f* vao, float angle_rad, const vec4f axis ){
     // Rotate the object by `angle_rad` about `axis`
     float op1[16];  identity_mtx44f( op1 );
-    rot_angle_axis_mtx44f( op1, angle_rad*180/M_PI, axis.x, axis.y, axis.z );
+    R_angle_axis_mtx44f( op1, angle_rad*180/M_PI, axis.x, axis.y, axis.z );
     // print_mtx44f( "Rotation Matrix:", op1 );
     mult_mtx44f( op1, vao->ownPose );
     copy_mtx44f( vao->ownPose, op1 );
@@ -176,7 +176,7 @@ void rotate_RPY_vehicle( VAO_VNC_f* vao, float r_, float p_, float y_ ){
     // Increment the world Roll, Pitch, Yaw of the model
     // NOTE: This is for airplanes that move forward in their own Z and have a wingspan across X
     float op1[16];  identity_mtx44f( op1 );
-    rot_RPY_vehicle_mtx44f( op1, r_, p_, y_ );
+    R_RPY_vehicle_mtx44f( op1, r_, p_, y_ );
     mult_mtx44f( op1, vao->ownPose );
     copy_mtx44f( vao->ownPose, op1 );
 }

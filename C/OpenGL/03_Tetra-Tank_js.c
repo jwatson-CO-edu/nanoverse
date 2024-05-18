@@ -22,6 +22,8 @@ const uint  _N_UNIT /*-*/ = 50;
 const vec4f _GRID_CLR     = {0.5f, 0.5f, 0.5f, 1.0f};
 const float _GRID_THICC   = 1.5f;
 
+/// Movement Settings ///
+const float _FRM_DISP = 0.05;
 
 ////////// PROGRAM STRUCTS /////////////////////////////////////////////////////////////////////////
 
@@ -68,22 +70,50 @@ TetraTank_mk0* make_TetraTank_mk0( float bodyRad_m, const vec4f bodyClr, float w
     return rtnTank;
 }
 
+
+
 ////////// PROGRAM STATE ///////////////////////////////////////////////////////////////////////////
 TetraTank_mk0* tank = NULL;
 Camera3D /*-*/ cam  = { {4.0f, 2.0f, 2.0f, 1.0f}, {0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f} };
 
 
 
-////////// SIMULATION //////////////////////////////////////////////////////////////////////////////
+////////// WINDOW & VIEW STATE /////////////////////////////////////////////////////////////////////
+float w2h = 0.0f; // Aspect ratio
 
-void tick(){
-    // Background work
-    
-    
 
-    // Tell GLUT it is necessary to redisplay the scene
-	glutPostRedisplay();
+static void project(){
+	// Set projection
+	// Adapted from code provided by Willem A. (Vlakkies) Schreüder  
+	// NOTE: This function assumes that aspect rario will be computed by 'resize'
+	// 1. Tell OpenGL we want to manipulate the projection matrix
+	glMatrixMode( GL_PROJECTION );
+	//  Undo previous transformations
+	glLoadIdentity();
+	gluPerspective( _FOV_DEG , //- Field of view angle, in degrees, in the y direction.
+					w2h , // ----- Aspect ratio , the field of view in the x direction. Ratio of x (width) to y (height).
+					_SCALE/4 , //- Specifies the distance from the viewer to the near clipping plane (always positive).
+					4*_SCALE ); // Specifies the distance from the viewer to the far clipping plane (always positive).
+	// 2. Switch back to manipulating the model matrix
+	glMatrixMode( GL_MODELVIEW );
+	// 3. Undo previous transformations
+	glLoadIdentity();
 }
+
+
+void reshape( int width , int height ){
+	// GLUT calls this routine when the window is resized
+    // Adapted from code provided by Willem A. (Vlakkies) Schreüder  
+	// 1. Calc the aspect ratio: width to the height of the window
+	w2h = ( height > 0 ) ? (float) width / height : 1;
+	// 2. Set the viewport to the entire window
+	glViewport( 0 , 0 , width , height );
+	// 3. Set projection
+	project();
+}
+
+
+
 
 
 
@@ -120,39 +150,55 @@ void display(){
 }
 
 
-////////// WINDOW & VIEW STATE /////////////////////////////////////////////////////////////////////
-float w2h = 0.0f; // Aspect ratio
 
+////////// INTERACTION /////////////////////////////////////////////////////////////////////////////
 
-static void project(){
-	// Set projection
-	// Adapted from code provided by Willem A. (Vlakkies) Schreüder  
-	// NOTE: This function assumes that aspect rario will be computed by 'resize'
-	// 1. Tell OpenGL we want to manipulate the projection matrix
-	glMatrixMode( GL_PROJECTION );
-	//  Undo previous transformations
-	glLoadIdentity();
-	gluPerspective( _FOV_DEG , //- Field of view angle, in degrees, in the y direction.
-					w2h , // ----- Aspect ratio , the field of view in the x direction. Ratio of x (width) to y (height).
-					_SCALE/4 , //- Specifies the distance from the viewer to the near clipping plane (always positive).
-					4*_SCALE ); // Specifies the distance from the viewer to the far clipping plane (always positive).
-	// 2. Switch back to manipulating the model matrix
-	glMatrixMode( GL_MODELVIEW );
-	// 3. Undo previous transformations
-	glLoadIdentity();
+bool upArrw = false;
+bool dnArrw = false;
+bool rtArrw = false;
+bool lfArrw = false;
+
+void special_dn( int key, int x, int y ){
+    // GLUT calls this routine when an arrow key is pressed
+    if( key == GLUT_KEY_UP    )  upArrw = true;
+    if( key == GLUT_KEY_DOWN  )  dnArrw = true;
+    if( key == GLUT_KEY_RIGHT )  rtArrw = true;
+    if( key == GLUT_KEY_LEFT  )  lfArrw = true;
 }
 
+void special_up( int key, int x, int y ){
+    // GLUT calls this routine when an arrow key is pressed
+    if( key == GLUT_KEY_UP    )  upArrw = false;
+    if( key == GLUT_KEY_DOWN  )  dnArrw = false;
+    if( key == GLUT_KEY_RIGHT )  rtArrw = false;
+    if( key == GLUT_KEY_LEFT  )  lfArrw = false;
+}
 
-void reshape( int width , int height ){
-	// GLUT calls this routine when the window is resized
-    // Adapted from code provided by Willem A. (Vlakkies) Schreüder  
-	// 1. Calc the aspect ratio: width to the height of the window
-	w2h = ( height > 0 ) ? (float) width / height : 1;
-	// 2. Set the viewport to the entire window
-	glViewport( 0 , 0 , width , height );
-	// 3. Set projection
+////////// SIMULATION //////////////////////////////////////////////////////////////////////////////
+
+void tick(){
+    // Background work
+    vec4f totMove = make_0_vec4f();
+    float op1[16];  identity_mtx44f( op1 );
+
+    if( upArrw )  totMove = add_vec4f( totMove, make_vec4f(  0.0f,  1.0f, 0.0f ) );
+    if( dnArrw )  totMove = add_vec4f( totMove, make_vec4f(  0.0f, -1.0f, 0.0f ) );
+    if( rtArrw )  totMove = add_vec4f( totMove, make_vec4f( -1.0f,  0.0f, 0.0f ) );
+    if( lfArrw )  totMove = add_vec4f( totMove, make_vec4f(  1.0f,  0.0f, 0.0f ) );
+
+    totMove = stretch_to_len_vec4f( totMove, _FRM_DISP );
+
+    translate_mtx44f( op1, totMove.x, totMove.y, 0.0f );
+    mult_mtx44f( op1, tank->body->relPose );
+    copy_mtx44f( tank->body->relPose, op1 );
+    print_mtx44f( "Model:", tank->body->relPose );
+
+    // 3. Set projection
 	project();
+    // Tell GLUT it is necessary to redisplay the scene
+	glutPostRedisplay();
 }
+
 
 
 
@@ -196,8 +242,9 @@ int main( int argc, char* argv[] ){
     //  Tell GLUT to call "reshape" when the window is resized
     glutReshapeFunc( reshape );
     
-    // //  Tell GLUT to call "special" when an arrow key is pressed
-    // glutSpecialFunc( special );
+    //  Tell GLUT to call "special" when an arrow key is pressed or released
+    glutSpecialFunc( special_dn );
+    glutSpecialUpFunc( special_up );
     
     // //  Tell GLUT to call "key" when a key is pressed
     // glutKeyboardFunc( key );
