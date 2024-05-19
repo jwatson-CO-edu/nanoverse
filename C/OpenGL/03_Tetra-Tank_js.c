@@ -16,7 +16,8 @@ const float _TARGET_FPS =  60.0f; // Desired framerate
 const float _TNK_BODY_SCL = 1.0f;
 const vec4f _TNK_BODY_CLR = {0.0f, 1.0f, 0.0f, 1.0f};
 const float _TNK_WHL_SCL  = 0.25f;
-const vec4f _TNK_WHL_CLR  = {0.0f, 0.0f, 1.0f, 1.0f};
+const vec4f _TNK_WHL_CLR  = {0.0f , 0.0f , 1.0f, 1.0f};
+const vec4f _TNK_GUN_CLR  = {0.50f, 0.75f, 1.0f, 1.0f};
 const float _GRID_UNIT    =  1.0f;
 const uint  _N_UNIT /*-*/ = 50;
 const vec4f _GRID_CLR     = {0.5f, 0.5f, 0.5f, 1.0f};
@@ -34,6 +35,7 @@ typedef struct{
     float*     w0pose; 
     float*     w1pose; 
     float*     w2pose; 
+    float*     gnPose; 
 }TetraTank_mk0;
 
 
@@ -45,14 +47,16 @@ TetraTank_mk0* make_TetraTank_mk0( float bodyRad_m, const vec4f bodyClr, float w
     vec4f v0 /**/ = tetNet->V[0];
     vec4f v1 /**/ = tetNet->V[1];
     vec4f v2 /**/ = tetNet->V[2];
+    vec4f v3 /**/ = tetNet->V[3];
     vec4f segCntr = seg_center( v0, v1 );
     float rotAngl = angle_between_vec4f( sub_vec4f( v2, segCntr ), make_vec4f( 0.0f, 0.0f, 1.0f ) );
     float op2[16];
+    float op3[16];
     Rx_mtx44f( op2, -(M_PI/2.0f-rotAngl) );
     rtnTank->body = VAO_from_TriNet_solid_color_transformed( tetNet, bodyClr, op2 );
     translate_mtx44f( rtnTank->body->relPose, 0.0f, 0.0f, bodyRad_m );
+    allocate_N_VAO_VNC_parts( rtnTank->body, 4 );
     // Wheels //
-    allocate_N_VAO_VNC_parts( rtnTank->body, 3 );
     for( ubyte i = 0; i < 3; ++i ){
         rtnTank->body->parts[i] = (void*) icosahedron_VAO_VNC_f( wheelRad_m, wheelClr );
     }
@@ -68,6 +72,21 @@ TetraTank_mk0* make_TetraTank_mk0( float bodyRad_m, const vec4f bodyClr, float w
     translate_mtx44f( get_part_i( rtnTank->body, 0 )->relPose, v0.x, v0.y, v0.z );
     translate_mtx44f( get_part_i( rtnTank->body, 1 )->relPose, v1.x, v1.y, v1.z );
     translate_mtx44f( get_part_i( rtnTank->body, 2 )->relPose, v2.x, v2.y, v2.z );
+    rtnTank->w0pose = get_part_i( rtnTank->body, 0 )->ownPose;
+    rtnTank->w1pose = get_part_i( rtnTank->body, 1 )->ownPose;
+    rtnTank->w2pose = get_part_i( rtnTank->body, 2 )->ownPose;
+
+    // Turret //
+    identity_mtx44f( op3 );
+    rotate_x_mtx44f( op3, M_PI-rotAngl ); //+rotAngl );
+    rotate_z_mtx44f( op3, M_PI/6.0f );
+    
+    rtnTank->body->parts[3] = (void*) triprism_transformed_VAO_VNC_f( bodyRad_m, wheelRad_m, _TNK_GUN_CLR, op3 );
+    v3 = stretch_to_len_vec4f( v3, bodyRad_m + wheelRad_m*2.0f );
+    mult_mtx44f( get_part_i( rtnTank->body, 3 )->relPose, op2 );
+    translate_mtx44f( get_part_i( rtnTank->body, 3 )->relPose, v3.x, v3.y, v3.z );
+    rtnTank->gnPose = get_part_i( rtnTank->body, 3 )->ownPose;
+    
     // Alloc All @ GPU //
     allocate_and_load_VAO_VNC_at_GPU( rtnTank->body );
     // Return //
@@ -172,12 +191,28 @@ void special_dn( int key, int x, int y ){
     if( key == GLUT_KEY_LEFT  )  lfArrw = true;
 }
 
+void key_dn( ubyte key, int x, int y ){
+    // GLUT calls this routine when an arrow key is pressed
+    if( key == 'w' )  upArrw = true;
+    if( key == 's' )  dnArrw = true;
+    if( key == 'd' )  rtArrw = true;
+    if( key == 'a' )  lfArrw = true;
+}
+
 void special_up( int key, int x, int y ){
     // GLUT calls this routine when an arrow key is released
     if( key == GLUT_KEY_UP    )  upArrw = false;
     if( key == GLUT_KEY_DOWN  )  dnArrw = false;
     if( key == GLUT_KEY_RIGHT )  rtArrw = false;
     if( key == GLUT_KEY_LEFT  )  lfArrw = false;
+}
+
+void key_up( ubyte key, int x, int y ){
+    // GLUT calls this routine when an arrow key is pressed
+    if( key == 'w' )  upArrw = false;
+    if( key == 's' )  dnArrw = false;
+    if( key == 'd' )  rtArrw = false;
+    if( key == 'a' )  lfArrw = false;
 }
 
 void mouse_move( int x, int y ){
@@ -202,19 +237,22 @@ void tick(){
 
     if( upArrw )  totMove = add_vec4f( totMove, make_vec4f(  0.0f,  1.0f, 0.0f ) );
     if( dnArrw )  totMove = add_vec4f( totMove, make_vec4f(  0.0f, -1.0f, 0.0f ) );
-    if( rtArrw )  totMove = add_vec4f( totMove, make_vec4f( -1.0f,  0.0f, 0.0f ) );
-    if( lfArrw )  totMove = add_vec4f( totMove, make_vec4f(  1.0f,  0.0f, 0.0f ) );
+    if( rtArrw )  totMove = add_vec4f( totMove, make_vec4f(  1.0f,  0.0f, 0.0f ) );
+    if( lfArrw )  totMove = add_vec4f( totMove, make_vec4f( -1.0f,  0.0f, 0.0f ) );
 
     totMove = stretch_to_len_vec4f( totMove, _FRM_DISP );
-
-    // Track only RELATIVE mouse movement!
-    xDelta = 0;
-    yDelta = 0;
 
     identity_mtx44f( op1 );
     translate_mtx44f( op1, totMove.x, totMove.y, 0.0f );
     mult_mtx44f( tank->body->ownPose, op1 );
-    // print_mtx44f( "Tank Body:", tank->body->ownPose );
+    
+    turnAngle = -1.0f * yDelta * _FRM_TURN / 2.0f;
+    Rx_mtx44f( op1, turnAngle );
+    mult_mtx44f( tank->gnPose, op1 );
+
+    // Track only RELATIVE mouse movement!
+    xDelta = 0;
+    yDelta = 0;
 
     // 3. Set projection
 	project();
@@ -273,9 +311,9 @@ int main( int argc, char* argv[] ){
     // glutMouseFunc( mouse ); // Clicks
     glutPassiveMotionFunc( mouse_move ); // Movement
     
-    // //  Tell GLUT to call "key" when a key is pressed
-    // glutKeyboardFunc( key );
-
+    // //  Tell GLUT to call "key" when a key is pressed or released
+    glutKeyboardFunc( key_dn );
+    glutKeyboardUpFunc( key_up );
 
     ///// GO ///// GO ///// GO ////////////////////////////////////////////
     

@@ -390,11 +390,23 @@ VAO_VNC_f* tetrahedron_VAO_VNC_f( float radius, const vec4f color ){
     return rtnVAO;
 }
 
+
 VAO_VNC_f* tetrahedron_transformed_VAO_VNC_f( float radius, const vec4f color, const float* xfrm ){
     // Construct a tetrahedron VAO with flat-shaded normals and one solid color, with all vectors transformed
     TriNet*    tetNet = create_tetra_mesh_only( radius );
     VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color_transformed( tetNet, color, xfrm );
     delete_net( tetNet );
+    return rtnVAO;
+}
+
+
+///// Triangular Prism ////////////////////////////////////////////////////
+
+VAO_VNC_f* triprism_transformed_VAO_VNC_f( float height, float triRad, const vec4f color, const float* xfrm ){
+    // Construct a triangular prism VAO with flat-shaded normals and one solid color, with all vectors transformed
+    TriNet*    priNet = create_triprism_mesh_only( height, triRad );
+    VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color_transformed( priNet, color, xfrm );
+    delete_net( priNet );
     return rtnVAO;
 }
 

@@ -151,6 +151,10 @@ VAO_VNC_f* VAO_from_TriNet_solid_color_transformed( TriNet* net, const vec4f col
 VAO_VNC_f* cube_VAO_VNC_f( float sideLen, const vec4f color );
 VAO_VNC_f* colorspace_cube_VAO_VNC_f( void ); // Make a colorful cube from the static array data
 
+///// Triangular Prism ////////////////////////////////////////////////////
+// Construct a triangular prism VAO with flat-shaded normals and one solid color, with all vectors transformed
+VAO_VNC_f* triprism_transformed_VAO_VNC_f( float height, float triRad, const vec4f color, const float* xfrm );
+
 ///// Tetrahedron /////////////////////////////////////////////////////////
 // Construct a tetrahedron VAO with flat-shaded normals and one solid color
 VAO_VNC_f* tetrahedron_VAO_VNC_f( float radius, const vec4f color ); 
