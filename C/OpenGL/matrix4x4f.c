@@ -137,7 +137,7 @@ void R_RPY_vehicle_mtx44f( float mat[], /*<<*/ float r_, float p_, float y_ ){
 //
 //  Rotate Angle-Axis
 //
-void R_angle_axis_mtx44f( float mat[], float th_deg, float x, float y, float z ){
+void rotate_angle_axis_mtx44f( float mat[], float th_deg, float x, float y, float z ){
     //  Normalize axis
     float l = sqrtf( x*x + y*y + z*z );
     if(l==0) return;
@@ -184,6 +184,28 @@ void set_position_mtx44f( float mat[], float x, float y, float z ){
    mat[14] = z;
 }
 
+
+float dotf( float Ux, float Uy, float Uz, float Vx, float Vy, float Vz ){
+   // Return the dot-product of {Ux,Uy,Uz} and {Vx,Vy,Vz}
+   return Ux*Vx + Uy*Vy + Uz*Vz;
+}
+
+
+void invert_homog( float mat[] ){
+   // Use the special inversion form for homogeneous coords
+   // Author: Adrian + Yoav, https://stackoverflow.com/a/155705/21767505
+   // Source: https://graphics.stanford.edu/courses/cs248-98-fall/Final/q4.html
+   float m[16];  copy_mtx44f( m, mat );
+   float UT = dotf( mat[ 0], mat[ 1], mat[ 2], mat[12], mat[13], mat[14] );
+   float VT = dotf( mat[ 4], mat[ 5], mat[ 6], mat[12], mat[13], mat[14] );
+   float WT = dotf( mat[ 8], mat[ 9], mat[10], mat[12], mat[13], mat[14] );
+   mat[0] = m[0];  mat[4] = m[1];  mat[ 8] = m[ 2];  mat[12] = -UT;
+   mat[1] = m[4];  mat[5] = m[5];  mat[ 9] = m[ 6];  mat[13] = -VT;
+   mat[2] = m[8];  mat[6] = m[9];  mat[10] = m[10];  mat[14] = -WT;
+   mat[3] = 0.0f;  mat[7] = 0.0f;  mat[11] = 0.0f;   mat[15] = 1.0f;
+}
+
+
 //
 //  Scale
 //
@@ -202,8 +224,7 @@ void scale_mtx44f( float mat[], float Sx, float Sy, float Sz ){
 //
 //  Normalize vector
 //
-static int normalize(float* x,float* y,float* z)
-{
+static int normalize(float* x,float* y,float* z){
    float l = sqrt((*x)*(*x)+(*y)*(*y)+(*z)*(*z));
    if (l==0) return -1;
    *x /= l;

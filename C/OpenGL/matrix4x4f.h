@@ -16,9 +16,10 @@ void   rotate_y_mtx44f( float mat[], /*<<*/ float theta_rad ); // Rotate `mat` w
 void   rotate_z_mtx44f( float mat[], /*<<*/ float theta_rad ); // Rotate `mat` with R_z( `theta_rad` ) 
 // Get a matrix to increment the world Roll, Pitch, Yaw of the model
 void   R_RPY_vehicle_mtx44f( float mat[], /*<<*/ float r_, float p_, float y_ );
-void   R_angle_axis_mtx44f( float mat[], /*<<*/ float th_deg, float x, float y, float z );
+void   rotate_angle_axis_mtx44f( float mat[], /*<<*/ float th_deg, float x, float y, float z );
 void   translate_mtx44f( float mat[], /*<<*/ float dx, float dy, float dz );
 void   set_position_mtx44f( float mat[], float x, float y, float z );
+void   invert_homog( float mat[] ); // Use the special inversion form for homogeneous coords
 void   scale_mtx44f( float mat[], float Sx, float Sy, float Sz );
 void   mat4lookAt(float mat[16] , float Ex,float Ey,float Ez , float Cx,float Cy,float Cz , float Ux,float Uy,float Uz);
 void   mat3normalMatrix(float mat[16],float inv[9]);

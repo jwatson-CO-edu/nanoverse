@@ -140,6 +140,23 @@ void align_firework_at_muzzle( TetraTank_mk0* tank, Firework* proj ){
 }
 
 
+void roll_wheels_for_rel_body_move( TetraTank_mk0* tank, const vec4f relMov ){
+    // Rotate the wheels as if they convey the tank by relative `relMov` through rolling contact
+    vec4f /**/ relAxis  = cross_vec4f( make_vec4f( 0.0f, 0.0f, 1.0f ), relMov );
+    float /**/ roll_deg = norm_vec4f( relMov )/_TNK_WHL_SCL * M_PI/180.0f;
+    vec4f /**/ whlAxis;
+    float /**/ matWhl[16];
+    VAO_VNC_f* whl = NULL;
+    for( ubyte i = 0; i < 3; ++i ){
+        whl = get_part_i( tank->body, i );
+        update_total_pose( whl );
+        copy_mtx44f( matWhl, whl->totPose );
+        invert_homog( matWhl );
+        whlAxis = mult_mtx44f_vec4f( matWhl, relAxis );
+        rotate_angle_axis_mtx44f( whl->ownPose, roll_deg, whlAxis.x, whlAxis.y, whlAxis.z );
+    }
+}
+
 
 ////////// PROGRAM STATE ///////////////////////////////////////////////////////////////////////////
 TetraTank_mk0* tank = NULL;
@@ -297,6 +314,8 @@ void tick(){
     turnAngle = -1.0f * yDelta * _FRM_TURN / 2.0f;
     Rx_mtx44f( op1, turnAngle );
     mult_mtx44f( tank->gnPose, op1 );
+
+    roll_wheels_for_rel_body_move( tank, totMove );
 
     // Track only RELATIVE mouse movement!
     xDelta = 0;
