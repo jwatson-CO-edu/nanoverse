@@ -120,12 +120,14 @@
 
 ## `[>]` Computer Graphics Blitz in Pure C + OpenGL + GLUT, Morning Warmup and Weekend Project
 * Goal: Reinforce fluency in Pure C + Pure OpenGL. I have been spoiled by Raylib + C++!
-* C++ and Eigen are **DISALLOWED**!
+* C++, Eigen, GLFW, and GLM are **DISALLOWED**!
+
 
 ### `[Y]` HW2: Lorenz Attractor
 * `[Y]` Multiple, Chasing Traces of System State, 2024-05-0X: 6D Lorenz attractor completed and tuned!
     - `[Y]` Different starting state, Different eq. params, 2024-05-0X: 6D Lorenz attractor completed and tuned!
     - `{Y}` Are there versions of the attractor with higher-dimensional state?, 2024-05-0X: 6D Lorenz attractor completed and tuned!
+
 
 ### `[>]` HW3: Nested Reference Frames with `glPushMatrix`/`glPopMatrix`
 * `[Y]` Simple VAO struct with vertex coloring, 2024-05-12: Needs testing
@@ -140,25 +142,43 @@
 * `[Y]` X-Y Grid, 2024-05-17: Ported from coursework, Needs testing
     - `{P}` As VAO?, 2024-05-17: Do this later.  Add one thing at a time!
 * `[>]` TetraTank rolling on icos wheels
-    - `[ ]` kb movement
+    - `[Y]` kb movement, 2024-05-1X: Move with either arrows or WASD
+    - `[>]` Convincing rolling contact
 * `{?}` Use a shader to construct lines at edges
     - `{?}` GLSL: How to compute distance from a triangle edge?  Sounds like a geometry shader to me?
 
 
-### HW4: First-Person View in a Scene
-* `[ ]` TetraTank rolling on icos wheels
-    - `[ ]` mouse: look + steer, 3rd person view
-    - `{?}` Joystick control
+### HW4: First-Person View in a Scene + Phong Shading + Moving Light Source(s) + Particle System(s)
+* `[>]` TetraTank rolling on icos wheels
+    - `[Y]` mouselook, 2024-05-1X: MOUSELOOK!
+    - `{N}` Joystick control, 2024-05-20: GLUT lacks dual-stick gamepad handling! Mouselook is sufficient
+    - `{?}` Hide cursor while in the window?
     - `{?}` Wireframe?
         * `{?}` As VAO?
-
-### HW5: Phong Shading + Moving Light Source(s)
-* `[ ]` View newer class material
-
-
+* `[ ]` Environment
+    - `[ ]` Moon (Stolen from [Vlakkies' Solar System demo]( `FIXME: LINK HERE` ))
+    - `{?}` Stars?
+    - `[ ]` Planar terrain from subdivided triangles
+    - `[ ]` Ambient + Directional moonlight
+        * `[ ]` Terrain matte
+        * `[ ]` Tank glossy
+* `[>]` Fireworks
+    - `[>]` Fire mortar from tank barrel
+    - `[ ]` Mortar emits a strong light
+    - `[ ]` Mortar has a particle spark trail
+    - `[ ]` Firework Detonation
+        * `[ ]` Mortar ends trajectory after N frames
+        * `[ ]` Emit **very** strong light
+        * `[ ]` Generate shockwave of particle sparks
+        * `[ ]` Sparks drop and fade
+    
 
 ### HW6: Shaded & Textured Models
 * `[ ]` View newer class material
+* `[ ]` Modify textures with shader(s)
+* `{?}` Chopper mode? (_DANGER!_)
+    - `{?}` Transformation Sequence
+    - `{?}` Floaty Dynamics
 
 ### HW7: ???
 * `[ ]` View newer class material
