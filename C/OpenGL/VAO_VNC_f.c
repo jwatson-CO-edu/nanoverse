@@ -88,6 +88,16 @@ void update_total_pose( VAO_VNC_f* vao ){
 }
 
 
+void calc_total_pose_part_i( float* mat, /*<<*/ VAO_VNC_f* vao, uint i ){
+    // Get the total distal pose at `i` and store it in `mat`
+    identity_mtx44f( mat );
+    update_total_pose( vao );
+    update_total_pose( get_part_i( vao, i ) );
+    mult_mtx44f( mat, vao->totPose );
+    mult_mtx44f( mat, get_part_i( vao, i )->totPose );
+}
+
+
 void draw_recur_VAO_VNC_f( VAO_VNC_f* vao ){
     // Inner draw function for `VAO_VNC_f`, NOTE: This function assumes GPU is set to draw VAO
     ulong arrSize = vao->arSiz;

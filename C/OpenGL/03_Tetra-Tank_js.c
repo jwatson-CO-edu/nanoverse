@@ -29,6 +29,20 @@ const float _FRM_TURN = 0.05; // Radians to move per pixel of mouse movement
 
 ////////// PROGRAM STRUCTS /////////////////////////////////////////////////////////////////////////
 
+///// Firework ////////////////////////////////////////////////////////////
+
+typedef struct{
+    // A bright projectile that explodes even more brightly, with particles!
+    VAO_VNC_f* bullet; // Mortar geometry
+    uint /*-*/ age; // -- Number of frames since leaving launch tube
+}Firework;
+
+Firework* make_Firework( float width, const vec4f bodyClr ){
+    // Alloc and construct firework mortar
+}
+
+///// TetraTank_mk0 ///////////////////////////////////////////////////////
+
 typedef struct{
     // Tetrahedral vehicle that rolls on 3 icosahedra and translates in any direction on X-Y plane
     VAO_VNC_f* body;
@@ -36,6 +50,7 @@ typedef struct{
     float*     w1pose; 
     float*     w2pose; 
     float*     gnPose; 
+    float /**/ tiltAng;
 }TetraTank_mk0;
 
 
@@ -89,14 +104,46 @@ TetraTank_mk0* make_TetraTank_mk0( float bodyRad_m, const vec4f bodyClr, float w
     
     // Alloc All @ GPU //
     allocate_and_load_VAO_VNC_at_GPU( rtnTank->body );
-    // Return //
+    rtnTank->tiltAng = rotAngl;
+    // Cleanup && Return //
+    delete_net( tetNet );
     return rtnTank;
+}
+
+
+void set_gunsight( TetraTank_mk0* tank, Camera3D* camera ){
+    // Look down the barrel of tetratank
+    float xfrm[16];
+    float ofst = 0.5f;
+    float stbk = 6.0f;
+    vec4f eye = make_vec4f(  ofst*_TNK_BODY_SCL,  stbk*_TNK_BODY_SCL, -ofst*_TNK_BODY_SCL );
+    vec4f luk = make_vec4f(  ofst*_TNK_BODY_SCL, -stbk*_TNK_BODY_SCL, -ofst*_TNK_BODY_SCL );
+    vec4f upC = make_vec4f(  0.0f, 0.0f, 1.0f );
+    calc_total_pose_part_i( xfrm, tank->body, 3 );
+    // rotate_x_mtx44f( xfrm, M_PI+(tank->tiltAng) );
+    rotate_x_mtx44f( xfrm, -M_PI/2.0f-(tank->tiltAng) );
+    // camera->eyeLoc = add_vec4f( mult_mtx44f_vec4f( xfrm, eye ), cen );
+    // camera->lookPt = add_vec4f( mult_mtx44f_vec4f( xfrm, luk ), cen );
+    camera->eyeLoc = mult_mtx44f_vec4f( xfrm, eye );
+    camera->lookPt = mult_mtx44f_vec4f( xfrm, luk );
+    camera->upVctr = upC;
+}
+
+
+void align_firework_at_muzzle( TetraTank_mk0* tank, Firework* proj ){
+    // Prepare to fire `proj` Z-wise from `tank` barrel
+    float xfrm[16];
+    calc_total_pose_part_i( xfrm, tank->body, 3 );
+    rotate_x_mtx44f( xfrm, M_PI );
+    copy_mtx44f( get_part_i( tank, 3 )->relPose, xfrm );
+    translate_mtx44f( get_part_i( tank, 3 )->ownPose, 0.0f, 0.0f, _TNK_BODY_SCL/2.0f );
 }
 
 
 
 ////////// PROGRAM STATE ///////////////////////////////////////////////////////////////////////////
 TetraTank_mk0* tank = NULL;
+Firework* /**/ frwk = NULL;
 Camera3D /*-*/ cam  = { {4.0f, 2.0f, 2.0f, 1.0f}, {0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f} };
 
 
@@ -151,6 +198,7 @@ void display(){
     glLoadIdentity();
 
     ///// DRAW LOOP BEGIN /////////////////////////////////////////////////
+    set_gunsight( tank, &cam );
     look( cam );
 
     draw_grid_org_XY( _GRID_UNIT, _N_UNIT, _N_UNIT, 

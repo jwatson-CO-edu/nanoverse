@@ -358,6 +358,44 @@ TriNet* create_cube_mesh_only( float sideLen ){
 }
 
 
+///// Octahedron //////////////////////////////////////////////////////////
+
+void populate_octahedron_vertices_and_faces( vec4f* V, vec3u* F, float cornerWidth, float height ){
+	// Load geometry for an octahedron onto matrices `V` and `F` 
+    float hW = cornerWidth / 2.0f;
+    float hH = height / 2.0f;
+    /// Load Vertices ///
+	// Assume `V` already allocated for *6* vertices
+    V[0] = make_vec4f(  0.0f,  0.0f, -hH   );
+    V[1] = make_vec4f(  0.0f,  0.0f,  hH   );
+    V[2] = make_vec4f(  hW  ,  0.0f,  0.0f );
+    V[3] = make_vec4f(  0.0f,  hW  ,  0.0f );
+    V[4] = make_vec4f( -hW  ,  0.0f,  0.0f );
+    V[5] = make_vec4f(  0.0f, -hW  ,  0.0f );
+    /// Load Faces ///
+	// Assume `F` already allocated for *8* faces
+    F[0] = make_vec3u( 0, 3, 2 );
+    F[1] = make_vec3u( 0, 2, 5 );
+    F[2] = make_vec3u( 0, 5, 4 );
+    F[3] = make_vec3u( 0, 4, 3 );
+    F[4] = make_vec3u( 1, 2, 3 );
+    F[5] = make_vec3u( 1, 5, 2 );
+    F[6] = make_vec3u( 1, 4, 5 );
+    F[7] = make_vec3u( 1, 3, 4 );
+}
+
+TriNet* create_octahedron_mesh_only( float cornerWidth, float height ){
+	// Create an octahedron (*without* unfolded net data)
+	/// Allocate ///
+	TriNet* net = alloc_net( 8, 6 );
+	/// Vertices and Faces ///
+	populate_octahedron_vertices_and_faces( net->V, net->F, cornerWidth, height );
+	/// Normals ///
+	N_from_VF( net->N, net->Ntri, net->V, net->F );
+	/// Return ///
+	return net;
+}
+
 ///// Icosahedron /////////////////////////////////////////////////////////
 
 void populate_icos_vertices_and_faces( vec4f* V, vec3u* F, float radius ){

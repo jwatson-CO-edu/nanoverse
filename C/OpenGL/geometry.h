@@ -51,7 +51,8 @@ typedef struct{
 
 ////////// HOMOGENEOUS COORDINATES /////////////////////////////////////////////////////////////////
 
-void  set_posn_mtx44f( float mat[], const vec4f posn ); // Set the position components of the homogeneous coordinates
+void  set_posn_mtx44f( float mat[], const vec4f posn ); // ---- Set the position components of the homogeneous coordinates
+vec4f get_posn_mtx44f( const float mat[] ); // ---------------- Get the position components of the homogeneous coordinates
 vec4f mult_mtx44f_vec4f( const float mat[], const vec4f v ); // Transform `v` with `mat`
     
 
@@ -101,6 +102,11 @@ TriNet* create_triprism_mesh_only( float height, float triRad );
 void populate_cube_vertices_and_faces( vec4f* V, vec3u* F, float sideLen );
 TriNet* create_cube_mesh_only( float sideLen ); // Create an regular icosahedron (*without* unfolded net data)
 
+///// Octahedron //////////////////////////////////////////////////////////
+// Load geometry for an octahedron onto matrices `V` and `F` 
+void populate_octahedron_vertices_and_faces( vec4f* V, vec3u* F, float cornerWidth, float height );
+TriNet* create_octahedron_mesh_only( float cornerWidth, float height ); // Create an octahedron (*without* unfolded net data)
+	
 ///// Icosahedron /////////////////////////////////////////////////////////
 // Load geometry for an icosahedron onto matrices `V` and `F` 
 void populate_icos_vertices_and_faces( vec4f* V, vec3u* F, float radius );
@@ -129,6 +135,8 @@ void /*-*/ load_VAO_VNC_from_full_arrays( VAO_VNC_f* vao, /*<<*/ const float* Vs
 void /*-*/ allocate_and_load_VAO_VNC_at_GPU( VAO_VNC_f* vao ); // Fetch & set buffer ID, and make space on the GPU for the VAO
 // Compose relative, ownship, and scale transformations into `totPose`, relative to parent frame
 void /*-*/ update_total_pose( VAO_VNC_f* vao );
+// Get the total distal pose at `i` and store it in `mat`    
+void /*-*/ calc_total_pose_part_i( float* mat, /*<<*/ VAO_VNC_f* vao, uint i ); 
 void /*-*/ draw_VAO_VNC_f( VAO_VNC_f* vao ); // Draw VAO and all subparts
 vec4f /**/ get_posn( VAO_VNC_f* vao ); // Get the position components of the homogeneous coordinates as a vector
 void /*-*/ set_posn( VAO_VNC_f* vao, const vec4f posn ); // Set the position components of the homogeneous coordinates

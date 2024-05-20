@@ -15,6 +15,11 @@ void set_posn_mtx44f( float mat[], const vec4f posn ){
     mat[14] = posn.z;
 }
 
+vec4f get_posn_mtx44f( const float mat[] ){
+    // Get the position components of the homogeneous coordinates
+    return make_vec4f( mat[12], mat[13], mat[14] );
+}
+
 
 vec4f mult_mtx44f_vec4f( const float mat[], const vec4f v ){
     // Transform `v` with `mat`
