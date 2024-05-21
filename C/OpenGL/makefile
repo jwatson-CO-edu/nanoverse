@@ -16,9 +16,6 @@ CLEAN=rm -f *.out *.o *.a
 
 ########## DEPENDENCIES ############################################################################
 
-### Float Matrix Math ###
-matrix4x4f.o: matrix4x4f.c matrix4x4f.h
-
 ### OpenGL Toolbox ###
 OGL_utils.o: OGL_utils.c toolbox.h
 load_assets.o: load_assets.c toolbox.h
@@ -26,8 +23,9 @@ vector-f_ops.o: vector-f_ops.c toolbox.h
 shaders.o: shaders.c toolbox.h
 
 ### Geometry Construction ###
+matrix4x4f.o: matrix4x4f.c matrix4x4f.h
 transform.o: transform.c geometry.h toolbox.h matrix4x4f.h
-TriNet.o: TriNet.c geometry.h toolbox.h 
+TriNet.o: TriNet.c geometry.h toolbox.h matrix4x4f.h
 VAO_VNC_f.o: VAO_VNC_f.c geometry.h toolbox.h 
 draw_geo.o: draw_geo.c geometry.h toolbox.h 
 
@@ -38,7 +36,7 @@ draw_geo.o: draw_geo.c geometry.h toolbox.h
 toolbox.a: OGL_utils.o load_assets.o vector-f_ops.o shaders.o
 	ar -rcs $@ $^
 
-geometry.a: transform.o TriNet.o VAO_VNC_f.o draw_geo.o
+geometry.a: transform.o TriNet.o VAO_VNC_f.o draw_geo.o matrix4x4f.o
 	ar -rcs $@ $^
 
 # Compile rules
@@ -58,10 +56,10 @@ geometry.a: transform.o TriNet.o VAO_VNC_f.o draw_geo.o
 01_Planet-Geom: 01_Planet-Geom.o geometry.a toolbox.a 
 	gcc $(CFLG) -o $@.out $^ $(LIBS)
 
-02_VAO_VNC_f: 02_VAO_VNC_f.o geometry.a toolbox.a matrix4x4f.o
+02_VAO_VNC_f: 02_VAO_VNC_f.o geometry.a toolbox.a 
 	gcc $(CFLG) -o $@.out $^ $(LIBS)
 
-03_Tetra-Tank_js: 03_Tetra-Tank_js.o geometry.a toolbox.a matrix4x4f.o
+03_Tetra-Tank_js: 03_Tetra-Tank_js.o geometry.a toolbox.a 
 	gcc $(CFLG) -o $@.out $^ $(LIBS)
 
 

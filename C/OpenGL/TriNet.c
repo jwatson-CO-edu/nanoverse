@@ -563,3 +563,58 @@ TriNet* create_icosphere_VFNA( float radius, uint div ){
     /// Return ///
     return sphrNet;
 }
+
+
+
+////////// OTHER OBJECTS ///////////////////////////////////////////////////////////////////////////
+
+///// Planar Surface //////////////////////////////////////////////////////
+TriNet* create_plane_XY_mesh_only( float xLen, float yLen, uint xDiv, uint yDiv ){
+    // Create a plane of triangles in the XY plane (*without* unfolded net data)
+    uint  Nvrt = xDiv*yDiv*4;
+    uint  Ntri = xDiv*yDiv*2;
+    /// Allocate ///
+	TriNet* net = alloc_net( Ntri, Nvrt );
+    /// Divide ///
+    float hX = xLen / 2.0f;
+    float hY = yLen / 2.0f;
+    float uX = xLen / (1.0f * xDiv);
+    float uY = yLen / (1.0f * yDiv);
+    vec4f v0, v1, v2, v3;
+    float x_i, x_ip1, y_j, y_jp1;
+    /// Construct ///
+    uint k = 0;
+    uint m = 0;
+    // For every row across X
+    for( uint i = 0; i < xDiv; ++i ){
+        x_i   = -hX + (uX * i);
+        x_ip1 = -hX + (uX * (i+1));
+        // For every column across Y
+        for( uint j = 0; j < yDiv; ++j ){
+            y_j   = -hY + (uY * j);
+            y_jp1 = -hY + (uY * (j+1));
+            // Make and store verts
+            v0 = make_vec4f( x_i  , y_j  , 0.0f );
+            v1 = make_vec4f( x_i  , y_jp1, 0.0f );
+            v2 = make_vec4f( x_ip1, y_jp1, 0.0f );
+            v3 = make_vec4f( x_ip1, y_j  , 0.0f );
+            net->V[k] = v0;  ++k;
+            net->V[k] = v1;  ++k;
+            net->V[k] = v2;  ++k;
+            net->V[k] = v3;  ++k;
+            // Alternate how the tri crosses the quad
+            if( (i+j)%2 == 0 ){
+                net->F[m] = make_vec3u( k-4, k-3, k-2 );  ++m;
+                net->F[m] = make_vec3u( k-2, k-1, k-4 );  ++m;
+            }else{
+                net->F[m] = make_vec3u( k-3, k-2, k-1 );  ++m;
+                net->F[m] = make_vec3u( k-1, k-4, k-3 );  ++m;
+            }
+        }    
+    }
+    /// Normals ///
+    N_from_VF( net->N, net->Ntri, net->V, net->F );
+    /// Return ///
+    return net;
+}
+

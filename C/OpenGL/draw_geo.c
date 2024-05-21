@@ -155,7 +155,8 @@ void draw_grid_org_XY( float gridSize, uint xPlusMinus, uint yPlusMinus,
     float xMin = - gridSize * xPlusMinus, 
           xMax =   gridSize * xPlusMinus,
           yMin = - gridSize * yPlusMinus, 
-          yMax =   gridSize * yPlusMinus;
+          yMax =   gridSize * yPlusMinus,
+          zOfs = 0.005;
     
     glLineWidth( lineThic );
     glClr4f( color );
@@ -172,21 +173,21 @@ void draw_grid_org_XY( float gridSize, uint xPlusMinus, uint yPlusMinus,
         // 3. Draw the grid , X
         for( uint i = 0 ; i < xPlusMinus ; i++ ){
             // Plus
-            glVertex3d(  gridSize * i , yMin , 0 ); // Bgn
-            glVertex3d(  gridSize * i , yMax , 0 ); // End
+            glVertex3d(  gridSize * i , yMin , zOfs ); // Bgn
+            glVertex3d(  gridSize * i , yMax , zOfs ); // End
             // Minus
-            glVertex3d( -gridSize * i , yMin , 0 ); // Bgn
-            glVertex3d( -gridSize * i , yMax , 0 ); // End
+            glVertex3d( -gridSize * i , yMin , zOfs ); // Bgn
+            glVertex3d( -gridSize * i , yMax , zOfs ); // End
         }
         
         // 3. Draw the grid , Y
         for( uint i = 0 ; i < yPlusMinus ; i++ ){
             // Plus
-            glVertex3d( xMin ,  gridSize * i , 0 ); // Bgn
-            glVertex3d( xMax ,  gridSize * i , 0 ); // End
+            glVertex3d( xMin ,  gridSize * i , zOfs ); // Bgn
+            glVertex3d( xMax ,  gridSize * i , zOfs ); // End
             // Minus
-            glVertex3d( xMin , -gridSize * i , 0 ); // Bgn
-            glVertex3d( xMax , -gridSize * i , 0 ); // End
+            glVertex3d( xMin , -gridSize * i , zOfs ); // Bgn
+            glVertex3d( xMax , -gridSize * i , zOfs ); // End
         }
         
     glEnd();

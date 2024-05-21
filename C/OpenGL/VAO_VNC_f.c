@@ -175,7 +175,7 @@ void translate( VAO_VNC_f* vao, const vec4f delta ){
 void rotate_angle_axis_rad( VAO_VNC_f* vao, float angle_rad, const vec4f axis ){
     // Rotate the object by `angle_rad` about `axis`
     float op1[16];  identity_mtx44f( op1 );
-    R_angle_axis_mtx44f( op1, angle_rad*180/M_PI, axis.x, axis.y, axis.z );
+    rotate_angle_axis_mtx44f( op1, angle_rad*180/M_PI, axis.x, axis.y, axis.z );
     // print_mtx44f( "Rotation Matrix:", op1 );
     mult_mtx44f( op1, vao->ownPose );
     copy_mtx44f( vao->ownPose, op1 );
@@ -454,3 +454,16 @@ VAO_VNC_f* icosphere_VAO_VNC_f( float radius, uint div, const vec4f color ){
     return rtnVAO;
 }
 
+
+
+////////// OTHER OBJECTS ///////////////////////////////////////////////////////////////////////////
+
+///// Planar Surface //////////////////////////////////////////////////////
+
+VAO_VNC_f* plane_XY_VAO_VNC_f( float xLen, float yLen, uint xDiv, uint yDiv, const vec4f color ){
+    // Construct a icosphere VAO with flat-shaded normals and one solid color
+    TriNet*    plnNet = create_plane_XY_mesh_only( xLen, yLen, xDiv, yDiv );
+    VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color( plnNet, color );
+    delete_net( plnNet );
+    return rtnVAO;
+}

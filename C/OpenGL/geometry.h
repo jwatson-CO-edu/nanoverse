@@ -118,7 +118,10 @@ TriNet* create_icos_VFNA( float radius ); // Create an regular icosahedron (*wit
 TriNet* create_icosphere_mesh_only( float radius, uint div );
 TriNet* create_icosphere_VFNA( float radius, uint div ); // Create an regular icosahedron (*with* unfolded net data)
 
+////////// OTHER OBJECTS ///////////////////////////////////////////////////////////////////////////
 
+///// Planar Surface //////////////////////////////////////////////////////
+TriNet* create_plane_XY_mesh_only( float xLen, float yLen, uint xDiv, uint yDiv );
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////// VAO_VNC_f.c ////////////////////////////////////////////////////////////////////////
@@ -176,6 +179,12 @@ VAO_VNC_f* icosahedron_VAO_VNC_f( float radius, const vec4f color );
 ///// Icosphere ///////////////////////////////////////////////////////////
 // Construct a icosphere VAO with flat-shaded normals and one solid color
 VAO_VNC_f* icosphere_VAO_VNC_f( float radius, uint div, const vec4f color );
+
+////////// OTHER OBJECTS ///////////////////////////////////////////////////////////////////////////
+
+///// Planar Surface //////////////////////////////////////////////////////
+// Construct a icosphere VAO with flat-shaded normals and one solid color
+VAO_VNC_f* plane_XY_VAO_VNC_f( float xLen, float yLen, uint xDiv, uint yDiv, const vec4f color );
     
 
 

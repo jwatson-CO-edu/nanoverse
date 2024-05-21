@@ -21,7 +21,7 @@ const vec4f _TNK_GUN_CLR  = {0.50f, 0.75f, 1.0f, 1.0f};
 const float _GRID_UNIT    =  1.0f;
 const uint  _N_UNIT /*-*/ = 50;
 const vec4f _GRID_CLR     = {0.5f, 0.5f, 0.5f, 1.0f};
-const float _GRID_THICC   = 1.5f;
+const float _GRID_THICC   = 3.0f;
 
 /// Movement Settings ///
 const float _FRM_DISP = 0.05; // Units to move per frame
@@ -37,9 +37,9 @@ typedef struct{
     uint /*-*/ age; // -- Number of frames since leaving launch tube
 }Firework;
 
-Firework* make_Firework( float width, const vec4f bodyClr ){
-    // Alloc and construct firework mortar
-}
+// Firework* make_Firework( float width, const vec4f bodyClr ){
+//     // Alloc and construct firework mortar
+// }
 
 ///// TetraTank_mk0 ///////////////////////////////////////////////////////
 
@@ -135,15 +135,16 @@ void align_firework_at_muzzle( TetraTank_mk0* tank, Firework* proj ){
     float xfrm[16];
     calc_total_pose_part_i( xfrm, tank->body, 3 );
     rotate_x_mtx44f( xfrm, M_PI );
-    copy_mtx44f( get_part_i( tank, 3 )->relPose, xfrm );
-    translate_mtx44f( get_part_i( tank, 3 )->ownPose, 0.0f, 0.0f, _TNK_BODY_SCL/2.0f );
+    copy_mtx44f( get_part_i( tank->body, 3 )->relPose, xfrm );
+    translate_mtx44f( get_part_i( tank->body, 3 )->ownPose, 0.0f, 0.0f, _TNK_BODY_SCL/2.0f );
 }
 
 
 void roll_wheels_for_rel_body_move( TetraTank_mk0* tank, const vec4f relMov ){
     // Rotate the wheels as if they convey the tank by relative `relMov` through rolling contact
     vec4f /**/ relAxis  = cross_vec4f( make_vec4f( 0.0f, 0.0f, 1.0f ), relMov );
-    float /**/ roll_deg = norm_vec4f( relMov )/_TNK_WHL_SCL * M_PI/180.0f;
+    float /**/ roll_deg = norm_vec4f( relMov )/_TNK_WHL_SCL * 180.0f/M_PI;
+    // printf( "Rolling %f [deg]\n", roll_deg );
     vec4f /**/ whlAxis;
     float /**/ matWhl[16];
     VAO_VNC_f* whl = NULL;
@@ -161,6 +162,7 @@ void roll_wheels_for_rel_body_move( TetraTank_mk0* tank, const vec4f relMov ){
 ////////// PROGRAM STATE ///////////////////////////////////////////////////////////////////////////
 TetraTank_mk0* tank = NULL;
 Firework* /**/ frwk = NULL;
+VAO_VNC_f*     grnd = NULL;
 Camera3D /*-*/ cam  = { {4.0f, 2.0f, 2.0f, 1.0f}, {0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f} };
 
 
@@ -220,6 +222,7 @@ void display(){
 
     draw_grid_org_XY( _GRID_UNIT, _N_UNIT, _N_UNIT, 
                       _GRID_THICC, _GRID_CLR );
+    draw_VAO_VNC_f( grnd );
 
     draw_VAO_VNC_f( tank->body );
 
@@ -352,12 +355,15 @@ int main( int argc, char* argv[] ){
     // Request double buffered, true color window 
     glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
     glEnable( GL_DEPTH_TEST );
-    glDepthRange( 0.0f , 1.0f ); // WARNING: NOT IN THE EXAMPLE
+    glDepthRange( 0.0f , 1.0f ); 
+    glutSetCursor( GLUT_CURSOR_NONE ); // Hide the cursor while in the window
 
 
     ///// Initialize Geometry /////////////////////////////////////////////
+    vec4f gClr = make_vec4f( 31.0f/255.0f, 120.0f/255.0f, 55.0f/255.0f );
     tank = make_TetraTank_mk0( _TNK_BODY_SCL, _TNK_BODY_CLR, _TNK_WHL_SCL, _TNK_WHL_CLR );
-    
+    grnd = plane_XY_VAO_VNC_f( 2.0f*_GRID_UNIT*_N_UNIT, 2.0f*_GRID_UNIT*_N_UNIT, _N_UNIT, _N_UNIT, gClr );
+    allocate_and_load_VAO_VNC_at_GPU( grnd );
 
     ///// Initialize GLUT Callbacks ///////////////////////////////////////
 

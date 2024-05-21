@@ -129,7 +129,8 @@
     - `{Y}` Are there versions of the attractor with higher-dimensional state?, 2024-05-0X: 6D Lorenz attractor completed and tuned!
 
 
-### `[>]` HW3: Nested Reference Frames with `glPushMatrix`/`glPopMatrix`
+### `[Y]` HW3: Nested Reference Frames with `glPushMatrix`/`glPopMatrix`
+* 2024-05-21: Needs testing, To combine with the "HW4" project, below
 * `[Y]` Simple VAO struct with vertex coloring, 2024-05-12: Needs testing
 * `[Y]` Render a cube, 2024-05-12: Tested!
 * `[Y]` Render rotating cubes in nested reference frames, 2024-05-16: Nested rotating cubes!
@@ -141,23 +142,23 @@
     - `[Y]` Add VAO Tetra, 2024-05-17: Added!
 * `[Y]` X-Y Grid, 2024-05-17: Ported from coursework, Needs testing
     - `{P}` As VAO?, 2024-05-17: Do this later.  Add one thing at a time!
-* `[>]` TetraTank rolling on icos wheels
+* `[Y]` TetraTank rolling on icos wheels, 2024-05-21: Needs testing
     - `[Y]` kb movement, 2024-05-1X: Move with either arrows or WASD
-    - `[>]` Convincing rolling contact
+    - `[Y]` Convincing rolling contact, 2024-05-21: Needs testing
 * `{?}` Use a shader to construct lines at edges
     - `{?}` GLSL: How to compute distance from a triangle edge?  Sounds like a geometry shader to me?
 
 
 ### HW4: First-Person View in a Scene + Phong Shading + Moving Light Source(s) + Particle System(s)
-* `[>]` TetraTank rolling on icos wheels
+* `[Y]` TetraTank rolling on icos wheels, 2024-05-1X: MOUSELOOK!
     - `[Y]` mouselook, 2024-05-1X: MOUSELOOK!
     - `{N}` Joystick control, 2024-05-20: GLUT lacks dual-stick gamepad handling! Mouselook is sufficient
     - `{?}` Hide cursor while in the window?
     - `{?}` Wireframe?
         * `{?}` As VAO?
-* `[ ]` Environment
-    - `[ ]` Moon (Stolen from [Vlakkies' Solar System demo]( `FIXME: LINK HERE` ))
-    - `{?}` Stars?
+* `[>]` Environment
+    - `[P]` Moon (Stolen from [Vlakkies' Solar System demo](https://www.prinmath.com/csci5229/F23/programs/ex19.zip))
+    - `{P}` Stars?
     - `[ ]` Planar terrain from subdivided triangles
     - `[ ]` Ambient + Directional moonlight
         * `[ ]` Terrain matte
