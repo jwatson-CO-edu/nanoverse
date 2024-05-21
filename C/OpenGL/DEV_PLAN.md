@@ -61,7 +61,7 @@
         * `[>]` Copy minimal code from Modified Example
         * `[>]` **ALL** tuning params as **GLOBALS**
         * `[>]` **ALL** particle data as *FAT* arrays
-    - `[ ]` Draw sphere, Test
+    - `[Y]` Draw sphere, Test
     - `[Y]` Init particles
         * `[Y]` Choose cell randomly, Choose size randomly
         * `[Y]` Locate clump centroid
@@ -146,6 +146,7 @@
     - `[Y]` kb movement, 2024-05-1X: Move with either arrows or WASD
     - `[Y]` Convincing rolling contact, 2024-05-21: Needs testing
 * `{?}` Use a shader to construct lines at edges
+    - [Computing Barycentric Coordinates](https://tchayen.github.io/posts/wireframes-with-barycentric-coordinates)
     - `{?}` GLSL: How to compute distance from a triangle edge?  Sounds like a geometry shader to me?
 
 
@@ -154,8 +155,8 @@
     - `[Y]` mouselook, 2024-05-1X: MOUSELOOK!
     - `{N}` Joystick control, 2024-05-20: GLUT lacks dual-stick gamepad handling! Mouselook is sufficient
     - `{?}` Hide cursor while in the window?
-    - `{?}` Wireframe?
-        * `{?}` As VAO?
+    - `{?}` Wireframe as VAO?
+        * [OpenGL Wireframe Mode](https://stackoverflow.com/a/137649)
 * `[>]` Environment
     - `[P]` Moon (Stolen from [Vlakkies' Solar System demo](https://www.prinmath.com/csci5229/F23/programs/ex19.zip))
     - `{P}` Stars?
