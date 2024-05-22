@@ -27,7 +27,56 @@ const float _GRID_THICC   = 3.0f;
 const float _FRM_DISP = 0.05; // Units to move per frame
 const float _FRM_TURN = 0.05; // Radians to move per pixel of mouse movement
 
+/// Environment Settings ///
+const int   _MOON_EMISS = 50;
+const float _MOON_SHINY =  1.0f;
+
 ////////// PROGRAM STRUCTS /////////////////////////////////////////////////////////////////////////
+
+///// Light Source ////////////////////////////////////////////////////////
+
+typedef struct{
+    // Light source for default Phong shading
+    uint  ID; // ----- GL light source enum
+    vec4f position; // Position in the world frame
+    vec4f ambient;
+	vec4f diffuse;
+	vec4f specular;
+}LightSource;
+
+
+LightSource* make_white_light_source( const vec4f posn, uint sourcEnum, 
+                                      int ambientPrcnt, int diffusePrcnt, int specularPrcnt ){
+    // White light source
+    LightSource* lite = (LightSource*) malloc( sizeof( LightSource ) );
+    lite->ID /*-*/ = sourcEnum;
+    lite->position = posn;
+    lite->ambient  = make_vec4f( 0.01f*ambientPrcnt  , 0.01f*ambientPrcnt , 0.01f*ambientPrcnt  );
+    lite->diffuse  = make_vec4f( 0.01f*diffusePrcnt  , 0.01f*diffusePrcnt , 0.01f*diffusePrcnt  );
+	lite->specular = make_vec4f( 0.01f*specularPrcnt , 0.01f*specularPrcnt, 0.01f*specularPrcnt );
+    return lite;
+}
+
+
+void illuminate_with_source( LightSource* lite ){
+    // Use this `lite` in the scene
+    float Position[] = { lite->position.x, lite->position.y, lite->position.z, lite->position.w };
+    float Ambient[]  = { lite->ambient.r , lite->ambient.g , lite->ambient.b , lite->ambient.a  };
+	float Diffuse[]  = { lite->diffuse.r , lite->diffuse.g , lite->diffuse.b , lite->diffuse.a  };
+	float Specular[] = { lite->specular.r, lite->specular.g, lite->specular.b, lite->specular.a };
+    // glColorMaterial( GL_FRONT_AND_BACK , GL_AMBIENT_AND_DIFFUSE );
+	// glEnable( GL_COLOR_MATERIAL );
+	//  Enable light 0
+	glEnable( lite->ID );
+	//  Set ambient, diffuse, specular components and position of light 0
+    glLightfv( lite->ID, GL_POSITION , Position );
+	glLightfv( lite->ID, GL_AMBIENT  , Ambient  );
+	glLightfv( lite->ID, GL_DIFFUSE  , Diffuse  );
+	glLightfv( lite->ID, GL_SPECULAR , Specular );
+
+    // glDisable( lite->ID );
+}
+
 
 ///// The Moon ////////////////////////////////////////////////////////////
 
@@ -94,6 +143,45 @@ Planet* make_Moon( char* texPath, float R_, const vec4f loc_, float th_, float p
     moon->th /**/ = th_;
     moon->ph /**/ = ph_;
     return moon;
+}
+
+
+void draw_Moon( Planet* texMoon, int emission, float shiny ){
+    // Like drawing a planet, but shiny
+    // Adapted from code by: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
+    float xfrm[16];  identity_mtx44f( xfrm );
+    translate_mtx44f( xfrm, texMoon->loc.x, texMoon->loc.y, texMoon->loc.z );
+    scale_mtx44f( xfrm, texMoon->R, texMoon->R, texMoon->R );
+    rotate_z_mtx44f( xfrm, texMoon->th );
+    rotate_y_mtx44f( xfrm, texMoon->ph );
+
+    glMatrixMode( GL_MODELVIEW );
+    glPushMatrix();
+    glMultMatrixf( xfrm );
+
+    // float yellow[] = { 1.0f , 1.0f , 0.0f , 1.0f };
+	float Emission[] = { 0.01f*emission, 0.01f*emission, 0.01f*emission, 1.0f };
+
+    glColor3f( 1 , 1 , 1 );
+    float shininess = shiny<0 ? 0 : pow( 2.0, shiny );
+	glMaterialf( GL_FRONT_AND_BACK , GL_SHININESS , shininess );
+	glMaterialfv( GL_FRONT_AND_BACK , GL_EMISSION , Emission );
+
+    //  Set texture
+    glEnable( GL_TEXTURE_2D );
+    glBindTexture( GL_TEXTURE_2D, texMoon->surftex );
+    //  Latitude bands
+    glColor3f( 1, 1, 1 );
+    for( int ph = -90; ph < 90; ph += 5 ){
+        glBegin( GL_QUAD_STRIP );
+        for( int th = 0; th <= 360; th += 5 ){
+            Vertex( th, ph   );
+            Vertex( th, ph+5 );
+        }
+        glEnd();
+    }
+    glDisable( GL_TEXTURE_2D );
+    glPopMatrix();
 }
 
 ///// Firework ////////////////////////////////////////////////////////////
@@ -231,6 +319,7 @@ TetraTank_mk0* tank = NULL;
 Firework* /**/ frwk = NULL;
 VAO_VNC_f*     grnd = NULL;
 Planet* /*--*/ moon = NULL;
+LightSource*   lite = NULL;
 Camera3D /*-*/ cam  = { {4.0f, 2.0f, 2.0f, 1.0f}, {0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f} };
 
 
@@ -280,22 +369,39 @@ void display(){
     // Refresh display
 
     //  Erase the window and the depth buffer
+    glClearDepth( 1.0f );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
     glEnable( GL_DEPTH_TEST );
+    glEnable( GL_CULL_FACE );
     glLoadIdentity();
 
     ///// DRAW LOOP BEGIN /////////////////////////////////////////////////
+
+    
+
+    //  OpenGL should normalize normal vectors
+	glEnable( GL_NORMALIZE );
+	//  Enable lighting , From this point until 'glDisable' lighting is applied
+	glEnable( GL_LIGHTING );
+    glColorMaterial( GL_FRONT_AND_BACK , GL_AMBIENT_AND_DIFFUSE );
+	glEnable( GL_COLOR_MATERIAL );
+
     set_gunsight( tank, &cam );
     look( cam );
 
-    draw_Planet( moon );
+    // draw_Planet( moon );
+    draw_Moon( moon, _MOON_EMISS, _MOON_SHINY );
 
-    draw_grid_org_XY( _GRID_UNIT, _N_UNIT, _N_UNIT, 
-                      _GRID_THICC, _GRID_CLR );
+    // draw_grid_org_XY( _GRID_UNIT, _N_UNIT, _N_UNIT, _GRID_THICC, _GRID_CLR );
+
     draw_VAO_VNC_f( grnd );
 
     draw_VAO_VNC_f( tank->body );
 
+    
+
+    illuminate_with_source( lite );
+    glDisable( GL_LIGHTING );
     ///// DRAW LOOP END ///////////////////////////////////////////////////
 
     //  Display parameters
@@ -335,6 +441,7 @@ void key_dn( ubyte key, int x, int y ){
     if( key == 's' )  dnArrw = true;
     if( key == 'd' )  rtArrw = true;
     if( key == 'a' )  lfArrw = true;
+    // if( key == 27  )  glutLeaveMainLoop(); // Quit on [Esc]
 }
 
 void special_up( int key, int x, int y ){
@@ -436,6 +543,7 @@ int main( int argc, char* argv[] ){
     grnd = plane_XY_VAO_VNC_f( 2.0f*_GRID_UNIT*_N_UNIT, 2.0f*_GRID_UNIT*_N_UNIT, _N_UNIT, _N_UNIT, gClr );
     allocate_and_load_VAO_VNC_at_GPU( grnd );
     moon = make_Moon( "resources/moon.bmp", 4.0f, mLoc, 0.0f, -M_PI/4.0f );
+    lite = make_white_light_source( stretch_to_len_vec4f( mLoc, 10.0f ), GL_LIGHT0, 5, 50, 100 );
 
     ///// Initialize GLUT Callbacks ///////////////////////////////////////
 

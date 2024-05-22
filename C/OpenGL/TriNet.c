@@ -604,11 +604,11 @@ TriNet* create_plane_XY_mesh_only( float xLen, float yLen, uint xDiv, uint yDiv 
             net->V[k] = v3;  ++k;
             // Alternate how the tri crosses the quad
             if( (i+j)%2 == 0 ){
-                net->F[m] = make_vec3u( k-4, k-3, k-2 );  ++m;
-                net->F[m] = make_vec3u( k-2, k-1, k-4 );  ++m;
+                net->F[m] = make_vec3u( k-4, k-2, k-3 );  ++m;
+                net->F[m] = make_vec3u( k-2, k-4, k-1 );  ++m;
             }else{
-                net->F[m] = make_vec3u( k-3, k-2, k-1 );  ++m;
-                net->F[m] = make_vec3u( k-1, k-4, k-3 );  ++m;
+                net->F[m] = make_vec3u( k-3, k-1, k-2 );  ++m;
+                net->F[m] = make_vec3u( k-1, k-3, k-4 );  ++m;
             }
         }    
     }
