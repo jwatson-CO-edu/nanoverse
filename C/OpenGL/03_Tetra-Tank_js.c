@@ -8,9 +8,9 @@
 ////////// PROGRAM SETTINGS ////////////////////////////////////////////////////////////////////////
 
 /// View Settings ///
-const float _SCALE /**/ =  10.0f; // Scale Dimension
-const int   _FOV_DEG    =  55; // - Field of view (for perspective)
-const float _TARGET_FPS =  60.0f; // Desired framerate
+const float _SCALE /**/ =   50.0f; // Scale Dimension
+const int   _FOV_DEG    =   55; // - Field of view (for perspective)
+const float _TARGET_FPS =   60.0f; // Desired framerate
 
 /// Model Settings ///
 const float _TNK_BODY_SCL = 1.0f;
@@ -28,6 +28,73 @@ const float _FRM_DISP = 0.05; // Units to move per frame
 const float _FRM_TURN = 0.05; // Radians to move per pixel of mouse movement
 
 ////////// PROGRAM STRUCTS /////////////////////////////////////////////////////////////////////////
+
+///// The Moon ////////////////////////////////////////////////////////////
+
+typedef struct{
+   char* name;
+   char* surf;
+   uint  surftex;
+   float R;
+   vec4f loc;
+   float th;
+   float ph;
+}Planet;
+
+
+static void Vertex( int th, int ph ){
+    // Draw vertex in polar coordinates
+    // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
+    double x = Cos(th)*Cos(ph);
+    double y = Sin(th)*Cos(ph);
+    double z =         Sin(ph);
+    glNormal3d(x,y,z);
+    glTexCoord2d(th/360.0,ph/180.0+0.5);
+    glVertex3d(x,y,z);
+}
+
+
+void draw_Planet( Planet* plnt ){
+    // Draw planet
+    // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
+    float xfrm[16];  identity_mtx44f( xfrm );
+    translate_mtx44f( xfrm, plnt->loc.x, plnt->loc.y, plnt->loc.z );
+    scale_mtx44f( xfrm, plnt->R, plnt->R, plnt->R );
+    rotate_z_mtx44f( xfrm, plnt->th );
+    rotate_y_mtx44f( xfrm, plnt->ph );
+
+    glMatrixMode( GL_MODELVIEW );
+    glPushMatrix();
+    glMultMatrixf( xfrm );
+
+    //  Set texture
+    glEnable( GL_TEXTURE_2D );
+    glBindTexture( GL_TEXTURE_2D, plnt->surftex );
+    //  Latitude bands
+    glColor3f( 1, 1, 1 );
+    for( int ph = -90; ph < 90; ph += 5 ){
+        glBegin( GL_QUAD_STRIP );
+        for( int th = 0; th <= 360; th += 5 ){
+            Vertex( th, ph   );
+            Vertex( th, ph+5 );
+        }
+        glEnd();
+    }
+    glDisable( GL_TEXTURE_2D );
+    glPopMatrix();
+}
+
+
+Planet* make_Moon( char* texPath, float R_, const vec4f loc_, float th_, float ph_ ){
+    Planet* moon = (Planet*) malloc( sizeof( Planet ) );
+    moon->surf    = texPath;
+    moon->surftex = LoadTexBMP( texPath );
+    moon->R /*-*/ = R_;
+    moon->loc     = loc_;
+    moon->th /**/ = th_;
+    moon->ph /**/ = ph_;
+    return moon;
+}
 
 ///// Firework ////////////////////////////////////////////////////////////
 
@@ -163,6 +230,7 @@ void roll_wheels_for_rel_body_move( TetraTank_mk0* tank, const vec4f relMov ){
 TetraTank_mk0* tank = NULL;
 Firework* /**/ frwk = NULL;
 VAO_VNC_f*     grnd = NULL;
+Planet* /*--*/ moon = NULL;
 Camera3D /*-*/ cam  = { {4.0f, 2.0f, 2.0f, 1.0f}, {0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f} };
 
 
@@ -181,8 +249,8 @@ static void project(){
 	glLoadIdentity();
 	gluPerspective( _FOV_DEG , //- Field of view angle, in degrees, in the y direction.
 					w2h , // ----- Aspect ratio , the field of view in the x direction. Ratio of x (width) to y (height).
-					_SCALE/4 , //- Specifies the distance from the viewer to the near clipping plane (always positive).
-					4*_SCALE ); // Specifies the distance from the viewer to the far clipping plane (always positive).
+					_SCALE/16 , //- Specifies the distance from the viewer to the near clipping plane (always positive).
+					16*_SCALE ); // Specifies the distance from the viewer to the far clipping plane (always positive).
 	// 2. Switch back to manipulating the model matrix
 	glMatrixMode( GL_MODELVIEW );
 	// 3. Undo previous transformations
@@ -219,6 +287,8 @@ void display(){
     ///// DRAW LOOP BEGIN /////////////////////////////////////////////////
     set_gunsight( tank, &cam );
     look( cam );
+
+    draw_Planet( moon );
 
     draw_grid_org_XY( _GRID_UNIT, _N_UNIT, _N_UNIT, 
                       _GRID_THICC, _GRID_CLR );
@@ -361,9 +431,11 @@ int main( int argc, char* argv[] ){
 
     ///// Initialize Geometry /////////////////////////////////////////////
     vec4f gClr = make_vec4f( 31.0f/255.0f, 120.0f/255.0f, 55.0f/255.0f );
+    vec4f mLoc = make_vec4f( 50.0f, 0.0f, 50.0f );
     tank = make_TetraTank_mk0( _TNK_BODY_SCL, _TNK_BODY_CLR, _TNK_WHL_SCL, _TNK_WHL_CLR );
     grnd = plane_XY_VAO_VNC_f( 2.0f*_GRID_UNIT*_N_UNIT, 2.0f*_GRID_UNIT*_N_UNIT, _N_UNIT, _N_UNIT, gClr );
     allocate_and_load_VAO_VNC_at_GPU( grnd );
+    moon = make_Moon( "resources/moon.bmp", 4.0f, mLoc, 0.0f, -M_PI/4.0f );
 
     ///// Initialize GLUT Callbacks ///////////////////////////////////////
 
