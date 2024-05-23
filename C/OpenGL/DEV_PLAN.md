@@ -145,9 +145,6 @@
 * `[Y]` TetraTank rolling on icos wheels, 2024-05-21: Needs testing
     - `[Y]` kb movement, 2024-05-1X: Move with either arrows or WASD
     - `[Y]` Convincing rolling contact, 2024-05-21: Needs testing
-* `{?}` Use a shader to construct lines at edges
-    - [Computing Barycentric Coordinates](https://tchayen.github.io/posts/wireframes-with-barycentric-coordinates)
-    - `{?}` GLSL: How to compute distance from a triangle edge?  Sounds like a geometry shader to me?
 
 
 ### HW4: First-Person View in a Scene + Phong Shading + Moving Light Source(s) + Particle System(s)
@@ -165,22 +162,24 @@
         * `[ ]` Terrain matte
         * `[ ]` Tank glossy
 * `[>]` Fireworks
-    - `[>]` Fire mortar from tank barrel
-    - `[ ]` Mortar emits a strong light
-    - `[ ]` Mortar has a particle spark trail
+    - `[>]` Fire shell from tank barrel
+    - `[ ]` shell emits a strong light
+    - `[ ]` shell has a particle spark trail
     - `[ ]` Firework Detonation
-        * `[ ]` Mortar ends trajectory after N frames
+        * `[ ]` shell ends trajectory after N frames
         * `[ ]` Emit **very** strong light
         * `[ ]` Generate shockwave of particle sparks
         * `[ ]` Sparks drop and fade
     
 
 ### HW6: Shaded & Textured Models
-* `[ ]` View newer class material
 * `[ ]` Modify textures with shader(s)
 * `{?}` Chopper mode? (_DANGER!_)
     - `{?}` Transformation Sequence
     - `{?}` Floaty Dynamics
+* `{?}` Use a shader to construct lines at edges
+    - [Computing Barycentric Coordinates](https://tchayen.github.io/posts/wireframes-with-barycentric-coordinates)
+    - `{?}` GLSL: How to compute distance from a triangle edge?  Sounds like a geometry shader to me?
 
 ### HW7: ???
 * `[ ]` View newer class material

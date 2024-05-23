@@ -11,6 +11,8 @@
 const float _SCALE /**/ =   50.0f; // Scale Dimension
 const int   _FOV_DEG    =   55; // - Field of view (for perspective)
 const float _TARGET_FPS =   60.0f; // Desired framerate
+const int   _WINDOW_W   = 1200;
+const int   _WINDOW_H   =  900;
 
 /// Model Settings ///
 const float _TNK_BODY_SCL = 1.0f;
@@ -175,8 +177,8 @@ void draw_Moon( Planet* texMoon, int emission, float shiny ){
     for( int ph = -90; ph < 90; ph += 5 ){
         glBegin( GL_QUAD_STRIP );
         for( int th = 0; th <= 360; th += 5 ){
-            Vertex( th, ph   );
             Vertex( th, ph+5 );
+            Vertex( th, ph   );
         }
         glEnd();
     }
@@ -188,12 +190,12 @@ void draw_Moon( Planet* texMoon, int emission, float shiny ){
 
 typedef struct{
     // A bright projectile that explodes even more brightly, with particles!
-    VAO_VNC_f* bullet; // Mortar geometry
+    VAO_VNC_f* bullet; // shell geometry
     uint /*-*/ age; // -- Number of frames since leaving launch tube
 }Firework;
 
 // Firework* make_Firework( float width, const vec4f bodyClr ){
-//     // Alloc and construct firework mortar
+//     // Alloc and construct firework shell
 // }
 
 ///// TetraTank_mk0 ///////////////////////////////////////////////////////
@@ -295,8 +297,10 @@ void align_firework_at_muzzle( TetraTank_mk0* tank, Firework* proj ){
 }
 
 
-void roll_wheels_for_rel_body_move( TetraTank_mk0* tank, const vec4f relMov ){
+void roll_wheels_for_rel_body_move( TetraTank_mk0* tank, const vec4f relMov, float zTurn_rad ){
+    // FIXME: TAKE TURNING INTO ACCOUNT!
     // Rotate the wheels as if they convey the tank by relative `relMov` through rolling contact
+    vec4f /**/ trnAxis;
     vec4f /**/ relAxis  = cross_vec4f( make_vec4f( 0.0f, 0.0f, 1.0f ), relMov );
     float /**/ roll_deg = norm_vec4f( relMov )/_TNK_WHL_SCL * 180.0f/M_PI;
     // printf( "Rolling %f [deg]\n", roll_deg );
@@ -306,8 +310,19 @@ void roll_wheels_for_rel_body_move( TetraTank_mk0* tank, const vec4f relMov ){
     for( ubyte i = 0; i < 3; ++i ){
         whl = get_part_i( tank->body, i );
         update_total_pose( whl );
-        copy_mtx44f( matWhl, whl->totPose );
+        copy_mtx44f( matWhl, whl->ownPose );
         invert_homog( matWhl );
+
+        trnAxis = unit_vec4f( get_posn_mtx44f( whl->relPose ) );
+        // trnAxis.z = 0.0f;
+        whlAxis = mult_mtx44f_vec4f( matWhl, trnAxis );
+        // trnAxis = cross_vec4f( make_vec4f( 0.0f, 0.0f, 1.0f ), trnAxis );
+        rotate_angle_axis_mtx44f( 
+            whl->ownPose, 
+            -zTurn_rad * 180.0f/M_PI * (_TNK_BODY_SCL+_TNK_WHL_SCL)/_TNK_WHL_SCL, 
+            whlAxis.x, whlAxis.y, whlAxis.z 
+        );
+        
         whlAxis = mult_mtx44f_vec4f( matWhl, relAxis );
         rotate_angle_axis_mtx44f( whl->ownPose, roll_deg, whlAxis.x, whlAxis.y, whlAxis.z );
     }
@@ -315,12 +330,24 @@ void roll_wheels_for_rel_body_move( TetraTank_mk0* tank, const vec4f relMov ){
 
 
 ////////// PROGRAM STATE ///////////////////////////////////////////////////////////////////////////
-TetraTank_mk0* tank = NULL;
-Firework* /**/ frwk = NULL;
-VAO_VNC_f*     grnd = NULL;
-Planet* /*--*/ moon = NULL;
-LightSource*   lite = NULL;
-Camera3D /*-*/ cam  = { {4.0f, 2.0f, 2.0f, 1.0f}, {0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f} };
+
+/// Geometry ///
+TetraTank_mk0* tank     = NULL;
+Firework* /**/ frwk     = NULL;
+bool /*-----*/ fwActive = false;
+VAO_VNC_f*     grnd     = NULL;
+Planet* /*--*/ moon     = NULL;
+LightSource*   lite     = NULL;
+Camera3D /*-*/ cam /**/ = { {4.0f, 2.0f, 2.0f, 1.0f}, {0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f} };
+
+/// Interaction ///
+bool upArrw = false;
+bool dnArrw = false;
+bool rtArrw = false;
+bool lfArrw = false;
+bool space  = false;
+int  xLast  = INT32_MAX, xDelta = 0;
+int  yLast  = INT32_MAX, yDelta = 0;
 
 
 
@@ -359,7 +386,11 @@ void reshape( int width , int height ){
 }
 
 
-
+void capture_pointer( int x, int y ){
+    int pad = 50;
+    if( (x < pad) || (y < pad) || (x > (_WINDOW_W-pad)) || (y > (_WINDOW_H-pad)) )
+        glutWarpPointer( _WINDOW_W/2, _WINDOW_H/2 ); // Retain cursor at center while space not pressed
+}
 
 
 
@@ -372,22 +403,18 @@ void display(){
     glClearDepth( 1.0f );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
     glEnable( GL_DEPTH_TEST );
-    glEnable( GL_CULL_FACE );
     glLoadIdentity();
 
     ///// DRAW LOOP BEGIN /////////////////////////////////////////////////
-
     
-
-    //  OpenGL should normalize normal vectors
-	glEnable( GL_NORMALIZE );
 	//  Enable lighting , From this point until 'glDisable' lighting is applied
 	glEnable( GL_LIGHTING );
     glColorMaterial( GL_FRONT_AND_BACK , GL_AMBIENT_AND_DIFFUSE );
 	glEnable( GL_COLOR_MATERIAL );
 
     set_gunsight( tank, &cam );
-    look( cam );
+    look( cam ); // ------------------ NOTE: Look THEN illuminate!
+    illuminate_with_source( lite ); // NOTE: Illumination THEN transformation!
 
     // draw_Planet( moon );
     draw_Moon( moon, _MOON_EMISS, _MOON_SHINY );
@@ -398,9 +425,7 @@ void display(){
 
     draw_VAO_VNC_f( tank->body );
 
-    
-
-    illuminate_with_source( lite );
+        
     glDisable( GL_LIGHTING );
     ///// DRAW LOOP END ///////////////////////////////////////////////////
 
@@ -414,18 +439,12 @@ void display(){
 	ErrCheck( "display" );
 	glFlush();
 	glutSwapBuffers();
+
 }
 
 
 
 ////////// INTERACTION /////////////////////////////////////////////////////////////////////////////
-
-bool upArrw = false;
-bool dnArrw = false;
-bool rtArrw = false;
-bool lfArrw = false;
-int  xLast  = INT32_MAX, xDelta = 0;
-int  yLast  = INT32_MAX, yDelta = 0;
 
 void special_dn( int key, int x, int y ){
     // GLUT calls this routine when an arrow key is pressed
@@ -436,12 +455,15 @@ void special_dn( int key, int x, int y ){
 }
 
 void key_dn( ubyte key, int x, int y ){
-    // GLUT calls this routine when an arrow key is pressed
+    // GLUT calls this routine when a letter key is pressed
     if( key == 'w' )  upArrw = true;
     if( key == 's' )  dnArrw = true;
     if( key == 'd' )  rtArrw = true;
     if( key == 'a' )  lfArrw = true;
-    // if( key == 27  )  glutLeaveMainLoop(); // Quit on [Esc]
+    if( key == 32  ){ // [Spacebar]
+        space = true;
+        glutSetCursor( GLUT_CURSOR_INHERIT );
+    }
 }
 
 void special_up( int key, int x, int y ){
@@ -453,11 +475,15 @@ void special_up( int key, int x, int y ){
 }
 
 void key_up( ubyte key, int x, int y ){
-    // GLUT calls this routine when an arrow key is pressed
+    // GLUT calls this routine when a letter key is released
     if( key == 'w' )  upArrw = false;
     if( key == 's' )  dnArrw = false;
     if( key == 'd' )  rtArrw = false;
     if( key == 'a' )  lfArrw = false;
+    if( key == 32  ){ // [Spacebar]
+        space = false;
+        glutSetCursor( GLUT_CURSOR_NONE );
+    }
 }
 
 void mouse_move( int x, int y ){
@@ -468,6 +494,7 @@ void mouse_move( int x, int y ){
     }
     xLast = x;
     yLast = y;
+    if( !space )  capture_pointer( x, y );
 }
 
 ////////// SIMULATION //////////////////////////////////////////////////////////////////////////////
@@ -477,30 +504,33 @@ void tick(){
     vec4f totMove   = make_0_vec4f();
     float turnAngle = -1.0f * xDelta * _FRM_TURN;
     float op1[16];  
-    Rz_mtx44f( op1, turnAngle );
-    mult_mtx44f( tank->body->ownPose, op1 );
 
-    if( upArrw )  totMove = add_vec4f( totMove, make_vec4f(  0.0f,  1.0f, 0.0f ) );
-    if( dnArrw )  totMove = add_vec4f( totMove, make_vec4f(  0.0f, -1.0f, 0.0f ) );
-    if( rtArrw )  totMove = add_vec4f( totMove, make_vec4f(  1.0f,  0.0f, 0.0f ) );
-    if( lfArrw )  totMove = add_vec4f( totMove, make_vec4f( -1.0f,  0.0f, 0.0f ) );
+    if( !space ){ // Disable driving while space is held down
+        Rz_mtx44f( op1, turnAngle );
+        mult_mtx44f( tank->body->ownPose, op1 );
 
-    totMove = stretch_to_len_vec4f( totMove, _FRM_DISP );
+        if( upArrw )  totMove = add_vec4f( totMove, make_vec4f(  0.0f,  1.0f, 0.0f ) );
+        if( dnArrw )  totMove = add_vec4f( totMove, make_vec4f(  0.0f, -1.0f, 0.0f ) );
+        if( rtArrw )  totMove = add_vec4f( totMove, make_vec4f(  1.0f,  0.0f, 0.0f ) );
+        if( lfArrw )  totMove = add_vec4f( totMove, make_vec4f( -1.0f,  0.0f, 0.0f ) );
 
-    identity_mtx44f( op1 );
-    translate_mtx44f( op1, totMove.x, totMove.y, 0.0f );
-    mult_mtx44f( tank->body->ownPose, op1 );
-    
-    turnAngle = -1.0f * yDelta * _FRM_TURN / 2.0f;
-    Rx_mtx44f( op1, turnAngle );
-    mult_mtx44f( tank->gnPose, op1 );
+        totMove = stretch_to_len_vec4f( totMove, _FRM_DISP );
 
-    roll_wheels_for_rel_body_move( tank, totMove );
+        identity_mtx44f( op1 );
+        translate_mtx44f( op1, totMove.x, totMove.y, 0.0f );
+        mult_mtx44f( tank->body->ownPose, op1 );
+        
+        roll_wheels_for_rel_body_move( tank, totMove, turnAngle );
+
+        turnAngle = -1.0f * yDelta * _FRM_TURN / 2.0f;
+        Rx_mtx44f( op1, turnAngle );
+        mult_mtx44f( tank->gnPose, op1 );
+    }
 
     // Track only RELATIVE mouse movement!
     xDelta = 0;
     yDelta = 0;
-
+    
     // 3. Set projection
 	project();
     // Tell GLUT it is necessary to redisplay the scene
@@ -523,7 +553,7 @@ int main( int argc, char* argv[] ){
     // initGL();
 
     // Request window with size specified in pixels
-    glutInitWindowSize( 900, 900 );
+    glutInitWindowSize( _WINDOW_W, _WINDOW_H );
 
     // Create the window
     glutCreateWindow( "Vertex Array Object (VAO) Test" );
@@ -531,9 +561,13 @@ int main( int argc, char* argv[] ){
     // NOTE: Set modes AFTER the window / graphics context has been created!
     // Request double buffered, true color window 
     glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
-    glEnable( GL_DEPTH_TEST );
+    
+    glEnable( GL_CULL_FACE );
+    //  OpenGL should normalize normal vectors
+	glEnable( GL_NORMALIZE );
     glDepthRange( 0.0f , 1.0f ); 
     glutSetCursor( GLUT_CURSOR_NONE ); // Hide the cursor while in the window
+    glutWarpPointer( _WINDOW_W/2, _WINDOW_H/2 );
 
 
     ///// Initialize Geometry /////////////////////////////////////////////
