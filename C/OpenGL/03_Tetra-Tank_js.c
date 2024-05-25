@@ -8,7 +8,8 @@
 ////////// PROGRAM SETTINGS ////////////////////////////////////////////////////////////////////////
 
 /// View Settings ///
-const float _SCALE /**/ =   50.0f; // Scale Dimension
+const float _DRAW_DIST_MIN = 50.0f / 16.0f; // Scale Dimension
+const float _DRAW_DIST_MAX = 50.0f * 16.0f; // Scale Dimension
 const int   _FOV_DEG    =   55; // - Field of view (for perspective)
 const float _TARGET_FPS =   60.0f; // Desired framerate
 const int   _WINDOW_W   = 1200;
@@ -28,6 +29,8 @@ const float _GRID_THICC   = 3.0f;
 /// Movement Settings ///
 const float _FRM_DISP = 0.05; // Units to move per frame
 const float _FRM_TURN = 0.05; // Radians to move per pixel of mouse movement
+const float _FWK_DISP = _FRM_DISP/2.0f; // Units to move per frame
+
 
 /// Environment Settings ///
 const int   _MOON_EMISS = 50;
@@ -190,13 +193,20 @@ void draw_Moon( Planet* texMoon, int emission, float shiny ){
 
 typedef struct{
     // A bright projectile that explodes even more brightly, with particles!
-    VAO_VNC_f* bullet; // shell geometry
-    uint /*-*/ age; // -- Number of frames since leaving launch tube
+    VAO_VNC_f* shell; // shell geometry
+    vec4f /**/ color;
 }Firework;
 
-// Firework* make_Firework( float width, const vec4f bodyClr ){
-//     // Alloc and construct firework shell
-// }
+
+Firework* make_Firework( float width, const vec4f bodyClr ){
+    // Alloc and construct firework shell
+    Firework* rtnFw = (Firework*) malloc( sizeof( Firework ) );
+    rtnFw->shell = octahedron_VAO_VNC_f( width, 2.0f*width, bodyClr );
+    rtnFw->color = bodyClr;
+    allocate_and_load_VAO_VNC_at_GPU( rtnFw->shell );
+    return rtnFw;
+}
+
 
 ///// TetraTank_mk0 ///////////////////////////////////////////////////////
 
@@ -291,19 +301,18 @@ void align_firework_at_muzzle( TetraTank_mk0* tank, Firework* proj ){
     // Prepare to fire `proj` Z-wise from `tank` barrel
     float xfrm[16];
     calc_total_pose_part_i( xfrm, tank->body, 3 );
-    rotate_x_mtx44f( xfrm, M_PI );
-    copy_mtx44f( get_part_i( tank->body, 3 )->relPose, xfrm );
-    translate_mtx44f( get_part_i( tank->body, 3 )->ownPose, 0.0f, 0.0f, _TNK_BODY_SCL/2.0f );
+    // copy_mtx44f( get_part_i( tank->body, 3 )->relPose, xfrm );
+    translate_mtx44f( xfrm, 0.0f, 3.0f*_TNK_WHL_SCL, _TNK_BODY_SCL );
+    rotate_x_mtx44f( xfrm, -5.0f*M_PI/4.0 );
+    copy_mtx44f( proj->shell->relPose, xfrm );
 }
 
 
 void roll_wheels_for_rel_body_move( TetraTank_mk0* tank, const vec4f relMov, float zTurn_rad ){
-    // FIXME: TAKE TURNING INTO ACCOUNT!
     // Rotate the wheels as if they convey the tank by relative `relMov` through rolling contact
     vec4f /**/ trnAxis;
     vec4f /**/ relAxis  = cross_vec4f( make_vec4f( 0.0f, 0.0f, 1.0f ), relMov );
     float /**/ roll_deg = norm_vec4f( relMov )/_TNK_WHL_SCL * 180.0f/M_PI;
-    // printf( "Rolling %f [deg]\n", roll_deg );
     vec4f /**/ whlAxis;
     float /**/ matWhl[16];
     VAO_VNC_f* whl = NULL;
@@ -346,6 +355,7 @@ bool dnArrw = false;
 bool rtArrw = false;
 bool lfArrw = false;
 bool space  = false;
+bool tab    = false;
 int  xLast  = INT32_MAX, xDelta = 0;
 int  yLast  = INT32_MAX, yDelta = 0;
 
@@ -363,10 +373,10 @@ static void project(){
 	glMatrixMode( GL_PROJECTION );
 	//  Undo previous transformations
 	glLoadIdentity();
-	gluPerspective( _FOV_DEG , //- Field of view angle, in degrees, in the y direction.
-					w2h , // ----- Aspect ratio , the field of view in the x direction. Ratio of x (width) to y (height).
-					_SCALE/16 , //- Specifies the distance from the viewer to the near clipping plane (always positive).
-					16*_SCALE ); // Specifies the distance from the viewer to the far clipping plane (always positive).
+	gluPerspective( _FOV_DEG , // ------ Field of view angle, in degrees, in the y direction.
+					w2h , // ----------- Aspect ratio , the field of view in the x direction. Ratio of x (width) to y (height).
+					_DRAW_DIST_MIN , //- Specifies the distance from the viewer to the near clipping plane (always positive).
+					_DRAW_DIST_MAX ); // Specifies the distance from the viewer to the far clipping plane (always positive).
 	// 2. Switch back to manipulating the model matrix
 	glMatrixMode( GL_MODELVIEW );
 	// 3. Undo previous transformations
@@ -425,6 +435,8 @@ void display(){
 
     draw_VAO_VNC_f( tank->body );
 
+    if( fwActive )  draw_VAO_VNC_f( frwk->shell );
+
         
     glDisable( GL_LIGHTING );
     ///// DRAW LOOP END ///////////////////////////////////////////////////
@@ -464,6 +476,7 @@ void key_dn( ubyte key, int x, int y ){
         space = true;
         glutSetCursor( GLUT_CURSOR_INHERIT );
     }
+    if( (key == 9) && (!fwActive) ){  tab = true;  } // [Tab]
 }
 
 void special_up( int key, int x, int y ){
@@ -484,6 +497,7 @@ void key_up( ubyte key, int x, int y ){
         space = false;
         glutSetCursor( GLUT_CURSOR_NONE );
     }
+    // if( key == 9 ){  tab = false;  } // [Tab]
 }
 
 void mouse_move( int x, int y ){
@@ -525,6 +539,14 @@ void tick(){
         turnAngle = -1.0f * yDelta * _FRM_TURN / 2.0f;
         Rx_mtx44f( op1, turnAngle );
         mult_mtx44f( tank->gnPose, op1 );
+
+        if( fwActive )  thrust_Z_vehicle( frwk->shell, -_FWK_DISP );
+
+        if( tab ){
+            align_firework_at_muzzle( tank, frwk );
+            fwActive = true;
+            tab /**/ = false;
+        }
     }
 
     // Track only RELATIVE mouse movement!
@@ -572,12 +594,14 @@ int main( int argc, char* argv[] ){
 
     ///// Initialize Geometry /////////////////////////////////////////////
     vec4f gClr = make_vec4f( 31.0f/255.0f, 120.0f/255.0f, 55.0f/255.0f );
+    vec4f fClr = make_vec4f( 1.0, 0.0f, 0.0f );
     vec4f mLoc = make_vec4f( 50.0f, 0.0f, 50.0f );
     tank = make_TetraTank_mk0( _TNK_BODY_SCL, _TNK_BODY_CLR, _TNK_WHL_SCL, _TNK_WHL_CLR );
     grnd = plane_XY_VAO_VNC_f( 2.0f*_GRID_UNIT*_N_UNIT, 2.0f*_GRID_UNIT*_N_UNIT, _N_UNIT, _N_UNIT, gClr );
     allocate_and_load_VAO_VNC_at_GPU( grnd );
     moon = make_Moon( "resources/moon.bmp", 4.0f, mLoc, 0.0f, -M_PI/4.0f );
     lite = make_white_light_source( stretch_to_len_vec4f( mLoc, 10.0f ), GL_LIGHT0, 5, 50, 100 );
+    frwk = make_Firework( _TNK_WHL_SCL*2.0f, fClr );
 
     ///// Initialize GLUT Callbacks ///////////////////////////////////////
 

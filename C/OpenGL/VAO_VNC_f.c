@@ -195,7 +195,7 @@ void rotate_RPY_vehicle( VAO_VNC_f* vao, float r_, float p_, float y_ ){
 void thrust_Z_vehicle( VAO_VNC_f* vao, float dZ ){
     // Move in the local Z direction by `dZ` 
     vec4f disp = make_vec4f( 0.0f, 0.0f, dZ );
-    disp = mult_mtx44f_vec4f( vao->ownPose, disp );
+    // disp = mult_mtx44f_vec4f( vao->ownPose, disp );
     translate( vao, disp );
 }
 
@@ -431,6 +431,16 @@ VAO_VNC_f* cube_VAO_VNC_f( float sideLen, const vec4f color ){
     return rtnVAO;
 }
 
+
+///// Octahedron //////////////////////////////////////////////////////////
+
+VAO_VNC_f* octahedron_VAO_VNC_f( float cornerWidth, float height, const vec4f color ){
+    // Construct a cube VAO with flat-shaded normals and one solid color
+    TriNet*    octNet = create_octahedron_mesh_only( cornerWidth, height );
+    VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color( octNet, color );
+    delete_net( octNet );
+    return rtnVAO;
+}
 
 
 ///// Icosahedron /////////////////////////////////////////////////////////

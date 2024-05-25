@@ -172,6 +172,10 @@ VAO_VNC_f* tetrahedron_VAO_VNC_f( float radius, const vec4f color );
 // Construct a tetrahedron VAO with flat-shaded normals and one solid color, with all vectors transformed
 VAO_VNC_f* tetrahedron_transformed_VAO_VNC_f( float radius, const vec4f color, const float* xfrm );
 
+///// Octahedron //////////////////////////////////////////////////////////
+// Construct an octahedron VAO with flat-shaded normals and one solid color
+VAO_VNC_f* octahedron_VAO_VNC_f( float cornerWidth, float height, const vec4f color );
+
 ///// Icosahedron /////////////////////////////////////////////////////////
 // Construct a icosahedron VAO with flat-shaded normals and one solid color
 VAO_VNC_f* icosahedron_VAO_VNC_f( float radius, const vec4f color );
