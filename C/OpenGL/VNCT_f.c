@@ -8,10 +8,11 @@
 
 ////////// VERTEX ARRAY OBJECTS (NESTED) ///////////////////////////////////////////////////////////
 
-VAO_VNC_f* make_VAO_VNC_f( uint Ntri_ ){
+VNCT_f* make_VNCT_f( uint Ntri_ ){
     // Allocate the VAO at heap
-    uint /*-*/ arrSize = sizeof( float ) * 9 * Ntri_;
-    VAO_VNC_f* rtnVAO  = (VAO_VNC_f*) malloc( sizeof( VAO_VNC_f ) );
+    uint    arrSize = sizeof( float ) * 9 * Ntri_;
+    uint    texSize = sizeof( float ) * 6 * Ntri_;
+    VNCT_f* rtnVAO  = (VNCT_f*) malloc( sizeof( VNCT_f ) );
     /// Geo Info ///
     rtnVAO->Ntri  = Ntri_;
     rtnVAO->V     = (float*) malloc( arrSize );
@@ -19,6 +20,10 @@ VAO_VNC_f* make_VAO_VNC_f( uint Ntri_ ){
     rtnVAO->C     = (float*) malloc( arrSize );
     rtnVAO->bufID = 0;
     rtnVAO->arSiz = arrSize;
+    /// Texture Info ///
+    rtnVAO->T     = (float*) malloc( texSize );
+    rtnVAO->txSiz = texSize;
+    rtnVAO->texID = 0;
     /// Pose & Scale ///
     rtnVAO->relPose = make_identity_mtx44f();
     rtnVAO->ownPose = make_identity_mtx44f();
@@ -32,34 +37,41 @@ VAO_VNC_f* make_VAO_VNC_f( uint Ntri_ ){
 }
 
 
-void allocate_N_VAO_VNC_parts( VAO_VNC_f* vao, uint N ){
+void allocate_N_VAO_VNCT_parts( VNCT_f* vao, uint N ){
     // Make space for `N` sub-part pointers
     vao->Nprt  = N;
-    vao->parts = (void**) malloc( N * sizeof( VAO_VNC_f* ) );
+    vao->parts = (void**) malloc( N * sizeof( VNCT_f* ) );
 }
 
 
-VAO_VNC_f* get_part_i( VAO_VNC_f* vao, uint i ){
+void set_texture( VNCT_f* vao, const char* path ){
+    // Load texture at GPU and get its handle
+    vao->texID = LoadTexBMP( path );
+}
+
+
+VNCT_f* get_part_i( VNCT_f* vao, uint i ){
     // Fetch sub-VAO, NOTE: This is to wrap the need to cast the null pointer
-    if( i < vao->Nprt )  return (VAO_VNC_f*) vao->parts[i];
+    if( i < vao->Nprt )  return (VNCT_f*) vao->parts[i];
     else /*----------*/  return NULL;
 }
 
 
-void delete_VAO_VNC_f( VAO_VNC_f* vao ){
+void delete_VNCT_f( VNCT_f* vao ){
     // Erase the VAO (and parts) at heap and the GPU
     if((vao->bufID) != 0){  glDeleteBuffersARB(1, &(vao->bufID));  }
     free( vao->V );
     free( vao->N );
     free( vao->C );
+    free( vao->T );
     free( vao->relPose );
     free( vao->ownPose );
-    for( uint i = 0; i < vao->Nprt; ++i ){   delete_VAO_VNC_f( (VAO_VNC_f*) (vao->parts[i]) );  }
+    for( uint i = 0; i < vao->Nprt; ++i ){   delete_VNCT_f( (VNCT_f*) (vao->parts[i]) );  }
     free( vao );
 }
 
 
-void load_VAO_VNC_from_full_arrays( VAO_VNC_f* vao, /*<<*/ const float* Vsto, const float* Nsto, const float* Csto ){
+void load_VNC_from_full_arrays( VNCT_f* vao, /*<<*/ const float* Vsto, const float* Nsto, const float* Csto ){
     // Copy {V,N,C} from the specified arrays
     memcpy( vao->V, Vsto, vao->arSiz ); // Copy vertices
     memcpy( vao->N, Nsto, vao->arSiz ); // Copy normals
@@ -67,7 +79,15 @@ void load_VAO_VNC_from_full_arrays( VAO_VNC_f* vao, /*<<*/ const float* Vsto, co
 }
 
 
-void allocate_and_load_VAO_VNC_at_GPU( VAO_VNC_f* vao ){
+void load_VNT_from_full_arrays( VNCT_f* vao, /*<<*/ const float* Vsto, const float* Nsto, const float* Tsto ){
+    // Copy {V,N,C} from the specified arrays
+    memcpy( vao->V, Vsto, vao->arSiz ); // Copy vertices
+    memcpy( vao->N, Nsto, vao->arSiz ); // Copy normals
+    memcpy( vao->T, Tsto, vao->txSiz ); // Copy texture UV
+}
+
+
+void allocate_and_load_VAO_VNC_at_GPU( VNCT_f* vao ){
     // Fetch & set buffer ID, and make space on the GPU for the VAO
     glGenBuffersARB( 1, &(vao->bufID) );
     glBindBufferARB( GL_ARRAY_BUFFER_ARB, vao->bufID );
@@ -75,11 +95,21 @@ void allocate_and_load_VAO_VNC_at_GPU( VAO_VNC_f* vao ){
     glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, 0             , vao->arSiz, vao->V ); // copy vertices starting from 0 offest
     glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vao->arSiz    , vao->arSiz, vao->N ); // copy normals after vertices
     glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, 2*(vao->arSiz), vao->arSiz, vao->C ); // copy colours after normals
-    for( uint i = 0; i < vao->Nprt; ++i ){  allocate_and_load_VAO_VNC_at_GPU( get_part_i( vao, i ) );  }
 }
 
 
-void update_total_pose( VAO_VNC_f* vao ){
+void allocate_and_load_VAO_VNT_at_GPU( VNCT_f* vao ){
+    // Fetch & set buffer ID, and make space on the GPU for the VAO
+    glGenBuffersARB( 1, &(vao->bufID) );
+    glBindBufferARB( GL_ARRAY_BUFFER_ARB, vao->bufID );
+    glBufferDataARB( GL_ARRAY_BUFFER_ARB, 3*(vao->arSiz), 0, GL_STATIC_DRAW_ARB );
+    glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, 0             , vao->arSiz, vao->V ); // copy vertices starting from 0 offest
+    glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, vao->arSiz    , vao->arSiz, vao->N ); // copy normals after vertices
+    glBufferSubDataARB( GL_ARRAY_BUFFER_ARB, 2*(vao->arSiz), vao->txSiz, vao->T ); // copy UV after normals
+}
+
+
+void update_total_pose( VNCT_f* vao ){
     // Compose relative, ownship, and scale transformations into `totPose`, relative to parent frame
     identity_mtx44f( vao->totPose );
     mult_mtx44f( vao->totPose, vao->relPose );
@@ -88,7 +118,7 @@ void update_total_pose( VAO_VNC_f* vao ){
 }
 
 
-void calc_total_pose_part_i( float* mat, /*<<*/ VAO_VNC_f* vao, uint i ){
+void calc_total_pose_part_i( float* mat, /*<<*/ VNCT_f* vao, uint i ){
     // Get the total distal pose at `i` and store it in `mat`
     identity_mtx44f( mat );
     update_total_pose( vao );
@@ -98,8 +128,8 @@ void calc_total_pose_part_i( float* mat, /*<<*/ VAO_VNC_f* vao, uint i ){
 }
 
 
-void draw_recur_VAO_VNC_f( VAO_VNC_f* vao ){
-    // Inner draw function for `VAO_VNC_f`, NOTE: This function assumes GPU is set to draw VAO
+void draw_recur_VNC_f( VNCT_f* vao ){
+    // Inner draw function for `VNCT_f`, NOTE: This function assumes GPU is set to draw VAO
     ulong arrSize = vao->arSiz;
     ulong dblSize = arrSize*2;
 
@@ -126,13 +156,13 @@ void draw_recur_VAO_VNC_f( VAO_VNC_f* vao ){
     // pointer, so, normal vertex array operations are re-activated
     glBindBufferARB( GL_ARRAY_BUFFER_ARB, 0 );
 
-    for( uint i = 0; i < vao->Nprt; ++i ){  draw_recur_VAO_VNC_f( (VAO_VNC_f*) vao->parts[i] );  }
+    for( uint i = 0; i < vao->Nprt; ++i ){  draw_recur_VNC_f( (VNCT_f*) vao->parts[i] );  }
 
     glPopMatrix();
 }
 
 
-void draw_VAO_VNC_f( VAO_VNC_f* vao ){
+void draw_VNC_f( VNCT_f* vao ){
     // Draw using "VBO Method" (See Song Ho Ahn code)
     // printf( "About to draw VAO ...\n" );
     
@@ -141,7 +171,7 @@ void draw_VAO_VNC_f( VAO_VNC_f* vao ){
     glEnableClientState( GL_NORMAL_ARRAY );
     glEnableClientState( GL_COLOR_ARRAY  );
 
-    draw_recur_VAO_VNC_f( vao );
+    draw_recur_VNC_f( vao );
 
     // disable vertex arrays
     glDisableClientState( GL_VERTEX_ARRAY );  
@@ -150,13 +180,69 @@ void draw_VAO_VNC_f( VAO_VNC_f* vao ){
 }
 
 
-vec4f get_posn( VAO_VNC_f* vao ){
+void draw_recur_VNT_f( VNCT_f* vao ){
+    // Inner draw function for `VNCT_f`, NOTE: This function assumes GPU is set to draw VAO
+    ulong arrSize = vao->arSiz;
+    ulong dblSize = arrSize*2;
+
+    update_total_pose( vao );
+
+    glColor4f( 1,1,1,1 ); // Set all color channels to full
+    glEnable( GL_TEXTURE_2D );
+    glBindTexture( GL_TEXTURE_2D , vao->texID );
+
+    glMatrixMode( GL_MODELVIEW );
+    glPushMatrix();
+    glMultMatrixf( vao->totPose );
+    
+    // bind VBOs with IDs and set the buffer offsets of the bound VBOs
+    // When buffer object is bound with its ID, all pointers in gl*Pointer()
+    // are treated as offset instead of real pointer.
+    glBindBufferARB( GL_ARRAY_BUFFER_ARB, vao->bufID );
+
+    // before draw, specify vertex and index arrays with their offsets
+    glVertexPointer(   3, GL_FLOAT, 0, 0               );
+    glNormalPointer(      GL_FLOAT, 0, (void*) arrSize );
+    glTexCoordPointer( 2, GL_FLOAT, 0, (void*) dblSize );
+
+    glDrawArrays( GL_TRIANGLES, 0, 3*(vao->Ntri) );
+
+    // it is good idea to release VBOs with ID 0 after use.
+    // Once bound with 0, all pointers in gl*Pointer() behave as real
+    // pointer, so, normal vertex array operations are re-activated
+    glBindBufferARB( GL_ARRAY_BUFFER_ARB, 0 );
+
+    for( uint i = 0; i < vao->Nprt; ++i ){  draw_recur_VNT_f( (VNCT_f*) vao->parts[i] );  }
+
+    glPopMatrix();
+}
+
+
+void draw_VNT_f( VNCT_f* vao ){
+    // Draw using "VBO Method" (See Song Ho Ahn code)
+    // printf( "About to draw VAO ...\n" );
+    
+    // enable vertex arrays
+    glEnableClientState( GL_VERTEX_ARRAY        );
+    glEnableClientState( GL_NORMAL_ARRAY        );
+    glEnableClientState( GL_TEXTURE_COORD_ARRAY );
+
+    draw_recur_VNT_f( vao );
+
+    // disable vertex arrays
+    glDisableClientState( GL_VERTEX_ARRAY        );  
+    glDisableClientState( GL_NORMAL_ARRAY        );
+    glDisableClientState( GL_TEXTURE_COORD_ARRAY );
+}
+
+
+vec4f get_posn( VNCT_f* vao ){
     // Get the position components of the homogeneous coordinates as a vector
     return make_vec4f( vao->totPose[12], vao->totPose[13], vao->totPose[14] );
 }
 
 
-void set_posn( VAO_VNC_f* vao, const vec4f posn ){
+void set_posn( VNCT_f* vao, const vec4f posn ){
     // Set the position components of the homogeneous coordinates
     vao->ownPose[12] = posn.x;
     vao->ownPose[13] = posn.y;
@@ -164,7 +250,7 @@ void set_posn( VAO_VNC_f* vao, const vec4f posn ){
 }
 
 
-void translate( VAO_VNC_f* vao, const vec4f delta ){
+void translate( VNCT_f* vao, const vec4f delta ){
     // Increment the position components of the homogeneous coordinates by the associated `delta` components
     vao->ownPose[12] += delta.x;
     vao->ownPose[13] += delta.y;
@@ -172,7 +258,7 @@ void translate( VAO_VNC_f* vao, const vec4f delta ){
 }
 
 
-void rotate_angle_axis_rad( VAO_VNC_f* vao, float angle_rad, const vec4f axis ){
+void rotate_angle_axis_rad( VNCT_f* vao, float angle_rad, const vec4f axis ){
     // Rotate the object by `angle_rad` about `axis`
     float op1[16];  identity_mtx44f( op1 );
     rotate_angle_axis_mtx44f( op1, angle_rad*180/M_PI, axis.x, axis.y, axis.z );
@@ -182,7 +268,7 @@ void rotate_angle_axis_rad( VAO_VNC_f* vao, float angle_rad, const vec4f axis ){
 }
 
 
-void rotate_RPY_vehicle( VAO_VNC_f* vao, float r_, float p_, float y_ ){
+void rotate_RPY_vehicle( VNCT_f* vao, float r_, float p_, float y_ ){
     // Increment the world Roll, Pitch, Yaw of the model
     // NOTE: This is for airplanes that move forward in their own Z and have a wingspan across X
     float op1[16];  identity_mtx44f( op1 );
@@ -192,7 +278,7 @@ void rotate_RPY_vehicle( VAO_VNC_f* vao, float r_, float p_, float y_ ){
 }
 
 
-void thrust_Z_vehicle( VAO_VNC_f* vao, float dZ ){
+void thrust_Z_vehicle( VNCT_f* vao, float dZ ){
     // Move in the local Z direction by `dZ` 
     vec4f disp = make_vec4f( 0.0f, 0.0f, dZ );
     // disp = mult_mtx44f_vec4f( vao->ownPose, disp );
@@ -203,11 +289,11 @@ void thrust_Z_vehicle( VAO_VNC_f* vao, float dZ ){
 
 ////////// CONSTRUCTION ////////////////////////////////////////////////////////////////////////////
 
-VAO_VNC_f* VAO_from_TriNet_solid_color( TriNet* net, const vec4f color ){
+VNCT_f* VAO_from_TriNet_solid_color( TriNet* net, const vec4f color ){
     // Get a VAO from a `TriNet`
     // NOTE: This function assumes that the normals of the `net` are populated
     uint /*-*/ Nrows = net->Ntri;
-    VAO_VNC_f* rtnVAO = make_VAO_VNC_f( net->Ntri );
+    VNCT_f* rtnVAO = make_VNCT_f( net->Ntri );
     vec4f /**/ v0, v1, v2, n0, n1, n2;
     // 1. For every triangle / row
     for( uint i = 0; i < Nrows; ++i ){
@@ -253,11 +339,11 @@ VAO_VNC_f* VAO_from_TriNet_solid_color( TriNet* net, const vec4f color ){
 }
 
 
-VAO_VNC_f* VAO_from_TriNet_solid_color_transformed( TriNet* net, const vec4f color, const float* xfrm ){
+VNCT_f* VAO_from_TriNet_solid_color_transformed( TriNet* net, const vec4f color, const float* xfrm ){
     // Get a VAO from a `TriNet` with `xfrm` applied to all vertices and normals
     // NOTE: This function assumes that the normals of the `net` are populated
     uint /*-*/ Nrows = net->Ntri;
-    VAO_VNC_f* rtnVAO = make_VAO_VNC_f( net->Ntri );
+    VNCT_f* rtnVAO = make_VNCT_f( net->Ntri );
     float /**/ rota[16];  
     vec4f /**/ v0, v1, v2, n0, n1, n2;
     copy_mtx44f( rota, xfrm );
@@ -380,31 +466,31 @@ const float cubeC[] = { 1, 1, 1,   1, 1, 0,   1, 0, 0,      // v0-v1-v2 (front)
                         0, 1, 0,   0, 1, 1,   0, 0, 1 };    // v6-v5-v4
 
 
-VAO_VNC_f* colorspace_cube_VAO_VNC_f( void ){
+VNCT_f* colorspace_cube_VNC_f( void ){
     // Make a colorful cube from the static array data
     printf( "About to allocate cube ...\n" );
-    VAO_VNC_f* rtnVAO = make_VAO_VNC_f( 12 );
+    VNCT_f* rtnVAO = make_VNCT_f( 12 );
     printf( "About to populate cube ...\n" );
-    load_VAO_VNC_from_full_arrays( rtnVAO, cubeV, cubeN, cubeC );
+    load_VNC_from_full_arrays( rtnVAO, cubeV, cubeN, cubeC );
     return rtnVAO;
 }
 
 
 ///// Tetrahedron /////////////////////////////////////////////////////////
 
-VAO_VNC_f* tetrahedron_VAO_VNC_f( float radius, const vec4f color ){
+VNCT_f* tetrahedron_VNC_f( float radius, const vec4f color ){
     // Construct a tetrahedron VAO with flat-shaded normals and one solid color
     TriNet*    tetNet = create_tetra_mesh_only( radius );
-    VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color( tetNet, color );
+    VNCT_f* rtnVAO = VAO_from_TriNet_solid_color( tetNet, color );
     delete_net( tetNet );
     return rtnVAO;
 }
 
 
-VAO_VNC_f* tetrahedron_transformed_VAO_VNC_f( float radius, const vec4f color, const float* xfrm ){
+VNCT_f* tetrahedron_transformed_VNC_f( float radius, const vec4f color, const float* xfrm ){
     // Construct a tetrahedron VAO with flat-shaded normals and one solid color, with all vectors transformed
     TriNet*    tetNet = create_tetra_mesh_only( radius );
-    VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color_transformed( tetNet, color, xfrm );
+    VNCT_f* rtnVAO = VAO_from_TriNet_solid_color_transformed( tetNet, color, xfrm );
     delete_net( tetNet );
     return rtnVAO;
 }
@@ -412,10 +498,10 @@ VAO_VNC_f* tetrahedron_transformed_VAO_VNC_f( float radius, const vec4f color, c
 
 ///// Triangular Prism ////////////////////////////////////////////////////
 
-VAO_VNC_f* triprism_transformed_VAO_VNC_f( float height, float triRad, const vec4f color, const float* xfrm ){
+VNCT_f* triprism_transformed_VNC_f( float height, float triRad, const vec4f color, const float* xfrm ){
     // Construct a triangular prism VAO with flat-shaded normals and one solid color, with all vectors transformed
     TriNet*    priNet = create_triprism_mesh_only( height, triRad );
-    VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color_transformed( priNet, color, xfrm );
+    VNCT_f* rtnVAO = VAO_from_TriNet_solid_color_transformed( priNet, color, xfrm );
     delete_net( priNet );
     return rtnVAO;
 }
@@ -423,10 +509,10 @@ VAO_VNC_f* triprism_transformed_VAO_VNC_f( float height, float triRad, const vec
 
 ///// Cube ////////////////////////////////////////////////////////////////
 
-VAO_VNC_f* cube_VAO_VNC_f( float sideLen, const vec4f color ){
+VNCT_f* cube_VNC_f( float sideLen, const vec4f color ){
     // Construct a cube VAO with flat-shaded normals and one solid color
     TriNet*    cubNet = create_cube_mesh_only( sideLen );
-    VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color( cubNet, color );
+    VNCT_f* rtnVAO = VAO_from_TriNet_solid_color( cubNet, color );
     delete_net( cubNet );
     return rtnVAO;
 }
@@ -434,10 +520,10 @@ VAO_VNC_f* cube_VAO_VNC_f( float sideLen, const vec4f color ){
 
 ///// Octahedron //////////////////////////////////////////////////////////
 
-VAO_VNC_f* octahedron_VAO_VNC_f( float cornerWidth, float height, const vec4f color ){
+VNCT_f* octahedron_VNC_f( float cornerWidth, float height, const vec4f color ){
     // Construct a cube VAO with flat-shaded normals and one solid color
     TriNet*    octNet = create_octahedron_mesh_only( cornerWidth, height );
-    VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color( octNet, color );
+    VNCT_f* rtnVAO = VAO_from_TriNet_solid_color( octNet, color );
     delete_net( octNet );
     return rtnVAO;
 }
@@ -445,10 +531,10 @@ VAO_VNC_f* octahedron_VAO_VNC_f( float cornerWidth, float height, const vec4f co
 
 ///// Icosahedron /////////////////////////////////////////////////////////
 
-VAO_VNC_f* icosahedron_VAO_VNC_f( float radius, const vec4f color ){
+VNCT_f* icosahedron_VNC_f( float radius, const vec4f color ){
     // Construct a icosahedron VAO with flat-shaded normals and one solid color
     TriNet*    icsNet = create_icos_mesh_only( radius );
-    VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color( icsNet, color );
+    VNCT_f* rtnVAO = VAO_from_TriNet_solid_color( icsNet, color );
     delete_net( icsNet );
     return rtnVAO;
 }
@@ -456,10 +542,10 @@ VAO_VNC_f* icosahedron_VAO_VNC_f( float radius, const vec4f color ){
 
 ///// Icosphere ///////////////////////////////////////////////////////////
 
-VAO_VNC_f* icosphere_VAO_VNC_f( float radius, uint div, const vec4f color ){
+VNCT_f* icosphere_VNC_f( float radius, uint div, const vec4f color ){
     // Construct a icosphere VAO with flat-shaded normals and one solid color
     TriNet*    sphNet = create_icosphere_mesh_only( radius, div );
-    VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color( sphNet, color );
+    VNCT_f* rtnVAO = VAO_from_TriNet_solid_color( sphNet, color );
     delete_net( sphNet );
     return rtnVAO;
 }
@@ -470,10 +556,10 @@ VAO_VNC_f* icosphere_VAO_VNC_f( float radius, uint div, const vec4f color ){
 
 ///// Planar Surface //////////////////////////////////////////////////////
 
-VAO_VNC_f* plane_XY_VAO_VNC_f( float xLen, float yLen, uint xDiv, uint yDiv, const vec4f color ){
+VNCT_f* plane_XY_VNC_f( float xLen, float yLen, uint xDiv, uint yDiv, const vec4f color ){
     // Construct a icosphere VAO with flat-shaded normals and one solid color
     TriNet*    plnNet = create_plane_XY_mesh_only( xLen, yLen, xDiv, yDiv );
-    VAO_VNC_f* rtnVAO = VAO_from_TriNet_solid_color( plnNet, color );
+    VNCT_f* rtnVAO = VAO_from_TriNet_solid_color( plnNet, color );
     delete_net( plnNet );
     return rtnVAO;
 }

@@ -30,6 +30,11 @@ typedef struct{
     float* C; // --- `Ntri` * 9: `float`
     uint   bufID; // Buffer ID at the GPU
     uint   arSiz; // Array size in bytes
+
+    /// Texture Info ///
+    float* T; // --- `Ntri` * 9: `float`
+    uint   txSiz; // UV Array size in bytes
+    uint   texID; // Handle for the texture
     
     /// Pose & Scale ///
     float* relPose; // Static offset pose from parent pose (anchor)
@@ -41,7 +46,7 @@ typedef struct{
     uint   Nprt; //- Number of sub-parts
     void** parts; // Array of sub-part pointers
 
-}VAO_VNC_f;
+}VNCT_f;
 
 
 
@@ -124,71 +129,71 @@ TriNet* create_icosphere_VFNA( float radius, uint div ); // Create an regular ic
 TriNet* create_plane_XY_mesh_only( float xLen, float yLen, uint xDiv, uint yDiv );
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////// VAO_VNC_f.c ////////////////////////////////////////////////////////////////////////
+/////////////// VNCT_f.c ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
     
 ////////// VERTEX ARRAY OBJECTS (NESTED) ///////////////////////////////////////////////////////////
 
-VAO_VNC_f* make_VAO_VNC_f( uint Ntri_ ); // Allocate the VAO at heap
-void /*-*/ allocate_N_VAO_VNC_parts( VAO_VNC_f* vao, uint N ); // Make space for `N` sub-part pointers
-VAO_VNC_f* get_part_i( VAO_VNC_f* vao, uint i ); // Fetch sub-VAO
-void /*-*/ delete_VAO_VNC_f( VAO_VNC_f* vao ); // Erase the VAO (and parts) at heap and the GPU
+VNCT_f* make_VNCT_f( uint Ntri_ ); // Allocate the VAO at heap
+void /*-*/ allocate_N_VAO_VNC_parts( VNCT_f* vao, uint N ); // Make space for `N` sub-part pointers
+VNCT_f* get_part_i( VNCT_f* vao, uint i ); // Fetch sub-VAO
+void /*-*/ delete_VNCT_f( VNCT_f* vao ); // Erase the VAO (and parts) at heap and the GPU
 // Copy {V,N,C} from the specified arrays
-void /*-*/ load_VAO_VNC_from_full_arrays( VAO_VNC_f* vao, /*<<*/ const float* Vsto, const float* Nsto, const float* Csto );
-void /*-*/ allocate_and_load_VAO_VNC_at_GPU( VAO_VNC_f* vao ); // Fetch & set buffer ID, and make space on the GPU for the VAO
+void /*-*/ load_VNCT_from_full_arrays( VNCT_f* vao, /*<<*/ const float* Vsto, const float* Nsto, const float* Csto );
+void /*-*/ allocate_and_load_VAO_VNC_at_GPU( VNCT_f* vao ); // Fetch & set buffer ID, and make space on the GPU for the VAO
 // Compose relative, ownship, and scale transformations into `totPose`, relative to parent frame
-void /*-*/ update_total_pose( VAO_VNC_f* vao );
+void /*-*/ update_total_pose( VNCT_f* vao );
 // Get the total distal pose at `i` and store it in `mat`    
-void /*-*/ calc_total_pose_part_i( float* mat, /*<<*/ VAO_VNC_f* vao, uint i ); 
-void /*-*/ draw_VAO_VNC_f( VAO_VNC_f* vao ); // Draw VAO and all subparts
-vec4f /**/ get_posn( VAO_VNC_f* vao ); // Get the position components of the homogeneous coordinates as a vector
-void /*-*/ set_posn( VAO_VNC_f* vao, const vec4f posn ); // Set the position components of the homogeneous coordinates
+void /*-*/ calc_total_pose_part_i( float* mat, /*<<*/ VNCT_f* vao, uint i ); 
+void /*-*/ draw_VNCT_f( VNCT_f* vao ); // Draw VAO and all subparts
+vec4f /**/ get_posn( VNCT_f* vao ); // Get the position components of the homogeneous coordinates as a vector
+void /*-*/ set_posn( VNCT_f* vao, const vec4f posn ); // Set the position components of the homogeneous coordinates
 // Increment the position components of the homogeneous coordinates by the associated `delta` components
-void /*-*/ translate( VAO_VNC_f* vao, const vec4f delta );
-void /*-*/ rotate_angle_axis_rad( VAO_VNC_f* vao, float angle_rad, const vec4f axis ); // Rotate the object by `angle_rad` about `axis`
-void /*-*/ rotate_RPY_vehicle( VAO_VNC_f* vao, float r_, float p_, float y_ ); // Increment the world Roll, Pitch, Yaw of the model
-void /*-*/ thrust_Z_vehicle( VAO_VNC_f* vao, float dZ ); // Move in the local Z direction by `dZ` 
+void /*-*/ translate( VNCT_f* vao, const vec4f delta );
+void /*-*/ rotate_angle_axis_rad( VNCT_f* vao, float angle_rad, const vec4f axis ); // Rotate the object by `angle_rad` about `axis`
+void /*-*/ rotate_RPY_vehicle( VNCT_f* vao, float r_, float p_, float y_ ); // Increment the world Roll, Pitch, Yaw of the model
+void /*-*/ thrust_Z_vehicle( VNCT_f* vao, float dZ ); // Move in the local Z direction by `dZ` 
 
 ////////// CONSTRUCTION ////////////////////////////////////////////////////////////////////////////
 
-VAO_VNC_f* VAO_from_TriNet_solid_color( TriNet* net, const vec4f color ); // Get a VAO from a `TriNet`
+VNCT_f* VAO_from_TriNet_solid_color( TriNet* net, const vec4f color ); // Get a VAO from a `TriNet`
 // Get a VAO from a `TriNet` with `xfrm` applied to all vertices and normals
-VAO_VNC_f* VAO_from_TriNet_solid_color_transformed( TriNet* net, const vec4f color, const float* xfrm );
+VNCT_f* VAO_from_TriNet_solid_color_transformed( TriNet* net, const vec4f color, const float* xfrm );
 
 ////////// SPECIFIC VAO ////////////////////////////////////////////////////////////////////////////
 
 ///// Cube ////////////////////////////////////////////////////////////////
 // Construct a cube VAO with flat-shaded normals and one solid color
-VAO_VNC_f* cube_VAO_VNC_f( float sideLen, const vec4f color );
-VAO_VNC_f* colorspace_cube_VAO_VNC_f( void ); // Make a colorful cube from the static array data
+VNCT_f* cube_VNCT_f( float sideLen, const vec4f color );
+VNCT_f* colorspace_cube_VNCT_f( void ); // Make a colorful cube from the static array data
 
 ///// Triangular Prism ////////////////////////////////////////////////////
 // Construct a triangular prism VAO with flat-shaded normals and one solid color, with all vectors transformed
-VAO_VNC_f* triprism_transformed_VAO_VNC_f( float height, float triRad, const vec4f color, const float* xfrm );
+VNCT_f* triprism_transformed_VNCT_f( float height, float triRad, const vec4f color, const float* xfrm );
 
 ///// Tetrahedron /////////////////////////////////////////////////////////
 // Construct a tetrahedron VAO with flat-shaded normals and one solid color
-VAO_VNC_f* tetrahedron_VAO_VNC_f( float radius, const vec4f color ); 
+VNCT_f* tetrahedron_VNCT_f( float radius, const vec4f color ); 
 // Construct a tetrahedron VAO with flat-shaded normals and one solid color, with all vectors transformed
-VAO_VNC_f* tetrahedron_transformed_VAO_VNC_f( float radius, const vec4f color, const float* xfrm );
+VNCT_f* tetrahedron_transformed_VNCT_f( float radius, const vec4f color, const float* xfrm );
 
 ///// Octahedron //////////////////////////////////////////////////////////
 // Construct an octahedron VAO with flat-shaded normals and one solid color
-VAO_VNC_f* octahedron_VAO_VNC_f( float cornerWidth, float height, const vec4f color );
+VNCT_f* octahedron_VNCT_f( float cornerWidth, float height, const vec4f color );
 
 ///// Icosahedron /////////////////////////////////////////////////////////
 // Construct a icosahedron VAO with flat-shaded normals and one solid color
-VAO_VNC_f* icosahedron_VAO_VNC_f( float radius, const vec4f color );
+VNCT_f* icosahedron_VNCT_f( float radius, const vec4f color );
 
 ///// Icosphere ///////////////////////////////////////////////////////////
 // Construct a icosphere VAO with flat-shaded normals and one solid color
-VAO_VNC_f* icosphere_VAO_VNC_f( float radius, uint div, const vec4f color );
+VNCT_f* icosphere_VNCT_f( float radius, uint div, const vec4f color );
 
 ////////// OTHER OBJECTS ///////////////////////////////////////////////////////////////////////////
 
 ///// Planar Surface //////////////////////////////////////////////////////
 // Construct a icosphere VAO with flat-shaded normals and one solid color
-VAO_VNC_f* plane_XY_VAO_VNC_f( float xLen, float yLen, uint xDiv, uint yDiv, const vec4f color );
+VNCT_f* plane_XY_VNCT_f( float xLen, float yLen, uint xDiv, uint yDiv, const vec4f color );
     
 
 
