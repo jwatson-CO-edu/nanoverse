@@ -147,7 +147,7 @@
     - `[Y]` Convincing rolling contact, 2024-05-21: Needs testing
 
 
-### HW4: First-Person View in a Scene + Phong Shading + Moving Light Source(s) + Particle System(s)
+### HW4+5: First-Person View in a Scene + Phong Shading + Moving Light Source(s) + Particle System(s)
 * `[Y]` TetraTank rolling on icos wheels, 2024-05-1X: MOUSELOOK!
     - `[Y]` mouselook, 2024-05-1X: MOUSELOOK!
     - `{N}` Joystick control, 2024-05-20: GLUT lacks dual-stick gamepad handling! Mouselook is sufficient
@@ -157,16 +157,16 @@
 * `[>]` Environment
     - `[P]` Moon (Stolen from [Vlakkies' Solar System demo](https://www.prinmath.com/csci5229/F23/programs/ex19.zip))
     - `{P}` Stars?
-    - `[ ]` Planar terrain from subdivided triangles
+    - `[Y]` Planar terrain from subdivided triangles, 2024-05-2X: Completed, even shading
     - `[ ]` Ambient + Directional moonlight
         * `[ ]` Terrain matte
         * `[ ]` Tank glossy
 * `[>]` Fireworks
-    - `[>]` Fire shell from tank barrel
-    - `[ ]` shell emits a strong light
-    - `[ ]` shell has a particle spark trail
+    - `[Y]` Fire shell from tank barrel, 2024-05-2X: Fires!
+    - `[ ]` Shell has a particle spark trail
+    - `[ ]` Shell emits a strong light
     - `[ ]` Firework Detonation
-        * `[ ]` shell ends trajectory after N frames
+        * `[ ]` Shell ends trajectory with a Poisson distribution
         * `[ ]` Emit **very** strong light
         * `[ ]` Generate shockwave of particle sparks
         * `[ ]` Sparks drop and fade

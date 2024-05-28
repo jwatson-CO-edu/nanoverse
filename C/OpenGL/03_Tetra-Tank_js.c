@@ -36,6 +36,8 @@ const float _FWK_DISP = _FRM_DISP/2.0f; // Units to move per frame
 const int   _MOON_EMISS = 50;
 const float _MOON_SHINY =  1.0f;
 
+
+
 ////////// PROGRAM STRUCTS /////////////////////////////////////////////////////////////////////////
 
 ///// Light Source ////////////////////////////////////////////////////////
@@ -193,15 +195,15 @@ void draw_Moon( Planet* texMoon, int emission, float shiny ){
 
 typedef struct{
     // A bright projectile that explodes even more brightly, with particles!
-    VAO_VNC_f* shell; // shell geometry
-    vec4f /**/ color;
+    VNCT_f* shell; // shell geometry
+    vec4f   color;
 }Firework;
 
 
 Firework* make_Firework( float width, const vec4f bodyClr ){
     // Alloc and construct firework shell
     Firework* rtnFw = (Firework*) malloc( sizeof( Firework ) );
-    rtnFw->shell = octahedron_VAO_VNC_f( width, 2.0f*width, bodyClr );
+    rtnFw->shell = octahedron_VNC_f( width, 2.0f*width, bodyClr );
     rtnFw->color = bodyClr;
     allocate_and_load_VAO_VNC_at_GPU( rtnFw->shell );
     return rtnFw;
@@ -212,12 +214,12 @@ Firework* make_Firework( float width, const vec4f bodyClr ){
 
 typedef struct{
     // Tetrahedral vehicle that rolls on 3 icosahedra and translates in any direction on X-Y plane
-    VAO_VNC_f* body;
-    float*     w0pose; 
-    float*     w1pose; 
-    float*     w2pose; 
-    float*     gnPose; 
-    float /**/ tiltAng;
+    VNCT_f* body;
+    float*  w0pose; 
+    float*  w1pose; 
+    float*  w2pose; 
+    float*  gnPose; 
+    float   tiltAng;
 }TetraTank_mk0;
 
 
@@ -226,21 +228,21 @@ TetraTank_mk0* make_TetraTank_mk0( float bodyRad_m, const vec4f bodyClr, float w
     TetraTank_mk0* rtnTank = (TetraTank_mk0*) malloc( sizeof( TetraTank_mk0 ) );
     // Body //
     TriNet* tetNet = create_tetra_mesh_only( bodyRad_m );
-    vec4f v0 /**/ = tetNet->V[0];
-    vec4f v1 /**/ = tetNet->V[1];
-    vec4f v2 /**/ = tetNet->V[2];
-    vec4f v3 /**/ = tetNet->V[3];
-    vec4f segCntr = seg_center( v0, v1 );
-    float rotAngl = angle_between_vec4f( sub_vec4f( v2, segCntr ), make_vec4f( 0.0f, 0.0f, 1.0f ) );
-    float op2[16];
-    float op3[16];
+    vec4f   v0 /**/ = tetNet->V[0];
+    vec4f   v1 /**/ = tetNet->V[1];
+    vec4f   v2 /**/ = tetNet->V[2];
+    vec4f   v3 /**/ = tetNet->V[3];
+    vec4f   segCntr = seg_center( v0, v1 );
+    float   rotAngl = angle_between_vec4f( sub_vec4f( v2, segCntr ), make_vec4f( 0.0f, 0.0f, 1.0f ) );
+    float   op2[16];
+    float   op3[16];
     Rx_mtx44f( op2, -(M_PI/2.0f-rotAngl) );
     rtnTank->body = VAO_from_TriNet_solid_color_transformed( tetNet, bodyClr, op2 );
     translate_mtx44f( rtnTank->body->relPose, 0.0f, 0.0f, bodyRad_m );
-    allocate_N_VAO_VNC_parts( rtnTank->body, 4 );
+    allocate_N_VAO_VNCT_parts( rtnTank->body, 4 );
     // Wheels //
     for( ubyte i = 0; i < 3; ++i ){
-        rtnTank->body->parts[i] = (void*) icosahedron_VAO_VNC_f( wheelRad_m, wheelClr );
+        rtnTank->body->parts[i] = (void*) icosahedron_VNC_f( wheelRad_m, wheelClr );
     }
     rtnTank->w0pose = get_part_i( rtnTank->body, 0 )->ownPose; 
     rtnTank->w1pose = get_part_i( rtnTank->body, 1 )->ownPose; 
@@ -263,7 +265,7 @@ TetraTank_mk0* make_TetraTank_mk0( float bodyRad_m, const vec4f bodyClr, float w
     rotate_x_mtx44f( op3, M_PI-rotAngl ); //+rotAngl );
     rotate_z_mtx44f( op3, M_PI/6.0f );
     
-    rtnTank->body->parts[3] = (void*) triprism_transformed_VAO_VNC_f( bodyRad_m, wheelRad_m, _TNK_GUN_CLR, op3 );
+    rtnTank->body->parts[3] = (void*) triprism_transformed_VNC_f( bodyRad_m, wheelRad_m, _TNK_GUN_CLR, op3 );
     v3 = stretch_to_len_vec4f( v3, bodyRad_m + wheelRad_m*2.0f );
     mult_mtx44f( get_part_i( rtnTank->body, 3 )->relPose, op2 );
     translate_mtx44f( get_part_i( rtnTank->body, 3 )->relPose, v3.x, v3.y, v3.z );
@@ -315,7 +317,7 @@ void roll_wheels_for_rel_body_move( TetraTank_mk0* tank, const vec4f relMov, flo
     float /**/ roll_deg = norm_vec4f( relMov )/_TNK_WHL_SCL * 180.0f/M_PI;
     vec4f /**/ whlAxis;
     float /**/ matWhl[16];
-    VAO_VNC_f* whl = NULL;
+    VNCT_f* whl = NULL;
     for( ubyte i = 0; i < 3; ++i ){
         whl = get_part_i( tank->body, i );
         update_total_pose( whl );
@@ -348,7 +350,7 @@ void roll_wheels_for_rel_body_move( TetraTank_mk0* tank, const vec4f relMov, flo
 TetraTank_mk0* tank     = NULL;
 Firework* /**/ frwk     = NULL;
 bool /*-----*/ fwActive = false;
-VAO_VNC_f*     grnd     = NULL;
+VNCT_f*     grnd     = NULL;
 Planet* /*--*/ moon     = NULL;
 LightSource*   lite     = NULL;
 Camera3D /*-*/ cam /**/ = { {4.0f, 2.0f, 2.0f, 1.0f}, {0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f} };
@@ -412,6 +414,7 @@ void capture_pointer( int x, int y ){
 
 void display(){
     // Refresh display
+    printf( "Draw scene ...\n" );
 
     //  Erase the window and the depth buffer
     glClearDepth( 1.0f );
@@ -426,20 +429,27 @@ void display(){
     glColorMaterial( GL_FRONT_AND_BACK , GL_AMBIENT_AND_DIFFUSE );
 	glEnable( GL_COLOR_MATERIAL );
 
+    // printf( "Lights!, Camera! ...\n" );
     set_gunsight( tank, &cam );
     look( cam ); // ------------------ NOTE: Look THEN illuminate!
     illuminate_with_source( lite ); // NOTE: Illumination THEN transformation!
 
     // draw_Planet( moon );
+    // printf( "About to draw moon ...\n" );
     draw_Moon( moon, _MOON_EMISS, _MOON_SHINY );
 
     // draw_grid_org_XY( _GRID_UNIT, _N_UNIT, _N_UNIT, _GRID_THICC, _GRID_CLR );
 
-    draw_VAO_VNC_f( grnd );
+    // printf( "About to draw ground ...\n" );
+    draw_VNC_f( grnd );
 
-    draw_VAO_VNC_f( tank->body );
+    // printf( "About to draw tank ...\n" );
+    draw_VNC_f( tank->body );
 
-    if( fwActive )  draw_VAO_VNC_f( frwk->shell );
+    if( fwActive ){  
+        // printf( "About to draw firework ...\n" );
+        draw_VNC_f( frwk->shell );
+    }
 
         
     glDisable( GL_LIGHTING );
@@ -519,6 +529,7 @@ void mouse_move( int x, int y ){
 
 void tick(){
     // Background work
+    // printf( "Run update step ...\n" );
     vec4f totMove   = make_0_vec4f();
     float turnAngle = -1.0f * xDelta * _FRM_TURN;
     float op1[16];  
@@ -600,14 +611,20 @@ int main( int argc, char* argv[] ){
     vec4f gClr = make_vec4f( 31.0f/255.0f, 120.0f/255.0f, 55.0f/255.0f );
     vec4f fClr = make_vec4f( 1.0, 0.0f, 0.0f );
     vec4f mLoc = make_vec4f( 50.0f, 0.0f, 50.0f );
+    printf( "About to make tank ...\n" );
     tank = make_TetraTank_mk0( _TNK_BODY_SCL, _TNK_BODY_CLR, _TNK_WHL_SCL, _TNK_WHL_CLR );
-    grnd = plane_XY_VAO_VNC_f( 2.0f*_GRID_UNIT*_N_UNIT, 2.0f*_GRID_UNIT*_N_UNIT, _N_UNIT, _N_UNIT, gClr );
+    printf( "About to make ground ...\n" );
+    grnd = plane_XY_VNC_f( 2.0f*_GRID_UNIT*_N_UNIT, 2.0f*_GRID_UNIT*_N_UNIT, _N_UNIT, _N_UNIT, gClr );
     allocate_and_load_VAO_VNC_at_GPU( grnd );
+    printf( "About to make moon ...\n" );
     moon = make_Moon( "resources/moon.bmp", 4.0f, mLoc, 0.0f, -M_PI/4.0f );
+    printf( "About to make light ...\n" );
     lite = make_white_light_source( stretch_to_len_vec4f( mLoc, 10.0f ), GL_LIGHT0, 5, 50, 100 );
+    printf( "About to make firework ...\n" );
     frwk = make_Firework( _TNK_WHL_SCL*2.0f, fClr );
 
     ///// Initialize GLUT Callbacks ///////////////////////////////////////
+    printf( "About to assign callbacks ...\n" );
 
     //  Tell GLUT to call "display" when the scene should be drawn
     glutDisplayFunc( display );
@@ -631,6 +648,7 @@ int main( int argc, char* argv[] ){
     glutKeyboardUpFunc( key_up );
 
     ///// GO ///// GO ///// GO ////////////////////////////////////////////
+    printf( "Entering main loop ...\n" );
     
     // Pass control to GLUT so it can interact with the user
     glutMainLoop();
@@ -639,7 +657,7 @@ int main( int argc, char* argv[] ){
     ///// Free Memory /////////////////////////////////////////////////////
     printf( "Cleanup!\n" );
     
-    delete_VAO_VNC_f( tank->body );
+    delete_VNCT_f( tank->body );
 
     printf( "\n### DONE ###\n\n" );
     //  Return code
