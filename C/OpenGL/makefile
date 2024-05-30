@@ -9,8 +9,9 @@ CLEAN=rm -f *.out *.o *.a
 
 00_Dyn-6D.o: 00_Dyn-6D.c toolbox.h # ------------------------ 6-Dimensional Lorenz Attractors
 01_Planet-Geom.o: 01_Planet-Geom.c geometry.h toolbox.h # --- Swirling atmosphere, Compute shader
-02_VAO_VNT_f.o: 02_VAO_VNT_f.c toolbox.h # ------- Vertex Array Objects, Nested
+02_VBO_VNT_f.o: 02_VBO_VNT_f.c toolbox.h # ------------------ Vertex Buffer Objects, Nested
 03_Tetra-Tank_js.o: 03_Tetra-Tank_js.c geometry.h toolbox.h # Rolling geometric tank, Joystick control
+04_Sparkle.o: 04_Sparkle.c geometry.h toolbox.h # ----------- Shader dev for 03 tank
 
 
 
@@ -56,7 +57,7 @@ geometry.a: transform.o TriNet.o VNCT_f.o draw_geo.o matrix4x4f.o
 01_Planet-Geom: 01_Planet-Geom.o geometry.a toolbox.a 
 	gcc $(CFLG) -o $@.out $^ $(LIBS)
 
-02_VAO_VNT_f: 02_VAO_VNT_f.o matrix4x4f.o toolbox.a 
+02_VBO_VNT_f: 02_VBO_VNT_f.o matrix4x4f.o toolbox.a 
 	gcc $(CFLG) -o $@.out $^ $(LIBS)
 
 03_Tetra-Tank_js: 03_Tetra-Tank_js.o geometry.a toolbox.a 

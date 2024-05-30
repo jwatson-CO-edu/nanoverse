@@ -18,10 +18,15 @@ layout( triangle_strip, max_vertices = 3 ) out;
 layout( binding = 4 ) buffer posbuf { vec4  posnArr[]; };
 layout( binding = 5 ) buffer clrbuf { vec4  colrArr[]; };
 
+uniform int   kill;
 uniform float time;
+uniform int   Nprt;
+uniform float clrThresh;
+uniform vec4  brightClr;
 
 
 ////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
+float accum = time;
 
 uint hash( uint x ) {
     // a single iteration of Bob Jenkins' OAT algorithm
@@ -33,6 +38,7 @@ uint hash( uint x ) {
     x += ( x << 15u );
     return x;
 }
+
 
 float random( float f ){
     // Mutate the bits of `f`
@@ -48,11 +54,55 @@ float random( float f ){
     return r2 - 1.0;
 }
 
+
+float randf( void ){
+    // Accumulate seed value, then use it to gen `random` number
+    accum += random( float time );
+    return random( accum );
+}
+
+// void reset_particles( void ){
+//     // Set all particles to dead state
+//     for( int i = 0; i < Nprt; ++i ){
+//         colrArr[i].a = 0.0;
+//     }
+// }
+
+
+
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
+
+/// Update Params ///
+const float _MTD /*--*/ = 5.0;
+const float _DEATH_PROB = 1.0 / _MTD;
+const float _DECAY_RATE = 0.99;
+const float _DROP_RATE  = 0.01;
 
 void main(){    
 
-    /// Sparkle ///
+    /// Sparkle Gen & Update ///
+    // vec4  nuPosn;
+    // vec4  nuColr;
+    float w0, w1, w2, tot;
+    for( int i = 0; i < Nprt; ++i ){
+
+        // Drop and Decay the particle
+        colrArr[i]   *= _DECAY_RATE
+        posnArr[i].z -= _DROP_RATE;
+
+        // If particle has died, then regen
+        if( (posnArr[i].z < 0.0) || (colrArr[i].a < clrThresh) || (randf() < _DEATH_PROB) ){
+            w0  = randf();
+            w1  = randf();
+            w2  = randf();
+            tot = w0 + w1 + w2;
+            w0  /= tot;
+            w1  /= tot;
+            w2  /= tot;
+            posnArr[i] = gl_in[0].gl_Position*w0 + gl_in[1].gl_Position*w1 + gl_in[1].gl_Position*w1;
+            colrArr[i] = brightClr;
+        }
+    }
 
     /// Unmodified Triangle ///
     gl_Position = gl_in[0].gl_Position;  EmitVertex();

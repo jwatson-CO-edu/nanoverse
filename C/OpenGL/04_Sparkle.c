@@ -63,6 +63,7 @@ void illuminate_with_source( LightSource* lite ){
     // glDisable( lite->ID );
 }
 
+
 ///// Firework ////////////////////////////////////////////////////////////
 
 typedef struct{
@@ -70,6 +71,7 @@ typedef struct{
     VNCT_f* shell; // Shell geometry
     vec4f   color; // Shell color
     uint    Nsprk; // Number of sparkles
+    uint    mode; //- 0: Shell, 1: Detonation
     // float*  posn; //- Sparkle position
     // float*  colr; //- Sparkle color, NOTE: Sparkle liveness is tracked by fading color
 }Firework;

@@ -1,6 +1,112 @@
 # `DEV PLAN`
 
-## `[Y]` Planet Atmosphere + Compute Shader 
+
+## `[>]` Computer Graphics Blitz in Pure C + OpenGL + GLUT, Morning Warmup and Weekend Project
+* Goal: Reinforce fluency in Pure C + Pure OpenGL. I have been spoiled by Raylib + C++!
+* C++, Eigen, GLFW, and GLM are **DISALLOWED**!
+
+
+### HW04+05: Third-Person View in a Scene + Phong Shading + Moving Light Source(s) + Particle System(s)
+* `[Y]` TetraTank rolling on icos wheels, 2024-05-1X: MOUSELOOK!
+    - `[Y]` mouselook, 2024-05-1X: MOUSELOOK!
+    - `{N}` Joystick control, 2024-05-20: GLUT lacks dual-stick gamepad handling! Mouselook is sufficient
+    - `{?}` Hide cursor while in the window?
+    - `{?}` Wireframe as VBO?
+        * [OpenGL Wireframe Mode](https://stackoverflow.com/a/137649)
+* `[>]` Fireworks
+    - `[Y]` Fire shell from tank barrel, 2024-05-2X: Fires!
+    - `[>]` Shell has a particle spark trail
+    - `[ ]` Shell emits a strong light
+    - `[ ]` Firework Detonation
+        * `[ ]` Shell ends trajectory with a Poisson distribution
+        * `[ ]` Use the star texture from the [geometry shader example](https://www.prinmath.com/csci5229/Sp24/programs/ex18.zip)
+        * `[ ]` Emit **very** strong light
+        * `[ ]` Generate shockwave of particle sparks
+        * `[ ]` Sparks drop and fade
+* `[>]` Environment
+    - `[P]` Moon (Stolen from [Vlakkies' Solar System demo](https://www.prinmath.com/csci5229/F23/programs/ex19.zip))
+    - `{P}` Stars?
+    - `[Y]` Planar terrain from subdivided triangles, 2024-05-2X: Completed, even shading
+    - `[ ]` Ambient + Directional moonlight
+        * `[ ]` Terrain matte
+        * `[ ]` Tank glossy
+
+    
+### HW06: Shaded & Textured Models
+* `[ ]` Randomized EC towers w/ texture
+* `{?}` Use a shader to construct lines at edges
+    - [Computing Barycentric Coordinates](https://tchayen.github.io/posts/wireframes-with-barycentric-coordinates)
+    - `{?}` GLSL: How to compute distance from a triangle edge?  Sounds like a geometry shader to me?
+* `{?}` Chopper mode? ( _DANGER!_ )
+    - `{?}` SDL2 gamepad integration
+    - `{?}` Transformation Sequence
+        * `{?}` Behavior Trees? ( _YAGNI!_ )
+    - `{?}` Floaty Dynamics
+    
+
+### HW07: Display Lists
+### HW08: Aliased Lines
+### HW09: Bezier Curves
+### HW10: Bezier Surfaces
+### HW11: B-Splines
+### HW12: B-Spline Surfacess
+
+### Example Project: Shadow Mapping
+* `[ ]` Directional shadows from moonlight
+* `[ ]` Shadows cast on player character
+* `[ ]` **BASIC** collistion detection (_DANGER!_)
+* `{?}` Detect visible/obscured?
+* `{?}` Player HUD
+* `{?}` SDL2 Multimedia
+    - `{?}` Sound effects
+    - `{?}` BG music
+
+
+## `[ ]` Advanced Computer Graphics + Geometric Algebra ( _YAGNI!_ )
+* C: -O3 -Wall -std=gnu17
+* OpenGL Visualization
+### `[ ]` Book --to-> Library
+* `[ ]` Decide on a Reading Plan
+* `[ ]` Create a Development Plan
+### `[ ]` N Body Problem
+* `[ ]` Search for interesting orbits to render
+### `[ ]` Classical Forces & Torques ( _DANGER!_ )
+### `[ ]` Classical Electrodynamics ( _EXTREME DANGER!_ )
+### `[ ]` Relativistic Systems ( _EXISTENTIAL DANGER!_ )
+
+
+# Completed Projects
+
+## `[>]` Computer Graphics Blitz in Pure C + OpenGL + GLUT, Morning Warmup and Weekend Project
+* Goal: Reinforce fluency in Pure C + Pure OpenGL. I have been spoiled by Raylib + C++!
+* C++, Eigen, GLFW, and GLM are **DISALLOWED**!
+
+
+### `[Y]` HW03: Nested Reference Frames with `glPushMatrix`/`glPopMatrix`, COMPLETE
+* 2024-05-21: Needs testing, To combine with the "HW4" project, below
+* `[Y]` Simple VBO struct with vertex coloring, 2024-05-12: Needs testing
+* `[Y]` Render a cube, 2024-05-12: Tested!
+* `[Y]` Render rotating cubes in nested reference frames, 2024-05-16: Nested rotating cubes!
+    - `[Y]` Single rotating cubes, 2024-05-16: Nested rotating cubes!
+    - `[Y]` Multiple levels of rotating cubes, 2024-05-16: Nested rotating cubes!
+* `[Y]` Promote "02_VBO_VNC_f.c" to a library  &&  Add VBO shapes, 2024-05-17: Added!
+    - `[Y]` Lib, 2024-05-16: Promoted!
+    - `[Y]` Add VBO Icos, 2024-05-17: Added!
+    - `[Y]` Add VBO Tetra, 2024-05-17: Added!
+* `[Y]` X-Y Grid, 2024-05-17: Ported from coursework, Needs testing
+    - `{P}` As VBO?, 2024-05-17: Do this later.  Add one thing at a time!
+* `[Y]` TetraTank rolling on icos wheels, 2024-05-21: Needs testing
+    - `[Y]` kb movement, 2024-05-1X: Move with either arrows or WASD
+    - `[Y]` Convincing rolling contact, 2024-05-21: Needs testing
+
+### `[Y]` HW02: Lorenz Attractor, COMPLETE
+* `[Y]` Multiple, Chasing Traces of System State, 2024-05-0X: 6D Lorenz attractor completed and tuned!
+    - `[Y]` Different starting state, Different eq. params, 2024-05-0X: 6D Lorenz attractor completed and tuned!
+    - `{Y}` Are there versions of the attractor with higher-dimensional state?, 2024-05-0X: 6D Lorenz attractor completed and tuned!
+
+## Other Demos
+
+### `[Y]` Planet Atmosphere + Compute Shader, COMPLETE
 * 2024-05-12: Done!
 * `[Y]` Orthogonal  Cuboid, 2024-04-22: HELL YES
 * `[Y]` Perspective Cuboid, 2024-04-22: FUCK YES
@@ -117,87 +223,6 @@
 
 * `[ ]` Q: Is it better for a worker to work on a single point or a smallish collection of points?
 * `[ ]` Q: How to add shading to the atmosphere to match the planet?
-
-## `[>]` Computer Graphics Blitz in Pure C + OpenGL + GLUT, Morning Warmup and Weekend Project
-* Goal: Reinforce fluency in Pure C + Pure OpenGL. I have been spoiled by Raylib + C++!
-* C++, Eigen, GLFW, and GLM are **DISALLOWED**!
-
-
-### `[Y]` HW2: Lorenz Attractor
-* `[Y]` Multiple, Chasing Traces of System State, 2024-05-0X: 6D Lorenz attractor completed and tuned!
-    - `[Y]` Different starting state, Different eq. params, 2024-05-0X: 6D Lorenz attractor completed and tuned!
-    - `{Y}` Are there versions of the attractor with higher-dimensional state?, 2024-05-0X: 6D Lorenz attractor completed and tuned!
-
-
-### `[Y]` HW3: Nested Reference Frames with `glPushMatrix`/`glPopMatrix`
-* 2024-05-21: Needs testing, To combine with the "HW4" project, below
-* `[Y]` Simple VAO struct with vertex coloring, 2024-05-12: Needs testing
-* `[Y]` Render a cube, 2024-05-12: Tested!
-* `[Y]` Render rotating cubes in nested reference frames, 2024-05-16: Nested rotating cubes!
-    - `[Y]` Single rotating cubes, 2024-05-16: Nested rotating cubes!
-    - `[Y]` Multiple levels of rotating cubes, 2024-05-16: Nested rotating cubes!
-* `[Y]` Promote "02_VAO_VNC_f.c" to a library  &&  Add VAO shapes, 2024-05-17: Added!
-    - `[Y]` Lib, 2024-05-16: Promoted!
-    - `[Y]` Add VAO Icos, 2024-05-17: Added!
-    - `[Y]` Add VAO Tetra, 2024-05-17: Added!
-* `[Y]` X-Y Grid, 2024-05-17: Ported from coursework, Needs testing
-    - `{P}` As VAO?, 2024-05-17: Do this later.  Add one thing at a time!
-* `[Y]` TetraTank rolling on icos wheels, 2024-05-21: Needs testing
-    - `[Y]` kb movement, 2024-05-1X: Move with either arrows or WASD
-    - `[Y]` Convincing rolling contact, 2024-05-21: Needs testing
-
-
-### HW4+5: First-Person View in a Scene + Phong Shading + Moving Light Source(s) + Particle System(s)
-* `[Y]` TetraTank rolling on icos wheels, 2024-05-1X: MOUSELOOK!
-    - `[Y]` mouselook, 2024-05-1X: MOUSELOOK!
-    - `{N}` Joystick control, 2024-05-20: GLUT lacks dual-stick gamepad handling! Mouselook is sufficient
-    - `{?}` Hide cursor while in the window?
-    - `{?}` Wireframe as VAO?
-        * [OpenGL Wireframe Mode](https://stackoverflow.com/a/137649)
-* `[>]` Environment
-    - `[P]` Moon (Stolen from [Vlakkies' Solar System demo](https://www.prinmath.com/csci5229/F23/programs/ex19.zip))
-    - `{P}` Stars?
-    - `[Y]` Planar terrain from subdivided triangles, 2024-05-2X: Completed, even shading
-    - `[ ]` Ambient + Directional moonlight
-        * `[ ]` Terrain matte
-        * `[ ]` Tank glossy
-* `[>]` Fireworks
-    - `[Y]` Fire shell from tank barrel, 2024-05-2X: Fires!
-    - `[ ]` Shell has a particle spark trail
-    - `[ ]` Shell emits a strong light
-    - `[ ]` Firework Detonation
-        * `[ ]` Shell ends trajectory with a Poisson distribution
-        * `[ ]` Emit **very** strong light
-        * `[ ]` Generate shockwave of particle sparks
-        * `[ ]` Sparks drop and fade
-    
-
-### HW6: Shaded & Textured Models
-* `[ ]` Modify textures with shader(s)
-* `{?}` Chopper mode? (_DANGER!_)
-    - `{?}` Transformation Sequence
-    - `{?}` Floaty Dynamics
-* `{?}` Use a shader to construct lines at edges
-    - [Computing Barycentric Coordinates](https://tchayen.github.io/posts/wireframes-with-barycentric-coordinates)
-    - `{?}` GLSL: How to compute distance from a triangle edge?  Sounds like a geometry shader to me?
-
-### HW7: ???
-* `[ ]` View newer class material
-
-### Example Project: Shadow Mapping
-* `[ ]` View newer class material
-* `{?}` Joystick interaction thru GLUT?
-* `{?}` Detect visible/obscured?
-
-
-## `[ ]` Advanced Computer Graphics in Pure C + OpenGL + GLUT
-* C++ and Eigen are **DISALLOWED**!
-
-### HW2: Lorenz Attractor
-* `[ ]` Geometry shader to expand line into a ribbon
-
-### ???
-* `[ ]` ??????
 
 # Far Future
 See also: Top-level plan
