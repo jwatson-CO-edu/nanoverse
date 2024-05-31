@@ -72,6 +72,25 @@ typedef struct{
     vec4f   color; // Shell color
     uint    Nsprk; // Number of sparkles
     uint    mode; //- 0: Shell, 1: Detonation
+    uint    sprkShdr; // Particle system shader
+    uint    xpldShdr; // Explosion animation shader
+    // FIXME, START HERE: HANDLES FOR GPU PARTICLES BUFFERS
     // float*  posn; //- Sparkle position
     // float*  colr; //- Sparkle color, NOTE: Sparkle liveness is tracked by fading color
 }Firework;
+
+Firework* make_Firework( float width, const vec4f bodyClr, uint Nsprk_ ){
+    // Setup the firework struct for rendering
+    Firework* rtnFw = (Firework*) malloc( sizeof( Firework ) );
+    /// CPU-Side ///
+    rtnFw->shell = octahedron_VNC_f( width, 2.0f*width, bodyClr );
+    rtnFw->color = bodyClr;
+    rtnFw->Nsprk    = Nsprk_;
+    rtnFw->mode     = 0; // Begin in Shell Mode
+    rtnFw->sprkShdr = 0; // TBD
+    rtnFw->xpldShdr = 0; // TBD
+    /// GPU-Side ///
+    allocate_and_load_VAO_VNC_at_GPU( rtnFw->shell );
+    // FIXME, START HERE: CREATE GPU BUFFERS FOR THE PARTICLES
+    return rtnFw;
+}

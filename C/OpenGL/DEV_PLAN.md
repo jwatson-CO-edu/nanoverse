@@ -48,18 +48,32 @@
 ### HW08: Aliased Lines
 ### HW09: Bezier Curves
 ### HW10: Bezier Surfaces
+* `[ ]` Look at: Utah Teapot Example
 ### HW11: B-Splines
-### HW12: B-Spline Surfacess
+### HW12: B-Spline Surfaces
+* `[ ]` Smoothly undulating terrain
+* `[ ]` TetraTank wheels track terrain
+### HW13: Engineering Center as a Procedural L-System
 
 ### Example Project: Shadow Mapping
 * `[ ]` Directional shadows from moonlight
 * `[ ]` Shadows cast on player character
-* `[ ]` **BASIC** collistion detection (_DANGER!_)
-* `{?}` Detect visible/obscured?
-* `{?}` Player HUD
-* `{?}` SDL2 Multimedia
-    - `{?}` Sound effects
-    - `{?}` BG music
+    - `[ ]` Tron highlights still shine when in shadow
+* `{?}` Gameplay ( _EXTREME DANGER!_ )
+    - `{?}` Enemies: Floating Eyes
+        * `{?}` Detect visible/obscured?
+    - `{?}` **BASIC** collistion detection
+    - `{?}` Player HUD
+    - `{?}` SDL2 Multimedia
+        * `{?}` Sound effects
+        * `{?}` BG music
+
+
+### Example Project: Physical-Based Rendering in OpenGL
+* `[ ]` Find examples
+* `[ ]` Re-read email from Paradise Killer programmer
+* `[ ]` Crystalline models with subsurface flakes
+* `[ ]` Crystalline models in EC scene + lighting
 
 
 ## `[ ]` Advanced Computer Graphics + Geometric Algebra ( _YAGNI!_ )
