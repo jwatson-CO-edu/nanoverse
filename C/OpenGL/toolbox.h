@@ -154,6 +154,7 @@ void nl( void ); // Emit a newline to console
 
 vec4f make_vec4f( float x, float y, float z ); // Make a 3D float vector with scale = 1.0 from three floats
 vec4f make_0_vec4f( void ); // ------------------ Make a 3D zero float vector with scale = 1.0
+vec4f make_0w0_vec4f( void ); // ---------------- Make a 3D zero float vector with scale = 0.0
 vec4f rand_vec4f( void ); // -------------------- Make a random 3D float vector with each of {X,Y,Z} on (0.0, 1.0]
 
 vec4f sub_vec4f( const vec4f u, const vec4f v ); // --------------------- Calc `u` - `v` = `r`, R^3

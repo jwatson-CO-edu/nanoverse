@@ -17,6 +17,13 @@ vec4f make_0_vec4f( void ){
 }
 
 
+vec4f make_0w0_vec4f( void ){
+    // Make a 3D zero float vector with scale = 0.0
+    vec4f rtnVec = {0.0f,0.0f,0.0f,0.0f};
+    return rtnVec;
+}
+
+
 vec4f rand_vec4f( void ){
     // Make a random unit 3D float vector with each of {X,Y,Z} on (0.0, 1.0]
     vec4f rtnVec = {randf(), randf(), randf(), 1.0f};

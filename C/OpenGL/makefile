@@ -63,6 +63,9 @@ geometry.a: transform.o TriNet.o VNCT_f.o draw_geo.o matrix4x4f.o
 03_Tetra-Tank_js: 03_Tetra-Tank_js.o geometry.a toolbox.a 
 	gcc $(CFLG) -o $@.out $^ $(LIBS)
 
+04_Sparkle: 04_Sparkle.o geometry.a toolbox.a 
+	gcc $(CFLG) -o $@.out $^ $(LIBS)
+
 
 ##### Clean Rule ##########################################################
 

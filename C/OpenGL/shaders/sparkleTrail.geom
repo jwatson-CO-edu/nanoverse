@@ -12,18 +12,17 @@ Resources:
 
 #version 450
 
-layout( points ) in;
-layout( triangle_strip, max_vertices = 3 ) out;
-
-layout( binding = 4 ) buffer posbuf { vec4  posnArr[]; };
-layout( binding = 5 ) buffer clrbuf { vec4  colrArr[]; };
-
-uniform int   kill;
+uniform int kill;
 uniform float time;
 uniform int   Nprt;
 uniform float clrThresh;
 uniform vec4  brightClr;
 
+layout( points ) in;
+layout( triangle_strip, max_vertices = 3 ) out;
+
+layout( binding = 4 ) buffer posbuf { vec4  posnArr[]; };
+layout( binding = 5 ) buffer clrbuf { vec4  colrArr[]; };
 
 ////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
 float accum = time;
