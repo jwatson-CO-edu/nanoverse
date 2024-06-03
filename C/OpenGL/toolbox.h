@@ -49,8 +49,8 @@ typedef struct{
 } vec4f;
 
 typedef struct{
-  float x;
-  float y;
+  union{ float x; float r; };
+  union{ float y; float t; };
 } vec2f;
 
 typedef struct{
