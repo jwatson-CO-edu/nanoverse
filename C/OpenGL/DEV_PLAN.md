@@ -34,13 +34,18 @@
     
 ### HW06: Shaded & Textured Models
 * `[ ]` Randomized EC towers w/ texture
+    - `[ ]` Choose EC "Unit Square"
+    - `[ ]` Prep textures: {Select, Squarify, Downsample}
+* `[ ]` Texture the Chopperhedron
+* `[ ]` Chopperhedron Animation Scripts
+    - `[ ]` _Cheap_ Behavior Treeps ( _CAREFUL!_ )
+    - `[ ]` Running modes
+    - `[ ]` Transformation Sequence
 * `{?}` Use a shader to construct lines at edges
     - [Computing Barycentric Coordinates](https://tchayen.github.io/posts/wireframes-with-barycentric-coordinates)
     - `{?}` GLSL: How to compute distance from a triangle edge?  Sounds like a geometry shader to me?
 * `{?}` Chopper mode? ( _DANGER!_ )
     - `{?}` SDL2 gamepad integration
-    - `{?}` Transformation Sequence
-        * `{?}` Behavior Trees? ( _YAGNI!_ )
     - `{?}` Floaty Dynamics
     
 
