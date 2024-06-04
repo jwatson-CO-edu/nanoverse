@@ -140,6 +140,7 @@ TriNet* create_plane_XY_mesh_only( float xLen, float yLen, uint xDiv, uint yDiv 
 
 VNCT_f* make_VNCT_f( uint Ntri_ ); // Allocate the VBO at heap
 void    allocate_N_VBO_VNCT_parts( VNCT_f* vbo, uint N ); // Make space for `N` sub-part pointers
+void    set_texture( VNCT_f* vbo, const char* path ); // Load texture for this model
 VNCT_f* get_part_i( VNCT_f* vbo, uint i ); // Fetch sub-VBO
 void    delete_VNCT_f( VNCT_f* vbo ); // Erase the VBO (and parts) at heap and the GPU
 // Copy {V,N,C} from the specified arrays

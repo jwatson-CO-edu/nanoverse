@@ -271,6 +271,7 @@ TetraTank_mk0* make_TetraTank_mk0( float bodyRad_m, const vec4f bodyClr, float w
     translate_mtx44f( get_part_i( rtnTank->body, 3 )->relPose, v3.x, v3.y, v3.z );
     rtnTank->gnPose = get_part_i( rtnTank->body, 3 )->ownPose;
     
+    
     // Alloc All @ GPU //
     allocate_and_load_VAO_VNC_at_GPU( rtnTank->body );
     rtnTank->tiltAng = rotAngl;

@@ -33,10 +33,10 @@
 
     
 ### HW06: Shaded & Textured Models
+* `[>]` Texture the Chopperhedron
 * `[ ]` Randomized EC towers w/ texture
     - `[ ]` Choose EC "Unit Square"
     - `[ ]` Prep textures: {Select, Squarify, Downsample}
-* `[ ]` Texture the Chopperhedron
 * `[ ]` Chopperhedron Animation Scripts
     - `[ ]` _Cheap_ Behavior Treeps ( _CAREFUL!_ )
     - `[ ]` Running modes

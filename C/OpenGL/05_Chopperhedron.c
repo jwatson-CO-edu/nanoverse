@@ -37,6 +37,60 @@ const int   _MOON_EMISS = 50;
 const float _MOON_SHINY =  1.0f;
 
 
+////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
+
+vec2f polr_2_cart_0Y( const vec2f polarCoords ){ // 0 angle is +Y North 
+    // Convert polar coordinates [radius , angle (radians)] to cartesian [x , y]. Theta = 0 is UP = Y+ 
+    vec2f rtnCoords = {0.0f, 0.0f};
+    rtnCoords.x = polarCoords.r * sinf( polarCoords.t );
+    rtnCoords.y = polarCoords.r * cosf( polarCoords.t );
+    return rtnCoords;
+}
+
+
+float* circ_space_2D_f( float radius_m, uint numPts, const vec2f center ){
+    // Return a list of 'numPts' points equally spaced around a 2D circle with a center at (0,0), or at 'center' if specified 
+    float  div     = 2.0 * M_PI / numPts;
+    float* circPts = (float*) malloc( 2 * numPts * sizeof( float ) );
+    vec2f  offset, plr;
+    for( uint pntDex = 0; pntDex < numPts; pntDex++ ){
+        plr.r  = radius_m;
+        plr.t  = pntDex * div;
+		offset = polr_2_cart_0Y( plr );
+		offset = add_vec2f( center, offset );
+		circPts[ pntDex*2   ] = offset.x;
+		circPts[ pntDex*2+1 ] = offset.y;
+	}
+    return circPts;
+}
+
+// Get the vertices of an equilateral triangle with one of the vertices pointing +Y
+float* equilateral_tri_vertices( const vec2f center, float radius_m ){  return circ_space_2D_f( radius_m, 3, center );  }
+
+
+float* assign_face_textures_randomly( uint Ntri, float patchRad_px, uint pixScale ){
+	// Pick a patch from a texture and assign it to `Ntri` equilateral faces
+    // NOTE: This function assumes that all textures are SQUARE in pixels
+    // NOTE: This function assumes that `patchRad_px` < `pixScale`
+	// 1. Designate this icos as having texture
+	float* txtrVerts = (float*) malloc( 6 * Ntri * sizeof( float ) );
+    float* triVerts  = NULL;
+    float  pxSclF    = 1.0f * pixScale;
+	vec2f  center;
+	// 2. Choose corresponding texture vertices for all of the faces , For each face
+	for( uint i = 0 ; i < 20 ; i++ ){
+		// 3. Choose a center of sufficient distance from the texture edge
+		center.x = randf_range( patchRad_px, pxSclF - patchRad_px )/pxSclF;
+		center.y = randf_range( patchRad_px, pxSclF - patchRad_px )/pxSclF;
+		// 4. Generate vertices
+		triVerts = equilateral_tri_vertices( center, patchRad_px );
+		// 5. Load vertices
+		for( uint j = 0; j < 6; j++ ){  txtrVerts[6*i+j] = triVerts[j];  }
+        free( triVerts );
+	}
+    return txtrVerts;
+}
+
 
 ////////// PROGRAM STRUCTS /////////////////////////////////////////////////////////////////////////
 
@@ -210,7 +264,7 @@ Firework* make_Firework( float width, const vec4f bodyClr ){
 }
 
 
-///// TetraTank_mk0 ///////////////////////////////////////////////////////
+///// TetraTank_mk1 ///////////////////////////////////////////////////////
 
 typedef struct{
     // Tetrahedral vehicle that rolls on 3 icosahedra and translates in any direction on X-Y plane
@@ -220,12 +274,12 @@ typedef struct{
     float*  w2pose; 
     float*  gnPose; 
     float   tiltAng;
-}TetraTank_mk0;
+}TetraTank_mk1;
 
 
-TetraTank_mk0* make_TetraTank_mk0( float bodyRad_m, const vec4f bodyClr, float wheelRad_m, const vec4f wheelClr ){
+TetraTank_mk1* make_TetraTank_mk1( float bodyRad_m, const vec4f bodyClr, float wheelRad_m, const vec4f wheelClr ){
     // Alloc and construct tank geometry
-    TetraTank_mk0* rtnTank = (TetraTank_mk0*) malloc( sizeof( TetraTank_mk0 ) );
+    TetraTank_mk1* rtnTank = (TetraTank_mk1*) malloc( sizeof( TetraTank_mk1 ) );
     // Body //
     TriNet* tetNet = create_tetra_mesh_only( bodyRad_m );
     vec4f   v0 /**/ = tetNet->V[0];
@@ -237,9 +291,9 @@ TetraTank_mk0* make_TetraTank_mk0( float bodyRad_m, const vec4f bodyClr, float w
     float   op2[16];
     float   op3[16];
     Rx_mtx44f( op2, -(M_PI/2.0f-rotAngl) );
-    rtnTank->body = VAO_from_TriNet_solid_color_transformed( tetNet, bodyClr, op2 );
+    rtnTank->body = VBO_from_TriNet_solid_color_transformed( tetNet, bodyClr, op2 );
     translate_mtx44f( rtnTank->body->relPose, 0.0f, 0.0f, bodyRad_m );
-    allocate_N_VAO_VNCT_parts( rtnTank->body, 4 );
+    allocate_N_VBO_VNCT_parts( rtnTank->body, 4 );
     // Wheels //
     for( ubyte i = 0; i < 3; ++i ){
         rtnTank->body->parts[i] = (void*) icosahedron_VNC_f( wheelRad_m, wheelClr );
@@ -270,9 +324,23 @@ TetraTank_mk0* make_TetraTank_mk0( float bodyRad_m, const vec4f bodyClr, float w
     mult_mtx44f( get_part_i( rtnTank->body, 3 )->relPose, op2 );
     translate_mtx44f( get_part_i( rtnTank->body, 3 )->relPose, v3.x, v3.y, v3.z );
     rtnTank->gnPose = get_part_i( rtnTank->body, 3 )->ownPose;
+
+    // Textures //
+    set_texture( rtnTank->body, "resources/triRando.bmp" );
+    float*  Tnu = assign_face_textures_randomly( 4, 128.0f, 512 );
+    VNCT_f* prt = NULL;
+    memcpy( rtnTank->body->T, Tnu, (rtnTank->body->txSiz) * sizeof( float ) );
+    free( Tnu );
+    Tnu = assign_face_textures_randomly( 20, 128.0f, 512 );
+    for( ubyte i = 0; i < 3; ++i ){
+        prt = get_part_i( rtnTank->body, i );
+        set_texture( prt, "resources/tread.bmp" );
+        memcpy( prt->T, Tnu, (prt->txSiz) * sizeof( float ) );
+    }
+    free( Tnu );
     
     // Alloc All @ GPU //
-    allocate_and_load_VAO_VNC_at_GPU( rtnTank->body );
+    allocate_and_load_VAO_VNT_at_GPU( rtnTank->body );
     rtnTank->tiltAng = rotAngl;
     // Cleanup && Return //
     delete_net( tetNet );
@@ -280,7 +348,7 @@ TetraTank_mk0* make_TetraTank_mk0( float bodyRad_m, const vec4f bodyClr, float w
 }
 
 
-void set_gunsight( TetraTank_mk0* tank, Camera3D* camera ){
+void set_gunsight( TetraTank_mk1* tank, Camera3D* camera ){
     // Look down the barrel of tetratank
     float xfrm[16];
     float ofst = 0.5f;
@@ -299,7 +367,7 @@ void set_gunsight( TetraTank_mk0* tank, Camera3D* camera ){
 }
 
 
-void align_firework_at_muzzle( TetraTank_mk0* tank, Firework* proj ){
+void align_firework_at_muzzle( TetraTank_mk1* tank, Firework* proj ){
     // Prepare to fire `proj` Z-wise from `tank` barrel
     float xfrm[16];
     calc_total_pose_part_i( xfrm, tank->body, 3 );
@@ -310,7 +378,7 @@ void align_firework_at_muzzle( TetraTank_mk0* tank, Firework* proj ){
 }
 
 
-void roll_wheels_for_rel_body_move( TetraTank_mk0* tank, const vec4f relMov, float zTurn_rad ){
+void roll_wheels_for_rel_body_move( TetraTank_mk1* tank, const vec4f relMov, float zTurn_rad ){
     // Rotate the wheels as if they convey the tank by relative `relMov` through rolling contact
     vec4f /**/ trnAxis;
     vec4f /**/ relAxis  = cross_vec4f( make_vec4f( 0.0f, 0.0f, 1.0f ), relMov );
@@ -341,65 +409,13 @@ void roll_wheels_for_rel_body_move( TetraTank_mk0* tank, const vec4f relMov, flo
 
 
 
-////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
 
-vec2f polr_2_cart_0Y( const vec2f polarCoords ){ // 0 angle is +Y North 
-    // Convert polar coordinates [radius , angle (radians)] to cartesian [x , y]. Theta = 0 is UP = Y+ 
-    vec2f rtnCoords = {0.0f, 0.0f};
-    rtnCoords.x = polarCoords.r * sinf( polarCoords.t );
-    rtnCoords.y = polarCoords.r * cosf( polarCoords.t );
-    return rtnCoords;
-}
-
-
-float* circ_space_2D_f( float radius_m, uint numPts, const vec2f center ){
-    // Return a list of 'numPts' points equally spaced around a 2D circle with a center at (0,0), or at 'center' if specified 
-    float  div     = 2.0 * M_PI / numPts;
-    float* circPts = (float*) malloc( 2 * numPts * sizeof( float ) );
-    vec2f  offset, plr;
-    for( uint pntDex = 0; pntDex < numPts; pntDex++ ){
-        plr.r  = radius_m;
-        plr.t  = pntDex * div;
-		offset = polr_2_cart_0Y( plr );
-		offset = add_vec2f( center, offset );
-		circPts[ pntDex*2   ] = offset.x;
-		circPts[ pntDex*2+1 ] = offset.y;
-	}
-    return circPts;
-}
-
-// Get the vertices of an equilateral triangle with one of the vertices pointing +Y
-float* equilateral_tri_vertices( const vec2f center, float radius_m ){  return circ_space_2D_f( radius_m, 3, center );  }
-
-
-float* assign_face_textures_randomly( uint Ntri, float patchRad_px, uint pixScale ){
-	// Pick a patch from a texture and assign it to `Ntri` equilateral faces
-    // NOTE: This function assumes that all textures are SQUARE in pixels
-    // NOTE: This function assumes that `patchRad_px` < `pixScale`
-	// 1. Designate this icos as having texture
-	float* txtrVerts = (float*) malloc( 6 * Ntri * sizeof( float ) );
-    float* triVerts  = NULL;
-    float  pxSclF    = 1.0f * pixScale;
-	vec2f  center;
-	// 2. Choose corresponding texture vertices for all of the faces , For each face
-	for( uint i = 0 ; i < 20 ; i++ ){
-		// 3. Choose a center of sufficient distance from the texture edge
-		center.x = randf_range( patchRad_px, pxSclF - patchRad_px )/pxSclF;
-		center.y = randf_range( patchRad_px, pxSclF - patchRad_px )/pxSclF;
-		// 4. Generate vertices
-		triVerts = equilateral_tri_vertices( center, patchRad_px );
-		// 5. Load vertices
-		for( uint j = 0; j < 6; j++ ){  txtrVerts[6*i+j] = triVerts[j];  }
-        free( triVerts );
-	}
-    return txtrVerts;
-}
 
 
 ////////// PROGRAM STATE ///////////////////////////////////////////////////////////////////////////
 
 /// Geometry ///
-TetraTank_mk0* tank     = NULL;
+TetraTank_mk1* tank     = NULL;
 Firework* /**/ frwk     = NULL;
 bool /*-----*/ fwActive = false;
 VNCT_f*     grnd     = NULL;
@@ -664,7 +680,7 @@ int main( int argc, char* argv[] ){
     vec4f fClr = make_vec4f( 1.0, 0.0f, 0.0f );
     vec4f mLoc = make_vec4f( 50.0f, 0.0f, 50.0f );
     printf( "About to make tank ...\n" );
-    tank = make_TetraTank_mk0( _TNK_BODY_SCL, _TNK_BODY_CLR, _TNK_WHL_SCL, _TNK_WHL_CLR );
+    tank = make_TetraTank_mk1( _TNK_BODY_SCL, _TNK_BODY_CLR, _TNK_WHL_SCL, _TNK_WHL_CLR );
     printf( "About to make ground ...\n" );
     grnd = plane_XY_VNC_f( 2.0f*_GRID_UNIT*_N_UNIT, 2.0f*_GRID_UNIT*_N_UNIT, _N_UNIT, _N_UNIT, gClr );
     allocate_and_load_VAO_VNC_at_GPU( grnd );
