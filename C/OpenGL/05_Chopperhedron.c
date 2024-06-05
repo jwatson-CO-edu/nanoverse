@@ -68,7 +68,7 @@ float* circ_space_2D_f( float radius_m, uint numPts, const vec2f center ){
 float* equilateral_tri_vertices( const vec2f center, float radius_m ){  return circ_space_2D_f( radius_m, 3, center );  }
 
 
-float* assign_face_textures_randomly( uint Ntri, float patchRad_px, uint pixScale ){
+float* assign_equilateral_face_textures_randomly( uint Ntri, float patchRad_px, uint pixScale ){
 	// Pick a patch from a texture and assign it to `Ntri` equilateral faces
     // NOTE: This function assumes that all textures are SQUARE in pixels
     // NOTE: This function assumes that `patchRad_px` < `pixScale`
@@ -89,6 +89,42 @@ float* assign_face_textures_randomly( uint Ntri, float patchRad_px, uint pixScal
         free( triVerts );
 	}
     return txtrVerts;
+}
+
+vec2f project_vec_3D_to_2D( const vec4f q, const vec4f origin, const vec4f xBasis, const vec4f yBasis ){
+    // Project the local 2D vector to the global 3D frame
+    vec4f qP = sub_vec4f( q, origin );
+    vec2f rtnVec;
+    rtnVec.x = dot_vec4f( qP, unit_vec4f( xBasis ) );
+    rtnVec.y = dot_vec4f( qP, unit_vec4f( yBasis ) );
+    return rtnVec;
+}
+
+float* flatten_V_to_uv( uint Ntri, vec4f* V, vec3u* F ){
+    // Flatten the triangle, then return coordinates with v0 at <0,0> and edge 0 as the X basis
+    float* rtnArr = (float*) malloc( Ntri * 6 * sizeof( float ) );
+    vec4f v0_4, v1_4, v2_4, xB, yB, zB;
+    vec2f v0_2, v1_2, v2_2;
+    for( uint i = 0; i < Ntri; ++i ){
+        v0_4 = V[ F[i].v0 ];
+        v1_4 = V[ F[i].v1 ];
+        v2_4 = V[ F[i].v2 ];
+        v1_4 = sub_vec4f( v1_4, v0_4 );
+        v2_4 = sub_vec4f( v2_4, v0_4 );
+        xB   = unit_vec4f( v1_4 );
+        zB   = get_CCW_tri_norm( v0_4, v1_4, v2_4 );
+        yB   = cross_vec4f( zB, xB );
+        v0_2 = project_vec_3D_to_2D( v0_4, v0_4, xB, yB );
+        v1_2 = project_vec_3D_to_2D( v1_4, v0_4, xB, yB );
+        v2_2 = project_vec_3D_to_2D( v2_4, v0_4, xB, yB );
+        rtnArr[ 6*i   ] = v0_2.x;
+        rtnArr[ 6*i+1 ] = v0_2.y;
+        rtnArr[ 6*i+2 ] = v1_2.x;
+        rtnArr[ 6*i+3 ] = v1_2.y;
+        rtnArr[ 6*i+4 ] = v2_2.x;
+        rtnArr[ 6*i+5 ] = v2_2.y;
+    }
+    return rtnArr;
 }
 
 
@@ -327,11 +363,11 @@ TetraTank_mk1* make_TetraTank_mk1( float bodyRad_m, const vec4f bodyClr, float w
 
     // Textures //
     set_texture( rtnTank->body, "resources/triRando.bmp" );
-    float*  Tnu = assign_face_textures_randomly( 4, 128.0f, 512 );
+    float*  Tnu = assign_equilateral_face_textures_randomly( 4, 128.0f, 512 );
     VNCT_f* prt = NULL;
     memcpy( rtnTank->body->T, Tnu, (rtnTank->body->txSiz) * sizeof( float ) );
     free( Tnu );
-    Tnu = assign_face_textures_randomly( 20, 128.0f, 512 );
+    Tnu = assign_equilateral_face_textures_randomly( 20, 128.0f, 512 );
     for( ubyte i = 0; i < 3; ++i ){
         prt = get_part_i( rtnTank->body, i );
         set_texture( prt, "resources/tread.bmp" );
