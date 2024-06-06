@@ -10,22 +10,37 @@ Resources:
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
-#version 450
-
-uniform int kill;
-uniform float time;
-uniform int   Nprt;
-uniform float clrThresh;
-uniform vec4  brightClr;
+#version 330 // "#version 450" changes many things about shaders!  Book uses 330!
 
 layout( points ) in;
 layout( triangle_strip, max_vertices = 3 ) out;
 
-layout( binding = 4 ) buffer posbuf { vec4  posnArr[]; };
-layout( binding = 5 ) buffer clrbuf { vec4  colrArr[]; };
+// in vData
+// {
+//     vec3 normal;
+//     vec4 vertexColor;
+// }vertices[];
+
+// out fData
+// {
+//     vec3 normal;
+//     vec4 color;
+// }frag;   
+
+
+uniform int kill;
+uniform float shdrTime;
+uniform int   Nprt;
+uniform float clrThresh;
+uniform vec4  brightClr;
+
+
+
+// layout( binding = 4 ) buffer posbuf { vec4  posnArr[]; };
+// layout( binding = 5 ) buffer clrbuf { vec4  colrArr[]; };
 
 ////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
-float accum = time;
+float accum;
 
 uint hash( uint x ) {
     // a single iteration of Bob Jenkins' OAT algorithm
@@ -56,7 +71,7 @@ float random( float f ){
 
 float randf( void ){
     // Accumulate seed value, then use it to gen `random` number
-    accum += random( float time );
+    accum += random( shdrTime );
     return random( accum );
 }
 
@@ -79,29 +94,33 @@ const float _DROP_RATE  = 0.01;
 
 void main(){    
 
+    /// Init ///
+
+    accum = shdrTime;
+
     /// Sparkle Gen & Update ///
-    // vec4  nuPosn;
-    // vec4  nuColr;
+    vec4  nuPosn;
+    vec4  nuColr;
     float w0, w1, w2, tot;
-    for( int i = 0; i < Nprt; ++i ){
+    // for( int i = 0; i < Nprt; ++i ){
 
-        // Drop and Decay the particle
-        colrArr[i]   *= _DECAY_RATE
-        posnArr[i].z -= _DROP_RATE;
+    //     // Drop and Decay the particle
+    //     colrArr[i]   *= _DECAY_RATE
+    //     posnArr[i].z -= _DROP_RATE;
 
-        // If particle has died, then regen
-        if( (posnArr[i].z < 0.0) || (colrArr[i].a < clrThresh) || (randf() < _DEATH_PROB) ){
-            w0  = randf();
-            w1  = randf();
-            w2  = randf();
-            tot = w0 + w1 + w2;
-            w0  /= tot;
-            w1  /= tot;
-            w2  /= tot;
-            posnArr[i] = gl_in[0].gl_Position*w0 + gl_in[1].gl_Position*w1 + gl_in[1].gl_Position*w1;
-            colrArr[i] = brightClr;
-        }
-    }
+    //     // If particle has died, then regen
+    //     if( (posnArr[i].z < 0.0) || (colrArr[i].a < clrThresh) || (randf() < _DEATH_PROB) ){
+    //         w0  = randf();
+    //         w1  = randf();
+    //         w2  = randf();
+    //         tot = w0 + w1 + w2;
+    //         w0  /= tot;
+    //         w1  /= tot;
+    //         w2  /= tot;
+    //         posnArr[i] = gl_in[0].gl_Position*w0 + gl_in[1].gl_Position*w1 + gl_in[1].gl_Position*w1;
+    //         colrArr[i] = brightClr;
+    //     }
+    // }
 
     /// Unmodified Triangle ///
     gl_Position = gl_in[0].gl_Position;  EmitVertex();

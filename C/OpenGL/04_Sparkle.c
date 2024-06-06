@@ -87,39 +87,21 @@ void init_particles( Firework* fw ){
     // Get geometry shader_ID info and allocate buffer space on the GPU
     // Adapted from code by: Willem A. (Vlakkies) Schreüder
 
-    vec4f* target = NULL;
+    ulong  halfBufSiz = (fw->Nsprk) * sizeof( vec4f );
+    vec4f* posClrData = (vec4f*) malloc( 2*halfBufSiz );
 
-    // Initialize position buffer
+    // Load init positions into buffer
+    for( uint i = 0; i < fw->Nsprk; ++i ){  posClrData[i] = make_0_vec4f();  }
+    // Load init colors into buffer
+    for( uint i = fw->Nsprk; i < 2*(fw->Nsprk); ++i ){  posClrData[i] = make_0w0_vec4f();  }
+
+    // Initialize buffer texture: OGL-PG-9e, pg. 315
     glGenBuffers( 1, &(fw->posArr_ID) );
-    glBindBuffer( GL_SHADER_STORAGE_BUFFER, fw->posArr_ID );
-    glBufferData( GL_SHADER_STORAGE_BUFFER, (fw->Nsprk) * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
+    glBindBuffer( GL_TEXTURE_BUFFER, fw->posArr_ID );
+    glBufferData( GL_TEXTURE_BUFFER, 2*halfBufSiz, posClrData, GL_STATIC_DRAW );
 
-    // Initialize color buffer
-    glGenBuffers( 1, &(fw->clrArr_ID) );
-    glBindBuffer( GL_SHADER_STORAGE_BUFFER, fw->clrArr_ID );
-    glBufferData( GL_SHADER_STORAGE_BUFFER, (fw->Nsprk) * sizeof( vec4f ), NULL, GL_STATIC_DRAW );
+    // FIXME, START HERE: FINISH SETTING UP THE BUFFER TEXTURE ACCORDING TO PAGE 315
 
-    glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 );
-
-    ///// Particle Positions /////////////////////
-
-    glBindBuffer( GL_SHADER_STORAGE_BUFFER, fw->posArr_ID ); // Set buffer object to point to this ID, for writing
-    // Get pointer to buffer and cast as a struct array
-    target = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, (fw->Nsprk) * sizeof( vec4f ),
-                                        GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT );
-    // Load init positions into buffer
-    for( uint i = 0; i < fw->Nsprk; ++i ){  target[i] = make_0_vec4f();  }
-
-    ///// Particle Colors ////////////////////////
-
-    glBindBuffer( GL_SHADER_STORAGE_BUFFER, fw->clrArr_ID ); // Set buffer object to point to this ID, for writing
-    // Get pointer to buffer and cast as a struct array
-    target = (vec4f*) glMapBufferRange( GL_SHADER_STORAGE_BUFFER, 0, (fw->Nsprk) * sizeof( vec4f ),
-                                        GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT );
-    // Load init positions into buffer
-    for( uint i = 0; i < fw->Nsprk; ++i ){  target[i] = make_0w0_vec4f();  }
-    
-    glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ); // Release buffer object
 }
 
 
