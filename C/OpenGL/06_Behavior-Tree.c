@@ -32,7 +32,7 @@ typedef enum BT_Status Status;
 
 enum BT_Type{
     LEAF, // --- Ignore children
-    SEQUENCE, // Run sequentially to first failure
+    SEQUENCE, // Run sequentially to first failure (Has memory!)
     SELECTOR, // Run sequentially to first success
 }; 
 typedef enum BT_Type BT_Type;
@@ -47,10 +47,19 @@ typedef struct{
     void*   data;
 }BT_Pckt;
 
+
+// Default execution packets
+BT_Pckt invalid_packet( void ){  BT_Pckt res = {INVALID, NULL};  return res;  }
+BT_Pckt running_packet( void ){  BT_Pckt res = {RUNNING, NULL};  return res;  }
+BT_Pckt success_packet( void ){  BT_Pckt res = {SUCCESS, NULL};  return res;  }
+
+
 typedef struct{
     // Cheapest possible BT struct in C
     BT_Type type; // --------------------- How should this node run its children?
+    char*   name; // --------------------- Display name of this `Behavior`
     Status  status; // ------------------- Current BT status
+    BT_Pckt (*init  )( BT_Pckt input ); // Init   function
     BT_Pckt (*update)( BT_Pckt input ); // Update function
     void*   parent; // ------------------- Container
     uint    Nchld; // -------------------- Number of children directly below this node
@@ -58,8 +67,29 @@ typedef struct{
     uint    index; // -------------------- Currently-running child
 }Behavior;
 
-// Dummy update that always succeeds
-BT_Pckt always_succeed( BT_Pckt input ){  BT_Pckt res = {SUCCESS,NULL};  return res;  }
+
+Behavior* make_action_leaf( char* name_, BT_Pckt (*initFunc  )( BT_Pckt ), BT_Pckt (*updateFunc  )( BT_Pckt ) ){
+    // Create a Behavior that performs an action
+    Behavior* rtnBhv = malloc( sizeof( Behavior ) );
+    rtnBhv->type     = LEAF; // ----- How should this node run its children?
+    rtnBhv->name     = name_; // ---- Display name of this `Behavior`
+    rtnBhv->status   = INVALID; // -- Current BT status
+    rtnBhv->init     = initFunc; // - Init   function
+    rtnBhv->update   = updateFunc; // Update function
+    rtnBhv->parent   = NULL; // ----- Container
+    rtnBhv->Nchld    = 0; // -------- Number of children directly below this node
+    rtnBhv->children = NULL; // ----- Children
+    rtnBhv->index    = 0; // -------- Currently-running child
+    return rtnBhv;
+}
+
+
+// Defualt init that Discards input && Always runs
+BT_Pckt default_init( BT_Pckt input ){  return running_packet();  }
+
+// Dummy update that Discards input && Always succeeds
+BT_Pckt always_succeed( BT_Pckt input ){  return success_packet();  }
+
 
 ///// BT Methods //////////////////////////////////////////////////////////
 
@@ -68,44 +98,68 @@ Behavior* get_BT_child_i( Behavior* parent, uint i ){
     if( i < parent->Nchld ){  return (Behavior*) parent->children[i];  }else{  return NULL;  }
 }
 
-BT_Pckt tick_once( Behavior* parent, BT_Pckt rootPacket ){
+
+BT_Pckt run_init( Behavior* behav, BT_Pckt packet ){
+    // Run init && Set status && Return the init result
+    BT_Pckt res;
+    behav->index  = 0;
+    res = behav->init( packet );
+    behav->status = res.status;
+    return res;
+}
+
+
+BT_Pckt run_update( Behavior* behav, BT_Pckt packet ){
+    // Run update && Set status && Return the update result
+    BT_Pckt res;
+    res = behav->update( packet );
+    behav->status = res.status;
+    return res;
+}
+
+
+BT_Pckt tick_once( Behavior* behav, BT_Pckt rootPacket ){
     // Advance the BT by one timestep
-    bool    running;
-    BT_Pckt res_i;
+    Behavior* child_i = NULL; // ----------- Current container child
+    BT_Pckt   res_i   = invalid_packet(); // Running execution result
+    
     /// 0. Init ///
-    if( parent->status == INVALID ){
-        parent->index = 0;
-        parent->status = RUNNING;
-    }
-    /// 1. Run own update ///
-    BT_Pckt result = parent->update( rootPacket );
-    /// 2. Run children updates ///
-    if( parent->status == RUNNING ){
-        switch( parent->type ){
-            case LEAF:
-                return result;
+    if( behav->status == INVALID ){  res_i = run_init( behav, rootPacket );  }
+    /// 1. Run updates ///
+    if( behav->status == RUNNING ){
+        /// 2. Run own update ///
+        res_i = run_update( behav, rootPacket );
+        /// 3. Handle container types, Run child updates ///
+        switch( behav->type ){
+            case LEAF: // Update was already run for leaf, return result
+                return res_i;
             case SEQUENCE:
-                running = true;
-                while( running ){
-                    res_i = get_BT_child_i( parent, parent->index )->update( rootPacket );
+                child_i = get_BT_child_i( behav, behav->index );
+                if( child_i->status == INVALID ){  res_i = run_init( child_i, rootPacket );  }
+                if( child_i->status == RUNNING ){
+                    res_i = tick_once( child_i, res_i );
                     switch( res_i.status ){
-                        // FIXME, START HERE: HANDLE CHILD UPDATE RESULT
-                        case /* constant-expression */:
-                            /* code */
+                        case SUCCESS:
+                            (behav->index)++;
+                            if( behav->index >= behav->Nchld ){  behav->status = SUCCESS;  }
                             break;
-                        
+                        case FAILURE:
+                            behav->status = FAILURE;
+                            break;
                         default:
+                            behav->status = res_i.status;
                             break;
                     }
-                    (parent->index)++;
                 }
                 break;
+            // FIXME, START HERE: HANDLE SELECTOR TYPE!
             default:
+                printf( "UNHANDLED BEHAVIOR TYPE!: %i", behav->type );
                 break;
         }
-    }else{  parent->status = FAILURE;  }
+    }
     /// N. Return ///
-    return result;
+    return res_i;
 }
 
 ////////// PROGRAM STRUCTS /////////////////////////////////////////////////////////////////////////

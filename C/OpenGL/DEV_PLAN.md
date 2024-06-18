@@ -10,15 +10,18 @@
 * `[Y]` TetraTank rolling on icos wheels, 2024-05-1X: MOUSELOOK!
     - `[Y]` mouselook, 2024-05-1X: MOUSELOOK!
     - `{N}` Joystick control, 2024-05-20: GLUT lacks dual-stick gamepad handling! Mouselook is sufficient
-    - `{?}` Hide cursor while in the window?
-    - `{?}` Wireframe as VBO?
+    - `{Y}` Hide cursor while in the window?, 2024-05-1X: Hidden!
+    - `{N}` Wireframe as VBO?, 2024-06-18: This is not interesting
         * [OpenGL Wireframe Mode](https://stackoverflow.com/a/137649)
 * `[>]` Fireworks
     - `[Y]` Fire shell from tank barrel, 2024-05-2X: Fires!
     - `[>]` Shell has a particle spark trail
+        * `[>]` Implement as a geometry shader writing to a texture buffer
+        * `[ ]` Second geometry shader turns points into billboards
     - `[ ]` Shell emits a strong light
     - `[ ]` Firework Detonation
         * `[ ]` Shell ends trajectory with a Poisson distribution
+        * `[ ]` To start, use a simple mesh as streaks (fading opacity)
         * `[ ]` Use the star texture from the [geometry shader example](https://www.prinmath.com/csci5229/Sp24/programs/ex18.zip)
         * `[ ]` Emit **very** strong light
         * `[ ]` Generate shockwave of particle sparks
@@ -34,11 +37,13 @@
     
 ### HW06: Shaded & Textured Models
 * `[>]` Texture the Chopperhedron
+    - `[ ]` Test
 * `[ ]` Randomized EC towers w/ texture
     - `[ ]` Choose EC "Unit Square"
     - `[ ]` Prep textures: {Select, Squarify, Downsample}
-* `[ ]` Chopperhedron Animation Scripts
-    - `[ ]` _Cheap_ Behavior Treeps ( _CAREFUL!_ )
+* `[>]` Chopperhedron Animation Scripts
+    - `[>]` _Cheap_ Behavior Treeps ( _CAREFUL!_ )
+    - `[ ]` Simplest keypoint animation via BT
     - `[ ]` Running modes
     - `[ ]` Transformation Sequence
 * `{?}` Use a shader to construct lines at edges
