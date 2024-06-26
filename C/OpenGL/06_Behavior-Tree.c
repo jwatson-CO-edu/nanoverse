@@ -23,10 +23,10 @@ const vec4f _SUB_AXIS /**/ = {-1.0f, 1.0f, 1.0f, 1.0f};
 ///// BT Enums ////////////////////////////////////////////////////////////
 
 enum BT_Status{
-  INVALID, // BT should start here
-  RUNNING, // Started but not done
-  SUCCESS, // Completed without failure
-  FAILURE, // Criteria failed
+    INVALID, // BT should start here
+    RUNNING, // Started but not done
+    SUCCESS, // Completed without failure
+    FAILURE, // Criteria failed
 }; 
 typedef enum BT_Status Status;
 
@@ -152,7 +152,27 @@ BT_Pckt tick_once( Behavior* behav, BT_Pckt rootPacket ){
                     }
                 }
                 break;
-            // FIXME, START HERE: HANDLE SELECTOR TYPE!
+            case SELECTOR:
+                child_i = get_BT_child_i( behav, behav->index );
+                if( child_i->status == INVALID ){  res_i = run_init( child_i, rootPacket );  }
+                res_i = tick_once( child_i, res_i );
+                switch( res_i.status ){
+                    case SUCCESS:
+                        behav->status = SUCCESS;
+                        break;
+                    case FAILURE:
+                        (behav->index)++;
+                        if( behav->index >= behav->Nchld ){  
+                            behav->status = FAILURE;  
+                        }else{  
+                            behav->status = RUNNING;  
+                        }
+                        break;
+                    default:
+                        behav->status = res_i.status;
+                        break;
+                }
+                break;
             default:
                 printf( "UNHANDLED BEHAVIOR TYPE!: %i", behav->type );
                 break;

@@ -454,7 +454,7 @@ void roll_wheels_for_rel_body_move( TetraTank_mk1* tank, const vec4f relMov, flo
 TetraTank_mk1* tank     = NULL;
 Firework* /**/ frwk     = NULL;
 bool /*-----*/ fwActive = false;
-VNCT_f*     grnd     = NULL;
+VNCT_f* /*--*/ grnd     = NULL;
 Planet* /*--*/ moon     = NULL;
 LightSource*   lite     = NULL;
 Camera3D /*-*/ cam /**/ = { {4.0f, 2.0f, 2.0f, 1.0f}, {0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f} };
