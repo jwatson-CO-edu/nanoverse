@@ -12,23 +12,16 @@ Resources:
 
 #version 330 // "#version 450" changes many things about shaders!  Book uses 330!
 
+// Geometry Shader I/O
 layout( points ) in;
 layout( triangle_strip, max_vertices = 3 ) out;
 
-// in vData
-// {
-//     vec3 normal;
-//     vec4 vertexColor;
-// }vertices[];
-
-// out fData
-// {
-//     vec3 normal;
-//     vec4 color;
-// }frag;   
+// Particle Buffer
+layout( binding = 0 ) uniform samplerBuffer buf;
 
 
-uniform int kill;
+
+uniform int   kill;
 uniform float shdrTime;
 uniform int   Nprt;
 uniform float clrThresh;
@@ -123,8 +116,9 @@ void main(){
     // }
 
     /// Unmodified Triangle ///
-    gl_Position = gl_in[0].gl_Position;  EmitVertex();
+    gl_Position = gl_in[0].gl_Position;  EmitVertex(); // Produces a new, independent point
     gl_Position = gl_in[1].gl_Position;  EmitVertex();
     gl_Position = gl_in[2].gl_Position;  EmitVertex();
-    EndPrimitive();
+    EndPrimitive(); // Produce a new vertex at the output of the geometry shader
+    // (When the shader exits, the current primitive is ended implicitly.)
 }  

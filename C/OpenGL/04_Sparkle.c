@@ -78,8 +78,8 @@ typedef struct{
     uint    mode; // ---- 0: Shell, 1: Detonation
     int     sprkShdr; //- Particle system shader
     int     xpldShdr; //- Explosion animation shader
-    uint    posArr_ID; // GPU position buffer
-    uint    clrArr_ID; // GPU color buffer
+    uint    buf_ID; // -- Particle data buffer
+    uint    tex_ID; // -- GPU texture buffer
 }Firework;
 
 
@@ -96,11 +96,15 @@ void init_particles( Firework* fw ){
     for( uint i = fw->Nsprk; i < 2*(fw->Nsprk); ++i ){  posClrData[i] = make_0w0_vec4f();  }
 
     // Initialize buffer texture: OGL-PG-9e, pg. 315
-    glGenBuffers( 1, &(fw->posArr_ID) );
-    glBindBuffer( GL_TEXTURE_BUFFER, fw->posArr_ID );
+    glGenBuffers( 1, &(fw->buf_ID) );
+    glBindBuffer( GL_TEXTURE_BUFFER, fw->buf_ID );
     glBufferData( GL_TEXTURE_BUFFER, 2*halfBufSiz, posClrData, GL_STATIC_DRAW );
 
-    // FIXME, START HERE: FINISH SETTING UP THE BUFFER TEXTURE ACCORDING TO PAGE 315
+    // Create the buffer texture and associate it with the buffer object: OGL-PG-9e, pg. 315
+    glCreateTextures( 1, GL_TEXTURE_BUFFER, &(fw->tex_ID) );
+    glTextureBuffer( fw->tex_ID, GL_R32F, fw->buf_ID );
+
+    // FIXME: AM I ALLOWED TO SET INITIAL PARTICLE DATA HERE?
 
 }
 
