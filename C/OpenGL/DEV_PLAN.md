@@ -13,6 +13,15 @@
     - `{Y}` Hide cursor while in the window?, 2024-05-1X: Hidden!
     - `{N}` Wireframe as VBO?, 2024-06-18: This is not interesting
         * [OpenGL Wireframe Mode](https://stackoverflow.com/a/137649)
+
+* `[>]` Particle System Test
+    - `[>]` Geometry shader writes and tracks particles stored on a Buffer Texture
+        * `[ ]` Init buffer texture    
+        * `[ ]` Write to buffer texture    
+        * `[ ]` Generate billboards from buffer texture
+    - `[ ]` Render particle billboards
+        * `[ ]` Color tint
+
 * `[>]` Fireworks
     - `[Y]` Fire shell from tank barrel, 2024-05-2X: Fires!
     - `[>]` Shell has a particle spark trail
@@ -26,6 +35,7 @@
         * `[ ]` Emit **very** strong light
         * `[ ]` Generate shockwave of particle sparks
         * `[ ]` Sparks drop and fade
+
 * `[>]` Environment
     - `[P]` Moon (Stolen from [Vlakkies' Solar System demo](https://www.prinmath.com/csci5229/F23/programs/ex19.zip))
     - `{P}` Stars?
@@ -57,13 +67,15 @@
 ### HW07: Display Lists
 ### HW08: Aliased Lines
 ### HW09: Bezier Curves
-### HW10: Bezier Surfaces
+### HW10: Bezier Surfaces / Patches
 * `[ ]` Look at: Utah Teapot Example
 ### HW11: B-Splines
 ### HW12: B-Spline Surfaces
 * `[ ]` Smoothly undulating terrain
 * `[ ]` TetraTank wheels track terrain
 ### HW13: Engineering Center as a Procedural L-System
+### HW14: Engineering Center in a Marching Cubes Terrain
+### HW15: Generate Asteroid Textures, Including Craters {Bump Map + Normal Map}
 
 ### Example Project: Shadow Mapping
 * `[ ]` Directional shadows from moonlight
@@ -84,6 +96,9 @@
 * `[ ]` Re-read email from Paradise Killer programmer
 * `[ ]` Crystalline models with subsurface flakes
 * `[ ]` Crystalline models in EC scene + lighting
+
+### Example Project: Procedurally-generated Backrooms
+### Example Project: Flight Through Detailed Asteroids
 
 
 ## `[ ]` Advanced Computer Graphics + Geometric Algebra ( _YAGNI!_ )
