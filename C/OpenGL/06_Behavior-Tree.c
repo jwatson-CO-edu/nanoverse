@@ -44,14 +44,26 @@ typedef enum BT_Type BT_Type;
 typedef struct{
     // Variable data passed between behaviors
     Status  status;
+    ulong   tickNum;
     void*   data;
 }BT_Pckt;
 
+// FIXME, START HERE: DEFAULT PACKET FACTORIES MUST TAKE THE SEQUENCE NUMBER INTO ACCOUNT
+
+// FIXME: IS THIS FUNCTION EVEN NEEDED?  !YAGNI!
+BT_Pckt copy_packet_timestamp_and_status( BT_Pckt input ){
+    // Copy of timestamp and status
+    BT_Pckt rtnPkt;
+    rtnPkt.status  = input.status;
+    rtnPkt.tickNum = input.tickNum;
+    rtnPkt.data    = NULL;
+    return rtnPkt;
+}
 
 // Default execution packets
-BT_Pckt invalid_packet( void ){  BT_Pckt res = {INVALID, NULL};  return res;  }
-BT_Pckt running_packet( void ){  BT_Pckt res = {RUNNING, NULL};  return res;  }
-BT_Pckt success_packet( void ){  BT_Pckt res = {SUCCESS, NULL};  return res;  }
+BT_Pckt invalid_packet( BT_Pckt input ){  BT_Pckt res = {INVALID, input.tickNum, NULL};  return res;  }
+BT_Pckt running_packet( BT_Pckt input ){  BT_Pckt res = {RUNNING, input.tickNum, NULL};  return res;  }
+BT_Pckt success_packet( BT_Pckt input ){  BT_Pckt res = {SUCCESS, input.tickNum, NULL};  return res;  }
 
 
 typedef struct{
@@ -83,12 +95,15 @@ Behavior* make_action_leaf( char* name_, BT_Pckt (*initFunc  )( BT_Pckt ), BT_Pc
     return rtnBhv;
 }
 
+// FIXME, START HERE: SEQUENCE FACTORY FUNCTION
+// FIXME: SELECTOR FACTORY FUNCTION
+
 
 // Defualt init that Discards input && Always runs
-BT_Pckt default_init( BT_Pckt input ){  return running_packet();  }
+BT_Pckt default_init( BT_Pckt input ){  return running_packet( input );  }
 
 // Dummy update that Discards input && Always succeeds
-BT_Pckt always_succeed( BT_Pckt input ){  return success_packet();  }
+BT_Pckt always_succeed( BT_Pckt input ){  return success_packet( input );  }
 
 
 ///// BT Methods //////////////////////////////////////////////////////////
@@ -121,7 +136,7 @@ BT_Pckt run_update( Behavior* behav, BT_Pckt packet ){
 BT_Pckt tick_once( Behavior* behav, BT_Pckt rootPacket ){
     // Advance the BT by one timestep
     Behavior* child_i = NULL; // ----------- Current container child
-    BT_Pckt   res_i   = invalid_packet(); // Running execution result
+    BT_Pckt   res_i   = invalid_packet( rootPacket ); // Running execution result
     
     /// 0. Init ///
     if( behav->status == INVALID ){  res_i = run_init( behav, rootPacket );  }
@@ -181,6 +196,30 @@ BT_Pckt tick_once( Behavior* behav, BT_Pckt rootPacket ){
     /// N. Return ///
     return res_i;
 }
+
+
+// FIXME: BT RUNNER STRUCT THAT TRACKS SEQUENCE NUMBER, TIMING, AND ROOT STATUS
+
+
+///// Behaviors ///////////////////////////////////////////////////////////
+
+// BT_Pckt Basic_Init( BT_Pckt input ){
+//     // Set status to `RUNNING`
+//     BT_Pckt rtnPkt = copy_packet_timestamp_and_status( input );
+//     rtnPkt.status = RUNNING;
+//     return rtnPkt;
+// }
+
+
+BT_Pckt Countdown_10( BT_Pckt input ){
+    // Return `SUCCESS` if 10 ticks have passed, otherwise returning `RUNNING`
+    BT_Pckt rtnPkt;
+    rtnPkt.data    = NULL;
+    rtnPkt.tickNum = input.tickNum;
+    if( input.tickNum < 10 ){  rtnPkt.status = RUNNING;  }else{  rtnPkt.status = SUCCESS;  }
+    return rtnPkt;
+}
+
 
 ////////// PROGRAM STRUCTS /////////////////////////////////////////////////////////////////////////
 

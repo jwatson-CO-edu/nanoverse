@@ -22,7 +22,7 @@
     - `[ ]` Render particle billboards
         * `[ ]` Color tint
 
-* `[>]` Fireworks
+* `[P]` Fireworks
     - `[Y]` Fire shell from tank barrel, 2024-05-2X: Fires!
     - `[>]` Shell has a particle spark trail
         * `[>]` Implement as a geometry shader writing to a texture buffer
@@ -36,7 +36,7 @@
         * `[ ]` Generate shockwave of particle sparks
         * `[ ]` Sparks drop and fade
 
-* `[>]` Environment
+* `[P]` Environment
     - `[P]` Moon (Stolen from [Vlakkies' Solar System demo](https://www.prinmath.com/csci5229/F23/programs/ex19.zip))
     - `{P}` Stars?
     - `[Y]` Planar terrain from subdivided triangles, 2024-05-2X: Completed, even shading
@@ -51,8 +51,11 @@
 * `[ ]` Randomized EC towers w/ texture
     - `[ ]` Choose EC "Unit Square"
     - `[ ]` Prep textures: {Select, Squarify, Downsample}
-* `[>]` Chopperhedron Animation Scripts
+
+* `[>]` Behavior Trees Test ( _DANGER!_ )
     - `[>]` _Cheap_ Behavior Treeps ( _CAREFUL!_ )
+
+* `[P]` Chopperhedron Animation Scripts
     - `[ ]` Simplest keypoint animation via BT
     - `[ ]` Running modes
     - `[ ]` Transformation Sequence
