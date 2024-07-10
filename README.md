@@ -211,14 +211,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
 
 &nbsp;  
 
-* `[ ]` Vaporwave Aesthetic Landscape
-    - `[ ]` BoxKart rolling over terrain
-        * `[ ]` Vaporwave avatar
-    - `[ ]` Fragmented statues
-        * `{ }` Iridescent shader?
-    - `[ ]` Fragmented architecture
-    - `[ ]` Vintage computer window textures
-    - `[ ]` Grainy/VHS filter shader
+
 
 &nbsp;  
 &nbsp;  
@@ -330,7 +323,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
             - `{ }` Learning Agents & Self-Play
         * `{ }` Wildlife?
         * `{ }` Virtual inhabitants?
-    - `[ ]` Story
+    - `[ ]` Story: The player has been granted both immortality and a sentient, mobile base of manufacture. The player must use these tools to venture out to planets that have been terraformed by automated systems and make the planets cozy and inviting for billions of future inhabitants. There is no conquest. There is no micromanaging. Creativity is encouraged.
         * `[ ]` Player character 
             - `[ ]` Model
                 * `{ }` Selectable Zook/Ceranid/Mawglin?
@@ -338,8 +331,9 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         * `[ ]` Terraformer/base mentor character
             - `[ ]` Intro/tutorial sequence
             - `[ ]` Reveal origin/history thru interaction + growing trust
+                * `{ }` Dark history as a Warshovel? PTSD?
         * `[ ]` Ancient monuments
-            [ ]` Choice: Destroy, Collect, Integrate into cities
+            - `[ ]` Choice: Destroy, Collect, Integrate into cities
         * `[ ]` Progression thru planets?
     - `[ ]` Advanced shading
         * `[ ]` Investigate Godot shaders
@@ -358,7 +352,38 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     - `[ ]` Network play
         * `[ ]` Multiple players
         * `[ ]` Hosted world
-* `[ ]` Live Coding IDE
+
+
+* `[ ]` Planetary Decorator II: Garden of the Mind
+    - Story: A warp drive test gone awry sends the player to a strange yet serene lanscape. A conscious universe that inhabits the In-Between has been collecting free-floating vibes as a hobby. The player now inhabits this universe, named Mu. Mu has modified its own structure to be an oasis for tired minds. The player is free to both appreciate and create. Welcome!
+    - `[ ]` Vaporwave Aesthetic Landscape
+        * `[ ]` Fragmented statues
+            - `{ }` Iridescent shader?
+        * `[ ]` Fragmented architecture
+        * `[ ]` Vintage computer window textures
+        * `[ ]` Grainy/VHS filter shader
+    - `[ ]` Friendly, nostalgic version of the Backrooms
+    - `[ ]` Scultpure Hunt
+        * `[ ]` Sculptures encountered by the player can be scanned, then copied to their own landscapes
+    - `[ ]` Multiverse Marketing: Attract minds that are tired of the Hustle and Bustle to take up residence in Mu
+
+* `[ ]` Magnificent Danger Squadron: Apocalypse Holiday
+
+* `[ ]` Star Chamber: The Litigious Elite
+
+* `[ ]` Warshovel: Dig Till You Die
+    - Story: The Second Activation Crisis - Three hundred years ago, the major powers of the galaxy were struggling for territory and power. The massive war effort required insurmountable logistics beyond the ability of biologic brains. Deep in the frantic hum of a weapons development laboratory, an engineer whose identity is now lost to time hit upon a profound and terrible idea: A weaponized factory that takes planets as input, and creates fleets as output. No supply lines, no conscription, only death. An arms race to produce the meanest and hungriest mobile shipyards, known as Warshovels, now occupied all scientific and economic activity across all known civilizations. This period is known as the Activation Crisis. After decades of untold destruction, the major powers declared a truce in order to prevent all habitable worlds from being consumed by frightening war factories. An insoluble problem remained: the Warshovels were sentient, alive, and owed the opportunity to freely exist. However, their very existence is a threat to all life. So a deal was struck between the living and the machines. The Warshovels would sleep for one million years. After this, life would either have to find a way to live amongst planet-eating monsters, or simply perish. ~ Something is amiss. Something is stirring and rumbling to life. You, a slumbering Warshovel, have awakened millenia too early, and you are ever so hungry ...
+    - Gameplay Concepts
+        * Focus 1: Player combat, destruction. Power level escalation
+        * Focus 2: RTS and/or 4X **without** the micromanagement. Strategy instead of tactics: automated routing of resources and units.
+            - Player may assume control of any unit at any time. See Focus 1.
+        * Focus 3: Moral choice. Can a system this large and this destructive possibly coexist with biological mortals?
+            - Conquest Ending
+            - Utopian Ending
+            - Other?
+
+
+* `[ ]` Geometric Algebra Live Coding IDE
 
 ## Completed Projects
 

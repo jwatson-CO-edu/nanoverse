@@ -3,6 +3,7 @@
 
 #include "geometry.h"
 #include "matrix4x4f.h"
+#include <time.h>
 
 
 
@@ -38,7 +39,7 @@ enum BT_Type{
 typedef enum BT_Type BT_Type;
 
 
-///// BT Struct ///////////////////////////////////////////////////////////
+///// BT Structs //////////////////////////////////////////////////////////
 // YAGNI: PLEASE KEEP THIS AS LIGHT AS POSSIBLE
 
 typedef struct{
@@ -48,17 +49,6 @@ typedef struct{
     void*   data;
 }BT_Pckt;
 
-// FIXME, START HERE: DEFAULT PACKET FACTORIES MUST TAKE THE SEQUENCE NUMBER INTO ACCOUNT
-
-// FIXME: IS THIS FUNCTION EVEN NEEDED?  !YAGNI!
-BT_Pckt copy_packet_timestamp_and_status( BT_Pckt input ){
-    // Copy of timestamp and status
-    BT_Pckt rtnPkt;
-    rtnPkt.status  = input.status;
-    rtnPkt.tickNum = input.tickNum;
-    rtnPkt.data    = NULL;
-    return rtnPkt;
-}
 
 // Default execution packets
 BT_Pckt invalid_packet( BT_Pckt input ){  BT_Pckt res = {INVALID, input.tickNum, NULL};  return res;  }
@@ -95,8 +85,43 @@ Behavior* make_action_leaf( char* name_, BT_Pckt (*initFunc  )( BT_Pckt ), BT_Pc
     return rtnBhv;
 }
 
-// FIXME, START HERE: SEQUENCE FACTORY FUNCTION
-// FIXME: SELECTOR FACTORY FUNCTION
+Behavior* make_sequence_container( char* name_, uint N_chldrn, 
+                                   BT_Pckt (*initFunc  )( BT_Pckt ), BT_Pckt (*updateFunc  )( BT_Pckt ) ){
+    // Create a Behavior that executes a sequence of leaf actions
+    Behavior* rtnBhv = malloc( sizeof( Behavior ) );
+    rtnBhv->type     = SEQUENCE; // ----- How should this node run its children?
+    rtnBhv->name     = name_; // ---- Display name of this `Behavior`
+    rtnBhv->status   = INVALID; // -- Current BT status
+    rtnBhv->init     = initFunc; // - Init   function
+    rtnBhv->update   = updateFunc; // Update function
+    rtnBhv->parent   = NULL; // ----- Container
+    rtnBhv->Nchld    = 0; // -------- Number of children directly below this node
+    rtnBhv->children = malloc( N_chldrn * sizeof( Behavior ) ); // ----- Children
+    rtnBhv->index    = 0; // -------- Currently-running child
+    return rtnBhv;
+}
+
+Behavior* make_selector_container( char* name_, uint N_chldrn, 
+                                   BT_Pckt (*initFunc  )( BT_Pckt ), BT_Pckt (*updateFunc  )( BT_Pckt ) ){
+    // Create a Behavior that executes a sequence of leaf actions
+    Behavior* rtnBhv = malloc( sizeof( Behavior ) );
+    rtnBhv->type     = SELECTOR; // ----- How should this node run its children?
+    rtnBhv->name     = name_; // ---- Display name of this `Behavior`
+    rtnBhv->status   = INVALID; // -- Current BT status
+    rtnBhv->init     = initFunc; // - Init   function
+    rtnBhv->update   = updateFunc; // Update function
+    rtnBhv->parent   = NULL; // ----- Container
+    rtnBhv->Nchld    = 0; // -------- Number of children directly below this node
+    rtnBhv->children = malloc( N_chldrn * sizeof( Behavior ) ); // ----- Children
+    rtnBhv->index    = 0; // -------- Currently-running child
+    return rtnBhv;
+}
+
+uint add_child( Behavior* parent, Behavior* child ){
+    // Add `child` under `parent`
+    parent->children[ parent->Nchld ] = (void*) child;
+    ++(parent->Nchld);
+}
 
 
 // Defualt init that Discards input && Always runs
@@ -198,17 +223,91 @@ BT_Pckt tick_once( Behavior* behav, BT_Pckt rootPacket ){
 }
 
 
-// FIXME: BT RUNNER STRUCT THAT TRACKS SEQUENCE NUMBER, TIMING, AND ROOT STATUS
+// FIXME, START HERE: FUNCTION TO RESET ENTIRE TREE TO `INVALID`
 
 
-///// Behaviors ///////////////////////////////////////////////////////////
+////////// TIME HELPERS ////////////////////////////////////////////////////////////////////////////
 
-// BT_Pckt Basic_Init( BT_Pckt input ){
-//     // Set status to `RUNNING`
-//     BT_Pckt rtnPkt = copy_packet_timestamp_and_status( input );
-//     rtnPkt.status = RUNNING;
-//     return rtnPkt;
-// }
+inline long get_epoch_nano( void ){
+    // Get nanoseconds since the epoch
+    // Author: Ciro Santilli, https://stackoverflow.com/a/36095407
+    struct timespec ts;
+    timespec_get( &ts, TIME_UTC );
+    return (long) ts.tv_sec * 1000000000L + ts.tv_nsec;
+}
+
+inline double get_epoch_milli( void ){
+    // Get milliseconds since the epoch
+    return get_epoch_nano() / ((double) 1e6);
+}
+
+inline void sleep_ms( double pause_ms ){
+    // Main thread will sleep for `pause_ms`
+    // Author: Ciro Santilli, https://stackoverflow.com/q/7684359
+    struct timespec tim, tim2;
+    tim.tv_sec  = (uint) pause_ms / 1000.0;
+    tim.tv_nsec = (uint) (pause_ms - tim.tv_sec) * 1000000;
+    if( nanosleep( &tim, &tim2 ) < 0 ){  printf( "`nanosleep` system call failed \n" );  }
+}
+
+
+
+////////// BT RUNNER ///////////////////////////////////////////////////////////////////////////////
+
+typedef struct{
+    // Cheapest possible BT manager in C
+    Status    status; // Current root status
+    ulong     ts; // --- Current timestep/tick
+    double    period_ms; // Minimum milliseconds between ticks
+    double    lastTick; //- Epoch time of last tick, [ms]
+    Behavior* root; // - BT to run
+}BT_Runner;
+
+
+BT_Runner* setup_BT_w_freq( Behavior* root_, double tickHz ){
+    // Get a populated `BT_Runner` struct
+    BT_Runner* rtnRnnr = malloc( sizeof( BT_Runner ) );
+    rtnRnnr->status    = INVALID;
+    rtnRnnr->ts /*--*/ = 0;
+    rtnRnnr->period_ms = (1.0/tickHz)*1000.0;
+    rtnRnnr->lastTick  = get_epoch_milli();
+    rtnRnnr->root /**/ = root_;
+    return rtnRnnr;
+}
+
+void reset_BT( BT_Runner* runner ){
+    // Reset the runner
+    runner->status   = INVALID;
+    runner->ts /*-*/ = 0;
+    runner->lastTick = get_epoch_milli();
+}
+
+BT_Pckt run_BT_tick( BT_Runner* runner ){
+    // Check for elapsed time and run the BT for one tick
+    // WARNING: THIS FUNCTION SLEEPS THE THREAD!
+    BT_Pckt rtnPkt = {runner->status, runner->ts, NULL};
+    double  now    = get_epoch_milli();
+    double  elp    = now - (runner->lastTick);
+
+    if( runner->status == INVALID ){
+        runner->status = RUNNING;
+        rtnPkt.status  = RUNNING;
+        printf( "Behavior Tree init!\n" );
+    }
+
+    if( runner->status == RUNNING ){
+        if( elp < (runner->period_ms) ){  sleep_ms( (runner->period_ms)-elp );  }
+        rtnPkt = tick_once( runner->root, rtnPkt );
+        ++(runner->ts);
+        runner->status   = rtnPkt.status;
+        runner->lastTick = get_epoch_milli();
+    }
+
+    return rtnPkt;
+}
+
+
+////////// BEHAVIORS ///////////////////////////////////////////////////////////////////////////////
 
 
 BT_Pckt Countdown_10( BT_Pckt input ){

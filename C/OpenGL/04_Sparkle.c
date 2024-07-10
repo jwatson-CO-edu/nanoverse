@@ -104,8 +104,10 @@ void init_particles( Firework* fw ){
     glCreateTextures( 1, GL_TEXTURE_BUFFER, &(fw->tex_ID) );
     glTextureBuffer( fw->tex_ID, GL_R32F, fw->buf_ID );
 
-    // FIXME: AM I ALLOWED TO SET INITIAL PARTICLE DATA HERE?
+    // FIXME: Is this needed?
+    glUnmapBuffer( GL_TEXTURE_BUFFER ); // Release buffer object
 
+    free( posClrData );
 }
 
 

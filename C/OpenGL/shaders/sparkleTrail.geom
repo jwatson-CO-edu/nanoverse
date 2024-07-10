@@ -18,19 +18,15 @@ layout( triangle_strip, max_vertices = 3 ) out;
 
 // Particle Buffer
 layout( binding = 0 ) uniform samplerBuffer buf;
+uniform int /*---------------------------*/ Nprt;
+
+// Particle Settings
+uniform int   active; // -- Particle system flag
+uniform float shdrTime; //- Used for randomization
+uniform float clrThresh; // Opacity that denotes a live particle
+uniform vec4  brightClr; // Particle base color
 
 
-
-uniform int   kill;
-uniform float shdrTime;
-uniform int   Nprt;
-uniform float clrThresh;
-uniform vec4  brightClr;
-
-
-
-// layout( binding = 4 ) buffer posbuf { vec4  posnArr[]; };
-// layout( binding = 5 ) buffer clrbuf { vec4  colrArr[]; };
 
 ////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
 float accum;
@@ -68,13 +64,6 @@ float randf( void ){
     return random( accum );
 }
 
-// void reset_particles( void ){
-//     // Set all particles to dead state
-//     for( int i = 0; i < Nprt; ++i ){
-//         colrArr[i].a = 0.0;
-//     }
-// }
-
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
@@ -91,29 +80,57 @@ void main(){
 
     accum = shdrTime;
 
+    ///// Particle System /////////////////////////////////////////////////
+
     /// Sparkle Gen & Update ///
-    vec4  nuPosn;
-    vec4  nuColr;
+    vec4  posn_i;
+    vec4  colr_i;
     float w0, w1, w2, tot;
-    // for( int i = 0; i < Nprt; ++i ){
+    int  live_i;
 
-    //     // Drop and Decay the particle
-    //     colrArr[i]   *= _DECAY_RATE
-    //     posnArr[i].z -= _DROP_RATE;
+    // For each possible particle
+    for( int i = 0; i < Nprt; ++i ){
 
-    //     // If particle has died, then regen
-    //     if( (posnArr[i].z < 0.0) || (colrArr[i].a < clrThresh) || (randf() < _DEATH_PROB) ){
-    //         w0  = randf();
-    //         w1  = randf();
-    //         w2  = randf();
-    //         tot = w0 + w1 + w2;
-    //         w0  /= tot;
-    //         w1  /= tot;
-    //         w2  /= tot;
-    //         posnArr[i] = gl_in[0].gl_Position*w0 + gl_in[1].gl_Position*w1 + gl_in[1].gl_Position*w1;
-    //         colrArr[i] = brightClr;
-    //     }
-    // }
+        // Fetch particle
+        posn_i = texelFetch( buf, i      );
+        colr_i = texelFetch( buf, i+Nprt );
+
+        // Determine if the particle is active
+        if( (posn_i.z > 0.0) || (colr_i.a > clrThresh) ){
+            
+            live_i = 1;
+
+            // Drop and Decay the particle
+            colr_i   *= _DECAY_RATE
+            posn_i.z += _DROP_RATE; // FIXME: CHANGE FROM RISE TO DROP AFTER SHADER TEST
+            
+            if( randf() < _DEATH_PROB ){
+                posn_i.z = 0.0;
+                colr_i.a = 0.0;
+                live_i   = 0;
+            }
+        }
+
+        // If the particle is dead, roll to resurrect
+        if( (!live_i) && (randf() > _DEATH_PROB) ){
+            w0  = randf();
+            w1  = randf();
+            w2  = randf();
+            tot = w0 + w1 + w2;
+            w0  /= tot;
+            w1  /= tot;
+            w2  /= tot;
+            posn_i = gl_in[0].gl_Position*w0 + gl_in[1].gl_Position*w1 + gl_in[1].gl_Position*w1;
+            colr_i = brightClr;
+        }
+
+        // Write transformed particle back to the buffer texture
+
+    }
+
+
+    
+    ///// Geometry Pass-Thru //////////////////////////////////////////////
 
     /// Unmodified Triangle ///
     gl_Position = gl_in[0].gl_Position;  EmitVertex(); // Produces a new, independent point
