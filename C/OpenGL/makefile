@@ -12,6 +12,8 @@ CLEAN=rm -f *.out *.o *.a
 02_VBO_VNT_f.o: 02_VBO_VNT_f.c toolbox.h # ------------------ Vertex Buffer Objects, Nested
 03_Tetra-Tank_js.o: 03_Tetra-Tank_js.c geometry.h toolbox.h # Rolling geometric tank, Joystick control
 04_Sparkle.o: 04_Sparkle.c geometry.h toolbox.h # ----------- Shader dev for 03 tank
+05_Chopperhedron.o: 05_Chopperhedron.c geometry.h toolbox.h # Transforming tank: Land + Air
+06_Behavior-Tree.o: 06_Behavior-Tree.c geometry.h toolbox.h # Behavior Tree (BT) dev + testing
 
 
 

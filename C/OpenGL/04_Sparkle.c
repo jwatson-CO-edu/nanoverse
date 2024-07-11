@@ -97,16 +97,18 @@ void init_particles( Firework* fw ){
 
     // Initialize buffer texture: OGL-PG-9e, pg. 315
     glGenBuffers( 1, &(fw->buf_ID) );
-    glBindBuffer( GL_TEXTURE_BUFFER, fw->buf_ID );
-    glBufferData( GL_TEXTURE_BUFFER, 2*halfBufSiz, posClrData, GL_STATIC_DRAW );
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, fw->buf_ID );
+    glBufferData( GL_SHADER_STORAGE_BUFFER, 2*halfBufSiz, posClrData, GL_STATIC_DRAW );
 
-    // Create the buffer texture and associate it with the buffer object: OGL-PG-9e, pg. 315
-    glCreateTextures( 1, GL_TEXTURE_BUFFER, &(fw->tex_ID) );
-    glTextureBuffer( fw->tex_ID, GL_R32F, fw->buf_ID );
+    // // Create the buffer texture and associate it with the buffer object: OGL-PG-9e, pg. 315
+    // glCreateTextures( 1, GL_TEXTURE_BUFFER, &(fw->tex_ID) );
+    // glTextureBuffer( fw->tex_ID, GL_R32F, fw->buf_ID );
 
-    // FIXME: Is this needed?
-    glUnmapBuffer( GL_TEXTURE_BUFFER ); // Release buffer object
+    // Release buffer object
+    // glUnmapBuffer( GL_TEXTURE_BUFFER ); 
+    glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 ); 
 
+    // Release CPU memory
     free( posClrData );
 }
 

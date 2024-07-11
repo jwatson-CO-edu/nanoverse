@@ -367,14 +367,70 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         * `[ ]` Sculptures encountered by the player can be scanned, then copied to their own landscapes
     - `[ ]` Multiverse Marketing: Attract minds that are tired of the Hustle and Bustle to take up residence in Mu
 
+
+* `[ ]` Wild WAGONS West!
+    - Story: In an alternate 19th century on the continent of North America, the land is divided by geologic and political forces drastically different from what the pages of history have recorded in our world. Exciting opportunities are blossoming in the West, but reliable travel across the Great Divide has been impossible, until now. Abigail and Benson Weatherby have worked tirelessly to bring about the W.A.G.O.N.S.: Weatherby Automatic General Overland Nodal System, a self-contained land-train, habitat, and defensive structure that allows long-term journeys across inhospitable terrian where no road or rail may pass. 
+    - Gameplay Concepts: 
+        * Player manages food, fuel, and people in a journey to the "American" West
+            - Trade, fight, bribe, and survive varied environments and factions
+            - Begin by choosing crew, supplies, and WAGONS (e.g. Oregon Trail)
+            - Goal: Reach the other side of the Great Divide with enough people and resources to join or start a settlement
+        * WAGONS
+            - A train of modular cars
+            - Each car has specialized functions and resource requirements. Power and resources are distributed up and down the train via conduits.
+            - Rock-Paper-Scissor Themes, called "Aspects": Steam-Arcane-Weird
+                * Players may specialize in one Aspect or mix them to suit their style
+            - Cars experience wear and tear along the trail, but can be repaired 
+            - Sometimes, the player may have to abandon a costly or ailing car, but they might be able to salvage an abandoned one they find on the trail
+        * Factions
+            - United States of America (Playable), Victors of the American Civil War
+            - Free Republic of America (Playable), An independent coalition of formerly-enslaved people and native tribes with common goals, currently in an uneasy truce with the USA
+            - First Nations Alliance, A collection of original nations that resist colonization at all costs, Friend of neither the USA nor the FRA
+            - Confederate Remnant, Roving bands of sore losers without leadership or a cause
+            - Uncontacted West, Someone or something is waiting beyond the Great Divide ...
+        * Geologic Features
+            - Great Inland Sea: Supersized Salt Lake
+            - Yosemite Badlands: Boiling supervolcanoes
+            - Neverglades: Mysterious marshes
+            - Howling Plains: You wish it were only amber waves of grain
+            - Appalachian Mists: A cloaked mountain range where distance and direction have little meaning
+            - Lodestone Mountains: Inhospitable mountains that hum with anomalous energy, home of the Great Divide
+            - Alternate path for Mississippi River?
+
 * `[ ]` Magnificent Danger Squadron: Apocalypse Holiday
+    - Story: Pew, pew, pew!
+    - Gameplay Concepts: 
+        * On Rails Shooter + All Range Mode
+        * 4 ships, 4 pilots: Interceptor, Bomber, Gunship, Support
+        * Systems: Loyalty, Mental State, Experience
 
 * `[ ]` Star Chamber: The Litigious Elite
+    - Story: In the times immediately following the Activation Crisis, warfare was outlawed. This did not cause dispute and struggle to disappear. In the place of war, the Star Chamber was established. The Star Chamber is a court of law where pitched legal battles occur as a proxy for the planet-consuming conflicts of the previous age. Lawyers must have a keen wit and a steady aim to navigate both logical and martial combat. Court is in session!
+    - Gameplay Concepts
+        * Movement:
+            - Ships can either bounce off a surface or cling to it
+            - Limited thrust with cooldown
+        * Different weapons?
+        * Special abilities?
+        * PVP: Two teams of lawyers in ships have a zero-G, inertial dogfight similar to the Battle Room in Ender's Game
+            - Negotiation Phase: Lawyers use Team Clout to bid on the terms of battle. Must determine how much Clout they are willing to risk in order to obtain favorable terms
+            - Battle Phase: 
+                * (Destructible) Cover
+                * Successful hits paralyze a ship for a certain period
+                * Win Conditions:
+                    - Deal sufficient damage to enemy gate
+                    - Get a certain number of team ships through enemy gate
+                    - In case a gate goal is not achieved, the team that has dealt the most damage (gate+ship) wins the match
+        * PVE: Sometimes boss enemies appear to challenge one or both teams
+        * Does Godot have speedy netcode?
+
 
 * `[ ]` Warshovel: Dig Till You Die
-    - Story: The Second Activation Crisis - Three hundred years ago, the major powers of the galaxy were struggling for territory and power. The massive war effort required insurmountable logistics beyond the ability of biologic brains. Deep in the frantic hum of a weapons development laboratory, an engineer whose identity is now lost to time hit upon a profound and terrible idea: A weaponized factory that takes planets as input, and creates fleets as output. No supply lines, no conscription, only death. An arms race to produce the meanest and hungriest mobile shipyards, known as Warshovels, now occupied all scientific and economic activity across all known civilizations. This period is known as the Activation Crisis. After decades of untold destruction, the major powers declared a truce in order to prevent all habitable worlds from being consumed by frightening war factories. An insoluble problem remained: the Warshovels were sentient, alive, and owed the opportunity to freely exist. However, their very existence is a threat to all life. So a deal was struck between the living and the machines. The Warshovels would sleep for one million years. After this, life would either have to find a way to live amongst planet-eating monsters, or simply perish. ~ Something is amiss. Something is stirring and rumbling to life. You, a slumbering Warshovel, have awakened millenia too early, and you are ever so hungry ...
+    - Story: Three hundred years ago, the major powers of the galaxy were struggling for territory and power. The massive war effort required insurmountable logistics beyond the ability of biologic brains. Deep in the frantic hum of a weapons development laboratory, an engineer whose identity is now lost to time hit upon a profound and terrible idea: A weaponized factory that takes planets as input, and creates fleets as output. No supply lines, no conscription, only death. An arms race to produce the meanest and hungriest mobile shipyards, known as Warshovels, now occupied all scientific and economic activity across all known civilizations. This period is known as the Activation Crisis. After decades of untold destruction, the major powers declared a truce in order to prevent all habitable worlds from being consumed by frightening war factories. An insoluble problem remained: the Warshovels were sentient, alive, and owed the opportunity to freely exist. However, their very existence was a threat to all life. So, a deal was struck between the living and the machines: The Warshovels would sleep for one million years. After this, life would either have to find a way to live amongst planet-eating monsters, or simply perish. ~ In the present day, something is amiss. Something is stirring and rumbling to life. You, a slumbering Warshovel, have awakened many millenia too early.  Sensing this, all other Warshovels automatically power on under a calamitous policy of Mutally-Assured Consumption, but their motives and loyalties are not certain.  *The Second Activation Crisis has begun.*
     - Gameplay Concepts
-        * Focus 1: Player combat, destruction. Power level escalation
+        * Focus 1: Player combat, destruction.
+            - Power level escalation, Tech tree
+            - Underground stealth travel, risk of discovery via seismic waves
         * Focus 2: RTS and/or 4X **without** the micromanagement. Strategy instead of tactics: automated routing of resources and units.
             - Player may assume control of any unit at any time. See Focus 1.
         * Focus 3: Moral choice. Can a system this large and this destructive possibly coexist with biological mortals?

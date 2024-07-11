@@ -17,8 +17,9 @@ layout( points ) in;
 layout( triangle_strip, max_vertices = 3 ) out;
 
 // Particle Buffer
-layout( binding = 0 ) uniform samplerBuffer buf;
-uniform int /*---------------------------*/ Nprt;
+layout( binding = 4 ) buffer posbuf { vec4 posnArr[]; };
+layout( binding = 5 ) buffer colbuf { vec4 colrArr[]; };
+uniform int /*------------*/ Nprt;
 
 // Particle Settings
 uniform int   active; // -- Particle system flag
@@ -92,8 +93,10 @@ void main(){
     for( int i = 0; i < Nprt; ++i ){
 
         // Fetch particle
-        posn_i = texelFetch( buf, i      );
-        colr_i = texelFetch( buf, i+Nprt );
+        posn_i = posnArr[i];
+        colr_i = colrArr[i];
+        // posn_i = texelFetch( buf, i      );
+        // colr_i = texelFetch( buf, i+Nprt );
 
         // Determine if the particle is active
         if( (posn_i.z > 0.0) || (colr_i.a > clrThresh) ){
@@ -124,8 +127,9 @@ void main(){
             colr_i = brightClr;
         }
 
-        // Write transformed particle back to the buffer texture
-
+        // Write transformed particle back to the buffer 
+        posnArr[i] = posn_i;
+        colrArr[i] = colr_i;
     }
 
 
