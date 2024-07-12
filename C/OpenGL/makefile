@@ -68,6 +68,11 @@ geometry.a: transform.o TriNet.o VNCT_f.o draw_geo.o matrix4x4f.o
 04_Sparkle: 04_Sparkle.o geometry.a toolbox.a 
 	gcc $(CFLG) -o $@.out $^ $(LIBS)
 
+05_Chopperhedron: 05_Chopperhedron.o geometry.a toolbox.a 
+	gcc $(CFLG) -o $@.out $^ $(LIBS)
+
+06_Behavior-Tree: 06_Behavior-Tree.o geometry.a toolbox.a 
+	gcc $(CFLG) -o $@.out $^ $(LIBS)
 
 ##### Clean Rule ##########################################################
 

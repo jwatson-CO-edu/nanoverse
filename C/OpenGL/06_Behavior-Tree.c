@@ -109,12 +109,14 @@ Behavior* make_selector_container( char* name_, uint N_chldrn,
     return rtnBhv;
 }
 
-uint add_child( Behavior* parent, Behavior* child ){
+void add_child( Behavior* parent, Behavior* child ){
     // Add `child` under `parent`
     parent->children[ parent->Nchld ] = (void*) child;
     ++(parent->Nchld);
 }
 
+// Return the input packet without modification
+BT_Pckt pass_packet( BT_Pckt input ){  return input;  }
 
 // Defualt init that Discards input && Always runs
 BT_Pckt default_init( BT_Pckt input ){  return running_packet( input );  }
@@ -141,13 +143,12 @@ BT_Pckt run_init( Behavior* behav, BT_Pckt packet ){
 }
 
 
-BT_Pckt run_update( Behavior* behav, BT_Pckt packet ){
-    // Run update && Set status && Return the update result
-    BT_Pckt res;
-    res = behav->update( packet );
-    behav->status = res.status;
-    return res;
-}
+// BT_Pckt run_update( Behavior* behav, BT_Pckt packet ){
+//     // Run update && Set status && Return the update result
+//     BT_Pckt res;
+//     res = 
+//     return res;
+// }
 
 
 BT_Pckt tick_once( Behavior* behav, BT_Pckt rootPacket ){
@@ -160,10 +161,12 @@ BT_Pckt tick_once( Behavior* behav, BT_Pckt rootPacket ){
     /// 1. Run updates ///
     if( behav->status == RUNNING ){
         /// 2. Run own update ///
-        res_i = run_update( behav, rootPacket );
+        printf( "Run Node %s:\n", behav->name );
+        res_i = behav->update( rootPacket );
         /// 3. Handle container types, Run child updates ///
         switch( behav->type ){
             case LEAF: // Update was already run for leaf, return result
+                behav->status = res_i.status;
                 return res_i;
             case SEQUENCE:
                 child_i = get_BT_child_i( behav, behav->index );
@@ -251,17 +254,16 @@ inline double get_epoch_milli( void ){
 //     if( nanosleep( &tim, &tim2 ) < 0 ){  printf( "`nanosleep` system call failed \n" );  }
 // }
 
-
-
 ////////// BT RUNNER ///////////////////////////////////////////////////////////////////////////////
 
 typedef struct{
     // Cheapest possible BT manager in C
-    Status    status; // Current root status
-    ulong     ts; // --- Current timestep/tick
+    Status    status; // -- Current root status
+    uint      done; // ---- Has the behavior completed?
+    ulong     ts; // ------ Current timestep/tick
     double    period_ms; // Minimum milliseconds between ticks
     double    lastTick; //- Epoch time of last tick, [ms]
-    Behavior* root; // - BT to run
+    Behavior* root; // ---- BT to run
 }BT_Runner;
 
 
@@ -288,23 +290,29 @@ void reset_BT( BT_Runner* runner ){
 
 BT_Pckt run_BT_tick( BT_Runner* runner ){
     // Check time elapsed and conditionally run the BT for one tick
-    // NOTE: This functions does NOT sleep the thread
-    BT_Pckt rtnPkt = {runner->status, runner->ts, NULL};
-    double  elp    = get_epoch_milli() - (runner->lastTick);
+    // NOTE: This functions does NOT sleep the thread, It it up to client code to maintain an update freq
+    BT_Pckt rtnPkt = {runner->status, runner->ts, NULL}; // --- Prep packet
+    double  elp    = get_epoch_milli() - (runner->lastTick); // Calc elapsed time
 
+    printf( "`run_BT_tick`: About to execute tick %lu ...\n", runner->ts );
+
+    // Set to running
     if( runner->status == INVALID ){
         runner->status = RUNNING;
         rtnPkt.status  = RUNNING;
         printf( "Behavior Tree init!\n" );
     }
 
+    // If BT period has elapsed since the last call, then execute one tick
     if( (runner->status == RUNNING) && (elp >= (runner->period_ms)) ){
         rtnPkt = tick_once( runner->root, rtnPkt );
         ++(runner->ts);
         runner->status   = rtnPkt.status;
+        runner->done     = (uint) ((runner->status == SUCCESS) || (runner->status == FAILURE));
         runner->lastTick = get_epoch_milli();
     }
 
+    // Return status packet
     return rtnPkt;
 }
 
@@ -317,7 +325,13 @@ BT_Pckt Countdown_10( BT_Pckt input ){
     BT_Pckt rtnPkt;
     rtnPkt.data    = NULL;
     rtnPkt.tickNum = input.tickNum;
-    if( input.tickNum < 10 ){  rtnPkt.status = RUNNING;  }else{  rtnPkt.status = SUCCESS;  }
+    if( input.tickNum < 10 ){  
+        rtnPkt.status = RUNNING;  
+        printf( "RUNNING at tick %lu of 10\n", input.tickNum );
+    }else{  
+        rtnPkt.status = SUCCESS;  
+        printf( "Countdown COMPLETE!\n" );
+    }
     return rtnPkt;
 }
 
@@ -338,7 +352,23 @@ BT_Pckt Countdown_10( BT_Pckt input ){
 
 int main( int argc, char* argv[] ){
     init_rand();
+
+    double freq_hz   = 60.0;
+    long   period_ms = (long) (1.25/freq_hz * 1000.0);
     
+    Behavior* seq = make_sequence_container( "Test Squence", 3, default_init, pass_packet );
+    add_child( seq, make_action_leaf( "Counter 1", default_init, Countdown_10 ) );
+    add_child( seq, make_action_leaf( "Counter 2", default_init, Countdown_10 ) );
+    add_child( seq, make_action_leaf( "Counter 3", default_init, Countdown_10 ) );
+
+    BT_Runner* runner = setup_BT_w_freq( seq, freq_hz );
+
+    while( !(runner->done) ){
+        run_BT_tick( runner );
+        sleep_ms( period_ms );
+    }
+
+    printf( "BT COMPLETED with status %u\n\n", runner->status );
     
     //  Return code
     return 0;
