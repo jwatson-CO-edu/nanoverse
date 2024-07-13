@@ -165,14 +165,17 @@ BT_Pckt tick_once( Behavior* behav, BT_Pckt rootPacket ){
         case INVALID:
             behav->status = RUNNING;
             switch( behav->type ){
+                /////////
                 case LEAF: 
                     res_i = behav->init( behav, rootPacket );
                     break;
+                /////////
                 case SEQUENCE:
                 case SELECTOR:
                     res_i = running_packet( (void*) behav, rootPacket );
                     behav->index = 0;
                     break;
+                /////////
                 default:
                     printf( "UNHANDLED BEHAVIOR TYPE!: %i", behav->type );
                     break;
@@ -183,11 +186,11 @@ BT_Pckt tick_once( Behavior* behav, BT_Pckt rootPacket ){
 
         case RUNNING:
             switch( behav->type ){
-
+                /////////
                 case LEAF: // Update was already run for leaf, return result
                     res_i /*---*/ = behav->update( behav, rootPacket );
                     behav->status = res_i.status;
-
+                /////////
                 case SEQUENCE:
                     printf( "SEQUENCE: Get child at index %u\n", behav->index );
                     child_i = get_BT_child_i( behav, behav->index );
@@ -205,7 +208,7 @@ BT_Pckt tick_once( Behavior* behav, BT_Pckt rootPacket ){
                             behav->status = res_i.status;
                             break;
                     }
-
+                /////////
                 case SELECTOR:
                     printf( "SEQUENCE: Get child at index %u\n", behav->index );
                     child_i = get_BT_child_i( behav, behav->index );
@@ -223,7 +226,7 @@ BT_Pckt tick_once( Behavior* behav, BT_Pckt rootPacket ){
                             behav->status = res_i.status;
                             break;
                     }
-
+                /////////
                 default:
                     printf( "UNHANDLED BEHAVIOR TYPE!: %i", behav->type );
                     break;
