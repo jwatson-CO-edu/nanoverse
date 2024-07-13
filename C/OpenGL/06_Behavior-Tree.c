@@ -139,20 +139,6 @@ Behavior* get_BT_child_i( Behavior* parent, uint i ){
 }
 
 
-// BT_Pckt run_init( Behavior* behav, BT_Pckt packet ){
-//     // Run init && Set status && Return the init result
-//     BT_Pckt res;
-//     
-//     res = behav->init( behav, packet );
-//     // behav->status = res.status;
-//     behav->status = RUNNING;
-//     return res;
-// }
-
-
-
-
-
 BT_Pckt tick_once( Behavior* behav, BT_Pckt rootPacket ){
     // Advance the BT by one timestep
     Behavior* child_i = NULL; // ----------- Current container child
