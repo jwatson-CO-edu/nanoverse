@@ -180,7 +180,7 @@ BT_Pckt tick_once( Behavior* behav, BT_Pckt rootPacket ){
                 case SEQUENCE:
                     printf( "SEQUENCE: Get child at index %u\n", behav->index );
                     child_i = get_BT_child_i( behav, behav->index );
-                    tick_once( child_i, res_i );
+                    tick_once( child_i, rootPacket );
                     switch( child_i->status ){
                         case SUCCESS:
                             ++(behav->index);
