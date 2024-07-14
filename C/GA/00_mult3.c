@@ -118,7 +118,7 @@ int main( int argc, char* argv[] ){
         scanf("%*c"); //consume the line break
         if( option != 'w' ){  break;  }
 
-        printf( "Enter 3D multivector `A`:  " );
+        printf( "\nEnter 3D multivector `A`:  " );
         op1 = read_mv3();
         scanf("%*c"); //consume the line break
 
