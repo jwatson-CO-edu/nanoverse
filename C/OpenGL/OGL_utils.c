@@ -1,5 +1,6 @@
-//  CSCIx239 library
-//  Willem A. (Vlakkies) Schreuder
+// Adapted from the CSCIx239 library by Willem A. (Vlakkies) Schreuder
+
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 #include "toolbox.h"
 
 
@@ -94,7 +95,18 @@ float heartbeat_FPS( float targetFPS ){
     return FPS;
 }
 
+inline long get_epoch_nano( void ){
+    // Get nanoseconds since the epoch
+    // Author: Ciro Santilli, https://stackoverflow.com/a/36095407
+    struct timespec ts;
+    timespec_get( &ts, TIME_UTC );
+    return (long) ts.tv_sec * 1000000000L + ts.tv_nsec;
+}
 
+double get_epoch_milli( void ){
+    // Get milliseconds since the epoch
+    return get_epoch_nano() / ((double) 1e6);
+}
 
 ////////// CAMERA //////////////////////////////////////////////////////////////////////////////////
 

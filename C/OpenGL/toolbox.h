@@ -71,6 +71,67 @@ typedef struct {
 
 
 
+////////// BEHAVIOR STRUCTS ////////////////////////////////////////////////////////////////////////
+#define _BT_STATE_SLOTS 16 // 2024-07-13: At this time, space for state is static
+
+///// BT Enums ////////////////////////////////////////////////////////////
+
+enum BT_Status{
+    // Behavior Status
+    INVALID, // BT should start here
+    RUNNING, // Started but not done
+    SUCCESS, // Completed without failure
+    FAILURE, // Criteria failed
+}; 
+typedef enum BT_Status Status;
+
+enum BT_Type{
+    // Behavior Node Type
+    LEAF, // --- Ignore children
+    SEQUENCE, // Run sequentially to first failure (Has memory!)
+    SELECTOR, // Run sequentially to first success
+}; 
+typedef enum BT_Type BT_Type;
+
+
+///// BT Structs //////////////////////////////////////////////////////////
+
+typedef struct{
+    // Variable data passed between behaviors
+    Status  status;
+    ulong   tickNum;
+}BT_Pckt;
+
+
+typedef struct{
+    // Cheapest possible BT struct in C
+    BT_Type type; // ---------------------- How should this node run its children?
+    char*   name; // ---------------------- Display name of this `Behavior`
+    Status  status; // -------------------- Current BT status
+    void**  state; // --------------------- Data specific to this `Behavior`
+    BT_Pckt (*init  )( void*, BT_Pckt ); // Init   function
+    BT_Pckt (*update)( void*, BT_Pckt ); // Update function
+    void*   parent; // -------------------- Container
+    uint    Nchld; // --------------------- Number of children directly below this node
+    void**  children; // ------------------ Children
+    uint    index; // --------------------- Currently-running child
+}Behavior;
+
+
+///// BT Runner ///////////////////////////////////////////////////////////
+
+typedef struct{
+    // Cheapest possible BT manager in C
+    Status    status; // -- Current root status
+    uint      done; // ---- Has the behavior completed?
+    ulong     ts; // ------ Current timestep/tick
+    double    period_ms; // Minimum milliseconds between ticks
+    double    lastTick; //- Epoch time of last tick, [ms]
+    Behavior* root; // ---- BT to run
+}BT_Runner;
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////// OGL_utils.c ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -105,16 +166,13 @@ ubyte rand_ubyte(); // ------------------- Return a pseudo-random ubyte
 
 
 ////////// SIMULATION & TIMING /////////////////////////////////////////////////////////////////////
-
 // Pause main thread: implemented using nanosleep(), continuing the sleep if it is interrupted by a signal
 int sleep_ms( long msec ); 
-
 // Attempt to maintain framerate no greater than target. (Period is rounded down to next ms)
 float heartbeat_FPS( float targetFPS );
-
+double get_epoch_milli( void ); // Get milliseconds since the epoch
 
 ////////// CAMERA //////////////////////////////////////////////////////////////////////////////////
-
 void look( const Camera3D camera ); // Set camera position, target, and orientation
 // Move the `camera` in a circular arc by `delTheta_deg` in the X-Y plane w/ `camera.lookPt` as the center
 void orbit_target_about_Z( Camera3D* camera, float delTheta_deg );
@@ -241,7 +299,45 @@ int CreateShaderProgCompute( const char* file ); // Create a comput shader
     
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////// behavior.c /////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+////////// BEHAVIOR TREES //////////////////////////////////////////////////////////////////////////
+
+// Default execution packets
+BT_Pckt invalid_packet( void* behav, BT_Pckt input );
+BT_Pckt running_packet( void* behav, BT_Pckt input );
+BT_Pckt success_packet( void* behav, BT_Pckt input );
+BT_Pckt failure_packet( void* behav, BT_Pckt input );
+
+// Create a Behavior that performs an action
+Behavior* make_action_leaf( char* name_, BT_Pckt (*initFunc)( void*, BT_Pckt ), BT_Pckt (*updateFunc)( void*, BT_Pckt ) );
+// Create a Behavior that executes a sequence of leaf actions
+Behavior* make_sequence_container( char* name_, uint N_chldrn ); 
+// Create a Behavior that executes a sequence of leaf actions
+Behavior* make_selector_container( char* name_, uint N_chldrn );
+
+void add_child( Behavior* parent, Behavior* child ); // Add `child` under `parent`
+
+BT_Pckt pass_packet( void* behav, BT_Pckt input ); // -- Return the input packet without modification
+BT_Pckt default_init( void* behav, BT_Pckt input ); // - Defualt init that Discards input && Always runs
+BT_Pckt always_succeed( void* behav, BT_Pckt input ); // Dummy update that Discards input && Always succeeds
+
+
+///// BT Methods //////////////////////////////////////////////////////////
+Behavior* get_BT_child_i( Behavior* parent, uint i ); // ----- Get the `i`th child of this `Behavior`
+BT_Pckt   tick_once( Behavior* behav, BT_Pckt rootPacket ); // Advance the BT by one timestep
+// Set behavior and all children to `INVALID` status, Set containers to initial child
+void reset_tree( Behavior* root ); 
+
+
+////////// BT RUNNER ///////////////////////////////////////////////////////////////////////////////
+
+BT_Runner* setup_BT_w_freq( Behavior* root_, double tickHz ); // Get a populated `BT_Runner` struct
+void /*-*/ reset_BT( BT_Runner* runner ); // ------------------- Reset the runner and associated BT
+BT_Pckt    run_BT_tick( BT_Runner* runner ); // ---------------- Check time elapsed and conditionally run the BT for one tick
+    
 
 #endif

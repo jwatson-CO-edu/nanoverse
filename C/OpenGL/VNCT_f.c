@@ -475,6 +475,25 @@ const float cubeC[] = { 1, 1, 1,   1, 1, 0,   1, 0, 0,      // v0-v1-v2 (front)
                         0, 0, 1,   0, 0, 0,   0, 1, 0,      // v4-v7-v6 (back)
                         0, 1, 0,   0, 1, 1,   0, 0, 1 };    // v6-v5-v4
 
+// texture array
+const float cubeT[] = { 0,0,   0,1,   1,1,      // v0-v1-v2 (front)
+                        1,1,   1,0,   0,0,      // v2-v3-v0
+
+                        0,0,   0,1,   1,1,      // v0-v1-v2 (front)
+                        1,1,   1,0,   0,0,
+
+                        0,0,   0,1,   1,1,      // v0-v1-v2 (front)
+                        1,1,   1,0,   0,0,
+
+                        0,0,   0,1,   1,1,      // v0-v1-v2 (front)
+                        1,1,   1,0,   0,0,
+
+                        0,0,   0,1,   1,1,      // v0-v1-v2 (front)
+                        1,1,   1,0,   0,0,
+
+                        0,0,   0,1,   1,1,      // v0-v1-v2 (front)
+                        1,1,   1,0,   0,0 };    // v6-v5-v4
+
 
 VNCT_f* colorspace_cube_VNC_f( void ){
     // Make a colorful cube from the static array data
@@ -525,6 +544,15 @@ VNCT_f* cube_VNC_f( float sideLen, const vec4f color ){
     VNCT_f* rtnVBO = VBO_from_TriNet_solid_color( cubNet, color );
     delete_net( cubNet );
     return rtnVBO;
+}
+
+VNCT_f* cube_VNT_f( void ){
+    // Make a textured cube from the static array data
+    printf( "About to allocate cube ...\n" );
+    VNCT_f* rtnVAO = make_VNCT_f( 12 );
+    printf( "About to populate cube ...\n" );
+    load_VNT_from_full_arrays( rtnVAO, cubeV, cubeN, cubeT );
+    return rtnVAO;
 }
 
 

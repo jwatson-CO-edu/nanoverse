@@ -1,60 +1,9 @@
-// Adapted from code by Song Ho Ahn (song.ahn@gmail.com)
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
-
-#include "geometry.h"
-#include "matrix4x4f.h"
-#include <time.h>
+#include "toolbox.h"
 
 
 
 ////////// BEHAVIOR TREES //////////////////////////////////////////////////////////////////////////
-#define _BT_STATE_SLOTS 16 // 2024-07-13: At this time, space for state is static
-
-///// BT Enums ////////////////////////////////////////////////////////////
-
-enum BT_Status{
-    // Behavior Status
-    INVALID, // BT should start here
-    RUNNING, // Started but not done
-    SUCCESS, // Completed without failure
-    FAILURE, // Criteria failed
-}; 
-typedef enum BT_Status Status;
-
-enum BT_Type{
-    // Behavior Node Type
-    LEAF, // --- Ignore children
-    SEQUENCE, // Run sequentially to first failure (Has memory!)
-    SELECTOR, // Run sequentially to first success
-}; 
-typedef enum BT_Type BT_Type;
-
-
-///// BT Structs //////////////////////////////////////////////////////////
-// YAGNI: PLEASE KEEP THIS AS LIGHT AS POSSIBLE
-
-
-typedef struct{
-    // Variable data passed between behaviors
-    Status  status;
-    ulong   tickNum;
-}BT_Pckt;
-
-
-typedef struct{
-    // Cheapest possible BT struct in C
-    BT_Type type; // ---------------------- How should this node run its children?
-    char*   name; // ---------------------- Display name of this `Behavior`
-    Status  status; // -------------------- Current BT status
-    void**  state; // --------------------- Data specific to this `Behavior`
-    BT_Pckt (*init  )( void*, BT_Pckt ); // Init   function
-    BT_Pckt (*update)( void*, BT_Pckt ); // Update function
-    void*   parent; // -------------------- Container
-    uint    Nchld; // --------------------- Number of children directly below this node
-    void**  children; // ------------------ Children
-    uint    index; // --------------------- Currently-running child
-}Behavior;
-
 
 // Default execution packets
 BT_Pckt invalid_packet( void* behav, BT_Pckt input ){  BT_Pckt res = {INVALID, input.tickNum};  return res;  }
@@ -252,35 +201,7 @@ void reset_tree( Behavior* root ){
 }
 
 
-////////// TIME HELPERS ////////////////////////////////////////////////////////////////////////////
-
-inline long get_epoch_nano( void ){
-    // Get nanoseconds since the epoch
-    // Author: Ciro Santilli, https://stackoverflow.com/a/36095407
-    struct timespec ts;
-    timespec_get( &ts, TIME_UTC );
-    return (long) ts.tv_sec * 1000000000L + ts.tv_nsec;
-}
-
-inline double get_epoch_milli( void ){
-    // Get milliseconds since the epoch
-    return get_epoch_nano() / ((double) 1e6);
-}
-
-
-
 ////////// BT RUNNER ///////////////////////////////////////////////////////////////////////////////
-
-typedef struct{
-    // Cheapest possible BT manager in C
-    Status    status; // -- Current root status
-    uint      done; // ---- Has the behavior completed?
-    ulong     ts; // ------ Current timestep/tick
-    double    period_ms; // Minimum milliseconds between ticks
-    double    lastTick; //- Epoch time of last tick, [ms]
-    Behavior* root; // ---- BT to run
-}BT_Runner;
-
 
 BT_Runner* setup_BT_w_freq( Behavior* root_, double tickHz ){
     // Get a populated `BT_Runner` struct
@@ -323,68 +244,4 @@ BT_Pckt run_BT_tick( BT_Runner* runner ){
 
     // Return status packet
     return rtnPkt;
-}
-
-
-////////// BEHAVIORS ///////////////////////////////////////////////////////////////////////////////
-
-BT_Pckt Countdown_Init( void* behav, BT_Pckt input ){
-    ((Behavior*) behav)->state[0] = (void*) input.tickNum;
-    printf( "`Countdown_Init`: Logged beginning tick %lu\n", input.tickNum );
-    return running_packet( behav, input );
-}
-
-BT_Pckt Countdown_10( void* behav, BT_Pckt input ){
-    // Return `SUCCESS` if 10 ticks have passed, otherwise returning `RUNNING`
-    BT_Pckt rtnPkt;
-    long    tickBgn = (ulong) ((Behavior*) behav)->state[0];
-    // rtnPkt.data    = NULL;
-    rtnPkt.tickNum = input.tickNum;
-    if( ((long) input.tickNum - tickBgn) < 10 ){  
-        rtnPkt.status = RUNNING;  
-        printf( "`Countdown_10`: RUNNING at tick %li of 10\n", ((long) input.tickNum - tickBgn) );
-    }else{  
-        rtnPkt.status = SUCCESS;  
-        printf( "Countdown COMPLETE!\n" );
-    }
-    return rtnPkt;
-}
-
-
-////////// PROGRAM STRUCTS /////////////////////////////////////////////////////////////////////////
-
-
-
-
-
-////////// PROGRAM STATE ///////////////////////////////////////////////////////////////////////////
-
-
-
-
-////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
-
-
-int main( int argc, char* argv[] ){
-    init_rand();
-
-    double freq_hz   = 60.0;
-    long   period_ms = (long) (1.25/freq_hz * 1000.0);
-    
-    Behavior* seq = make_sequence_container( "Test Sequence", 3 );
-    add_child( seq, make_action_leaf( "Counter 1", Countdown_Init, Countdown_10 ) );
-    add_child( seq, make_action_leaf( "Counter 2", Countdown_Init, Countdown_10 ) );
-    add_child( seq, make_action_leaf( "Counter 3", Countdown_Init, Countdown_10 ) );
-
-    BT_Runner* runner = setup_BT_w_freq( seq, freq_hz );
-
-    while( !(runner->done) ){
-        sleep_ms( period_ms );
-        run_BT_tick( runner );
-    }
-
-    printf( "BT COMPLETED with status %u\n\n", runner->status );
-    
-    //  Return code
-    return 0;
 }

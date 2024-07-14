@@ -92,13 +92,6 @@ void set_texture( VNCT_f* vao, const char* path ){
 }
 
 
-// VNCT_f* get_part_i( VNCT_f* vao, uint i ){
-//     // Fetch sub-VAO, NOTE: This is to wrap the need to cast the null pointer
-//     if( i < vao->Nprt )  return (VNCT_f*) vao->parts[i];
-//     else /*----------*/  return NULL;
-// }
-
-
 void delete_VNCT_f( VNCT_f* vao ){
     // Erase the VAO (and parts) at heap and the GPU
     if((vao->bufID) != 0){  glDeleteBuffersARB(1, &(vao->bufID));  }
@@ -391,7 +384,7 @@ const float cubeC[] = { 1, 1, 1,   1, 1, 0,   1, 0, 0,      // v0-v1-v2 (front)
                         0, 0, 1,   0, 0, 0,   0, 1, 0,      // v4-v7-v6 (back)
                         0, 1, 0,   0, 1, 1,   0, 0, 1 };    // v6-v5-v4
 
-// color array
+// texture array
 const float cubeT[] = { 0,0,   0,1,   1,1,      // v0-v1-v2 (front)
                         1,1,   1,0,   0,0,      // v2-v3-v0
 

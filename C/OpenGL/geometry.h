@@ -147,6 +147,7 @@ void    delete_VNCT_f( VNCT_f* vbo ); // Erase the VBO (and parts) at heap and t
 void    load_VNC_from_full_arrays( VNCT_f* vbo, /*<<*/ const float* Vsto, const float* Nsto, const float* Csto );
 void    load_VNT_from_full_arrays( VNCT_f* vbo, /*<<*/ const float* Vsto, const float* Nsto, const float* Tsto );
 void    allocate_and_load_VBO_VNC_at_GPU( VNCT_f* vbo ); // Fetch & set buffer ID, and make space on the GPU for the VBO
+void    allocate_and_load_VBO_VNT_at_GPU( VNCT_f* vbo ); // Fetch & set buffer ID, and make space on the GPU for the VBO
 // Compose relative, ownship, and scale transformations into `totPose`, relative to parent frame
 void    update_total_pose( VNCT_f* vbo );
 // Get the total distal pose at `i` and store it in `mat`    
@@ -173,6 +174,7 @@ VNCT_f* VBO_from_TriNet_solid_color_transformed( TriNet* net, const vec4f color,
 // Construct a cube VBO with flat-shaded normals and one solid color
 VNCT_f* cube_VNC_f( float sideLen, const vec4f color );
 VNCT_f* colorspace_cube_VNC_f( void ); // Make a colorful cube from the static array data
+VNCT_f* cube_VNT_f( void ); // Make a textured cube from the static array data
 
 ///// Triangular Prism ////////////////////////////////////////////////////
 // Construct a triangular prism VBO with flat-shaded normals and one solid color, with all vectors transformed
