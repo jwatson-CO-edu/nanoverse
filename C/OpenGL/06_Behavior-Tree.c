@@ -63,6 +63,7 @@ typedef struct{
 BT_Pckt invalid_packet( void* behav, BT_Pckt input ){  BT_Pckt res = {INVALID, input.tickNum};  return res;  }
 BT_Pckt running_packet( void* behav, BT_Pckt input ){  BT_Pckt res = {RUNNING, input.tickNum};  return res;  }
 BT_Pckt success_packet( void* behav, BT_Pckt input ){  BT_Pckt res = {SUCCESS, input.tickNum};  return res;  }
+BT_Pckt failure_packet( void* behav, BT_Pckt input ){  BT_Pckt res = {FAILURE, input.tickNum};  return res;  }
 
 
 Behavior* make_action_leaf( char* name_, 
@@ -89,8 +90,8 @@ Behavior* make_sequence_container( char* name_, uint N_chldrn ){
     rtnBhv->name     = name_; // --------------------------------- Display name of this `Behavior`
     rtnBhv->status   = INVALID; // ------------------------------- Current BT status
     rtnBhv->state    = NULL; // ---------------------------------- Current BT state
-    rtnBhv->init     = NULL; // ------------------------------ Init   function
-    rtnBhv->update   = NULL; // ---------------------------- Update function
+    rtnBhv->init     = NULL; // ---------------------------------- Init   function
+    rtnBhv->update   = NULL; // ---------------------------------- Update function
     rtnBhv->parent   = NULL; // ---------------------------------- Container 
     rtnBhv->Nchld    = 0; // ------------------------------------- Number of children directly below this node
     rtnBhv->children = malloc( N_chldrn * sizeof( Behavior ) ); // Children
@@ -105,8 +106,8 @@ Behavior* make_selector_container( char* name_, uint N_chldrn ){
     rtnBhv->name     = name_; // ---------------------------------- Display name of this `Behavior`
     rtnBhv->status   = INVALID; // -------------------------------- Current BT status
     rtnBhv->state    = NULL; // ----------------------------------- Current BT state
-    rtnBhv->init     = NULL; // ------------------------------- Init   function
-    rtnBhv->update   = NULL; // ----------------------------- Update function
+    rtnBhv->init     = NULL; // ----------------------------------- Init   function
+    rtnBhv->update   = NULL; // ----------------------------------- Update function
     rtnBhv->parent   = NULL; // ----------------------------------- Container
     rtnBhv->Nchld    = 0; // -------------------------------------- Number of children directly below this node
     rtnBhv->children = malloc( N_chldrn * sizeof( Behavior* ) ); // Children
@@ -144,6 +145,8 @@ BT_Pckt tick_once( Behavior* behav, BT_Pckt rootPacket ){
     Behavior* child_i = NULL; // ----------- Current container child
     BT_Pckt   res_i; // Running execution result
 
+    printf( "About to run Node %s at address %p ...\n", behav->name, behav );
+
     switch( behav->status ){
 
         //////////////////////////////////////////
@@ -176,24 +179,33 @@ BT_Pckt tick_once( Behavior* behav, BT_Pckt rootPacket ){
                 case LEAF: // Update was already run for leaf, return result
                     res_i /*---*/ = behav->update( behav, rootPacket );
                     behav->status = res_i.status;
+                    break;
                 /////////
                 case SEQUENCE:
-                    printf( "SEQUENCE: Get child at index %u\n", behav->index );
+                    printf( "SEQUENCE %s: Get child at index %u\n", behav->name, behav->index );
                     child_i = get_BT_child_i( behav, behav->index );
-                    res_i   = tick_once( child_i, rootPacket );
-                    switch( child_i->status ){
-                        case SUCCESS:
-                            ++(behav->index);
-                            printf( "%u >= %u ? %i \n", behav->index, behav->Nchld , behav->index >= behav->Nchld  );
-                            if( behav->index >= behav->Nchld ){  behav->status = SUCCESS;  }
-                            break;
-                        case FAILURE:
-                            behav->status = FAILURE;
-                            break;
-                        default:
-                            behav->status = res_i.status;
-                            break;
+                    if( child_i ){
+                        tick_once( child_i, rootPacket );
+                        switch( child_i->status ){
+                            case SUCCESS:
+                                ++(behav->index);
+                                printf( "%u >= %u ? %i \n", behav->index, behav->Nchld , behav->index >= behav->Nchld  );
+                                if( behav->index >= behav->Nchld ){  behav->status = SUCCESS;  }
+                                break;
+                            case FAILURE:
+                                behav->status = FAILURE;
+                                break;
+                            default:
+                                behav->status = res_i.status;
+                                break;
+                        }
+                        res_i.status  = behav->status;
+                        res_i.tickNum = rootPacket.tickNum;
+                    }else{
+                        printf( "ERROR: NO child of %s at index %u!\n", behav->name, behav->index );
+                        res_i = failure_packet( behav, rootPacket );
                     }
+                    break;
                 /////////
                 case SELECTOR:
                     printf( "SEQUENCE: Get child at index %u\n", behav->index );
@@ -212,6 +224,7 @@ BT_Pckt tick_once( Behavior* behav, BT_Pckt rootPacket ){
                             behav->status = res_i.status;
                             break;
                     }
+                    break;
                 /////////
                 default:
                     printf( "UNHANDLED BEHAVIOR TYPE!: %i", behav->type );
@@ -308,10 +321,9 @@ BT_Pckt run_BT_tick( BT_Runner* runner ){
     BT_Pckt rtnPkt = {runner->status, runner->ts}; // --- Prep packet
     double  elp    = get_epoch_milli() - (runner->lastTick); // Calc elapsed time
 
-    printf( "`run_BT_tick`: About to execute tick %lu ...\n", (runner->ts)+1 );
-
     // If BT period has elapsed since the last call, then execute one tick
     if( (!(runner->done)) && (elp >= (runner->period_ms)) ){
+        printf( "`run_BT_tick`: About to execute tick %lu ...\n", (runner->ts)+1 );
         rtnPkt = tick_once( runner->root, rtnPkt );
         ++(runner->ts);
         runner->status   = rtnPkt.status;
@@ -328,6 +340,7 @@ BT_Pckt run_BT_tick( BT_Runner* runner ){
 
 BT_Pckt Countdown_Init( void* behav, BT_Pckt input ){
     ((Behavior*) behav)->state[0] = (void*) input.tickNum;
+    printf( "`Countdown_Init`: Logged beginning tick %lu\n", input.tickNum );
     return running_packet( behav, input );
 }
 
@@ -369,15 +382,15 @@ int main( int argc, char* argv[] ){
     long   period_ms = (long) (1.25/freq_hz * 1000.0);
     
     Behavior* seq = make_sequence_container( "Test Sequence", 3 );
-    add_child( seq, make_action_leaf( "Counter 1", default_init, Countdown_10 ) );
-    add_child( seq, make_action_leaf( "Counter 2", default_init, Countdown_10 ) );
-    add_child( seq, make_action_leaf( "Counter 3", default_init, Countdown_10 ) );
+    add_child( seq, make_action_leaf( "Counter 1", Countdown_Init, Countdown_10 ) );
+    add_child( seq, make_action_leaf( "Counter 2", Countdown_Init, Countdown_10 ) );
+    add_child( seq, make_action_leaf( "Counter 3", Countdown_Init, Countdown_10 ) );
 
     BT_Runner* runner = setup_BT_w_freq( seq, freq_hz );
 
     while( !(runner->done) ){
-        run_BT_tick( runner );
         sleep_ms( period_ms );
+        run_BT_tick( runner );
     }
 
     printf( "BT COMPLETED with status %u\n\n", runner->status );
