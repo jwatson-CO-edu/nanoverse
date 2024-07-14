@@ -140,7 +140,7 @@ int main( int argc, char* argv[] ){
     printf( "About to init subpart ...\n" );
     sub0 = cube_VNT_f();
     set_texture( sub0, "resources/crate.bmp" );
-    allocate_and_load_VBO_VNC_at_GPU( sub0 );
+    allocate_and_load_VBO_VNT_at_GPU( sub0 );
     sub0->scale   = make_vec4f( 0.25f, 0.25f, 0.25f );
     translate_mtx44f( sub0->relPose, 1.0f, 1.0f, 1.0f );
     cube->parts[0] = (void*) sub0;
