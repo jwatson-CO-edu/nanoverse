@@ -373,7 +373,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     - Gameplay Concepts: 
         * Player manages food, fuel, and people in a journey to the "American" West
             - Trade, fight, bribe, and survive varied environments and factions
-            - Begin by choosing crew, supplies, and WAGONS (e.g. Oregon Trail)
+            - Begin by choosing faction (or Independent), crew, supplies, and WAGONS (e.g. Oregon Trail)
             - Goal: Reach the other side of the Great Divide with enough people and resources to join or start a settlement
         * WAGONS
             - A train of modular cars

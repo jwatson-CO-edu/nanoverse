@@ -72,7 +72,8 @@ typedef struct {
 
 
 ////////// BEHAVIOR STRUCTS ////////////////////////////////////////////////////////////////////////
-#define _BT_STATE_SLOTS 16 // 2024-07-13: At this time, space for state is static
+#define _BT_REF_SLOTS    16 // 2024-07-13: At this time, space for state is static
+#define _BT_STATE_SLOTS 128 // 2024-07-13: At this time, space for state is static
 
 ///// BT Enums ////////////////////////////////////////////////////////////
 
@@ -108,7 +109,8 @@ typedef struct{
     BT_Type type; // ---------------------- How should this node run its children?
     char*   name; // ---------------------- Display name of this `Behavior`
     Status  status; // -------------------- Current BT status
-    void**  state; // --------------------- Data specific to this `Behavior`
+    void**  refs; // ---------------------- Structures needed by this `Behavior`
+    float*  state; // --------------------- Data specific to this `Behavior`
     BT_Pckt (*init  )( void*, BT_Pckt ); // Init   function
     BT_Pckt (*update)( void*, BT_Pckt ); // Update function
     void*   parent; // -------------------- Container

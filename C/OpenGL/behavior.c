@@ -19,7 +19,8 @@ Behavior* make_action_leaf( char* name_,
     rtnBhv->type     = LEAF; // -------------------------------------- How should this node run its children?
     rtnBhv->name     = name_; // ------------------------------------- Display name of this `Behavior`
     rtnBhv->status   = INVALID; // ----------------------------------- Current BT status
-    rtnBhv->state    = malloc( _BT_STATE_SLOTS * sizeof( void* ) ); // Current BT state
+    rtnBhv->refs     = malloc( _BT_REF_SLOTS * sizeof( void* ) ); // Current BT state
+    rtnBhv->state    = (float*) malloc( _BT_STATE_SLOTS * sizeof( float ) ); // Current BT state
     rtnBhv->init     = initFunc; // ---------------------------------- Init   function
     rtnBhv->update   = updateFunc; // -------------------------------- Update function
     rtnBhv->parent   = NULL; // -------------------------------------- Container
@@ -35,6 +36,7 @@ Behavior* make_sequence_container( char* name_, uint N_chldrn ){
     rtnBhv->type     = SEQUENCE; // ------------------------------ How should this node run its children?
     rtnBhv->name     = name_; // --------------------------------- Display name of this `Behavior`
     rtnBhv->status   = INVALID; // ------------------------------- Current BT status
+    rtnBhv->refs     = NULL; // ---------------------------------- Current BT state
     rtnBhv->state    = NULL; // ---------------------------------- Current BT state
     rtnBhv->init     = NULL; // ---------------------------------- Init   function
     rtnBhv->update   = NULL; // ---------------------------------- Update function
@@ -51,6 +53,7 @@ Behavior* make_selector_container( char* name_, uint N_chldrn ){
     rtnBhv->type     = SELECTOR; // ------------------------------- How should this node run its children?
     rtnBhv->name     = name_; // ---------------------------------- Display name of this `Behavior`
     rtnBhv->status   = INVALID; // -------------------------------- Current BT status
+    rtnBhv->refs     = NULL; // ----------------------------------- Current BT state
     rtnBhv->state    = NULL; // ----------------------------------- Current BT state
     rtnBhv->init     = NULL; // ----------------------------------- Init   function
     rtnBhv->update   = NULL; // ----------------------------------- Update function
