@@ -136,7 +136,7 @@ TriNet* create_plane_XY_mesh_only( float xLen, float yLen, uint xDiv, uint yDiv 
 /////////////// VNCT_f.c ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
     
-////////// VERTEX ARRAY OBJECTS (NESTED) ///////////////////////////////////////////////////////////
+////////// VERTEX BUFFER OBJECTS (NESTED) //////////////////////////////////////////////////////////
 
 VNCT_f* make_VNCT_f( uint Ntri_ ); // Allocate the VBO at heap
 void    allocate_N_VBO_VNCT_parts( VNCT_f* vbo, uint N ); // Make space for `N` sub-part pointers
@@ -155,6 +155,7 @@ void    calc_total_pose_part_i( float* mat, /*<<*/ VNCT_f* vbo, uint i );
 void    draw_VNC_f( VNCT_f* vbo ); // Draw VBO and all subparts, Vertex Colors
 void    draw_VNT_f( VNCT_f* vbo ); // Draw VBO and all subparts, Textured
 vec4f   get_posn( VNCT_f* vbo ); // Get the position components of the homogeneous coordinates as a vector
+vec4f   get_rel_posn( VNCT_f* vbo ); // Get the relative position components of the homogeneous coordinates as a vector
 void    set_posn( VNCT_f* vbo, const vec4f posn ); // Set the position components of the homogeneous coordinates
 // Increment the position components of the homogeneous coordinates by the associated `delta` components
 void    translate( VNCT_f* vbo, const vec4f delta );

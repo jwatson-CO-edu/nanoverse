@@ -252,6 +252,12 @@ vec4f get_posn( VNCT_f* vbo ){
 }
 
 
+vec4f get_rel_posn( VNCT_f* vbo ){
+    // Get the relative position components of the homogeneous coordinates as a vector
+    return make_vec4f( vbo->relPose[12], vbo->relPose[13], vbo->relPose[14] );
+}
+
+
 void set_posn( VNCT_f* vbo, const vec4f posn ){
     // Set the position components of the homogeneous coordinates
     vbo->ownPose[12] = posn.x;

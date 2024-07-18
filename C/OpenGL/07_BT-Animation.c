@@ -26,6 +26,29 @@ Camera3D cam  = { {4.0f, 2.0f, 2.0f, 1.0f}, {0.0f, 0.0f, 0.0f, 1.0f}, {0.0f, 0.0
 
 
 
+////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
+
+void fetch_pose( float mat16[], float* dataStore ){
+    // Copy the 4x4 matrix from the allocated memory block beginning at `dataStore`
+    float* fltPtr = dataStore;
+    for( ubyte i = 0; i < 16; ++i ){
+        mat16[i] = *dataStore;
+        ++dataStore;
+    }
+}
+
+
+void store_pose( float* dataStore, float mat16[] ){
+    // Store the 4x4 matrix in the allocated memory block beginning at `dataStore`
+    float* fltPtr = dataStore;
+    for( ubyte i = 0; i < 16; ++i ){
+        *dataStore = mat16[i];
+        ++dataStore;
+    }
+}
+
+
+
 ////////// AGENT LOGIC /////////////////////////////////////////////////////////////////////////////
 
 ///// VBO Keyframe Animation //////////////////////////////////////////////
@@ -37,22 +60,14 @@ state [16-31]: Update transform --- (Set by init    function)
 state [32]   : Desired linear speed (Set by factory function)
 */
 
-void fetch_pose( float mat16[], float* dataStore ){
-    // Copy the 4x4 matrix from the allocated memory block beginning at `dataStore`
-    float* fltPtr = dataStore;
-    for( ubyte i = 0; i < 16; ++i ){
-        mat16[i] = *dataStore;
-        ++dataStore;
-    }
-}
-
 BT_Pckt MoveVNCT_init( void* behav, BT_Pckt input ){
     // Compute the update transform for this keyframe animation
     VNCT_f* model = (VNCT_f*) (((Behavior*) behav)->refs[0]);
     float   target[16]; // - Where we are going
     float   xfrmStep[16]; // How to get there
+    vec4f   bgnPosn, endPosn;
     fetch_pose( target, (((Behavior*) behav)->state) );
-    vec4f bgnPosn, endPosn;
+    
 
     // FIXME, START HERE: COMPUTE THE PER-TICK UPDATE TRANSFORM
 
