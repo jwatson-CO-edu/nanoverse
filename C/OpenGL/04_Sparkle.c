@@ -210,7 +210,9 @@ void display(){
 
     if( fwActive ){  
         // printf( "About to draw firework ...\n" );
+        glUseProgram( frwk->sprkShdr );
         draw_VNC_f( frwk->shell );
+        glUseProgram( 0 );
     }
         
     glDisable( GL_LIGHTING );

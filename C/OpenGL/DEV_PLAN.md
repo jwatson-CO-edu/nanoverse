@@ -53,7 +53,9 @@
     - `[ ]` Prep textures: {Select, Squarify, Downsample}
 
 * `[>]` Behavior Trees Test ( _DANGER!_ )
-    - `[>]` _Cheap_ Behavior Treeps ( _CAREFUL!_ )
+    - `[Y]` _Cheap_ Behavior Treeps ( _CAREFUL!_ ): 2024-07-1X, Simplest BT!
+    - `[>]` Test keyframe animation
+    - `[ ]` Test keyframe animation + Geometry transformation
 
 * `[P]` Chopperhedron Animation Scripts
     - `[ ]` Simplest keypoint animation via BT

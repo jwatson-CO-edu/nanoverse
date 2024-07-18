@@ -11,14 +11,17 @@ Resources:
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
 #version 330 // "#version 450" changes many things about shaders!  Book uses 330!
-
-// Geometry Shader I/O
-layout( points ) in;
-layout( triangle_strip, max_vertices = 3 ) out;
+#extension GL_ARB_shader_storage_buffer_object : require
 
 // Particle Buffer
 layout( binding = 4 ) buffer posbuf { vec4 posnArr[]; };
 layout( binding = 5 ) buffer colbuf { vec4 colrArr[]; };
+
+// Geometry Shader I/O
+layout( triangles ) in;
+layout( triangle_strip, max_vertices = 3 ) out;
+
+// Particle Buffer
 uniform int /*------------*/ Nprt;
 
 // Particle Settings
@@ -87,7 +90,7 @@ void main(){
     vec4  posn_i;
     vec4  colr_i;
     float w0, w1, w2, tot;
-    int  live_i;
+    int   live_i = 0;
 
     // For each possible particle
     for( int i = 0; i < Nprt; ++i ){
@@ -104,7 +107,7 @@ void main(){
             live_i = 1;
 
             // Drop and Decay the particle
-            colr_i   *= _DECAY_RATE
+            colr_i   *= _DECAY_RATE;
             posn_i.z += _DROP_RATE; // FIXME: CHANGE FROM RISE TO DROP AFTER SHADER TEST
             
             if( randf() < _DEATH_PROB ){
@@ -115,7 +118,7 @@ void main(){
         }
 
         // If the particle is dead, roll to resurrect
-        if( (!live_i) && (randf() > _DEATH_PROB) ){
+        if( (live_i > 0) && (randf() > _DEATH_PROB) ){
             w0  = randf();
             w1  = randf();
             w2  = randf();
