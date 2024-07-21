@@ -54,20 +54,31 @@ void store_pose( float* dataStore, float mat16[] ){
 ///// VBO Keyframe Animation //////////////////////////////////////////////
 
 /* /// MoveVNCT Data Layout ///
-refs  [0]    : VBO Model ---------- (Set by factory function)
-state [ 0-15]: Target pose -------- (Set by factory function)
-state [16-31]: Update transform --- (Set by init    function)
-state [32]   : Desired linear speed (Set by factory function)
+refs  [0]    : VBO Model ------------------------------------- (Set by factory function)
+state [ 0-15]: Target pose ----------------------------------- (Set by factory function)
+state [16-31]: Update transform ------------------------------ (Set by init    function)
+state [32]   : Desired linear speed -------------------------- (Set by factory function)
+state [33]   : Flag for relative move, <= 0.0 is absolute move (Set by factory function)
 */
 
 BT_Pckt MoveVNCT_init( void* behav, BT_Pckt input ){
     // Compute the update transform for this keyframe animation
     VNCT_f* model = (VNCT_f*) (((Behavior*) behav)->refs[0]);
-    float   target[16]; // - Where we are going
+    float   target[16]; // - Where we are going?
+    float   bgnXfrm[16]; //- Where did we start?
     float   xfrmStep[16]; // How to get there
     vec4f   bgnPosn, endPosn;
+    ubyte   relMove = (((Behavior*) behav)->state[33] > 0.0);
     fetch_pose( target, (((Behavior*) behav)->state) );
     
+    if( relMove ){
+        copy_mtx44f( bgnXfrm, model->ownPose );
+        // FIXME: RELATIVE CALCS
+    }else{
+        update_total_pose( model );
+        copy_mtx44f( bgnXfrm, model->totPose );
+        // FIXME: ABSOLUTE CALCS
+    }
 
     // FIXME, START HERE: COMPUTE THE PER-TICK UPDATE TRANSFORM
 

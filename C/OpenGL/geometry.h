@@ -18,10 +18,10 @@ typedef struct{
 }TriNet;
 
 
-///// Vertex Array Object (VBO, Nested) ///////////////////////////////////
+///// Vertex Buffer Object (VBO, Nested) ///////////////////////////////////
 
 typedef struct{
-    // Vertex Array Object meant to be drawn rapidly and simply
+    // Vertex Buffer Object meant to be drawn rapidly and simply
 
     /// Geo Info ///
     uint   Ntri; //- Number of triangles

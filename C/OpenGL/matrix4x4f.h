@@ -6,7 +6,7 @@
 void   mat4vulkan(int k);
 void   identity_mtx44f( float mat[] );
 float* make_identity_mtx44f( void );
-void   copy_mtx44f( float mat[], const float m[] );
+void   copy_mtx44f( float mat[], /*<<*/ const float m[] );
 void   mult_mtx44f( float mat[], float m[] );
 void   Rx_mtx44f( float mat[], /*<<*/ float theta_rad ); // Load `mat` from R_x( `theta_rad` )
 void   Ry_mtx44f( float mat[], /*<<*/ float theta_rad ); // Load `mat` from R_y( `theta_rad` ) 
