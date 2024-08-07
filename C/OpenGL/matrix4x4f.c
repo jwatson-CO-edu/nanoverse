@@ -22,7 +22,8 @@
 static int vulkan=0;
 
 //  Identity matrix
-static const float I[] = {1,0,0,0 , 0,1,0,0 , 0,0,1,0 , 0,0,0,1};
+static const float I_44f[] = {1,0,0,0 , 0,1,0,0 , 0,0,1,0 , 0,0,0,1};
+
 
 
 //
@@ -35,23 +36,21 @@ void mat4vulkan( int k ){  vulkan = k;  }
 //  Allocate and return Identity 4x4 matrix
 //
 float* make_identity_mtx44f( void ){
-    float* rtnMatx = (float*) malloc( sizeof( I ) );
+    float* rtnMatx = (float*) malloc( sizeof( I_44f ) );
     identity_mtx44f( rtnMatx );
     return rtnMatx;
 }
 
 
-//
-//  Identity 4x4 matrix
-//
-void identity_mtx44f( float mat[] ){  memcpy( mat, I, sizeof(I) );  }
+void identity_mtx44f( float mat[] ){  memcpy( mat, I_44f, sizeof( I_44f ) );  } // Identity 4x4 matrix
+
 
 
 //
 //  Copy 4x4 matrix
 //
 void copy_mtx44f( float mat[], const float m[] ){
-    memcpy( mat, m, sizeof(I) );
+    memcpy( mat, m, sizeof(I_44f) );
 }
 
 

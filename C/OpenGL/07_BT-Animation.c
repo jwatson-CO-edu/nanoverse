@@ -48,6 +48,75 @@ void store_pose( float* dataStore, float mat16[] ){
 }
 
 
+static const float I_33f[] = {1,0,0 , 0,1,0 , 0,0,1};
+
+
+void get_rot_matx_from_homog( float rot33f[], float mat16f[] ){
+    // Obtain the rotation matrix from the homogeneous transform
+    rot33f[0] = mat16f[0];  rot33f[3] = mat16f[4];  rot33f[6] = mat16f[ 8];  
+    rot33f[1] = mat16f[1];  rot33f[4] = mat16f[5];  rot33f[7] = mat16f[ 9];  
+    rot33f[2] = mat16f[2];  rot33f[5] = mat16f[6];  rot33f[8] = mat16f[10];  
+}
+
+
+void transpose_mtx33f( float mat9f[] ){
+    // Transpose the 3x3 matrix
+    float res[9];
+    res[0] = mat9f[0];  res[3] = mat9f[1];  res[6] = mat9f[2];  
+    res[1] = mat9f[3];  res[4] = mat9f[4];  res[7] = mat9f[5];  
+    res[2] = mat9f[6];  res[5] = mat9f[7];  res[8] = mat9f[8]; 
+    memcpy( mat9f, res, sizeof( res ) );
+}
+
+void mult_mtx33f( float mat[], float m[] ){
+    // Right multiply 3x3 matrix
+    float res[9];
+    for( int i = 0; i < 3; i++ )
+        for( int j = 0; j < 3; j++ )
+            res[ 3*i+j ] = mat[j]*m[3*i] + mat[3+j]*m[3*i+1] + mat[6+j]*m[3*i+2];
+    //  Copy matrix back
+    memcpy( mat, res, sizeof( res ) );
+}
+
+
+void sub_mtx33f( float mat[], float m[] ){
+    // Subtract: `mat` - `m`
+    for( int i = 0; i < 9; i++ ){  mat[i] -= m[i];  }
+}
+
+
+float norm_mtx33f( float mat[] ){
+    // Return the sum of all elements
+    float tot = 0.0f;
+    for( int i = 0; i < 9; i++ ){  tot += mat[i];  }
+    return tot;
+}
+
+
+void identity_mtx33f( float mat[] ){  memcpy( mat, I_33f, sizeof( I_33f ) );  } // Identity 3x3 matrix
+
+
+void copy_mtx33f( float mat[], const float m[] ){
+    // Copy 3x3 matrix
+    memcpy( mat, m, sizeof( I_33f ) );
+}
+
+
+ubyte p_rotation_mtrx( float R[] ){
+    // Checks if a matrix is a valid rotation matrix.
+    float Rt[9];
+    float df;
+    copy_mtx33f( Rt, R );
+    transpose_mtx33f( Rt );
+    mult_mtx33f( Rt, R );
+    sub_mtx33f( Rt, I_33f );
+    df = norm_mtx33f( Rt );
+    if( df < 1e-5 )  return 1;
+    else /*------*/  return 0;
+}
+    
+
+
 
 ////////// AGENT LOGIC /////////////////////////////////////////////////////////////////////////////
 
