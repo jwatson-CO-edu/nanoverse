@@ -51,11 +51,11 @@ void store_pose( float* dataStore, float mat16[] ){
 static const float I_33f[] = {1,0,0 , 0,1,0 , 0,0,1};
 
 
-void get_rot_matx_from_homog( float rot33f[], float mat16f[] ){
+void get_rot_matx_from_homog( float rot9f[], float mat16f[] ){
     // Obtain the rotation matrix from the homogeneous transform
-    rot33f[0] = mat16f[0];  rot33f[3] = mat16f[4];  rot33f[6] = mat16f[ 8];  
-    rot33f[1] = mat16f[1];  rot33f[4] = mat16f[5];  rot33f[7] = mat16f[ 9];  
-    rot33f[2] = mat16f[2];  rot33f[5] = mat16f[6];  rot33f[8] = mat16f[10];  
+    rot9f[0] = mat16f[0];  rot9f[3] = mat16f[4];  rot9f[6] = mat16f[ 8];  
+    rot9f[1] = mat16f[1];  rot9f[4] = mat16f[5];  rot9f[7] = mat16f[ 9];  
+    rot9f[2] = mat16f[2];  rot9f[5] = mat16f[6];  rot9f[8] = mat16f[10];  
 }
 
 
@@ -103,7 +103,7 @@ void copy_mtx33f( float mat[], const float m[] ){
 
 
 ubyte p_rotation_mtrx( float R[] ){
-    // Checks if a matrix is a valid rotation matrix.
+    // Checks if a 3x3 matrix is a valid rotation matrix.
     float Rt[9];
     float df;
     copy_mtx33f( Rt, R );
@@ -116,6 +116,30 @@ ubyte p_rotation_mtrx( float R[] ){
 }
     
 
+ubyte p_homog_rotation_OK( float mat16f[] ){
+    // Checks if a transform has a valid rotation matrix.
+    float rot[9];
+    get_rot_matx_from_homog( rot, mat16f );
+    return p_rotation_mtrx( rot );
+}
+
+// PROBABLY NOT GOING TO USE THIS
+def repair_pose( float dodgyHomogPose[], float* errVal ):
+    // Attempt to construct a pose that passes the test
+    
+    bgnPose = np.array( dodgyHomogPose )
+    rtnPose = bgnPose.copy()
+    xBasis  = vec_unit( bgnPose[0:3,0] )
+    yBasis  = vec_unit( bgnPose[0:3,1] )
+    zBasis  = np.cross( xBasis, yBasis )
+    yBasis  = np.cross( zBasis, xBasis )
+    rtnPose[0:3,0] = xBasis
+    rtnPose[0:3,1] = yBasis
+    rtnPose[0:3,2] = zBasis
+    if getErr:
+        return rtnPose, np.linalg.norm( rtnPose - bgnPose )
+    else:
+        return rtnPose
 
 
 ////////// AGENT LOGIC /////////////////////////////////////////////////////////////////////////////
