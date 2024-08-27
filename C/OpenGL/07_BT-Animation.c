@@ -123,23 +123,116 @@ ubyte p_homog_rotation_OK( float mat16f[] ){
     return p_rotation_mtrx( rot );
 }
 
-// PROBABLY NOT GOING TO USE THIS
-def repair_pose( float dodgyHomogPose[], float* errVal ):
-    // Attempt to construct a pose that passes the test
+void pose_mtrx_to_vec( float vec6f[], float mat16f[] ){
+    float theta, rv1, rv2, rv3, xx, yy, zz, xy, xz, yz, x, y, z, r11, r12, r13, r21, r22, r23, r31, r32, r33;
+    if( p_homog_rotation_OK( mat16f ) ){
+
+        // ##### Position: The Easy Part ################
+        x = mat16f[3*4 + 0];
+        y = mat16f[3*4 + 1];
+        z = mat16f[3*4 + 2];
+
+        // ##### Orientation: The Tricky Part ################
+        r11 = mat16f[0 + 0*4];
+        r12 = mat16f[0 + 1*4];
+        r13 = mat16f[0 + 2*4];
+        r21 = mat16f[1 + 0*4];
+        r22 = mat16f[1 + 1*4];
+        r23 = mat16f[1 + 2*4];
+        r31 = mat16f[2 + 0*4];
+        r32 = mat16f[2 + 1*4];
+        r33 = mat16f[2 + 2*4];
+
+        // NOTE: THIS IS TO PREVENT FLIPPING FOR HAND-CODED AXIS-ALSIGNED POSES, WHICH SEEMS TO BE COMMON
+        // NOTE: STOP REMOVING THIS PART, **I WILL FIND OUT**
+        // https://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToAngle/
+        float epsilon  = 1e-4; // margin to allow for rounding errors
+        float epsilon2 = 0.1; // margin to distinguish between 0 and 180 degrees
+
+        if((fabsf(r12-r21) < epsilon) && (fabsf(r13-r31) < epsilon) && (fabsf(r23-r32)< epsilon)){
+            // Singularity found, First check for identity matrix which must have +1 for all terms, in leading diagonal and zero in other terms
+            if((fabsf(r12+r21) < epsilon2) && (fabsf(r13+r31) < epsilon2) && (fabsf(r23+r32) < epsilon2) && (fabsf(r11+r22+r33-3.0) < epsilon2)):
+        }
+
+    }else{
+        for( ubyte i = 0; i < 6; ++i ){  vec6f[i] = 0.0f;  }
+    }
+}
     
-    bgnPose = np.array( dodgyHomogPose )
-    rtnPose = bgnPose.copy()
-    xBasis  = vec_unit( bgnPose[0:3,0] )
-    yBasis  = vec_unit( bgnPose[0:3,1] )
-    zBasis  = np.cross( xBasis, yBasis )
-    yBasis  = np.cross( zBasis, xBasis )
-    rtnPose[0:3,0] = xBasis
-    rtnPose[0:3,1] = yBasis
-    rtnPose[0:3,2] = zBasis
-    if getErr:
-        return rtnPose, np.linalg.norm( rtnPose - bgnPose )
+    
+    
+
+    
+
+    
+
+    
+        
+        
+			# this singularity is identity matrix so angle = 0
+            theta = 0.0
+            rv1   = 0.0
+            rv2   = 0.0
+            rv3   = 0.0
+        else:
+            theta = np.pi
+            xx = (r11 + 1.0) / 2.0
+            yy = (r22 + 1.0) / 2.0
+            zz = (r33 + 1.0) / 2.0
+            xy = (r12 + r21) / 4.0
+            xz = (r13 + r31) / 4.0
+            yz = (r23 + r32) / 4.0
+            if ((xx > yy) and (xx > zz)): # m[0][0] is the largest diagonal term
+                if (xx < epsilon):
+                    kx = 0.0
+                    ky = 0.7071
+                    kz = 0.7071
+                else:
+                    kx = np.sqrt( xx )
+                    ky = xy / kx
+                    kz = xz / kx
+            elif (yy > zz): # m[1][1] is the largest diagonal term
+                if (yy < epsilon):
+                    kx = 0.7071
+                    ky = 0.0
+                    kz = 0.7071
+                else:
+                    ky = np.sqrt( yy )
+                    kx = xy / ky
+                    kz = yz / ky
+            else: # m[2][2] is the largest diagonal term so base result on this
+                if (zz < epsilon):
+                    kx = 0.7071
+                    ky = 0.7071
+                    kz = 0.0
+                else:
+                    kz = np.sqrt( zz )
+                    kx = xz / kz
+                    ky = yz / kz
+
+		
     else:
-        return rtnPose
+        val = (r11 + r22 + r33 - 1) / 2.0
+        while val < -1.0:
+            val += 2.0
+        while val > 1.0:
+            val -= 2.0
+        theta = np.arccos( val )
+
+        if theta == 0.0:
+            theta = 1e-8
+        sth = np.sin(theta)
+        kx = (r32 - r23) / (2 * sth)
+        ky = (r13 - r31) / (2 * sth)
+        kz = (r21 - r12) / (2 * sth)
+
+    rv1 = theta * kx
+    rv2 = theta * ky
+    rv3 = theta * kz
+
+    
+
+    return [float(x), float(y), float(z), float(rv1), float(rv2), float(rv3)]
 
 
 ////////// AGENT LOGIC /////////////////////////////////////////////////////////////////////////////
