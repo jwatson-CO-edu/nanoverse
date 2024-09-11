@@ -1,10 +1,12 @@
 # `DEV PLAN`
 
 ## `[ ]` Advanced Computer Graphics 
-* C: -O3 -Wall -std=gnu17
+* C: 
+    - `CFLG=-O3 -Wall -std=gnu17`
+    - `LIBS=-lglut -lGLU -lGL -lm`
 * OpenGL Visualization
 
-### `08` Simplest Shader
+### `01` Simplest Shader
 * `[ ]` Scrolling Texture
 * `[ ]` Change Color with State
 
