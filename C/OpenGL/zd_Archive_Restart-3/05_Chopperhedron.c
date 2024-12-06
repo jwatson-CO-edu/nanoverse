@@ -161,8 +161,6 @@ void illuminate_with_source( LightSource* lite ){
     float Ambient[]  = { lite->ambient.r , lite->ambient.g , lite->ambient.b , lite->ambient.a  };
 	float Diffuse[]  = { lite->diffuse.r , lite->diffuse.g , lite->diffuse.b , lite->diffuse.a  };
 	float Specular[] = { lite->specular.r, lite->specular.g, lite->specular.b, lite->specular.a };
-    // glColorMaterial( GL_FRONT_AND_BACK , GL_AMBIENT_AND_DIFFUSE );
-	// glEnable( GL_COLOR_MATERIAL );
 	//  Enable light 0
 	glEnable( lite->ID );
 	//  Set ambient, diffuse, specular components and position of light 0
