@@ -7,6 +7,7 @@ build/
 */*/.ipynb_checkpoints/
 */*/*/.ipynb_checkpoints/
 */*/__pycache__/
+*/*/*/images/
 python/OGRE/pugixml/
 zig/mach/
 
