@@ -1,14 +1,11 @@
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
 ///// Includes /////
-
-/// Standard ///
-#include <vector>
-using std::vector;
-#include <string>
-using std::string, std::to_string, std::stof;
+#include "SfM.hpp"
 
 ////////// IMAGE PROCESSING ////////////////////////////////////////////////////////////////////////
+
+///// Image Loading ///////////////////////////////////////////////////////
 
 void fetch_images_at_path( string path, vector<string>& fNames, vector<Mat>& images, 
                            uint limit = 0, string ext = "jpg" ){
@@ -29,4 +26,12 @@ void fetch_images_at_path( string path, vector<string>& fNames, vector<Mat>& ima
         i++;
     }
     cout << endl << "Got " << images.size() << " images!" << endl;
+}
+
+///// KAZE ////////////////////////////////////////////////////////////////
+
+KAZE::KAZE(){  akaze = AKAZE::create();  }
+
+vector<KeyPoint> KAZE::get_KAZE_keypoints( const Mat& img, vector<KeyPoint>& kptsOut, Mat& descOut ){
+    akaze->detectAndCompute( img, cv::noArray(), kptsOut, descOut, false );
 }

@@ -1,34 +1,120 @@
+/*
+WARNING: DO NOT WORRY ABOUT SERIALIZATION!
+*/
+
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
 ///// Includes /////
 
 /// Standard ///
 #include <iostream>
-using std::cout, std::endl;
+using std::cout, std::endl, std::flush;
 #include <vector>
 using std::vector;
 #include <string>
 using std::string, std::to_string;
 #include <memory>
 using std::shared_ptr;
+#include <filesystem>
+using std::filesystem::directory_iterator;
+
+
+/// Special ///
+#include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/core/utility.hpp>
+using cv::Mat, cv::String, cv::Vec;
+#include <opencv2/imgcodecs.hpp>
+using cv::imread, cv::IMREAD_COLOR, cv::IMREAD_GRAYSCALE;
+#include "opencv2/features2d.hpp"
+using cv::Ptr, cv::KeyPoint, cv::Point2f, cv::FeatureDetector, cv::Feature2D, cv::AKAZE;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////// helpers.cpp /////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+////////// STANDARD CONTAINERS /////////////////////////////////////////////////////////////////////
+
+template<typename T>
+bool p_vec_has_item( const vector<T>& vec, const T& item ){
+    for( const T& elem : vec ) if( elem == item )  return true;
+    return false;
+}
+
+template<typename T>
+T get_last( vector<T>& vec ){  
+    // Get the last element of a vector, if it exists, otherwise throw an index error
+    size_t N = vec.size();
+    if( N > 0 )
+        return vec[ N-1 ];
+    else
+        throw std::out_of_range{ "get_last: Vector was EMPTY!" };
+}
+
+template<typename T>
+T get_last( const vector<T>& vec ){  
+    // Get the last element of a vector, if it exists, otherwise throw an index error
+    size_t N = vec.size();
+    if( N > 0 )
+        return vec[ N-1 ];
+    else
+        throw std::out_of_range{ "get_last: Vector was EMPTY!" };
+}
+
+
+////////// STRING PROCESSING ///////////////////////////////////////////////////////////////////////
+
+string /*---*/ to_upper( string input );
+vector<string> split_string_on_char( string input, char ch );
+
+
+////////// PATH AND FILE OPERATIONS ////////////////////////////////////////////////////////////////
+
+bool /*-----*/ file_has_ext( string path, string ext );
+vector<string> list_files_at_path( string path, bool sortAlpha = true );
+vector<string> list_files_at_path_w_ext( string path, string ext, bool sortAlpha = true );
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////// image_proc.cpp //////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+////////// IMAGE PROCESSING ////////////////////////////////////////////////////////////////////////
+
+void fetch_images_at_path( string path, vector<string>& fNames, vector<Mat>& images, 
+                           uint limit = 0, string ext = "jpg" );
+
+class KAZE{ public:
+    Ptr<Feature2D> akaze;
+
+    KAZE();
+
+    vector<KeyPoint> get_KAZE_keypoints( const Mat& img, vector<KeyPoint>& kptsOut, Mat& descOut );
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// SCENE GRAPH /////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 class SG_Node;
 typedef shared_ptr<SG_Node> NodePtr;
 
 
 class SG_Node{ public:
-    // Scene Graph Node for Structure from Motion. Assumes one image per pose
+    // Scene Graph Node for Structure from Motion. Assumes one image per pose.
 
     /// Members ///
-    string /*-----*/ path;
-    Mat /*--------*/ imag;
-    vector<KeyPoint> kpts;
-    Mat /*--------*/ xfrm;
-    vector<NodePtr>  nbrs;
+    string /*-----*/ imPth; // Image path
+    Mat /*--------*/ image; // Image data
+    vector<KeyPoint> kypts;
+    Mat /*--------*/ kpNfo;
+    Mat /*--------*/ xform;
+    vector<NodePtr>  nhbrs;
+
+    SG_Node( const string fName, const Mat& img );
 
 };
 

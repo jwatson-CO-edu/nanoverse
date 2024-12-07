@@ -1,33 +1,6 @@
-#ifndef HELPERS_HPP
-#define HELPERS_HPP
-
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
-#include <vector>
-using std::vector;
-#include <string>
-using std::string, std::to_string;
-#include <sys/stat.h>
-#include <fstream>
-using std::ifstream, std::ofstream;
-#include <iostream>
-using std::cout, std::endl, std::flush;
+#include "SfM.hpp"
 
-#include "Eigen/Core"
-typedef Eigen::Vector2i /*-------*/ Vec2i;
-typedef Eigen::Vector2f /*-------*/ Vec2f;
-typedef Eigen::Vector3i /*-------*/ Vec3i;
-typedef Eigen::Vector3f /*-------*/ Vec3f;
-typedef Eigen::Vector3d /*-------*/ Vec3;
-typedef Eigen::Vector4i /*-------*/ Vec4i;
-typedef Eigen::Matrix<float, 6, 1>  Vec6f;
-typedef Eigen::Matrix<float, 9, 1>  Vec9f;
-typedef Eigen::Matrix<double, 9, 1> Vec9;
-
-typedef Eigen::Matrix2f /*-------*/ Mat2f;
-typedef Eigen::Matrix3f /*-------*/ Mat3f;
-typedef Eigen::Matrix4i /*-------*/ Mat4i;
-typedef Eigen::Matrix4f /*-------*/ Mat4f;
-typedef Eigen::Matrix<float, 3, 4>  Mat34f;
 
 
 ////////// STRING PROCESSING ///////////////////////////////////////////////////////////////////////
@@ -90,73 +63,3 @@ vector<string> list_files_at_path_w_ext( string path, string ext, bool sortAlpha
     }
     return rtnPaths;
 }
-
-bool file_exists( const string& fName ){ 
-    // Return true if the file exists , otherwise return false
-    struct stat buf; 
-    if( stat( fName.c_str() , &buf ) != -1 ){ return true; } else { return false; }
-}
-
-vector<string> read_lines( string path ){ 
-    // Return all the lines of text file as a string vector
-    vector<string> rtnVec;
-    if( file_exists( path ) ){
-        ifstream fin( path ); // Open the list file for reading
-        string   line; // String to store each line
-        while ( std::getline( fin , line ) ){ // While we are able to fetch a line
-            rtnVec.push_back( line ); // Add the file to the list to read
-        }
-        fin.close();
-    } else { cout << "readlines: Could not open the file " << path << endl; }
-    return rtnVec;
-}
-
-
-////////// STANDARD CONTAINERS /////////////////////////////////////////////////////////////////////
-
-
-template<typename T>
-bool p_vec_has_item( const vector<T>& vec, const T& item ){
-    for( const T& elem : vec ) if( elem == item )  return true;
-    return false;
-}
-
-template<typename T>
-T get_last( vector<T>& vec ){  
-    // Get the last element of a vector, if it exists, otherwise throw an index error
-    size_t N = vec.size();
-    if( N > 0 )
-        return vec[ N-1 ];
-    else
-        throw std::out_of_range{ "get_last: Vector was EMPTY!" };
-}
-
-template<typename T>
-T get_last( const vector<T>& vec ){  
-    // Get the last element of a vector, if it exists, otherwise throw an index error
-    size_t N = vec.size();
-    if( N > 0 )
-        return vec[ N-1 ];
-    else
-        throw std::out_of_range{ "get_last: Vector was EMPTY!" };
-}
-
-
-////////// OPENCV //////////////////////////////////////////////////////////////////////////////////
-#include <opencv2/core/utility.hpp>
-using cv::Mat;
-
-template<typename T>
-string serialize_Mat_2D( const Mat& mat ){
-    stringstream outStr;
-    int M = mat.rows;
-    int N = mat.cols;
-    for( int i = 0; i < M; ++i ){
-        for( int j = 0; j < N; ++j ){
-            outStr << ((T) mat.at<T>(i,j)) << ',';
-        }    
-    }
-    return outStr.str();
-}
-
-#endif
