@@ -118,4 +118,4 @@ class SG_Node{ public:
 
 };
 
-vector<NodePtr> images_to_nodes( string path );
+vector<NodePtr> images_to_nodes( string path, string ext = "jpg" );
