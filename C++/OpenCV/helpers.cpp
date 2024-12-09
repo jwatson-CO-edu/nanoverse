@@ -40,7 +40,7 @@ bool file_has_ext( string path, string ext ){
     return (to_upper( parts[ parts.size()-1 ] ) == to_upper( ext ));
 }
 
-vector<string> list_files_at_path( string path, bool sortAlpha = true ){
+vector<string> list_files_at_path( string path, bool sortAlpha ){
     // List all the files found at a path
     vector<string> rtnNams;
     string /*---*/ path_i;
@@ -52,7 +52,7 @@ vector<string> list_files_at_path( string path, bool sortAlpha = true ){
     return rtnNams;
 }
 
-vector<string> list_files_at_path_w_ext( string path, string ext, bool sortAlpha = true ){
+vector<string> list_files_at_path_w_ext( string path, string ext, bool sortAlpha ){
     vector<string> allPaths = list_files_at_path( path, sortAlpha );
     // cout << allPaths.size() << " candidate paths ..." << flush;
     vector<string> rtnPaths;
@@ -63,3 +63,16 @@ vector<string> list_files_at_path_w_ext( string path, string ext, bool sortAlpha
     }
     return rtnPaths;
 }
+
+
+////////// TRIGONOMETRY ////////////////////////////////////////////////////////////////////////////
+
+// Cosine and Sine in degrees
+// Author: Willem A. (Vlakkies) Schreüder  
+double Cos( double x ){  return cos( (x) * 3.1415927 / 180 );  }
+double Sin( double x ){  return sin( (x) * 3.1415927 / 180 );  }
+double Tan( double x ){  return tan( (x) * 3.1415927 / 180 );  }
+float  Cosf( float x ){  return cosf( (x) * 3.1415927f / 180.0f );  }
+float  Sinf( float x ){  return sinf( (x) * 3.1415927f / 180.0f );  }
+float  Tanf( float x ){  return tanf( (x) * 3.1415927f / 180.0f );  }
+float  Atan2f( float y, float x ){  return (atan2f( y, x ) * 3.1415927f / 180.0f);  }

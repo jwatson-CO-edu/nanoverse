@@ -77,6 +77,19 @@ vector<string> list_files_at_path( string path, bool sortAlpha = true );
 vector<string> list_files_at_path_w_ext( string path, string ext, bool sortAlpha = true );
 
 
+////////// TRIGONOMETRY ////////////////////////////////////////////////////////////////////////////
+
+// Cosine and Sine in degrees
+// Author: Willem A. (Vlakkies) Schreüder  
+double Cos( double x );
+double Sin( double x );
+double Tan( double x );
+float  Cosf( float x );
+float  Sinf( float x );
+float  Tanf( float x );
+float  Atan2f( float y, float x );
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// image_proc.cpp //////////////////////////////////////////////////////////////////////////
@@ -92,7 +105,7 @@ class KAZE{ public:
 
     KAZE();
 
-    vector<KeyPoint> get_KAZE_keypoints( const Mat& img, vector<KeyPoint>& kptsOut, Mat& descOut );
+    void get_KAZE_keypoints( const Mat& img, vector<KeyPoint>& kptsOut, Mat& descOut );
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

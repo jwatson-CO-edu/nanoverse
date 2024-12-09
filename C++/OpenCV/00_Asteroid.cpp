@@ -4,6 +4,11 @@
 
 const string _IMAGE_DIR = "images/";
 const string _IMAGE_EXT = "png";
+const float  fov_deg    = 40.0f; // [deg]
+const float  cam_res    = 3000.0f; // [pixels]
+const float  foc_length = cam_res/(2*Tanf(fov_deg/2)); // [pixels]
+
+
 
 int main( int argc, char* argv[] ){
 

@@ -3,10 +3,8 @@ ZZ_Proprietary-Ignored/*
 .vscode/
 build/
 .ipynb_checkpoints/
-*/.ipynb_checkpoints/
-*/*/.ipynb_checkpoints/
-*/*/*/.ipynb_checkpoints/
-*/*/__pycache__/
+**/.ipynb_checkpoints/
+**/__pycache__/
 **/images/
 python/OGRE/pugixml/
 zig/mach/
@@ -18,13 +16,9 @@ C++/OpenGL/*/cpp_helpers
 C++/OpenCV/data/*
 
 *.out
-*/*.out
-*/*/*.out
-*/*/*/*.out
+**/*.out
 *.zip
-*/*.zip
-*/*/*.zip
-*/*/*/*.zip
+**/*.zip
 
 # Prerequisites
 

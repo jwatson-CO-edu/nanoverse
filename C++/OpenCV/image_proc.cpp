@@ -8,7 +8,7 @@
 ///// Image Loading ///////////////////////////////////////////////////////
 
 void fetch_images_at_path( string path, vector<string>& fNames, vector<Mat>& images, 
-                           uint limit = 0, string ext = "jpg" ){
+                           uint limit, string ext ){
     // Load all the images found at a path
     fNames.clear();
     images.clear();
@@ -32,6 +32,14 @@ void fetch_images_at_path( string path, vector<string>& fNames, vector<Mat>& ima
 
 KAZE::KAZE(){  akaze = AKAZE::create();  }
 
-vector<KeyPoint> KAZE::get_KAZE_keypoints( const Mat& img, vector<KeyPoint>& kptsOut, Mat& descOut ){
+void KAZE::get_KAZE_keypoints( const Mat& img, vector<KeyPoint>& kptsOut, Mat& descOut ){
     akaze->detectAndCompute( img, cv::noArray(), kptsOut, descOut, false );
+}
+
+
+
+////////// CAMERA MODEL ////////////////////////////////////////////////////////////////////////////
+Mat camera_instrinsics( float f_x, float f_y, float x_0, float y_0 ){
+    Mat rtnMat = Mat::eye( 3, 3, CV_32F );
+    rtnMat.at<float>(1, 2) = 100; // FIXME, START HERE: SET THE ELEMENTS OF THE INTRINSIC MATRIX
 }
