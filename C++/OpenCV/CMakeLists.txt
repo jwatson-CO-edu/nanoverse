@@ -25,10 +25,12 @@ else()
     message( FATAL_ERROR "OpenCV not found" )
 endif()
 
+find_package( matioCpp REQUIRED )
+
 
 ##### Local #####
 
-add_subdirectory( matio )
+# add_subdirectory( matio )
 
 
 
@@ -37,4 +39,5 @@ set( EXECUTABLE_NAME build-asteroid.out )
 add_executable( ${EXECUTABLE_NAME} 
                 00_Asteroid.cpp
                 SfM.cpp image_proc.cpp helpers.cpp )
-target_link_libraries( build-asteroid.out ${OpenCV_LIBS} )
+target_link_libraries( build-asteroid.out PUBLIC ${OpenCV_LIBS} PRIVATE matioCpp::matioCpp )
+# target_link_libraries( build-asteroid.out PRIVATE matioCpp::matioCpp )
