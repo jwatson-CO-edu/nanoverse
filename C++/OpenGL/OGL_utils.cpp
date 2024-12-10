@@ -1,4 +1,5 @@
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
+#include <cstdarg>
 
 #include "toolbox.hpp"
 
@@ -34,4 +35,62 @@ static void Vertex( int th, int ph ){
     glNormal3d(x,y,z);
     glTexCoord2d(th/360.0,ph/180.0+0.5);
     glVertex3d(x,y,z);
+}
+
+
+
+////////// OPENGL SYSTEM ///////////////////////////////////////////////////////////////////////////
+
+
+void ErrCheck( const char* where ){
+   // Check for OpenGL errors and print to stderr
+   // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
+   int err = glGetError();
+   if(err) cerr << "ERROR: " << gluErrorString(err) << ", " << where << "\n";
+}
+
+
+void Fatal( const char* format , ... ){
+   // Print message to stderr and exit
+   // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
+   va_list args;
+   va_start( args, format );
+   vfprintf( stderr, format, args );
+   va_end( args );
+   exit(1);
+}
+
+
+void Print(const char* format , ...){
+    // Print raster letters to the viewport
+    // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
+    char    buf[LEN];
+    char*   ch = buf;
+    va_list args;
+    // 1. Turn the parameters into a character string
+    va_start( args, format );
+    vsnprintf( buf, LEN, format, args );
+    va_end( args );
+    // 2. Display the characters one at a time at the current raster position
+    while( *ch ){  glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18, *ch++ );  }
+}
+
+
+void Project( double fov, double asp, double dim ){
+    // Set projection
+    // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
+    // 1. Tell OpenGL we want to manipulate the projection matrix
+    glMatrixMode( GL_PROJECTION );
+    // 2. Undo previous transformations
+    glLoadIdentity();
+    // 3. Perspective transformation
+    if( fov )
+        gluPerspective( fov, asp, dim/16, 16*dim );
+    // 4. Orthogonal transformation
+    else
+        glOrtho( -asp*dim, asp*dim, -dim, +dim, -dim, +dim );
+    //  Switch to manipulating the model matrix
+    glMatrixMode( GL_MODELVIEW );
+    //  Undo previous transformations
+    glLoadIdentity();
 }

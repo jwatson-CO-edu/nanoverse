@@ -3,9 +3,21 @@
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
+///// Defines /////////////////////////////////////////////////////////////
+// NOTE: It's just a good idea to put `#define`s before `#include`s because they might trigger important macros
+#define _USE_MATH_DEFINES 
+#define GL_GLEXT_PROTOTYPES // REQUIRED HERE: Get all GL prototypes // WARNING: MUST appear BEFORE ALL GL includes!
+#define LEN 8192 // ---------- Maximum length of text string
+
+///// Imports /////////////////////////////////////////////////////////////
+/// Standard ////
+#include <iostream>
+using std::cout, std::cerr, std::endl, std::flush;
+
+
 /// OpenGL + GLUT ////
-// #include <GL/glut.h>
-// #include <GL/glu.h>
+#include <GL/glut.h>
+#include <GL/glu.h>
 #include <GL/gl.h>
 
 #include <glm/glm.hpp>
@@ -63,9 +75,25 @@ float  Atan2f( float y, float x );
 mat4f identity_mtx44f( void );
 
 
-
 ////////// POLYHEDRA ///////////////////////////////////////////////////////////////////////////////
 static void Vertex( int th, int ph );
+
+
+////////// OPENGL SYSTEM ///////////////////////////////////////////////////////////////////////////
+void ErrCheck( const char* where );
+void Fatal( const char* format , ... );
+void Print(const char* format , ...);
+void Project( double fov, double asp, double dim );
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////// load_assets.c //////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
+
+unsigned int LoadTexBMP( const char* file );
+int  LoadOBJ( const char* file );
 
 
 

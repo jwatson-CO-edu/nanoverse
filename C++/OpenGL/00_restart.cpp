@@ -78,3 +78,54 @@ void draw_Planet( Planet* plnt ){
     glDisable( GL_TEXTURE_2D );
     glPopMatrix();
 }
+
+
+Planet* make_Moon( char* texPath, float R_, const vec4f loc_, float th_, float ph_ ){
+    Planet* moon = (Planet*) malloc( sizeof( Planet ) );
+    moon->surf    = texPath;
+    moon->surftex = LoadTexBMP( texPath );
+    moon->R /*-*/ = R_;
+    moon->loc     = loc_;
+    moon->th /**/ = th_;
+    moon->ph /**/ = ph_;
+    return moon;
+}
+
+
+void draw_Moon( Planet* texMoon, int emission, float shiny ){
+    // Like drawing a planet, but shiny
+    // Adapted from code by: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
+    mat4f xfrm = identity_mtx44f();
+    xfrm = translate( xfrm, vec3f{texMoon->loc.x, texMoon->loc.y, texMoon->loc.z} );
+    xfrm = scale( xfrm, vec3f{texMoon->R, texMoon->R, texMoon->R} );
+    xfrm = rotate( xfrm, texMoon->th, vec3f{0.0f, 0.0f, 1.0f} );
+    xfrm = rotate( xfrm, texMoon->ph, vec3f{0.0f, 1.0f, 0.0f} );
+
+    glMatrixMode( GL_MODELVIEW );
+    glPushMatrix();
+    glMultMatrixf( value_ptr( xfrm ) );
+
+    // float yellow[] = { 1.0f , 1.0f , 0.0f , 1.0f };
+	float Emission[] = { 0.01f*emission, 0.01f*emission, 0.01f*emission, 1.0f };
+
+    glColor3f( 1 , 1 , 1 );
+    float shininess = shiny<0 ? 0 : pow( 2.0, shiny );
+	glMaterialf( GL_FRONT_AND_BACK , GL_SHININESS , shininess );
+	glMaterialfv( GL_FRONT_AND_BACK , GL_EMISSION , Emission );
+
+    //  Set texture
+    glEnable( GL_TEXTURE_2D );
+    glBindTexture( GL_TEXTURE_2D, texMoon->surftex );
+    //  Latitude bands
+    glColor3f( 1, 1, 1 );
+    for( int ph = -90; ph < 90; ph += 5 ){
+        glBegin( GL_QUAD_STRIP );
+        for( int th = 0; th <= 360; th += 5 ){
+            Vertex( th, ph+5 );
+            Vertex( th, ph   );
+        }
+        glEnd();
+    }
+    glDisable( GL_TEXTURE_2D );
+    glPopMatrix();
+}
