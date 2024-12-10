@@ -39,7 +39,13 @@ void KAZE::get_KAZE_keypoints( const Mat& img, vector<KeyPoint>& kptsOut, Mat& d
 
 
 ////////// CAMERA MODEL ////////////////////////////////////////////////////////////////////////////
+
 Mat camera_instrinsics( float f_x, float f_y, float x_0, float y_0 ){
+    // Return the idealized intrinsic matrix
     Mat rtnMat = Mat::eye( 3, 3, CV_32F );
-    rtnMat.at<float>(1, 2) = 100; // FIXME, START HERE: SET THE ELEMENTS OF THE INTRINSIC MATRIX
+    rtnMat.at<float>(0, 0) = f_x; 
+    rtnMat.at<float>(1, 1) = f_y; 
+    rtnMat.at<float>(0, 2) = x_0; 
+    rtnMat.at<float>(1, 2) = y_0; 
+    return rtnMat;
 }
