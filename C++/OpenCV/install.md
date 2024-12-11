@@ -20,15 +20,33 @@
     1. `cat CMakePrepInfo.txt | grep opencv_contrib` , Verify that extra modules are going to be built
     1. `make -j7 | tee makeBuildInfo.txt`
     1. `cat makeBuildInfo.txt | grep xfeatures2d` , Verify that extra 2D features module was **actually** *built*
-1. Install
+1. Install OpenCV and Notify the Linker
     1. `sudo make install`
     1. `sudo ldconfig -v` , Let the linker find OpenCV. Needed?
     1. `ls /usr/local/include/opencv4/opencv2/ | grep xfeatures2d` , Verify that extra 2D features module was **actually** *installed*
     1. `export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib` , Let the compiler find the shared object location
     1. Add `/usr/local/include/opencv4/` to the editor search path for this project.
+1. Build and Install MatIO
+    1. `cd /tmp/`
+    1. `git clone git://git.code.sf.net/p/matio/matio`
+    1. `cd matio`
+    1. `git submodule update --init  # for datasets used in unit tests`
+    1. `./autogen.sh`
+    1. `./configure`
+    1. `make`
+    1. `make check`
+    1. `make install`
+1. Build and Install MatIO_Cpp
+    1. `cd /tmp/`
+    1. `git clone https://github.com/ami-iit/matio-cpp`
+    1. `cd matio-cpp`
+    1. `mkdir build && cd build`
+    1. `cmake ..`
+    1. `make`
+    1. `sudo make install`
     
-# Eigen3
+<!-- # Eigen3
 1. `sudo apt install libeigen3-dev`
 1. `cd /usr/include`
 1. `sudo ln -sf eigen3/Eigen Eigen`
-1. `sudo ln -sf eigen3/unsupported unsupported`
+1. `sudo ln -sf eigen3/unsupported unsupported` -->
