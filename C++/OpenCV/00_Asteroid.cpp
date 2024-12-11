@@ -19,7 +19,7 @@ const float  foc_length  = cam_res/(2*Tanf(fov_deg/2)); // [pixels]
 const Mat    cam_intr    = camera_instrinsics( foc_length, foc_length, cam_res/2,cam_res/2 );
 const ubyte  n_poses     = baselinesFile.read("baselines").dimensions()[1];
 
-// NOTE: MATLAB IS COLUMN-MAJOR
+// FIXME: MATLAB IS COLUMN-MAJOR
 
 Mat copy_slice_from_MatIO_3d( matioCpp::MultiDimensionalArray<double>& matioMat, uint rows, uint cols, uint depth, uint sliceDex ){
     Mat     rtnMat = Mat::zeros( rows, cols, CV_32F );
