@@ -35,9 +35,9 @@ find_package( matioCpp REQUIRED )
 
 
 ########## PROGRAMS ################################################################################
-set( EXECUTABLE_NAME build-asteroid.out )
+set( EXECUTABLE_NAME 00_asteroid-SfM.out )
 add_executable( ${EXECUTABLE_NAME} 
                 00_Asteroid.cpp
                 SfM.cpp image_proc.cpp helpers.cpp )
-target_link_libraries( build-asteroid.out PUBLIC ${OpenCV_LIBS} PRIVATE matioCpp::matioCpp )
+target_link_libraries( ${EXECUTABLE_NAME} PUBLIC ${OpenCV_LIBS} PRIVATE matioCpp::matioCpp )
 # target_link_libraries( build-asteroid.out PRIVATE matioCpp::matioCpp )
