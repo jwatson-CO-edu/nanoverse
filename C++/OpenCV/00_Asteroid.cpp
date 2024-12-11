@@ -21,12 +21,12 @@ const ubyte  n_poses     = baselinesFile.read("baselines").dimensions()[1];
 
 // NOTE: MATLAB IS COLUMN-MAJOR
 
-Mat copy_slice_from_MatIO_3d( matioCpp::MultiDimensionalArray<double> matioMat, uint rows, uint cols, uint depth, uint sliceDex ){
+Mat copy_slice_from_MatIO_3d( matioCpp::MultiDimensionalArray<double>& matioMat, uint rows, uint cols, uint depth, uint sliceDex ){
     Mat     rtnMat = Mat::zeros( rows, cols, CV_32F );
-    double* arr    = matioMat.data();
+    double* arr    = matioMat.data(); // FIXME, START HERE: SEGMENTATION FAULT, GET THE SIZE OF THE ARRAY
     Element<double> elem;
 
-    // FIXME, START HERE: SEGMENTATION FAULT, GET THE SIZE OF THE ARRAY
+    
 
     for( uint i = 0; i < rows; ++i ){
         for( uint j = 0; j < cols; ++j ){
