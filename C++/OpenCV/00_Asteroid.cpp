@@ -35,7 +35,7 @@ const ubyte n_poses = baselinesFile.read( "baselines" ).dimensions()[1];
 
 
 
-////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////////////////
+////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
 
 
 Mat copy_slice_from_MatIO_3d( matioCpp::MultiDimensionalArray<double>& matioMat, 
@@ -45,7 +45,7 @@ Mat copy_slice_from_MatIO_3d( matioCpp::MultiDimensionalArray<double>& matioMat,
     double* arr    = matioMat.data(); 
     for( uint i = 0; i < rows; ++i ){
         for( uint j = 0; j < cols; ++j ){
-            rtnMat.at<float>( j, i ) = (float) arr[ matioMat.rawIndexFromIndices( {i,j,sliceDex} ) ];
+            rtnMat.at<float>( i, j ) = (float) arr[ matioMat.rawIndexFromIndices( {j,i,sliceDex} ) ];
         }
     }
     return rtnMat;
