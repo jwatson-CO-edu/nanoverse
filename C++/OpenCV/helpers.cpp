@@ -76,3 +76,16 @@ float  Cosf( float x ){  return cosf( (x) * 3.1415927f / 180.0f );  }
 float  Sinf( float x ){  return sinf( (x) * 3.1415927f / 180.0f );  }
 float  Tanf( float x ){  return tanf( (x) * 3.1415927f / 180.0f );  }
 float  Atan2f( float y, float x ){  return (atan2f( y, x ) * 3.1415927f / 180.0f);  }
+
+
+////////// 3D GEOMETRY /////////////////////////////////////////////////////////////////////////////
+
+Mat skew_symm_mat( Vec3f& x ){
+    // Evaluate skew-symmetric matrix, Accepts both 1x3 and 3x1 vectors
+    Mat S_x = Mat::zeros( 3, 3, CV_32F );
+    S_x.at<float>(0,0) =  0.0f;   S_x.at<float>(0,1) = -x[2];   S_x.at<float>(0,2) =  x[1];
+    S_x.at<float>(1,0) =  x[2];   S_x.at<float>(1,1) =  0.0f;   S_x.at<float>(1,2) = -x[0];
+    S_x.at<float>(2,0) = -x[1];   S_x.at<float>(2,1) =  x[0];   S_x.at<float>(2,2) =  0.0f;
+    return S_x;
+}
+    

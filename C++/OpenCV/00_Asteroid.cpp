@@ -26,10 +26,10 @@ matioCpp::MultiDimensionalArray<double> cam_pos_true = baselinesFile.read( "cam_
 const string _IMAGE_DIR = "images/";
 const string _IMAGE_EXT = "png";
 // Define camera intrinsic parameters
-const float fov_deg    = 40.0f; // [deg]
-const float cam_res    = 3000.0f; // [pixels]
-const float foc_length = cam_res/(2*Tanf(fov_deg/2)); // [pixels]
-const Mat   cam_intr   = camera_instrinsics( foc_length, foc_length, cam_res/2,cam_res/2 );
+const float /*-------*/ fov_deg    = 40.0f; // [deg]
+const float /*-------*/ cam_res    = 3000.0f; // [pixels]
+const float /*-------*/ foc_length = cam_res/(2*Tanf(fov_deg/2)); // [pixels]
+const CameraInstrinsics cam_intr{ foc_length, foc_length, cam_res/2,cam_res/2, cam_res, cam_res };
 // Reconstruction
 const ubyte n_poses = baselinesFile.read( "baselines" ).dimensions()[1];
 
@@ -112,9 +112,6 @@ int main( int argc, char* argv[] ){
         pos_true_camframe_i.copyTo( pos_true_camframe.row(i) );
     }
 
-    
-
-
     // cout << rot_cam2astFile.read("rot_cam2ast").name() << ", " << endl
     //      << rot_cam2astFile.read("rot_cam2ast").dimensions()[0] << ", " 
     //      << rot_cam2astFile.read("rot_cam2ast").dimensions()[1] << ", " 
@@ -124,8 +121,9 @@ int main( int argc, char* argv[] ){
     //      << baselinesFile.read("baselines").dimensions()[0] << ", " 
     //      << baselinesFile.read("baselines").dimensions()[1] << endl; 
 
+    // Initialize pose graph objects
+    // Read images
     cout << "About to calculate KAZE keypoints ..." << endl;
-
     vector<NodePtr> nodes = images_to_nodes( _IMAGE_DIR, _IMAGE_EXT );
 
     // cout << "Calculated KAZE keypoints for the following images ..." << endl;

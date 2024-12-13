@@ -29,3 +29,12 @@ vector<NodePtr> images_to_nodes( string path, string ext ){
     return rtnNds;
 }
 
+
+
+////////// TRIANGULATION ///////////////////////////////////////////////////////////////////////////
+
+void triangulate_keypoints_DLT( Mat& uv1, Mat& uv2 ){
+    // FIXME, START HERE: DETERMINE IF THIS IS ALREADY PART OF OPENCV!!!
+    // FIXME: BEGIN TRANSLATING THE MATLAB FUNCTION
+
+}

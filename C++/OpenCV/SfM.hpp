@@ -7,6 +7,8 @@ WARNING: DO NOT WORRY ABOUT SERIALIZATION!
 ///// Includes ////////////////////////////////////////////////////////////
 
 /// Standard ///
+#include <cmath>
+using std::nan;
 #include <iostream>
 using std::cout, std::endl, std::flush;
 #include <vector>
@@ -23,7 +25,7 @@ using std::filesystem::directory_iterator;
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
 #include <opencv2/core/utility.hpp>
-using cv::Mat, cv::String, cv::Vec;
+using cv::Mat, cv::String, cv::Vec, cv::Vec3f;
 #include <opencv2/imgcodecs.hpp>
 using cv::imread, cv::IMREAD_COLOR, cv::IMREAD_GRAYSCALE;
 #include "opencv2/features2d.hpp"
@@ -112,13 +114,23 @@ class KAZE{ public:
     void get_KAZE_keypoints( const Mat& img, vector<KeyPoint>& kptsOut, Mat& descOut );
 };
 
-Mat camera_instrinsics( float f_x, float f_y, float x_0, float y_0 );
+class CameraInstrinsics{ public:
+    Mat   K; // Intrinsic Matrix
+    float F; // Focal Length
+    float R; // Resolution
+
+    CameraInstrinsics( float f_x, float f_y, float x_0, float y_0, float r_x, float r_y );
+};
 
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+////////// SfM.cpp /////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 ////////// SCENE GRAPH /////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///// SG_Node /////////////////////////////////////////////////////////////
 
 class SG_Node;
 typedef shared_ptr<SG_Node> NodePtr;
@@ -140,3 +152,6 @@ class SG_Node{ public:
 };
 
 vector<NodePtr> images_to_nodes( string path, string ext = "jpg" );
+
+
+////////// TRIANGULATION ///////////////////////////////////////////////////////////////////////////
