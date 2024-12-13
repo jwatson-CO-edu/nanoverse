@@ -99,6 +99,20 @@ int main( int argc, char* argv[] ){
 
     // Load true camera positions in the asteroid-fixed frame
     // Note: (only for plotting purposes, not used for shape reconstruction!)
+    Mat rot_cam2ast_1  = copy_slice_from_MatIO_3d( rot_cam2ast, 3, 3, n_poses, 1 );
+    Mat rot_cam2ast_1T;
+    transpose( rot_cam2ast_1, rot_cam2ast_1T );
+    Mat cam_pos_true_1 = copy_row_from_MatIO_2d( cam_pos_true, 3, n_poses, 1 );
+    Mat cam_pos_true_i;
+    Mat pos_true_camframe_i;
+
+    for( ubyte i = 1; i < n_poses; ++i ){
+        cam_pos_true_i = copy_row_from_MatIO_2d( cam_pos_true, 3, n_poses, i );
+        pos_true_camframe_i = rot_cam2ast_1T * (cam_pos_true_i - cam_pos_true_1);
+        pos_true_camframe_i.copyTo( pos_true_camframe.row(i) );
+    }
+
+    
 
 
     // cout << rot_cam2astFile.read("rot_cam2ast").name() << ", " << endl
