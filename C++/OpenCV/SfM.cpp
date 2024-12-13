@@ -34,7 +34,6 @@ vector<NodePtr> images_to_nodes( string path, string ext ){
 ////////// TRIANGULATION ///////////////////////////////////////////////////////////////////////////
 
 void triangulate_keypoints_DLT( Mat& uv1, Mat& uv2 ){
-    // FIXME, START HERE: DETERMINE IF THIS IS ALREADY PART OF OPENCV!!!
-    // FIXME: BEGIN TRANSLATING THE MATLAB FUNCTION
-
+    // FIXME, START HERE: https://docs.opencv.org/3.4/d0/dbd/group__triangulation.html
+    // https://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/EPSRC_SSAZ/node3.html
 }
