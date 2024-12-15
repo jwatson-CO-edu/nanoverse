@@ -13,6 +13,8 @@ using std::nan;
 using std::cout, std::endl, std::flush;
 #include <vector>
 using std::vector;
+#include <queue>
+using std::queue;
 #include <string>
 using std::string, std::to_string;
 #include <memory>
@@ -25,7 +27,7 @@ using std::filesystem::directory_iterator;
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
 #include <opencv2/core/utility.hpp>
-using cv::Mat, cv::String, cv::Vec, cv::Vec3f;
+using cv::Mat, cv::String, cv::Vec, cv::Vec3f, cv::norm;
 #include <opencv2/imgcodecs.hpp>
 using cv::imread, cv::IMREAD_COLOR, cv::IMREAD_GRAYSCALE;
 #include "opencv2/features2d.hpp"
@@ -140,15 +142,17 @@ class SG_Node{ public:
     // Scene Graph Node for Structure from Motion. Assumes one image per pose.
 
     /// Members ///
-    string /*-----*/ imPth; // Image path
-    Mat /*--------*/ image; // Image data
-    vector<KeyPoint> kypts;
-    Mat /*--------*/ kpNfo;
-    Mat /*--------*/ xform;
-    vector<NodePtr>  nhbrs;
+    string /*-----------*/ imPth; // Image path
+    Mat /*--------------*/ image; // Image data
+    vector<KeyPoint> /*-*/ kypts; // Keypoints in the (greyscale) image
+    Mat /*--------------*/ kpNfo; // Keypoint Info (Not used?)
+    Mat /*--------------*/ xform; // Estimated camera pose
+    vector<NodePtr> /*--*/ nhbrs; // Graph neighbors
+    vector<vector<size_t>> match; // Keypoint correspondences to each neighbor
+    ubyte /*------------*/ visit; // Was this node expanded?
 
     /// Constructors ///
-    SG_Node( const string fName, const Mat& img );
+    SG_Node( const string fName, const Mat& img ); // Constructor from an image
 };
 
 vector<NodePtr> images_to_nodes( string path, string ext = "jpg" );
