@@ -70,8 +70,10 @@ void find_graph_correspondences( NodePtr root ){
         node_i->visit = 1;
         frontier.pop();
         for( NodePtr node_j : node_i->nhbrs ){
-            node_i->match.push_back(  find_correspondences_I2J( node_i, node_j )  );
-            frontier.push( NodePtr{ node_j } );
+            if( !(node_j->visit) ){
+                node_i->match.push_back(  find_correspondences_I2J( node_i, node_j )  );
+                frontier.push( NodePtr{ node_j } );
+            }
         }
     }
 }
