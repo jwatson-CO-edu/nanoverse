@@ -10,7 +10,7 @@ WARNING: DO NOT WORRY ABOUT SERIALIZATION!
 #include <cmath>
 using std::nan;
 #include <iostream>
-using std::cout, std::endl, std::flush;
+using std::cout, std::cerr, std::endl, std::flush;
 #include <vector>
 using std::vector;
 #include <queue>
@@ -159,3 +159,5 @@ vector<NodePtr> images_to_nodes( string path, string ext = "jpg" );
 
 
 ////////// TRIANGULATION ///////////////////////////////////////////////////////////////////////////
+
+void find_graph_correspondences( NodePtr root );

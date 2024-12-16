@@ -19,8 +19,16 @@ matioCpp::File /*--------------------*/ rot_cam2astFile( "zb_MATLAB/rot_cam2ast.
 matioCpp::MultiDimensionalArray<double> rot_cam2ast = rot_cam2astFile.read( "rot_cam2ast" ).asMultiDimensionalArray<double>();
 matioCpp::File /*--------------------*/ baselinesFile( "zb_MATLAB/baselines.mat" ); // 3, 36
 matioCpp::MultiDimensionalArray<double> baselines = baselinesFile.read( "baselines" ).asMultiDimensionalArray<double>();
-matioCpp::File /*--------------------*/ cam_pos_trueFile( "zb_MATLAB/cam_pos_true.mat" ); 
-matioCpp::MultiDimensionalArray<double> cam_pos_true = baselinesFile.read( "cam_pos_true" ).asMultiDimensionalArray<double>();
+
+
+// matioCpp::File /*--------------------*/ cam_pos_trueFile( "zb_MATLAB/cam_pos_true.mat" ); 
+// // matioCpp::MultiDimensionalArray<double> cam_pos_true = baselinesFile.read( "cam_pos_true" ).asMultiDimensionalArray<double>();
+// matioCpp::Vector<double> cam_pos_true = baselinesFile.read( "cam_pos_true" ).asVector<double>();
+
+
+
+
+
 
 // Images
 const string _IMAGE_DIR = "images/";
@@ -66,6 +74,30 @@ Mat copy_row_from_MatIO_2d( matioCpp::MultiDimensionalArray<double>& matioMat,
 }
 
 
+Mat get_triples_from_MatIO_var_dbbl( string fPath ){
+    // Get triples from a car with an inaccessible type
+    mat_t*    matfp /*--*/ = Mat_Open( fPath.c_str(), MAT_ACC_RDONLY );
+    matvar_t* variable     = Mat_VarReadNext( matfp );
+    double*   varData /**/ = (double*) variable->data;
+    size_t    num_elements = variable->nbytes / Mat_SizeOfClass( variable->class_type ); 
+    size_t    num_rows     = num_elements / 3;
+    size_t    row /*----*/ = 0;
+    Mat /*-*/ rtnMat;
+    if( num_elements%3 != 0 ){
+        cerr << "Var elems were NOT a multiple of 3!" << endl;
+        rtnMat = Mat::zeros( 0, 3, CV_32F );
+    }else{
+        rtnMat = Mat::zeros( num_rows, 3, CV_32F );
+        for( size_t i = 0; i < num_elements; i += 3 ){
+            for( ubyte j = 0; j < 3; ++j ){
+                rtnMat.at<float>( row, j ) = varData[i+j];
+            }
+            ++row;
+        }
+    }
+    return rtnMat;
+}
+
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 
@@ -78,6 +110,7 @@ int main( int argc, char* argv[] ){
     Mat /*---*/ rot_curr;
     Mat /*---*/ rel_pos /*-----*/ = Mat::zeros( n_poses-1, 3, CV_32F );
     Mat /*---*/ pos_true_camframe = Mat::zeros( n_poses  , 3, CV_32F );
+    Mat /*---*/ cam_pos_true = get_triples_from_MatIO_var_dbbl( "zb_MATLAB/cam_pos_true.mat" );
     Mat /*---*/ baseRow_i;
     Mat /*---*/ trueRow_i;
     vector<Mat> rel_rot_cam;
@@ -97,34 +130,30 @@ int main( int argc, char* argv[] ){
     
     }
 
-    // Load true camera positions in the asteroid-fixed frame
-    // Note: (only for plotting purposes, not used for shape reconstruction!)
+
     Mat rot_cam2ast_1  = copy_slice_from_MatIO_3d( rot_cam2ast, 3, 3, n_poses, 1 );
     Mat rot_cam2ast_1T;
     transpose( rot_cam2ast_1, rot_cam2ast_1T );
-    Mat cam_pos_true_1 = copy_row_from_MatIO_2d( cam_pos_true, 3, n_poses, 1 );
+    Mat cam_pos_true_1;
+    transpose( cam_pos_true.row(0), cam_pos_true_1 );
     Mat cam_pos_true_i;
     Mat pos_true_camframe_i;
 
+    // FIXME: THERE ARE PROBLEMS HERE, PRINT OUT THE SIZES
+
     for( ubyte i = 1; i < n_poses; ++i ){
-        cam_pos_true_i = copy_row_from_MatIO_2d( cam_pos_true, 3, n_poses, i );
+        // cam_pos_true_i = cam_pos_true.row(i);
+        transpose( cam_pos_true.row(i), cam_pos_true_i );
         pos_true_camframe_i = rot_cam2ast_1T * (cam_pos_true_i - cam_pos_true_1);
         pos_true_camframe_i.copyTo( pos_true_camframe.row(i) );
     }
 
-    // cout << rot_cam2astFile.read("rot_cam2ast").name() << ", " << endl
-    //      << rot_cam2astFile.read("rot_cam2ast").dimensions()[0] << ", " 
-    //      << rot_cam2astFile.read("rot_cam2ast").dimensions()[1] << ", " 
-    //      << rot_cam2astFile.read("rot_cam2ast").dimensions()[2] << endl; 
-         
-    // cout << baselinesFile.read("baselines").name() << ", " << endl
-    //      << baselinesFile.read("baselines").dimensions()[0] << ", " 
-    //      << baselinesFile.read("baselines").dimensions()[1] << endl; 
+    
 
     // Initialize pose graph objects
     // Read images
-    cout << "About to calculate KAZE keypoints ..." << endl;
-    vector<NodePtr> nodes = images_to_nodes( _IMAGE_DIR, _IMAGE_EXT );
+    // cout << "About to calculate KAZE keypoints ..." << endl;
+    // vector<NodePtr> nodes = images_to_nodes( _IMAGE_DIR, _IMAGE_EXT );
 
     // cout << "Calculated KAZE keypoints for the following images ..." << endl;
     // for( NodePtr node : nodes ){
@@ -133,3 +162,64 @@ int main( int argc, char* argv[] ){
 
     return 0;
 }
+
+
+////////// SPARE PARTS /////////////////////////////////////////////////////////////////////////////
+
+// cout << rot_cam2astFile.read("rot_cam2ast").name() << ", " << endl
+    //      << rot_cam2astFile.read("rot_cam2ast").dimensions()[0] << ", " 
+    //      << rot_cam2astFile.read("rot_cam2ast").dimensions()[1] << ", " 
+    //      << rot_cam2astFile.read("rot_cam2ast").dimensions()[2] << endl; 
+         
+    // cout << baselinesFile.read("baselines").name() << ", " << endl
+    //      << baselinesFile.read("baselines").dimensions()[0] << ", " 
+    //      << baselinesFile.read("baselines").dimensions()[1] << endl; 
+
+
+
+    
+    
+
+    // while (variable != NULL) {
+    //     std::cout << "Variable name: " << variable->name << std::endl;
+
+    //     size_t num_elements = variable->nbytes / Mat_SizeOfClass(variable->class_type); 
+
+    //     // Print the size
+    //     std::cout << "Size: " << num_elements << std::endl; 
+
+    //     std::cout << "Variable type: ";
+
+    //     switch (variable->class_type) {
+    //         case MAT_C_DOUBLE:
+    //             std::cout << "double" << std::endl;
+    //             break;
+    //         case MAT_C_SINGLE:
+    //             std::cout << "single" << std::endl;
+    //             break;
+    //         case MAT_C_INT32:
+    //             std::cout << "int32" << std::endl;
+    //             break;
+    //         case MAT_C_UINT8:
+    //             std::cout << "uint8" << std::endl;
+    //             break;
+    //         case MAT_C_CHAR:
+    //             std::cout << "char" << std::endl;
+    //             break;
+    //         case MAT_C_STRUCT:
+    //             std::cout << "struct" << std::endl;
+    //             break;
+    //         case MAT_C_CELL:
+    //             std::cout << "cell" << std::endl;
+    //             break;
+    //         // Add more cases as needed
+    //         default:
+    //             std::cout << "unknown" << std::endl;
+    //             break;
+    //     }
+
+    //     Mat_VarFree(variable);
+    //     variable = Mat_VarReadNext(matfp);
+    // }
+
+    // Mat_Close(matfp);
