@@ -147,9 +147,7 @@ int main( int argc, char* argv[] ){
         pos_true_camframe_i = rot_cam2ast_1T * (cam_pos_true_i - cam_pos_true_1);
         pos_true_camframe_i.copyTo( pos_true_camframe.row(i) );
     }
-
     
-
     // Initialize pose graph objects
     // Read images
     // cout << "About to calculate KAZE keypoints ..." << endl;
