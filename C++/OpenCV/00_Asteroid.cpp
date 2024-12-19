@@ -117,6 +117,10 @@ int main( int argc, char* argv[] ){
     Mat baselines    = MatIO_2d_to_cv_Mat( "zb_MATLAB/baselines.mat"  , "baselines" );
     Mat cam_pos_true = get_triples_from_MatIO_var_dbbl( "zb_MATLAB/cam_pos_true.mat" );
 
+    // cout << rot_cam2ast  << endl << endl;
+    // cout << baselines    << endl << endl;
+    // cout << cam_pos_true << endl << endl;
+
     // FIXME, START HERE: PRINT OUT THE DIMS AND CONTENTS OF EACH Mat IN ORDER TO UNDERSTAND THE PROBLEM
 
     ///// Compute relative pose between consecutive camera views /////

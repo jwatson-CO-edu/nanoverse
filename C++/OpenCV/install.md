@@ -35,7 +35,7 @@
     1. `./configure`
     1. `make`
     1. `make check`
-    1. `make install`
+    1. `sudo make install`
 1. Build and Install MatIO_Cpp
     1. `cd /tmp/`
     1. `git clone https://github.com/ami-iit/matio-cpp`
