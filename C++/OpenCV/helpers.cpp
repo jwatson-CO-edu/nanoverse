@@ -40,6 +40,7 @@ bool file_has_ext( string path, string ext ){
     return (to_upper( parts[ parts.size()-1 ] ) == to_upper( ext ));
 }
 
+
 vector<string> list_files_at_path( string path, bool sortAlpha ){
     // List all the files found at a path
     vector<string> rtnNams;
@@ -51,6 +52,7 @@ vector<string> list_files_at_path( string path, bool sortAlpha ){
     if( sortAlpha )  std::sort( rtnNams.begin(),rtnNams.end() );
     return rtnNams;
 }
+
 
 vector<string> list_files_at_path_w_ext( string path, string ext, bool sortAlpha ){
     vector<string> allPaths = list_files_at_path( path, sortAlpha );
@@ -65,6 +67,7 @@ vector<string> list_files_at_path_w_ext( string path, string ext, bool sortAlpha
 }
 
 
+
 ////////// TRIGONOMETRY ////////////////////////////////////////////////////////////////////////////
 
 // Cosine and Sine in degrees
@@ -76,3 +79,16 @@ float  Cosf( float x ){  return cosf( (x) * 3.1415927f / 180.0f );  }
 float  Sinf( float x ){  return sinf( (x) * 3.1415927f / 180.0f );  }
 float  Tanf( float x ){  return tanf( (x) * 3.1415927f / 180.0f );  }
 float  Atan2f( float y, float x ){  return (atan2f( y, x ) * 3.1415927f / 180.0f);  }
+
+
+////////// 3D GEOMETRY /////////////////////////////////////////////////////////////////////////////
+
+Mat skew_symm_mat( Vec3f& x ){
+    // Evaluate skew-symmetric matrix, Accepts both 1x3 and 3x1 vectors
+    Mat S_x = Mat::zeros( 3, 3, CV_32F );
+    S_x.at<float>(0,0) =  0.0f;   S_x.at<float>(0,1) = -x[2];   S_x.at<float>(0,2) =  x[1];
+    S_x.at<float>(1,0) =  x[2];   S_x.at<float>(1,1) =  0.0f;   S_x.at<float>(1,2) = -x[0];
+    S_x.at<float>(2,0) = -x[1];   S_x.at<float>(2,1) =  x[0];   S_x.at<float>(2,2) =  0.0f;
+    return S_x;
+}
+    
