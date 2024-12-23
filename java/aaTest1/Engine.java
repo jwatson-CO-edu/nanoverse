@@ -24,6 +24,7 @@ public class Engine {
     private HashMap<int[],ActiveObject> objects;
     private HashMap<int[],ActiveObject> bullets;
     private Tile[][] /*--------------*/ tileMap;
+    static  float /*-----------------*/ P_init = 0.05f;
 
     /// Constructor(s) ///
     Engine( int w, int h ){
