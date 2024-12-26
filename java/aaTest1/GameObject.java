@@ -6,7 +6,7 @@
 
 ///////// INIT /////////////////////////////////////////////////////////////////////////////////////
 
-// import java.util.ArrayList;
+import static java.util.UUID.randomUUID;
 
 
 
@@ -15,16 +15,19 @@
 public class GameObject {
 
     /// Member Vars ///
-    protected String /*----------*/ type; 
-    protected String /*----------*/ id; 
-    protected Engine /*----------*/ game; // Container
-    protected int[] /*-----------*/ address; // Address and/or screen coordinates
-    // protected ArrayList<GameObject> neighbors; // Data structure for neighborhood calcs
-    public    char /*------------*/ rep; // How to draw this item in text
+    protected String type; 
+    protected String id; 
+    protected Engine game; // Container
+    protected int[]  address; // Address and/or screen coordinates
+    public    char   rep; // How to draw this item in text
     
     
     /// Constructor(s) ///
-    GameObject( Engine g ){  game = g;  }
+    GameObject( Engine g, String typ ){  
+        game = g;
+        type = typ;
+        id   = randomUUID().toString();
+    }
 
     /// (Virtual) Methods ///
     int update(){  return 0;  };

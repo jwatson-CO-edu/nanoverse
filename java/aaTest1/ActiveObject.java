@@ -20,7 +20,7 @@ public class ActiveObject extends GameObject {
     protected int[][] target; // Map-space intent of this object
 
     /// Constructor(s) ///
-    ActiveObject( Engine g ){
-        super(g);
+    ActiveObject( Engine g, String t ){
+        super( g, t );
     }
 }

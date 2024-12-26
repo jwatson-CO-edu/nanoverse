@@ -24,7 +24,9 @@ public class Engine {
     private HashMap<int[],ActiveObject> objects;
     private HashMap<int[],ActiveObject> bullets;
     private Tile[][] /*--------------*/ tileMap;
-    static  float /*-----------------*/ P_init = 0.05f;
+    static  float /*-----------------*/ P_init = 0.10f;
+    static  float /*-----------------*/ P_nMax = 0.50f;
+    static  float /*-----------------*/ P_nAdd = 0.50f;
 
     /// Constructor(s) ///
     Engine( int w, int h ){
@@ -39,14 +41,17 @@ public class Engine {
     /// Methods ///
     
     ArrayList<int[]> get_neighborhood( int[] center ){
-        // Return the 8 cell neighborhood of `center`
+        // Return the 8 cell neighborhood of `center`, Respects the grid world boundaries
         ArrayList<int[]> rtnHood = new ArrayList<int[]>();
-        int[] addr = new int[2];
+        int[] /*------*/ addr    = new int[2];
+        int /*--------*/ ii, jj;
         for( int i = -1; i <= 1; ++i ){
             for( int j = -1; j <= 1; ++j ){
-                if( (i!=0) || (j!=0) ){
-                    addr[0] = clamp( i + center[0], 0, Wmap-1 );
-                    addr[1] = clamp( j + center[1], 0, Hmap-1 );
+                ii = i + center[0];
+                jj = j + center[1];
+                if( ((i!=0) || (j!=0)) && (ii>=0) && (jj>=0) && (ii<Wmap) && (jj<Hmap) ){
+                    addr[0] = ii;
+                    addr[1] = jj;
                     rtnHood.add( addr.clone() );
                 }
             }
@@ -55,15 +60,21 @@ public class Engine {
     }
     
     public void gen_map( int[] landSeed, float bgnMargin, float decay ){
-        // Generate the map
+        // Generate the map, Procedurally
         ArrayDeque<int[]> frontier = new ArrayDeque<int[]>();
-        int[] currAddr;
+        ArrayList<int[]>  nghbrs;
+        int[] /*-------*/ currAddr;
+        int /*---------*/ ii, jj;
+        int /*---------*/ gCount;
+        int /*---------*/ Nstep = 0;
 
         /// Stage 1: Seed Random Tiles ///
         for( int i = 0; i < Wmap; ++i ){
             for( int j = 0; j < Hmap; ++j ){
-                if( coinflip_P( 0.05f ) ){
-
+                if( coinflip_P( P_init ) ){
+                    tileMap[i][j] = Tile.make_grass( this );
+                }else{
+                    tileMap[i][j] = Tile.make_water( this );
                 }
             }
         }
@@ -71,7 +82,21 @@ public class Engine {
         /// Stage 2: Grow Clumps
         frontier.add( landSeed );
         while( frontier.size() > 0 ){
+
+            // 1. Pop from frontier
             currAddr = frontier.pop();
+            ii /*-*/ = currAddr[0];
+            jj /*-*/ = currAddr[1];
+            tileMap[ii][jj].visited = true;
+
+            // 2. Calc grass probability from neighborhood
+            nghbrs = get_neighborhood( currAddr );
+            gCount = 0;
+            for( int[] a : nghbrs ){
+                if( tileMap[ a[0] ][ a[1] ].type == "grass" ){
+                    ++gCount;
+                }
+            }
         }
     }
 
