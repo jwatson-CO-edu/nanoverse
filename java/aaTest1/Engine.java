@@ -1,8 +1,4 @@
-/*
- * Engine.java
- * James Watson, 2024-12
- * Contains game logic
- */
+
 
 ///////// INIT /////////////////////////////////////////////////////////////////////////////////////
 
@@ -11,7 +7,6 @@ import java.util.ArrayList;
 import java.util.ArrayDeque;
 import java.util.Map;
 
-import static Helpers.Utils.clamp;
 import static Helpers.Utils.coinflip_P;;
 
 
@@ -24,7 +19,7 @@ public class Engine {
     private HashMap<int[],ActiveObject> objects;
     private HashMap<int[],ActiveObject> bullets;
     private Tile[][] /*--------------*/ tileMap;
-    static  float /*-----------------*/ P_init = 0.10f;
+    static  float /*-----------------*/ P_init = 0.75f;
     static  float /*-----------------*/ P_nMax = 0.50f;
     static  float /*-----------------*/ P_nAdd = 0.50f;
 
@@ -66,7 +61,7 @@ public class Engine {
         int[] /*-------*/ currAddr;
         int /*---------*/ ii, jj;
         int /*---------*/ gCount;
-        int /*---------*/ Nstep = 0;
+        float /*-------*/ P_step = P_nAdd;
 
         /// Stage 1: Seed Random Tiles ///
         for( int i = 0; i < Wmap; ++i ){
@@ -96,8 +91,27 @@ public class Engine {
                 if( tileMap[ a[0] ][ a[1] ].type == "grass" ){
                     ++gCount;
                 }
+                if( !tileMap[ a[0] ][ a[1] ].visited ){  frontier.add(a);  }
             }
+            if( coinflip_P( (gCount / 8.0f) * P_nMax + P_step ) ){
+                tileMap[ currAddr[0] ][ currAddr[1] ] = Tile.make_grass( this );
+            }else{
+                tileMap[ currAddr[0] ][ currAddr[1] ] = Tile.make_water( this );
+            }
+            P_step *= (1.0f - decay);
+            tileMap[ currAddr[0] ][ currAddr[1] ].visited = true;
         }
+    }
+
+    public void print(){
+        // Output the current map state to the terminal
+        for( int j = 0 ; j < Wmap ; j++ ){
+            for( int i = 0 ; i < Hmap ; i++ ){
+                System.out.print( tileMap[j][i].rep ); System.out.print( ' ' );
+            }
+            System.out.println();
+        }
+
     }
 
     public void add_object( int[] addr, ActiveObject obj, boolean isBullet ){

@@ -1,8 +1,4 @@
-/*
- * GameObject.java
- * James Watson, 2024-12
- * Superclass for something that can be somewhere
- */
+
 
 ///////// INIT /////////////////////////////////////////////////////////////////////////////////////
 

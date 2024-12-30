@@ -1,12 +1,19 @@
 # Custom
+
+*.class
+**/*.class
+
 ZZ_Proprietary-Ignored/*
 .vscode/
 build/
+
 .ipynb_checkpoints/
 **/.ipynb_checkpoints/
+
 **/__pycache__/
 **/images/
 python/OGRE/pugixml/
+
 zig/mach/
 
 d/raylib/*/*.app

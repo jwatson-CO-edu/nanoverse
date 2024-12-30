@@ -1,8 +1,4 @@
-/*
- * ActiveObject.java
- * James Watson, 2024-12
- * Game things that can do things (Walls, Cannons, Enemies)
- */
+
 
 ///////// INIT /////////////////////////////////////////////////////////////////////////////////////
 
