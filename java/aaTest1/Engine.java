@@ -15,13 +15,13 @@ import static Helpers.Utils.coinflip_P;;
 public class Engine {
 
     /// Simulation ///
-    private int /*-------------------*/ Wmap, Hmap;
-    private HashMap<int[],ActiveObject> objects;
-    private HashMap<int[],ActiveObject> bullets;
-    private Tile[][] /*--------------*/ tileMap;
-    static  float /*-----------------*/ P_init = 0.75f;
-    static  float /*-----------------*/ P_nMax = 0.50f;
-    static  float /*-----------------*/ P_nAdd = 0.50f;
+    protected int /*-------------------*/ Wmap, Hmap;
+    private   HashMap<int[],ActiveObject> objects;
+    private   HashMap<int[],ActiveObject> bullets;
+    protected Tile[][] /*--------------*/ tileMap;
+    static    float /*-----------------*/ P_init = 0.75f;
+    static    float /*-----------------*/ P_nMax = 0.50f;
+    static    float /*-----------------*/ P_nAdd = 0.50f;
 
     /// Constructor(s) ///
     Engine( int w, int h ){
