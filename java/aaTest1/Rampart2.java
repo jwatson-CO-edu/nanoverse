@@ -12,7 +12,7 @@ public class Rampart2 {
         Engine  engine  = new Engine( 25, 25 ); // Game State and Events
         Painter painter = new Painter( engine, 25 );
         int[]  bgnTil = {12,12};
-        engine.gen_map( bgnTil, 0.50f, 0.001f);
+        engine.gen_map( bgnTil, 0.85f, 0.50f, 0.001f);
         // engine.print();
 
         // Create a JFrame to display the panel

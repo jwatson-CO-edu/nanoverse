@@ -19,9 +19,9 @@ public class Engine {
     private   HashMap<int[],ActiveObject> objects;
     private   HashMap<int[],ActiveObject> bullets;
     protected Tile[][] /*--------------*/ tileMap;
-    static    float /*-----------------*/ P_init = 0.75f;
-    static    float /*-----------------*/ P_nMax = 0.50f;
-    static    float /*-----------------*/ P_nAdd = 0.50f;
+    static    float /*-----------------*/ P_nMax = 0.50f; // Max coinflip probability for grassy neighborhood
+    static    int /*-------------------*/ gThresh = 5;
+    static    int /*-------------------*/ wThresh = 6;
 
     /// Constructor(s) ///
     Engine( int w, int h ){
@@ -54,22 +54,23 @@ public class Engine {
         return rtnHood;
     }
     
-    public void gen_map( int[] landSeed, float bgnMargin, float decay ){
+    public void gen_map( int[] landSeed, float bgnProb, float bgnMargin, float decay ){
         // Generate the map, Procedurally
         ArrayDeque<int[]> frontier = new ArrayDeque<int[]>();
         ArrayList<int[]>  nghbrs;
         int[] /*-------*/ currAddr;
         int /*---------*/ ii, jj;
         int /*---------*/ gCount;
-        float /*-------*/ P_step = P_nAdd;
+        int /*---------*/ wCount;
+        float /*-------*/ P_step = bgnProb;
 
         /// Stage 1: Seed Random Tiles ///
         for( int i = 0; i < Wmap; ++i ){
             for( int j = 0; j < Hmap; ++j ){
-                if( coinflip_P( P_init ) ){
-                    tileMap[i][j] = Tile.make_grass( this );
+                if( coinflip_P( bgnProb ) ){
+                    tileMap[i][j] = Tile.make_Tile( this, "grass" );  
                 }else{
-                    tileMap[i][j] = Tile.make_water( this );
+                    tileMap[i][j] = Tile.make_Tile( this, "water" );  
                 }
             }
         }
@@ -82,24 +83,46 @@ public class Engine {
             currAddr = frontier.pop();
             ii /*-*/ = currAddr[0];
             jj /*-*/ = currAddr[1];
-            tileMap[ii][jj].visited = true;
+            // tileMap[ii][jj].visited = true;
 
             // 2. Calc grass probability from neighborhood
             nghbrs = get_neighborhood( currAddr );
             gCount = 0;
             for( int[] a : nghbrs ){
+                if( !tileMap[ a[0] ][ a[1] ].p_visited() ){  frontier.add( a.clone() );  }
                 if( tileMap[ a[0] ][ a[1] ].type == "grass" ){
                     ++gCount;
                 }
-                if( !tileMap[ a[0] ][ a[1] ].visited ){  frontier.add(a);  }
             }
-            if( coinflip_P( (gCount / 8.0f) * P_nMax + P_step ) ){
-                tileMap[ currAddr[0] ][ currAddr[1] ] = Tile.make_grass( this );
+            if( coinflip_P( ((float) gCount / 8.0f) * P_nMax + P_step ) ){
+                tileMap[ii][jj] = Tile.make_Tile( this, "grass" );  
             }else{
-                tileMap[ currAddr[0] ][ currAddr[1] ] = Tile.make_water( this );
+                tileMap[ii][jj] = Tile.make_Tile( this, "water" );  
             }
+            tileMap[ii][jj].visit();
             P_step *= (1.0f - decay);
-            tileMap[ currAddr[0] ][ currAddr[1] ].visited = true;
+        }
+
+        /// Stage 3: Fill in Gaps ///
+        for( int i = 0; i < Wmap; ++i ){
+            for( int j = 0; j < Hmap; ++j ){
+                currAddr = new int[]{ i, j };
+                nghbrs   = get_neighborhood( currAddr );
+                gCount   = 0;
+                wCount   = 0;
+                for( int[] a : nghbrs ){
+                    if( tileMap[ a[0] ][ a[1] ].type == "grass" ){  ++gCount;  }
+                    else if( tileMap[ a[0] ][ a[1] ].type == "water" ){  ++wCount;  }
+                }
+                if( gCount >= gThresh ){  
+                    tileMap[i][j] = Tile.make_Tile( this, "grass" );  
+                    tileMap[i][j].visit();
+                }
+                if( wCount >= wThresh ){  
+                    tileMap[i][j] = Tile.make_Tile( this, "water" );  
+                    tileMap[i][j].visit();
+                }
+            }
         }
     }
 
@@ -111,7 +134,6 @@ public class Engine {
             }
             System.out.println();
         }
-
     }
 
     public void add_object( int[] addr, ActiveObject obj, boolean isBullet ){
@@ -125,12 +147,12 @@ public class Engine {
     }
 
 
-    public void update(){
-        // https://stackoverflow.com/a/1066607
-        for (Map.Entry<int[],ActiveObject> entry : bullets.entrySet()) {
-            int[] /*-*/  key   = entry.getKey();
-            ActiveObject value = entry.getValue();
-            // ...
-        }
-    }
+    // public void update(){
+    //     // https://stackoverflow.com/a/1066607
+    //     for (Map.Entry<int[],ActiveObject> entry : bullets.entrySet()) {
+    //         int[] /*-*/  key   = entry.getKey();
+    //         ActiveObject value = entry.getValue();
+    //         // ...
+    //     }
+    // }
 }

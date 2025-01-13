@@ -10,8 +10,8 @@ import java.awt.Color;
 public class Tile extends GameObject {
 
     /// Members ///
-    boolean visited;
-    Color   clr;
+    private   boolean visited;
+    protected Color   clr;
     
     /// Constructor(s) ///
     Tile( Engine g, String t, char r, Color c ){
@@ -21,13 +21,28 @@ public class Tile extends GameObject {
         visited = false;
     }
 
-    static Tile make_grass( Engine g ){
-        // Return a `Tile` representing grass
-        return new Tile( g, "grass", '"', Color.GREEN );
+    /// Factory Function ///
+    
+    static Tile make_Tile( Engine g, String tileType ){
+        // Return a tile of the specified type
+        Tile rtnTile;
+        switch(tileType) {
+            case "grass":
+                rtnTile = new Tile( g, "grass", '"', Color.GREEN );        
+                break;
+                
+            case "water":
+                rtnTile = new Tile( g, "water", '~', Color.BLUE );
+                break;
+
+            default:
+                rtnTile = new Tile( g, "INVALID", '"', Color.BLACK );        
+        }
+        return rtnTile;
     }
 
-    static Tile make_water( Engine g ){
-        // Return a `Tile` representing grass
-        return new Tile( g, "water", '~', Color.BLUE );
-    }
+    /// Methods ///
+    public void    visit(){  visited = true;  }
+    public void    unvisit(){  visited = false;  }
+    public boolean p_visited(){  return visited;  }
 }
