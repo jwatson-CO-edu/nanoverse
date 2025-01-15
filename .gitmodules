@@ -1,3 +1,6 @@
 [submodule "C++/OpenCV/matio"]
 	path = C++/OpenCV/matio
 	url = https://github.com/tbeu/matio.git
+[submodule "java/ae_Build_Tools/csci-4448-5448-spring-2025-homework-1-jwatson-CO-edu"]
+	path = java/ae_Build_Tools/csci-4448-5448-spring-2025-homework-1-jwatson-CO-edu
+	url = git@github.com:University-of-Colorado-Boulder-S2025/csci-4448-5448-spring-2025-homework-1-jwatson-CO-edu.git
