@@ -29,7 +29,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */ 
 
-package ad_Swing_kb;
 
 
  /*
@@ -41,30 +40,29 @@ package ad_Swing_kb;
  import java.awt.event.*;
  import javax.swing.*;
  
- public class KeyEventDemo extends JFrame
-         implements KeyListener,
-         ActionListener
- {
-     JTextArea displayArea;
-     JTextField typingArea;
-     static final String newline = System.getProperty("line.separator");
+ public class KeyEventDemo extends JFrame implements KeyListener, ActionListener {
+
+    JTextArea /*-----*/ displayArea;
+    JTextField /*----*/ typingArea;
+    static final String newline = System.getProperty( "line.separator" );
 
     KeyEventDemo(){
         try {
-             
             UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
-        } catch (UnsupportedLookAndFeelException ex) {
+        } catch ( UnsupportedLookAndFeelException ex) {
             ex.printStackTrace();
-        } catch (IllegalAccessException ex) {
+        } catch ( IllegalAccessException ex ) {
             ex.printStackTrace();
-        } catch (InstantiationException ex) {
+        } catch ( InstantiationException ex ) {
             ex.printStackTrace();
-        } catch (ClassNotFoundException ex) {
+        } catch ( ClassNotFoundException ex ) {
             ex.printStackTrace();
         }
         /* Turn off metal's use of bold fonts */
-        UIManager.put("swing.boldMetal", Boolean.FALSE);
-        
+        UIManager.put("swing.boldMetal", Boolean.FALSE);   
+    }
+
+    public void run(){
         //Schedule a job for event dispatch thread:
         //creating and showing this application's GUI.
         javax.swing.SwingUtilities.invokeLater(new Runnable() {

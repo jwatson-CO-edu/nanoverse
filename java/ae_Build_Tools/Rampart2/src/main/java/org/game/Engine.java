@@ -2,7 +2,7 @@ package org.game;
 
 ///////// INIT /////////////////////////////////////////////////////////////////////////////////////
 
-import java.util.HashMap;
+//import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.ArrayDeque;
 // import java.util.Map;
@@ -16,8 +16,8 @@ public class Engine {
 
     /// Simulation ///
     protected int /*-------------------*/ Wmap, Hmap;
-    private   HashMap<int[],ActiveObject> objects;
-    private   HashMap<int[],ActiveObject> bullets;
+//    private   HashMap<int[],ActiveObject> objects;
+//    private   HashMap<int[],ActiveObject> bullets;
     protected Tile[][] /*--------------*/ tileMap;
     static    float /*-----------------*/ P_nMax = 0.50f; // Max coinflip probability for grassy neighborhood
     static    int /*-------------------*/ gThresh = 5;
@@ -28,8 +28,8 @@ public class Engine {
         // Instantiate vars
         Wmap    = w;
         Hmap    = h;
-        objects = new HashMap<int[],ActiveObject>();
-        bullets = new HashMap<int[],ActiveObject>();
+//        objects = new HashMap<int[],ActiveObject>();
+//        bullets = new HashMap<int[],ActiveObject>();
         tileMap = new Tile[w][h];
     }
 
@@ -77,7 +77,7 @@ public class Engine {
 
         /// Stage 2: Grow Clumps
         frontier.add( landSeed );
-        while( frontier.size() > 0 ){
+        while( !frontier.isEmpty() ){
 
             // 1. Pop from frontier
             currAddr = frontier.pop();
@@ -136,15 +136,15 @@ public class Engine {
         }
     }
 
-    public void add_object( int[] addr, ActiveObject obj, boolean isBullet ){
-        if( !isBullet ){
-            obj.address = addr;
-            objects.put( addr, obj );
-        }else{
-            obj.address = addr;
-            bullets.put( addr, obj );
-        }
-    }
+//    public void add_object( int[] addr, ActiveObject obj, boolean isBullet ){
+//        if( !isBullet ){
+//            obj.address = addr;
+//            objects.put( addr, obj );
+//        }else{
+//            obj.address = addr;
+//            bullets.put( addr, obj );
+//        }
+//    }
 
 
     // public void update(){
