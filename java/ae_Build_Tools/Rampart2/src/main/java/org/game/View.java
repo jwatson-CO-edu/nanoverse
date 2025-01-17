@@ -4,17 +4,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 
 
 
-
-
-public class Painter extends JPanel implements KeyListener, ActionListener  {
+public class View extends JPanel implements ActionListener  {
 
     /// Members ///
-    protected Engine game; // Container
+    protected Engine game; // Simulation
     private   int    unitPx;
     private   int    Wwin, Hwin;
     private   Timer  timer;
@@ -45,7 +41,7 @@ public class Painter extends JPanel implements KeyListener, ActionListener  {
 
 
     /// Constructor(s) ///
-    public Painter( Engine g, int gridUnit_px ) {
+    public View( Engine g, int gridUnit_px ) {
         // Connect the renderer to the game engine
         game   = g;
         unitPx = gridUnit_px;
@@ -91,43 +87,6 @@ public class Painter extends JPanel implements KeyListener, ActionListener  {
     }
 
 
-    /// Interaction Methods ///
-
-    /** Handle the key typed event from the text field. */
-    public void keyTyped( KeyEvent e ) {
-        // NO-OP, Req'd by interface
-    }
     
-    /** Handle the key pressed event from the text field. */
-    public void keyPressed( KeyEvent e ) {
-        // NO-OP, Req'd by interface
-        int keyCode = e.getKeyCode();
-        switch ( keyCode ) {
-
-            case 38: // UP
-                game.cursor.move_UP();
-                break;
-
-            case 40: // DOWN
-                game.cursor.move_DOWN();
-                break;
-
-            case 37: // LEFT
-                game.cursor.move_LEFT();
-                break;
-
-            case 39: // RIGHT
-                game.cursor.move_RIGHT();
-                break;
-        
-            default: // NO-OP
-                break;
-        }
-    }
-    
-    /** Handle the key released event from the text field. */
-    public void keyReleased( KeyEvent e ) {
-        // NO-OP, Req'd by interface
-    }
 
 }
