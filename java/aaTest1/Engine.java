@@ -33,7 +33,22 @@ public class Engine {
         tileMap = new Tile[w][h];
     }
 
+
     /// Methods ///
+    
+    public boolean p_valid_addr( int ii, int jj ){
+        // Is <ii,jj> a valid address?
+        return ((ii>=0) && (jj>=0) && (ii<Wmap) && (jj<Hmap));
+    }
+
+
+    public boolean p_valid_addr( int[] addr ){
+        // Is {ii,jj} a valid address?
+        int ii = addr[0];
+        int jj = addr[1];
+        return p_valid_addr( ii, jj );
+    }
+
     
     ArrayList<int[]> get_neighborhood( int[] center ){
         // Return the 8 cell neighborhood of `center`, Respects the grid world boundaries
@@ -44,7 +59,7 @@ public class Engine {
             for( int j = -1; j <= 1; ++j ){
                 ii = i + center[0];
                 jj = j + center[1];
-                if( ((i!=0) || (j!=0)) && (ii>=0) && (jj>=0) && (ii<Wmap) && (jj<Hmap) ){
+                if( ((i!=0) || (j!=0)) && p_valid_addr( ii, jj ) ){
                     addr[0] = ii;
                     addr[1] = jj;
                     rtnHood.add( addr.clone() );
