@@ -102,21 +102,22 @@ public class Painter extends JPanel implements KeyListener, ActionListener  {
     public void keyPressed( KeyEvent e ) {
         // NO-OP, Req'd by interface
         int keyCode = e.getKeyCode();
-        switch (keyCode) {
+        switch ( keyCode ) {
+
             case 38: // UP
-                
+                game.cursor.move_UP();
                 break;
 
             case 40: // DOWN
-                
+                game.cursor.move_DOWN();
                 break;
 
             case 37: // LEFT
-                
+                game.cursor.move_LEFT();
                 break;
 
             case 39: // RIGHT
-                
+                game.cursor.move_RIGHT();
                 break;
         
             default: // NO-OP

@@ -22,15 +22,21 @@ public class Engine {
     static    float /*-----------------*/ P_nMax = 0.50f; // Max coinflip probability for grassy neighborhood
     static    int /*-------------------*/ gThresh = 5;
     static    int /*-------------------*/ wThresh = 6;
+    /// Interaction ///
+    Cursor cursor;
+
 
     /// Constructor(s) ///
     Engine( int w, int h ){
+        int[] bgnAdr = { (int)w/2, (int)h/2 };
         // Instantiate vars
         Wmap    = w;
         Hmap    = h;
 //        objects = new HashMap<int[],ActiveObject>();
 //        bullets = new HashMap<int[],ActiveObject>();
         tileMap = new Tile[w][h];
+        // Instantiate UI
+        cursor = new Cursor(this, bgnAdr );
     }
 
     /// Methods ///
