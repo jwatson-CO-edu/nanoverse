@@ -17,8 +17,16 @@ public class View extends JPanel implements ActionListener  {
 
 
     /// Getters ///
-    public int get_width(){   return Wwin;  }
-    public int get_height(){  return Hwin;  }
+    public int get_width(){   
+        System.out.println( String.format("Map Width: %d [px]" , Wwin ));
+        return Wwin;  
+    }
+
+
+    public int get_height(){    
+        System.out.println( String.format("Map Height: %d [px]" , Hwin ));
+        return Hwin;  
+    }
 
 
     /// Init Helpers ///
@@ -57,17 +65,26 @@ public class View extends JPanel implements ActionListener  {
 
     /// Display Methods ///
     public void paint_terrain( Graphics2D g2d ){
+        // Draw the Game Map
         for( int j = 0 ; j < game.Wmap ; j++ ){
             for( int i = 0 ; i < game.Hmap ; i++ ){
                 g2d.setColor( game.tileMap[j][i].clr );
-                g2d.fillRect( j*unitPx, Hwin-(i+1)*unitPx, unitPx, unitPx    );
+                g2d.fillRect( j*unitPx, Hwin-(i+1)*unitPx, unitPx, unitPx );
             }
         }
     }
 
 
+    public void paint_cursor( Graphics2D g2d ){
+        // Draw the Cursor
+        g2d.setColor( Color.WHITE );
+        g2d.setStroke( new BasicStroke(3) );
+        g2d.drawRect( game.cursor.address[0]*unitPx, Hwin-(game.cursor.address[1]+1)*unitPx, unitPx, unitPx );
+    }
+
+
     @Override
-    protected void paintComponent(Graphics g) {
+    protected void paintComponent( Graphics g ) {
         super.paintComponent(g);
 
         // Cast Graphics to Graphics2D for advanced features
@@ -77,6 +94,7 @@ public class View extends JPanel implements ActionListener  {
         g2d.setColor( Color.BLACK );
         g2d.fillRect( 0, 0, Wwin, Hwin );
         paint_terrain( g2d );
+        paint_cursor( g2d );
     }
 
 
