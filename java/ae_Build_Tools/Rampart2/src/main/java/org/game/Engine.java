@@ -2,29 +2,44 @@ package org.game;
 
 ///////// INIT /////////////////////////////////////////////////////////////////////////////////////
 
-//import java.util.HashMap;
+// import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.ArrayDeque;
 // import java.util.Map;
 
-import static Helpers.Utils.coinflip_P;;
+import static Helpers.Utils.coinflip_P;
 
 
 ///////// CLASS DEF ////////////////////////////////////////////////////////////////////////////////
 
+enum GameState {
+    // Governs game behavior thru different interaction phases
+    BUILD,
+}
+
+// public class Engine implements MessageSystem, Observer {
 public class Engine {
+
+    /// Class Vars ///
+    static float /*-----------------*/ P_nMax    = 0.50f; // Max coinflip probability for grassy neighborhood
+    static int /*-------------------*/ gThresh   = 5;
+    static int /*-------------------*/ wThresh   = 6;
+    static Dir[] /*-----------------*/ cardinals = { Dir.NORTH, Dir.EAST, Dir.SOUTH, Dir.WEST, };
 
     /// Simulation ///
     protected int /*-------------------*/ Wmap, Hmap;
 //    private   HashMap<int[],ActiveObject> objects;
 //    private   HashMap<int[],ActiveObject> bullets;
     protected Tile[][] /*--------------*/ tileMap;
-    static    float /*-----------------*/ P_nMax = 0.50f; // Max coinflip probability for grassy neighborhood
-    static    int /*-------------------*/ gThresh = 5;
-    static    int /*-------------------*/ wThresh = 6;
+    
+    // private   ArrayList<String> /*-----*/ eventLog;
     /// Interaction ///
-    Cursor cursor;
-
+    protected Cursor    cursor;
+    protected Blueprint blcBP;
+    protected GameState state;
+    /// Messages ///
+    // protected ArrayDeque<Message> /*-----------*/ msgQ;
+    // protected HashMap<String,ArrayList<Observer>> observers;
 
     /// Constructor(s) ///
     Engine( int w, int h ){
@@ -36,8 +51,20 @@ public class Engine {
 //        bullets = new HashMap<int[],ActiveObject>();
         tileMap = new Tile[w][h];
         // Instantiate UI
-        cursor = new Cursor(this, bgnAdr );
+        cursor = new Cursor( this, bgnAdr );
+        blcBP  = null;
+        state  = GameState.BUILD;
+        // Start `MessageSystem`
+        // msgQ /**/ = new ArrayDeque<Message>();
+        // observers = new HashMap<String,ArrayList<Observer>>();
     }
+
+
+    public BlcPn next_template(){
+        blcBP = Blueprint.random_template( this );
+        return blcBP.shape;
+    }
+
 
     /// Methods ///
     
@@ -156,6 +183,11 @@ public class Engine {
             System.out.println();
         }
     }
+
+
+    /// MessageSystem ///
+    
+    
 
 //    public void add_object( int[] addr, ActiveObject obj, boolean isBullet ){
 //        if( !isBullet ){
