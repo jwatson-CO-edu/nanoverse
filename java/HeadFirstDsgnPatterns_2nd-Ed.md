@@ -12,6 +12,12 @@
     - No variable should hold a reference to a concrete class.
     - No class should derive from a concrete class.
 * Principle of Least Knowledge: Talk only to your immediate friends
+* Don't Call Us, We'll Call You
+    - allow low-level components to hook themselves into a system, but the high-level components determine when they are needed, and how.
+    - Dependency rot happens when you have a large number of vertical and lateral dependencies
+* A class should have only one responsibility
+    - Every responsibility of a class is an area of potential change
+    - We say that a module or class has **high cohesion** when it is designed around a set of related functions
 
 # Observer Pattern
 * One-to-Many Relationships
@@ -56,3 +62,17 @@
 * An adapter that simplifies the interface that has been adapted
 
 # Template Method Pattern
+* Think C++ Template Library
+* Template Method Pattern defines the skeleton of an algorithm in a method, deferring some steps to subclasses. 
+* Template Method lets subclasses redefine certain steps of an algorithm without changing the algorithm’s structure.
+    - Keep abstract methods small in number
+* Template Method implements the same algorithm on different targets, Strategy implements different algorithms for different actions at runtime
+* Use abstract methods when your subclass MUST provide an implementation of the method or step in the algorithm. 
+* Use hooks when that part of the algorithm is optional. With hooks, a subclass may choose to implement that hook, but it doesn’t have to.
+
+# Iterator Pattern
+* Get elements of the container, even if the containers are different in structure
+* Implements an iterator interface: `has_next()` + `next_item()` + `remove_item()` (optional)
+* See `java.util.Iterator`
+
+# Composite Pattern
