@@ -76,3 +76,42 @@
 * See `java.util.Iterator`
 
 # Composite Pattern
+* Tree structure to represent part/sub-part hierarchies
+* Needs to be able to add new sub-collections and iterate them easily
+* The Composite Pattern allows clients to treat composites and individual objects uniformly.
+
+# State Pattern
+* This is a Finite State Machine: allows an object to have many different behaviors that are based on its internal state.
+    - Context delegates work to states, which are classes
+    - State transitions can take place either within the states or the context
+        * The Context is the best place for transitions so that you can rewire that instead of many state definitions
+    - Context should be loosely coupled with states
+    - States should be loosely coupled with each other, if at all
+* Similar to Stategy Pattern, with the addition of rules that determine which state governs behavior at each any given time
+* Can be replaced by a **Behavior Tree**
+
+# Proxy Pattern
+* Goal: Access Control
+* The Remote Proxy is a local representation of a remote object
+* Remote Method Invocation (RMI) gives us a way to find objects in a remote JVM and allows us to invoke their methods.
+* The Virtual Proxy acts as a representative for an object that may be expensive to create. The Virtual Proxy often defers the creation of the object until it is needed.
+* Protection Proxy controls access to the methods of an object based on the caller.
+
+# Model-View-Controller (MVC) Pattern
+* A compound pattern consisting of the Observer, Strategy, and Composite Patterns.
+* *Model* (Observer Pattern): Data + State + Logic = Main computational component
+    - The model notifies the view when its state has changed.
+* *View* (Composite Pattern): Represents the model with enough fidelity to support control
+    - Fetches necessary data from the *Model*
+    - Sends user interaction events to the *Controller*
+* *Controller* (Strategy Pattern): Mediates state changes between the user and the *Model*
+    - Receives user input, Interprets the input. and Manipulates the model based on that input
+        * Application logic does NOT belong in the *Controller*, It belongs in the *Model*
+    - Initiates state changes in the *Model*
+    - The *Controller* may also ask the view to change.
+
+# Other Patterns
+## Bridge Pattern
+* Abstraction and implementation can be extended independently: Allows you to vary the implementation and the abstraction by placing the two in separate class hierarchies.
+* Useful in graphics and windowing systems that need to run over multiple platforms.
+## Builder Pattern
