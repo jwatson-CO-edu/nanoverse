@@ -2,7 +2,7 @@ package org.game;
 
 ///////// INIT /////////////////////////////////////////////////////////////////////////////////////
 
-// import java.util.HashMap;
+import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.ArrayDeque;
 // import java.util.Map;
@@ -17,6 +17,22 @@ enum GameState {
     BUILD,
 }
 
+enum GameCmd {
+    // Valid commands the engine receives (and sends)
+
+    /// General Purpose ///
+    NO_OP,
+    ERROR,
+
+    /// `BUILD` Phase ///
+    PLACEMENT_CONFIRM,
+    PLACEMENT_NEXT,
+    CURSOR_NORTH, 
+    CURSOR_EAST, 
+    CURSOR_SOUTH, 
+    CURSOR_WEST,
+}
+
 // public class Engine implements MessageSystem, Observer {
 public class Engine {
 
@@ -28,7 +44,7 @@ public class Engine {
 
     /// Simulation ///
     protected int /*-------------------*/ Wmap, Hmap;
-//    private   HashMap<int[],ActiveObject> objects;
+   private   HashMap<int[],ActiveObject> objects;
 //    private   HashMap<int[],ActiveObject> bullets;
     protected Tile[][] /*--------------*/ tileMap;
     
@@ -47,13 +63,14 @@ public class Engine {
         // Instantiate vars
         Wmap    = w;
         Hmap    = h;
-//        objects = new HashMap<int[],ActiveObject>();
+        objects = new HashMap<int[],ActiveObject>();
 //        bullets = new HashMap<int[],ActiveObject>();
         tileMap = new Tile[w][h];
         // Instantiate UI
         cursor = new Cursor( this, bgnAdr );
         blcBP  = null;
         state  = GameState.BUILD;
+        next_template();
         // Start `MessageSystem`
         // msgQ /**/ = new ArrayDeque<Message>();
         // observers = new HashMap<String,ArrayList<Observer>>();
@@ -63,6 +80,34 @@ public class Engine {
     public BlcPn next_template(){
         blcBP = Blueprint.random_template( this );
         return blcBP.shape;
+    }
+
+    public void make_Wall( int[] addr ){
+        // Make a single `Wall` segment
+        objects.put( addr, new Wall( this, addr ) );
+    }
+
+    public String get_terrain_type( int[] addr ){
+        // Get the `Tile` type for a valid address, Otherwise return "INVALID"
+        String rtnStr = "INVALID";
+        if( p_valid_addr( addr ) ){
+            rtnStr = tileMap[ addr[0] ][ addr[1] ].type;
+        }
+        return rtnStr;
+    }
+
+    public int emplace_template(){
+        // Create `Wall` segments, Report how many `Wall` segments were created on the map!
+        int consumed = 0;
+        if( blcBP != null ){
+            for( int[] spot : blcBP.actual ){
+                if( get_terrain_type( spot ) == "grass" ){ // `get_terrain_type` performs `p_valid_addr( spot )`
+                    make_Wall( spot );
+                    consumed++;
+                }
+            }
+        }
+        return consumed;
     }
 
 
@@ -200,12 +245,31 @@ public class Engine {
 //    }
 
 
-    // public void update(){
-    //     // https://stackoverflow.com/a/1066607
-    //     for (Map.Entry<int[],ActiveObject> entry : bullets.entrySet()) {
-    //         int[] /*-*/  key   = entry.getKey();
-    //         ActiveObject value = entry.getValue();
-    //         // ...
-    //     }
-    // }
+    public boolean handle_command( Message input ){
+
+        switch (state) {
+            case BUILD:{
+                    switch ( input.cmd ) {
+
+                        case PLACEMENT_NEXT:
+                            next_template();
+                            break;
+                    
+                        case PLACEMENT_CONFIRM:
+                            next_template();
+                            break;
+
+                        default:
+                            break;
+                    }
+                }break;
+        
+            default:
+                break;
+        }
+
+        
+
+        return true;
+    }
 }
