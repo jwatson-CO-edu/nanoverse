@@ -110,8 +110,63 @@
     - Initiates state changes in the *Model*
     - The *Controller* may also ask the view to change.
 
+
 # Other Patterns
+
 ## Bridge Pattern
 * Abstraction and implementation can be extended independently: Allows you to vary the implementation and the abstraction by placing the two in separate class hierarchies.
 * Useful in graphics and windowing systems that need to run over multiple platforms.
+
 ## Builder Pattern
+* Encapsulates the way a complex object is constructed.
+* Allows objects to be constructed in a multistep and varying process (as opposed to one-step factories).
+* Hides the internal representation of the product from the client.
+* Implementations can be swapped in and out because the client only sees an abstract interface.
+
+## Chain of Responsibility Pattern
+* Gives more than one object a chance to handle a request
+* Decouples the sender of the request and its receivers.
+* Simplifies your object because it doesn't have to know the chain's structure and keep direct references to its members.
+* Allows you to add or remove responsibilities dynamically by changing the members or order of the chain.
+* Execution of the request isn't guaranteed; it may fall off the end of the chain if no object handles it.
+* Can be hard to observe and debug at runtime.
+
+## Flyweight Pattern
+* One placeholder instance of a class can be used to provide many virtual instances
+* Reduces the number of object instances at runtime, saving memory.
+* Centralizes state for many "virtual" objects into a single location.
+* Single, logical instances of the class will not be able to behave independently from the other instances.
+
+## Interpreter Pattern
+* Implements a DSL or scripting language
+* Representing each grammar rule in a class makes the language easy to implement.
+* Because the grammar is represented by classes, you can easily change or extend the language.
+* By adding methods to the class structure, you can add new behaviors beyond interpretation, like pretty printing and more sophisticated program validation.
+* This pattern can become cumbersome when the number of grammar rules is large. In these cases a parser/compiler generator may be more appropriate.
+
+## Mediator Pattern
+* Centralize complex communications and control between related objects
+* Simplifies maintenance of the system by centralizing control logic.
+* Simplifies and reduces the variety of messages sent between objects in the system
+* A drawback of the Mediator Pattern is that without proper design, the Mediator object itself can become overly complex.
+
+## Momento Pattern
+* Supports the ability to return an object to one of its previous states; for instance, if your user requests an "undo"
+* Provides easy-to-implement recovery capability.
+* A drawback to using Memento is that saving and restoring state can be time-consuming.
+
+## Prototype Pattern
+* Use the Prototype Pattern when creating an instance of a given class is either expensive or complicated.
+* Hides the complexities of making new instances from the client.
+* Provides the option for the client to generate objects whose type is not known.
+* In some circumstances, copying an object can be more efficient than creating a new object.
+* Prototype should be considered when a system must create new objects of many types in a complex class hierarchy.
+* A drawback to using Prototype is that making a copy of an object can sometimes be complicated.
+
+## Visitor Pattern
+* Allows you to add operations to a Composite structure without changing the structure itself.
+* Adding new operations is relatively easy.
+* The code for operations performed by the Visitor is centralized.
+* The Composite classes' encapsulation is broken when the Visitor is used.
+* Because the traversal function is involved, changes to the Composite structure are more difficult.
+
