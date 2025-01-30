@@ -24,8 +24,10 @@ vector<NodePtr> images_to_nodes( string path, string ext ){
     for( uint i = 0; i < N; ++i ){
         node_i = new SG_Node( fNames[i], images[i] );
         kazeMaker.get_KAZE_keypoints( images[i], node_i->kypts, node_i->kpNfo );
+        if( i > 0 ){  node_i->nhbrs.push_back( NodePtr{ rtnNds.back() } );  } // Assume pix were taken in a sequence
         rtnNds.push_back( NodePtr{ node_i } );
         cout << node_i->kypts.size() << " kp, " << flush;
+        
     }
     cout << endl;
     return rtnNds;
