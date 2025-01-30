@@ -1,13 +1,18 @@
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
+
 package org.game;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Map;
 
 
 
-public class View extends JPanel implements ActionListener  {
+////////// GAME DISPLAY ////////////////////////////////////////////////////////////////////////////
+
+public class View extends JPanel implements ActionListener {
 
     /// Members ///
     protected Engine game; // Simulation
@@ -18,12 +23,14 @@ public class View extends JPanel implements ActionListener  {
 
     /// Getters ///
     public int get_width(){   
+        // Width of the map in pixels
         System.out.println( String.format("Map Width: %d [px]" , Wwin ));
         return Wwin;  
     }
 
 
     public int get_height(){    
+        // Height of the map in pixels
         System.out.println( String.format("Map Height: %d [px]" , Hwin ));
         return Hwin;  
     }
@@ -75,6 +82,22 @@ public class View extends JPanel implements ActionListener  {
     }
 
 
+    public void paint_walls( Graphics2D g2d ){
+        // Draw all intact, placed walls
+        int /*----*/ i, j;
+        int[] /*--*/ k;
+        ActiveObject v;
+        g2d.setColor( Color.GRAY );
+        for( Map.Entry<int[],ActiveObject> entry : game.objects.entrySet() ){
+            k = entry.getKey();
+            v = entry.getValue();
+            i = k[0];
+            j = k[1];
+            if( v.type == "wall" ){  g2d.fillRect( i*unitPx, Hwin-(j+1)*unitPx, unitPx, unitPx );  }
+        }
+    }
+
+
     public void paint_cursor( Graphics2D g2d ){
         // Draw the Cursor
         g2d.setColor( Color.WHITE );
@@ -85,16 +108,30 @@ public class View extends JPanel implements ActionListener  {
 
     @Override
     protected void paintComponent( Graphics g ) {
+        // Actually repaints the frame
         super.paintComponent(g);
 
         // Cast Graphics to Graphics2D for advanced features
         Graphics2D g2d = (Graphics2D) g;
 
-        // Set the background color to black
+        /// Draw Static Elements ///
         g2d.setColor( Color.BLACK );
         g2d.fillRect( 0, 0, Wwin, Hwin );
         paint_terrain( g2d );
+
+        /// Draw Cursor ///
         paint_cursor( g2d );
+
+        /// Draw Mode-Dependent Elements ///
+        switch( game.state ){
+            case BUILD:
+                
+                break;
+        
+            default:
+                System.out.println( String.format( "Drew a frame OUTSIDE of a game mode!" ) );
+                break;
+        }
     }
 
 
@@ -103,8 +140,5 @@ public class View extends JPanel implements ActionListener  {
         // Repaint the panel to show the updated position
         repaint();
     }
-
-
-    
 
 }

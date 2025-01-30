@@ -1,6 +1,6 @@
-package org.game;
-
 ///////// INIT /////////////////////////////////////////////////////////////////////////////////////
+
+package org.game;
 
 import java.util.HashMap;
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ public class Engine {
 
     /// Simulation ///
     protected int /*-------------------*/ Wmap, Hmap;
-   private   HashMap<int[],ActiveObject> objects;
+    protected HashMap<int[],ActiveObject> objects;
 //    private   HashMap<int[],ActiveObject> bullets;
     protected Tile[][] /*--------------*/ tileMap;
     
