@@ -6,6 +6,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 
 
@@ -70,39 +73,104 @@ public class View extends JPanel implements ActionListener {
     }
 
 
+    public int[] get_address_upper_left_px( int i, int j ){
+        // DRY: This is used by every draw method
+        int[] r = {i*unitPx, Hwin-(j+1)*unitPx};
+        return r;
+    }
+
+
+    public int[] get_address_upper_left_px( int[] addr ){
+        // DRY: This is used by every draw method
+        int i = addr[0];
+        int j = addr[1];
+        return get_address_upper_left_px( i, j );
+    }
+
+
     /// Display Methods ///
     public void paint_terrain( Graphics2D g2d ){
         // Draw the Game Map
+        int[] aPx;
+        int   xPx, yPx;
         for( int j = 0 ; j < game.Wmap ; j++ ){
             for( int i = 0 ; i < game.Hmap ; i++ ){
+                aPx = get_address_upper_left_px( j, i );
+                xPx = aPx[0];
+                yPx = aPx[1];
                 g2d.setColor( game.tileMap[j][i].clr );
-                g2d.fillRect( j*unitPx, Hwin-(i+1)*unitPx, unitPx, unitPx );
+                g2d.fillRect( xPx, yPx, unitPx, unitPx );
             }
         }
     }
 
 
-    public void paint_walls( Graphics2D g2d ){
-        // Draw all intact, placed walls
-        int /*----*/ i, j;
-        int[] /*--*/ k;
-        ActiveObject v;
-        g2d.setColor( Color.GRAY );
-        for( Map.Entry<int[],ActiveObject> entry : game.objects.entrySet() ){
+    public void paint_grid_objects( Graphics2D g2d ){
+        // Draw all grid-bound objects
+        
+        // Temp vars
+        int[] /*-------------*/ aPx;
+        int /*---------------*/ xPx, yPx;
+        int /*---------------*/ i, j;
+        int[] /*-------------*/ k;
+        ArrayList<ActiveObject> v;
+
+        // Define a draw order for object types
+        ArrayList<String> /*-*/ objOrder = new ArrayList<String>();
+        objOrder.add( "wall" );
+        
+        // For every address, draw the objects in order
+        for( Map.Entry<int[],ArrayList<ActiveObject>> entry : game.objects.entrySet() ){
             k = entry.getKey();
             v = entry.getValue();
             i = k[0];
             j = k[1];
-            if( v.type == "wall" ){  g2d.fillRect( i*unitPx, Hwin-(j+1)*unitPx, unitPx, unitPx );  }
+            // For every entry in the draw order, Iterate over the objects at the current address
+            for( String type_j : objOrder ){
+                // For every object at the current address, draw only the objects at this place in the draw order
+                for( ActiveObject obj_k : v ){
+                    if( obj_k.type == type_j ){
+                        aPx = get_address_upper_left_px( i, j );
+                        xPx = aPx[0];
+                        yPx = aPx[1];
+                        switch( type_j ){
+                            case "wall":
+                                g2d.setColor( Color.GRAY );
+                                g2d.fillRect( xPx, yPx, unitPx, unitPx );
+                                break;
+                            default:
+                                System.out.println( String.format( "NO draw routine for %s!", type_j ) );
+                                break;
+                        }
+                    }
+                }   
+            }
         }
     }
 
 
     public void paint_cursor( Graphics2D g2d ){
         // Draw the Cursor
+        int[] aPx = get_address_upper_left_px( game.cursor.address );
+        int   xPx = aPx[0];
+        int   yPx = aPx[1];
         g2d.setColor( Color.WHITE );
         g2d.setStroke( new BasicStroke(3) );
-        g2d.drawRect( game.cursor.address[0]*unitPx, Hwin-(game.cursor.address[1]+1)*unitPx, unitPx, unitPx );
+        g2d.drawRect( xPx, yPx, unitPx, unitPx );
+    }
+
+
+    public void paint_template( Graphics2D g2d ){
+        // Draw the template at its current absolute pose
+        int[] aPx;
+        int   xPx, yPx;
+        for( int[] absAddr : game.blcBP.actual ){
+            aPx = get_address_upper_left_px( absAddr );
+            xPx = aPx[0];
+            yPx = aPx[1];
+            g2d.setColor( Color.GRAY );
+            g2d.fillOval( xPx, yPx, unitPx, unitPx );
+        }
     }
 
 
@@ -125,7 +193,7 @@ public class View extends JPanel implements ActionListener {
         /// Draw Mode-Dependent Elements ///
         switch( game.state ){
             case BUILD:
-                
+                paint_template( g2d );
                 break;
         
             default:

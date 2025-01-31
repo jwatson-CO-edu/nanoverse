@@ -97,12 +97,14 @@ public class Blueprint extends ActiveObject {
     }
 
 
-    public void transform_template( int[] cntr, Dir drct ){
-        // Calc block placements for template + cursor + rotation
-        drctn  = drct;
+    public void set_direction( Dir drct ){  drctn = drct;  }
+
+
+    public void transform_template( int[] cntr ){
+        // Calc block placements for template + cursor + rotation        
         actual = new ArrayList<int[]>(); // Erase last placement
         int[] currAddr = new int[] {0,0};
-        switch (drct) {
+        switch( drctn ){
             case NORTH: // No rotation && Translation
                 for( int[] offset : template ){
                     currAddr = offset.clone();

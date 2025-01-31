@@ -10,7 +10,7 @@ import java.util.ArrayDeque;
 import static Helpers.Utils.coinflip_P;
 
 
-///////// CLASS DEF ////////////////////////////////////////////////////////////////////////////////
+///////// STATES && COMMANDS ///////////////////////////////////////////////////////////////////////
 
 enum GameState {
     // Governs game behavior thru different interaction phases
@@ -33,6 +33,11 @@ enum GameCmd {
     CURSOR_WEST,
 }
 
+
+
+///////// MVC MODEL: GAME LOGIC / ENGINE ///////////////////////////////////////////////////////////
+
+
 // public class Engine implements MessageSystem, Observer {
 public class Engine {
 
@@ -44,7 +49,7 @@ public class Engine {
 
     /// Simulation ///
     protected int /*-------------------*/ Wmap, Hmap;
-    protected HashMap<int[],ActiveObject> objects;
+    protected HashMap<int[],ArrayList<ActiveObject>> objects;
 //    private   HashMap<int[],ActiveObject> bullets;
     protected Tile[][] /*--------------*/ tileMap;
     
@@ -53,6 +58,7 @@ public class Engine {
     protected Cursor    cursor;
     protected Blueprint blcBP;
     protected GameState state;
+    public    Message   cmd;
     /// Messages ///
     // protected ArrayDeque<Message> /*-----------*/ msgQ;
     // protected HashMap<String,ArrayList<Observer>> observers;
@@ -63,7 +69,7 @@ public class Engine {
         // Instantiate vars
         Wmap    = w;
         Hmap    = h;
-        objects = new HashMap<int[],ActiveObject>();
+        objects = new HashMap<int[],ArrayList<ActiveObject>>();
 //        bullets = new HashMap<int[],ActiveObject>();
         tileMap = new Tile[w][h];
         // Instantiate UI
@@ -78,14 +84,31 @@ public class Engine {
 
 
     public BlcPn next_template(){
+        // The user does not get to choose a template
         blcBP = Blueprint.random_template( this );
         return blcBP.shape;
     }
 
-    public void make_Wall( int[] addr ){
+
+    public void make_object( int[] addr, String type ){
         // Make a single `Wall` segment
-        objects.put( addr, new Wall( this, addr ) );
+        // Fetch, Create new vector if null
+        ArrayList<ActiveObject> objLst = objects.get( addr );
+        if( objLst == null ){  
+            objLst = new ArrayList<ActiveObject>(); 
+            objects.put( addr.clone(), objLst );
+        }
+        // Add the appropriate object at the addressed array
+        switch( type ){
+            case "wall":
+                objLst.add( new Wall( this, addr.clone() ) );        
+                break;
+            default:
+                System.out.println( String.format( "CANNOT add grid object of type %s", type ) );
+                break;
+        }    
     }
+
 
     public String get_terrain_type( int[] addr ){
         // Get the `Tile` type for a valid address, Otherwise return "INVALID"
@@ -96,13 +119,14 @@ public class Engine {
         return rtnStr;
     }
 
+
     public int emplace_template(){
         // Create `Wall` segments, Report how many `Wall` segments were created on the map!
         int consumed = 0;
         if( blcBP != null ){
             for( int[] spot : blcBP.actual ){
                 if( get_terrain_type( spot ) == "grass" ){ // `get_terrain_type` performs `p_valid_addr( spot )`
-                    make_Wall( spot );
+                    make_object( spot, "wall" );
                     consumed++;
                 }
             }
@@ -247,7 +271,33 @@ public class Engine {
 
     public boolean handle_command( Message input ){
 
-        switch (state) {
+        /// General Commands ///
+        if( input.topic == "kb" ){
+            switch( input.cmd ){
+
+                case CURSOR_NORTH:
+                    cursor.move_UP();
+                    break;
+
+                case CURSOR_SOUTH:
+                    cursor.move_DOWN();
+                    break;
+
+                case CURSOR_WEST:
+                    cursor.move_LEFT();
+                    break;
+            
+                case CURSOR_EAST:
+                    cursor.move_RIGHT();
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        /// State-Specific Commands ///
+        switch( state ){
             case BUILD:{
                     switch ( input.cmd ) {
 
@@ -267,9 +317,28 @@ public class Engine {
             default:
                 break;
         }
-
-        
-
         return true;
+    }
+
+
+    public GameState update( Message input ){
+        // Run one step of the engine state machine
+        GameState nxtState = GameState.BUILD;
+
+        /// Handle the command ///
+        handle_command( input );
+
+        /// State Machine ///
+        switch( state ){
+            case BUILD:
+                blcBP.transform_template( cursor.address );
+                nxtState = GameState.BUILD;
+                break;
+        
+            default:
+                break;
+        }
+
+        return nxtState;
     }
 }

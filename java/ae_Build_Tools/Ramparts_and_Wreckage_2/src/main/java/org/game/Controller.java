@@ -16,9 +16,8 @@ import java.awt.event.KeyListener;
 public class Controller implements KeyListener {
 
     /// Members ///
-    protected Engine    game; // - Simulation
-    // protected View /**/ view; // - Graphics Panel
-    // protected JTextArea status; // Text Feedback
+    protected Engine  game; // - Simulation
+    protected boolean fresh;
 
 
     /// Constructor(s) ///
@@ -39,25 +38,29 @@ public class Controller implements KeyListener {
     /** Handle the key pressed event from the text field. */
     public void keyPressed( KeyEvent e ) {
 
-        System.out.println( String.format("KEY PRESS" ) );
+        fresh = true;
 
         int keyCode = e.getKeyCode();
         switch ( keyCode ) {
 
             case 38: // UP
-                game.cursor.move_UP();
+                game.cmd = new Message("kb", GameCmd.CURSOR_NORTH, "up" );
+                // game.
                 break;
 
             case 40: // DOWN
-                game.cursor.move_DOWN();
+                game.cmd = new Message("kb", GameCmd.CURSOR_SOUTH, "down" );
+                // game.
                 break;
 
             case 37: // LEFT
-                game.cursor.move_LEFT();
+                game.cmd = new Message("kb", GameCmd.CURSOR_WEST, "left" );
+                // game.
                 break;
 
             case 39: // RIGHT
-                game.cursor.move_RIGHT();
+                game.cmd = new Message("kb", GameCmd.CURSOR_EAST, "right" );
+                // game.
                 break;
         
             default: // NO-OP
@@ -68,6 +71,11 @@ public class Controller implements KeyListener {
     /** Handle the key released event from the text field. */
     public void keyReleased( KeyEvent e ) {
         // NO-OP, Req'd by interface
+    }
+
+    public void update(){
+        if( fresh ){  fresh = false;  }
+        else{  game.cmd = new Message("general", GameCmd.NO_OP, "NO OP" );  }
     }
 
 }

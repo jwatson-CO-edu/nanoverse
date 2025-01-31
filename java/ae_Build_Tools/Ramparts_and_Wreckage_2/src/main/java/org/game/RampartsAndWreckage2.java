@@ -12,7 +12,7 @@ import java.awt.GridBagConstraints;
 ///////// MAIN /////////////////////////////////////////////////////////////////////////////////////
 
 
-public class Rampart2 {
+public class RampartsAndWreckage2 {
 
     private static void createAndShowGUI(){
         /// 1. Start Game Engine ///
@@ -93,4 +93,6 @@ public class Rampart2 {
     public static void main( String[] args ){
         run();
     }
+
+    // FIXME, RUN THE UPDATE LOOP!
 }
