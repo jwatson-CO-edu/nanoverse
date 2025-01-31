@@ -30,9 +30,12 @@ class ImgNode{ public:
     // Represents an image and all of the information inferred from that image
     
     /// Members ///
-    string /*-----*/ path;
-    Mat /*--------*/ imag;
-    vector<KeyPoint> kpts;
-    Mat /*--------*/ xfrm;
+    string /*-----*/ imgPth; // Image path
+    Mat /*--------*/ image; //- Image data
+    vector<KeyPoint> keyPts; // Keypoints for image
+    nodePtr /*----*/ prev; // - Parent `ImgNode`
+    nodePtr /*----*/ next; // - Successor `ImgNode`s
+    Mat /*--------*/ xform; //- Transform relative to `prev` node
+    
 };
 typedef shared_ptr<ImgNode> nodePtr;
