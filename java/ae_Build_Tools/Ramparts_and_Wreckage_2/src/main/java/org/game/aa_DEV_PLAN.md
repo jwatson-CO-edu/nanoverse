@@ -10,7 +10,12 @@ Example Java project exemplifies OOP design patterns in a reimagining of an arca
 * `[>]` Build Phase
     - `[>]` Block Templates
     - `[>]` Block Placement
+    - `[>]` Template Display
+    - `[>]` Draw Placed Walls
     - `[ ]` Resource Consumption
+* `[ ]` Patterns Intermission
+    - `[ ]` Refactor
+    - `[ ]` UML
 * `[ ]` Battle Phase
 ## Refactor to Patterns
 1. `[Y]` 2025-01-XX: `Tile`s are now instantiated by a Factory Pattern
