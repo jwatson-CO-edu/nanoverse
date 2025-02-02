@@ -1,8 +1,11 @@
 # Custom
 
-*.class
+**/*.jpg
+**/*.ShotPair
+**/*.CamShot
+**/*.Photogrammetry
+
 **/*.class
-*.jar
 **/*.jar
 
 ZZ_Proprietary-Ignored/*
