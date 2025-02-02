@@ -1,3 +1,5 @@
+// g++ 01_SfM_bgn.cpp `pkg-config --cflags --libs opencv4` -std=c++17 -lopencv_xfeatures2d -I /usr/local/include/opencv4/ -o build-struct.out
+
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 #include "SfM.hpp"
 

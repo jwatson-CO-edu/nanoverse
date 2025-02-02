@@ -61,6 +61,9 @@ void fetch_images_at_path( string path, vector<string>& fNames, vector<Mat>& ima
 ////////// Structure.cpp ///////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+class ImgNode;
+typedef shared_ptr<ImgNode> NodePtr;
+
 class ImgNode{ public:
     // Represents an image and all of the information inferred from that image
     // NOTE: This class assumes that the pictures are taken in a sequence, Doubly-Linked List
@@ -76,6 +79,6 @@ class ImgNode{ public:
     ImgNode( string path, const Mat& sourceImg );
     
 };
-typedef shared_ptr<ImgNode> NodePtr;
+
 
 vector<NodePtr> images_to_nodes( string path, string ext ); // Populate a vector of nodes with paths and images

@@ -6,12 +6,14 @@
 # `DEV_PLAN`
 
 ## 2 Image Sequence
-* `[>]` Load images into nodes
-* `[ ]` Keypoint registration
-    - `[ ]` Fetch Claude response
-    - `[ ]` KNN
+* `[Y]` Load images into nodes, 2025-02-02: Same as it ever was!
+    - `[Y]` Find AKAZE (Again), 2025-02-02: Same as it ever was!
+* `[>]` Keypoint registration
+    - `[>]` Fetch Claude response, Compare to ChatGPT response
+    - `[>]` KNN
     - `{?}` What is fastest? What is most accurate?
 * `[ ]` Calc relative camera pose previous --to-> current
+    - `[ ]` Decide what the transform means, relative or absolute!
 * `[ ]` Generate PCD for registered image pair
     - `[ ]` Decide which node the PCD belongs to!
     - `{?}` Is there an **EXISTING** struct/class that I SHOULD use?

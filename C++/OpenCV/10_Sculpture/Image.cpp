@@ -75,7 +75,7 @@ vector<string> list_files_at_path_w_ext( string path, string ext, bool sortAlpha
 
 
 void fetch_images_at_path( string path, vector<string>& fNames, vector<Mat>& images, 
-                           uint limit = 0, string ext = "jpg" ){
+                           uint limit, string ext ){
     // Load all the images found at a path
     fNames.clear();
     images.clear();
