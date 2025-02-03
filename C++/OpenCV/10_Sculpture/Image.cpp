@@ -94,3 +94,65 @@ void fetch_images_at_path( string path, vector<string>& fNames, vector<Mat>& ima
     }
     cout << endl << "Got " << images.size() << " images!" << endl;
 }
+
+
+bool file_exists( const string& fName ){ 
+    // Return true if the file exists , otherwise return false
+    struct stat buf; 
+    if( stat( fName.c_str() , &buf ) != -1 ){ return true; } else { return false; }
+}
+
+
+vector<string> read_lines( string path ){ 
+    // Return all the lines of text file as a string vector
+    vector<string> rtnVec;
+    if( file_exists( path ) ){
+        ifstream fin( path ); // Open the list file for reading
+        string   line; // String to store each line
+        while ( std::getline( fin , line ) ){ // While we are able to fetch a line
+            rtnVec.push_back( line ); // Add the file to the list to read
+        }
+        fin.close();
+    } else { cout << "readlines: Could not open the file " << path << endl; }
+    return rtnVec;
+}
+
+
+////////// UTILITY FUNCTIONS ///////////////////////////////////////////////////////////////////////
+
+Mat deserialize_2d_Mat_f( string input, int Mrows, int Ncols, char sep ){
+    // Deserialize an OpenCV `CV_32F` matrix stored row-major in a comma-separated list in a string
+    Mat rtnMat = Mat::zeros( Mrows, Ncols, CV_32F );
+
+    // cout << "Got input: " << input << endl;
+
+    vector<string> tokens = split_string_on_char( input, sep );
+    // cout << "Separated input: " << endl;
+    // for( string& token : tokens ) cout << '\t' << token << endl;
+
+
+    if( tokens.size() < Mrows*Ncols )  return rtnMat; // Return the zero matrix if there are insufficient elements
+    int k = 0;
+    float val;
+    string item;
+    for( int i = 0; i < Mrows; ++i ){
+        for( int j = 0; j < Ncols; ++j ){
+            // cout << endl << "\t\tAt (" << i << ',' << j << "), " << k << flush;
+            // cout << ", " << tokens[k] << flush;
+            // item = tokens[k];
+            // item += '\0'
+            // cout << ", " << stof( tokens[k] ) << flush;
+            try{
+                rtnMat.at<float>(i,j) = stof( tokens[k] );
+            }catch (const std::out_of_range& e) {
+                cout << "Out of Range error." << endl;
+                rtnMat.at<float>(i,j) = nanf("");
+            }
+            ++k;
+        }
+    }
+    return rtnMat;
+}
+
+// Get everything after the last ':' in a string
+string get_line_arg( string line ){  return get_last( split_string_on_char( line, ':' ) );  }
