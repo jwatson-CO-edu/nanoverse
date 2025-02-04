@@ -110,8 +110,8 @@ Mat load_cam_calibration( string cPath ); // Fetch the K matrix stored as plain 
 class CamData{ public:
     Mat     Kintrinsic;
     Point2i imgSize;
-    float   horzFOV;
-    float   vertFOV;
+    float   horzFOV; // 65.0deg // https://www.camerafv5.com/devices/manufacturers/motorola/moto_g_power_sofia_0/
+    float   vertFOV; // 51.1deg // https://www.camerafv5.com/devices/manufacturers/motorola/moto_g_power_sofia_0/
 
     CamData( string kPath, const Mat& image, float horzFOV_, float vertFOV_ );
 
