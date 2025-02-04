@@ -21,11 +21,11 @@ using std::ifstream, std::ofstream;
 #include <opencv2/opencv.hpp>
 #include "opencv2/core.hpp"
 #include <opencv2/core/utility.hpp>
-using cv::Mat, cv::String, cv::Vec, cv::Ptr;
+using cv::Mat, cv::String, cv::Vec, cv::Ptr, cv::Range;
 #include <opencv2/imgcodecs.hpp>
 using cv::imread, cv::IMREAD_COLOR, cv::IMREAD_GRAYSCALE;
 #include "opencv2/features2d.hpp"
-using cv::Ptr, cv::KeyPoint, cv::Point2f, cv::DMatch, cv::FeatureDetector, cv::Feature2D, cv::AKAZE,
+using cv::Ptr, cv::KeyPoint, cv::Point2f, cv::Point2i, cv::DMatch, cv::FeatureDetector, cv::Feature2D, cv::AKAZE,
       cv::DescriptorMatcher;
 
 
@@ -105,6 +105,20 @@ Mat deserialize_2d_Mat_f( string input, int Mrows, int Ncols, char sep = ',' );
 
 ////////// RELATIVE CAMERA POSE ////////////////////////////////////////////////////////////////////
 
+Mat load_cam_calibration( string cPath ); // Fetch the K matrix stored as plain text
+
+class CamData{ public:
+    Mat     Kintrinsic;
+    Point2i imgSize;
+    float   horzFOV;
+    float   vertFOV;
+
+    CamData( string kPath, const Mat& image, float horzFOV_, float vertFOV_ );
+
+    vector<Mat> keypoints_to_rays( const Mat& camPose, const vector<Point2f>& points ); // FIXME: WRITE THIS
+};
+
+
 struct PoseResult{
     // Models the relative poses between two nodes
     // Source: https://claude.ai/chat/b55bb623-d26f-42fe-9ece-c7fd3477e0ac
@@ -113,11 +127,8 @@ struct PoseResult{
     vector<Point2f> matched_points1;
     vector<Point2f> matched_points2;
     vector<DMatch>  good_matches;
-    bool success;
+    bool /*------*/ success;
 };
-
-
-Mat load_cam_calibration( string cPath ); // Fetch the K matrix stored as plain text
 
 
 class RelativePoseEstimator{ public:
@@ -125,9 +136,8 @@ class RelativePoseEstimator{ public:
     // Source: https://claude.ai/chat/b55bb623-d26f-42fe-9ece-c7fd3477e0ac
 
     // Camera intrinsic parameters - these would typically come from calibration
-    cv::Mat camera_matrix;
-    cv::Mat dist_coeffs;
-    
+    // FIXME: START HERE, MAKE THE SUBSTITUTION
+
     // Matcher object
     Ptr<DescriptorMatcher> matcher;
     
@@ -138,10 +148,10 @@ class RelativePoseEstimator{ public:
 
     RelativePoseEstimator( string kPath, float ratioThresh_ = 0.7f, float ransacThresh_ = 2.5f, float confidence_ = 0.99f );
 
-    PoseResult estimatePose( const vector<KeyPoint>& keypoints1, const Mat& descriptors1, 
-                             const vector<KeyPoint>& keypoints2, const Mat& descriptors2 );
+    PoseResult estimate_pose( const vector<KeyPoint>& keypoints1, const Mat& descriptors1, 
+                              const vector<KeyPoint>& keypoints2, const Mat& descriptors2 );
 
-    static Mat visualizeMatches( const Mat& img1, const Mat& img2, const PoseResult& result);
+    static Mat visualize_matches( const Mat& img1, const Mat& img2, const PoseResult& result);
 };
 
 
@@ -158,6 +168,7 @@ class ImgNode{ public:
     /// Members ///
     string /*-----*/ imgPth; // - Image path
     Mat /*--------*/ image; // -- Image data
+    Point2i /*----*/ imgSize; //- Image size [px]
     vector<KeyPoint> keyPts; // - Keypoints for image
     Mat /*--------*/ kpDesc; // - Keypoint descriptors, needed for matching
     PoseResult /*-*/ kpRes; // -- Result of keypoint matching

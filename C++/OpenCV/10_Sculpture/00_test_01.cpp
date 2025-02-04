@@ -21,11 +21,16 @@ int main(){
     
     RelativePoseEstimator est{ "input/SfM/00_sculpture/moto-g-power-2022.intrinsic" };
 
-    PoseResult res = est.estimatePose( nodes[0]->keyPts, nodes[0]->kpDesc, nodes[1]->keyPts, nodes[1]->kpDesc );
+    PoseResult res = est.estimate_pose( nodes[0]->keyPts, nodes[0]->kpDesc, nodes[1]->keyPts, nodes[1]->kpDesc );
 
     cout << "There are " << res.good_matches.size() << " good matches!" << endl;
     cout << "Translation:\n" << res.t << endl;
     cout << "Rotation:\n" << res.R << endl;
+    cout << res.matched_points1.size() << ", " << res.matched_points2.size() << ", " << res.success << endl;
+
+    
+
+    // cout << "Returned a " <<  <<  "x" << " matrix"
 
     // est.visualizeMatches( nodes[0]->image, nodes[1]->image, res );
 

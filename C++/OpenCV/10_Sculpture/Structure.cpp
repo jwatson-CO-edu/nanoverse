@@ -6,8 +6,9 @@
 ////////// POSE GRAPH //////////////////////////////////////////////////////////////////////////////
 
 ImgNode::ImgNode( string path, const Mat& sourceImg ){
-    imgPth = path;
-    image  = sourceImg;
+    imgPth  = path;
+    image   = sourceImg;
+    imgSize = Point2i{ sourceImg.rows, sourceImg.cols };
 }
 
 
@@ -54,25 +55,28 @@ Mat load_cam_calibration( string cPath ){
     return matx;
 }
 
+CamData::CamData( string kPath, const Mat& image, float horzFOV_, float vertFOV_ ){
+    Kintrinsic = load_cam_calibration( kPath );
+    imgSize    = Point2i{ image.rows, image.cols };
+    horzFOV    = horzFOV_;
+    vertFOV    = vertFOV_;
+}
+
 
 RelativePoseEstimator::RelativePoseEstimator( string kPath, float ratioThresh_, float ransacThresh_, float confidence_ ) {
     // Use FLANN matcher for efficient matching
     matcher = DescriptorMatcher::create( DescriptorMatcher::BRUTEFORCE_HAMMING );
-    camera_matrix = load_cam_calibration( kPath );
-    dist_coeffs = cv::Mat::zeros(5, 1, CV_64F); // Initialize distortion coefficients to zero (assuming undistorted images)
     ratioThresh  = ratioThresh_;
     ransacThresh = ransacThresh_;
     confidence = confidence_;
 }
     
     
-PoseResult RelativePoseEstimator::estimatePose( const vector<KeyPoint>& keypoints1, const Mat& descriptors1, 
-                                                const vector<KeyPoint>& keypoints2, const Mat& descriptors2 ){
+PoseResult RelativePoseEstimator::estimate_pose( const vector<KeyPoint>& keypoints1, const Mat& descriptors1, 
+                                                 const vector<KeyPoint>& keypoints2, const Mat& descriptors2 ){
     PoseResult result;
     result.success = false;
             
-    
-    
     // Step 2: Match features using k-nearest neighbors (k=2)
     vector<vector<DMatch>> knn_matches;
     matcher->knnMatch(descriptors1, descriptors2, knn_matches, 2);
@@ -124,8 +128,8 @@ PoseResult RelativePoseEstimator::estimatePose( const vector<KeyPoint>& keypoint
 }
     
 // Utility function to visualize matches
-Mat RelativePoseEstimator::visualizeMatches( const Mat& img1, const Mat& img2,
-                                    const PoseResult& result) {
+Mat RelativePoseEstimator::visualize_matches( const Mat& img1, const Mat& img2,
+                                              const PoseResult& result) {
     Mat output;
     if (!result.success) {
         return output;
@@ -134,4 +138,16 @@ Mat RelativePoseEstimator::visualizeMatches( const Mat& img1, const Mat& img2,
     cv::drawMatches( img1, vector<KeyPoint>(), img2, vector<KeyPoint>(),
                         result.good_matches, output );
     return output;
+}
+
+vector<Mat> rays_from_frame_and_image_points( const Mat& frame, const Point2i& imgSize, const vector<Point2f>& points2d ){
+
+}
+
+Mat recover_PCD_from_matched_keypoints( PoseResult& res ){
+    Mat pose1 = Mat::eye( 4, 4, CV_32F );
+    Mat pose2 = Mat::eye( 4, 4, CV_32F );
+    
+    res.R.copyTo( pose2( Range(0,2), Range(0,2) ) );
+    res.t.copyTo( pose2( Range(0,2), Range(3,3) ) );
 }
