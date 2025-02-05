@@ -11,23 +11,26 @@
 * `[Y]` Keypoint registration, 2025-02-03: Copy and Paste!
     - `[Y]` Fetch Claude response, Compare to ChatGPT response, 2025-02-03: Copy and Paste!
     - `[Y]` KNN, 2025-02-03: Copy and Paste!
-* `[>]` Calc relative camera pose previous --to-> current
+* `[Y]` Calc relative camera pose previous --to-> current, 2025-02-02: Relative!
     - `[Y]` Decide what the transform means, relative or absolute!, 2025-02-02: Relative!
-    - `[>]` Store as homog coords in the SECOND node!
-* `[ ]` Generate PCD for registered image pair
-    - `[Y]` Fetch Claude response
+* `[>]` Generate PCD for registered image pair
+    - `[Y]` Fetch Claude response, 2025-02-05: THERE WERE PROBLEMS
+    - `[>]` ISSUE: SIZE AND TYPE MISMATCH IN GENERATED CODE
+        * `[>]` Fetch human example of `cv::triangulatePoints`
+        * `[ ]` Step-by-Step rebuild
     - `[ ]` Visualize the PCD! Does it make sense?
-    - `[ ]` Decide which node the PCD belongs to!
+    - `[ ]` Store the result struct in the SECOND node!
     - `{?}` Is there an **EXISTING** struct/class that I SHOULD use?
 
-## N Image Sequence
+## 3 Image Sequence
 * `[ ]` ICP for PCD
     - `[ ]` Try N-dim ICP that includes the coordinates of the associated keypoints
 * `[ ]` Calc absolute camera pose previous --to-> current
-* `[ ]` Cleanup
-    - `[ ]` PCD consensus across pairs?
-    - `[ ]` How to account for drift?
-    - `[ ]` Consider loop closure
+
+## N Image Sequence
+* `[ ]` PCD consensus across pairs?
+* `[ ]` How to account for drift?
+* `[ ]` Consider loop closure
 
 ## Troubleshooting
 * `{?}` IF poor quality, THEN switch all OpenCV `Mat`s and calcs to `double`

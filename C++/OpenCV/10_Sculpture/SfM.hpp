@@ -122,9 +122,13 @@ struct TwoViewResult{
     // Contains info that can be computed by two (consecutive) views
     // Source: https://claude.ai/chat/b55bb623-d26f-42fe-9ece-c7fd3477e0ac
     
+    /// Input ///
+    Mat view1;
+    Mat view2;
+
     /// Stage 1 ///
-    Mat R;  // Rotation matrix
-    Mat t;  // Translation vector
+    Mat /*-------*/ R; // Rotation matrix
+    Mat /*-------*/ t; // Translation vector
     vector<Point2f> matched_points1;
     vector<Point2f> matched_points2;
     vector<DMatch>  good_matches;
