@@ -55,26 +55,34 @@ Mat load_cam_calibration( string cPath ){
     return matx;
 }
 
-CamData::CamData( string kPath, const Mat& image, float horzFOV_, float vertFOV_ ){
-    Kintrinsic = load_cam_calibration( kPath );
-    imgSize    = Point2i{ image.rows, image.cols };
-    horzFOV    = horzFOV_;
-    vertFOV    = vertFOV_;
+CamData::CamData( string kPath, string imgDir, float horzFOV_, float vertFOV_, string ext ){
+
+    vector<Mat>    image;
+    vector<String> fNames;
+    fetch_images_at_path( imgDir, fNames, image, 1, ext );
+
+    Kintrinsic  = load_cam_calibration( kPath );
+    imgSize     = Point2i{ image[0].rows, image[0].cols };
+    horzFOV_deg = horzFOV_;
+    vertFOV_deg = vertFOV_;
 }
 
 
-RelativePoseEstimator::RelativePoseEstimator( string kPath, float ratioThresh_, float ransacThresh_, float confidence_ ) {
+TwoViewCalculator::TwoViewCalculator( float ratioThresh_, float ransacThresh_, float confidence_ ) {
     // Use FLANN matcher for efficient matching
-    matcher = DescriptorMatcher::create( DescriptorMatcher::BRUTEFORCE_HAMMING );
+    matcher /**/ = DescriptorMatcher::create( DescriptorMatcher::BRUTEFORCE_HAMMING );
     ratioThresh  = ratioThresh_;
     ransacThresh = ransacThresh_;
-    confidence = confidence_;
+    confidence   = confidence_;
 }
     
     
-PoseResult RelativePoseEstimator::estimate_pose( const vector<KeyPoint>& keypoints1, const Mat& descriptors1, 
-                                                 const vector<KeyPoint>& keypoints2, const Mat& descriptors2 ){
-    PoseResult result;
+TwoViewResult TwoViewCalculator::estimate_pose( const CamData& camInfo,
+                                             const vector<KeyPoint>& keypoints1, const Mat& descriptors1, 
+                                             const vector<KeyPoint>& keypoints2, const Mat& descriptors2 ){
+    // Use keypoint collections from two images to calculate a relative pose
+    // https://claude.site/artifacts/6b2b5025-4cdf-43cd-9762-b8f4fdb74d90
+    TwoViewResult result;
     result.success = false;
             
     // Step 2: Match features using k-nearest neighbors (k=2)
@@ -106,9 +114,9 @@ PoseResult RelativePoseEstimator::estimate_pose( const vector<KeyPoint>& keypoin
     }
     
     // Step 5: Calculate essential matrix using RANSAC
-    cv::Mat E = cv::findEssentialMat( points1, points2, camera_matrix,
-                                      cv::RANSAC, confidence, ransacThresh,
-                                      cv::noArray() );
+    Mat E = cv::findEssentialMat( points1, points2, camInfo.Kintrinsic,
+                                  cv::RANSAC, confidence, ransacThresh,
+                                  cv::noArray() );
                                     
     if( E.empty() ){
         std::cout << "Could not estimate essential matrix!" << std::endl;
@@ -116,8 +124,8 @@ PoseResult RelativePoseEstimator::estimate_pose( const vector<KeyPoint>& keypoin
     }
     
     // Step 6: Recover R and t from essential matrix
-    cv::Mat R, t;
-    cv::recoverPose( E, points1, points2, camera_matrix, R, t );
+    Mat R, t;
+    cv::recoverPose( E, points1, points2, camInfo.Kintrinsic, R, t );
     
     // Store results
     result.R = R;
@@ -127,27 +135,86 @@ PoseResult RelativePoseEstimator::estimate_pose( const vector<KeyPoint>& keypoin
     return result;
 }
     
-// Utility function to visualize matches
-Mat RelativePoseEstimator::visualize_matches( const Mat& img1, const Mat& img2,
-                                              const PoseResult& result) {
+
+Mat TwoViewCalculator::visualize_matches( const Mat& img1, const vector<KeyPoint>& keypoints1,
+                                          const Mat& img2, const vector<KeyPoint>& keypoints2,
+                                          const TwoViewResult& result ){
+    // Utility function to visualize matches
     Mat output;
-    if (!result.success) {
+    if( !result.success ){
         return output;
     }
     
-    cv::drawMatches( img1, vector<KeyPoint>(), img2, vector<KeyPoint>(),
-                        result.good_matches, output );
+    cv::drawMatches( img1, keypoints1, img2, keypoints2,
+                     result.good_matches, output );
+    // imshow( "Keypoint Matches", output );
+    // waitKey(0);
+    /* The function is not implemented. Rebuild the library with Windows, GTK+ 2.x or Cocoa support. 
+    If you are on Ubuntu or Debian, install libgtk2.0-dev and pkg-config, then re-run cmake or 
+    configure script in function 'cvShowImage' */
     return output;
 }
 
-vector<Mat> rays_from_frame_and_image_points( const Mat& frame, const Point2i& imgSize, const vector<Point2f>& points2d ){
+vector<Point3f> TwoViewCalculator::generate_point_cloud( 
+    const vector<Point2f>& keypoints1, const vector<Point2f>& keypoints2,
+    const Mat& R, const Mat& t, const CamData& camInfo ){
+    // https://claude.site/artifacts/f4a5b5fd-b317-4c6f-b42d-f35b92d03cbf
+    // FIXME: GENERATED CODE NOT TRUSTWORTHY!
+    // Check input validity
+    if (keypoints1.size() != keypoints2.size() || keypoints1.empty()) {
+        throw invalid_argument( "Keypoint vectors must be non-empty and of equal size" );
+    }
+    if( R.size() != Size(3, 3) || t.size() != Size(1, 3) || camInfo.Kintrinsic.size() != Size(3, 3) ){
+        throw invalid_argument( "Invalid matrix dimensions" );
+    }
 
-}
-
-Mat recover_PCD_from_matched_keypoints( PoseResult& res ){
-    Mat pose1 = Mat::eye( 4, 4, CV_32F );
-    Mat pose2 = Mat::eye( 4, 4, CV_32F );
+    // Construct projection matrices
+    Mat P1 = camInfo.Kintrinsic * Mat::eye( 3, 4, CV_32F );  // First camera matrix [K|0]
+    cout << "Calculated projection!" << endl;
     
-    res.R.copyTo( pose2( Range(0,2), Range(0,2) ) );
-    res.t.copyTo( pose2( Range(0,2), Range(3,3) ) );
+    // Create second camera matrix [K(R|t)]
+    Mat P2( 3, 4, CV_32F );
+    cv::hconcat( R, t, P2 );
+    cout << "Concatenated!" << endl;
+    cout << camInfo.Kintrinsic.size() << " x " << P2.size() << endl; // FIXME: DIMENSIONS NOT ALIGNED?
+    cout << camInfo.Kintrinsic.type() << " x " << P2.type() << endl; // ERROR: THESE ARE DIFFERENT TYPES!
+    P2 = camInfo.Kintrinsic * P2;
+    cout << "Calculated second camera matrix!" << endl;
+
+    vector<Point3f> points3D;
+    points3D.reserve( keypoints1.size() );
+
+    // Triangulate each pair of corresponding points
+    for (size_t i = 0; i < keypoints1.size(); i++) {
+        // Convert points to normalized homogeneous coordinates
+        Point2f pt1 = keypoints1[i];
+        Point2f pt2 = keypoints2[i];
+
+        // Create matrices for triangulation
+        Mat point4D;
+        Mat points1( 2, 1, CV_32F );
+        Mat points2( 2, 1, CV_32F );
+        points1.at<float>(0) = pt1.x;
+        points1.at<float>(1) = pt1.y;
+        points2.at<float>(0) = pt2.x;
+        points2.at<float>(1) = pt2.y;
+
+        // Triangulate the point
+        cv::triangulatePoints( P1, P2, points1, points2, point4D );
+
+        // Convert homogeneous coordinates to 3D point
+        point4D = point4D / point4D.at<float>(3);
+        Point3f point3D(
+            point4D.at<float>(0),
+            point4D.at<float>(1),
+            point4D.at<float>(2)
+        );
+
+        // Add to point cloud
+        points3D.push_back( point3D );
+    }
+
+    cout << endl << points3D << endl << endl; 
+
+    return points3D;
 }

@@ -21,12 +21,13 @@ using std::ifstream, std::ofstream;
 #include <opencv2/opencv.hpp>
 #include "opencv2/core.hpp"
 #include <opencv2/core/utility.hpp>
-using cv::Mat, cv::String, cv::Vec, cv::Ptr, cv::Range;
+using cv::Mat, cv::String, cv::Vec, cv::Ptr, cv::Range, cv::Size, cv::imshow, cv::waitKey;
 #include <opencv2/imgcodecs.hpp>
 using cv::imread, cv::IMREAD_COLOR, cv::IMREAD_GRAYSCALE;
 #include "opencv2/features2d.hpp"
-using cv::Ptr, cv::KeyPoint, cv::Point2f, cv::Point2i, cv::DMatch, cv::FeatureDetector, cv::Feature2D, cv::AKAZE,
-      cv::DescriptorMatcher;
+using cv::Ptr, cv::KeyPoint, cv::Point2f, cv::Point2i, cv::Point3f, cv::DMatch, 
+      cv::FeatureDetector, cv::Feature2D, cv::AKAZE, cv::DescriptorMatcher;
+using std::invalid_argument; // Who included `<stdexcept>`?
 
 
 ////////// STANDARD CONTAINERS /////////////////////////////////////////////////////////////////////
@@ -110,33 +111,35 @@ Mat load_cam_calibration( string cPath ); // Fetch the K matrix stored as plain 
 class CamData{ public:
     Mat     Kintrinsic;
     Point2i imgSize;
-    float   horzFOV; // 65.0deg // https://www.camerafv5.com/devices/manufacturers/motorola/moto_g_power_sofia_0/
-    float   vertFOV; // 51.1deg // https://www.camerafv5.com/devices/manufacturers/motorola/moto_g_power_sofia_0/
+    float   horzFOV_deg; // 65.0deg // https://www.camerafv5.com/devices/manufacturers/motorola/moto_g_power_sofia_0/
+    float   vertFOV_deg; // 51.1deg // https://www.camerafv5.com/devices/manufacturers/motorola/moto_g_power_sofia_0/
 
-    CamData( string kPath, const Mat& image, float horzFOV_, float vertFOV_ );
-
-    vector<Mat> keypoints_to_rays( const Mat& camPose, const vector<Point2f>& points ); // FIXME: WRITE THIS
+    CamData( string kPath, string imgDir, float horzFOV_ = 65.0f, float vertFOV_ = 51.1f, string ext = "jpg" );
 };
 
 
-struct PoseResult{
-    // Models the relative poses between two nodes
+struct TwoViewResult{
+    // Contains info that can be computed by two (consecutive) views
     // Source: https://claude.ai/chat/b55bb623-d26f-42fe-9ece-c7fd3477e0ac
+    
+    /// Stage 1 ///
     Mat R;  // Rotation matrix
     Mat t;  // Translation vector
     vector<Point2f> matched_points1;
     vector<Point2f> matched_points2;
     vector<DMatch>  good_matches;
     bool /*------*/ success;
+
+    /// Stage 2 ///
+    vector<Point3f> PCD;
 };
 
 
-class RelativePoseEstimator{ public:
+class TwoViewCalculator{ public:
     // Uses the keypoints of two images to estimate a relative camera pose between them
     // Source: https://claude.ai/chat/b55bb623-d26f-42fe-9ece-c7fd3477e0ac
 
     // Camera intrinsic parameters - these would typically come from calibration
-    // FIXME: START HERE, MAKE THE SUBSTITUTION
 
     // Matcher object
     Ptr<DescriptorMatcher> matcher;
@@ -146,12 +149,18 @@ class RelativePoseEstimator{ public:
     float ransacThresh;
     float confidence;
 
-    RelativePoseEstimator( string kPath, float ratioThresh_ = 0.7f, float ransacThresh_ = 2.5f, float confidence_ = 0.99f );
+    TwoViewCalculator( float ratioThresh_ = 0.7f, float ransacThresh_ = 2.5f, float confidence_ = 0.99f );
 
-    PoseResult estimate_pose( const vector<KeyPoint>& keypoints1, const Mat& descriptors1, 
+    TwoViewResult estimate_pose( const CamData& camInfo,
+                              const vector<KeyPoint>& keypoints1, const Mat& descriptors1, 
                               const vector<KeyPoint>& keypoints2, const Mat& descriptors2 );
 
-    static Mat visualize_matches( const Mat& img1, const Mat& img2, const PoseResult& result);
+    vector<Point3f> generate_point_cloud( const vector<Point2f>& keypoints1, const vector<Point2f>& keypoints2,
+                                          const Mat& R, const Mat& t, const CamData& camInfo );
+
+    static Mat visualize_matches( const Mat& img1, const vector<KeyPoint>& keypoints1,
+                                  const Mat& img2, const vector<KeyPoint>& keypoints2,
+                                  const TwoViewResult& result );
 };
 
 
@@ -171,7 +180,7 @@ class ImgNode{ public:
     Point2i /*----*/ imgSize; //- Image size [px]
     vector<KeyPoint> keyPts; // - Keypoints for image
     Mat /*--------*/ kpDesc; // - Keypoint descriptors, needed for matching
-    PoseResult /*-*/ kpRes; // -- Result of keypoint matching
+    TwoViewResult /*-*/ kpRes; // -- Result of keypoint matching
     NodePtr /*----*/ prev; // --- Parent `ImgNode`
     NodePtr /*----*/ next; // --- Successor `ImgNode`s
     Mat /*--------*/ relXform; // Transform relative to `prev` node
@@ -182,6 +191,6 @@ class ImgNode{ public:
 };
 
 
-vector<NodePtr> images_to_nodes( string path, string ext ); // Populate a vector of nodes with paths and images
+vector<NodePtr> images_to_nodes( string path, string ext = "jpg" ); // Populate a vector of nodes with paths and images
 
 

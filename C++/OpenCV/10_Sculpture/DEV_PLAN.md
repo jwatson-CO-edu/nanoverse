@@ -15,6 +15,7 @@
     - `[Y]` Decide what the transform means, relative or absolute!, 2025-02-02: Relative!
     - `[>]` Store as homog coords in the SECOND node!
 * `[ ]` Generate PCD for registered image pair
+    - `[Y]` Fetch Claude response
     - `[ ]` Visualize the PCD! Does it make sense?
     - `[ ]` Decide which node the PCD belongs to!
     - `{?}` Is there an **EXISTING** struct/class that I SHOULD use?
@@ -27,6 +28,9 @@
     - `[ ]` PCD consensus across pairs?
     - `[ ]` How to account for drift?
     - `[ ]` Consider loop closure
+
+## Troubleshooting
+* `{?}` IF poor quality, THEN switch all OpenCV `Mat`s and calcs to `double`
 
 ## Textured Model
 * `[ ]` Cluster total PCD into "surfaces"
