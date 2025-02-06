@@ -150,9 +150,9 @@ struct Camera3D{
 	// Camera state goes here
 
 	/// Members ///
-	vec3f eyeLoc; // ------------ Camera location (world frame)
-	vec3f lookPt; // ------------ Focus of camera (world frame)
-	vec3f upVctr; // ------------ Direction of "up"0f};
+	vec3f eyeLoc; // Camera location (world frame)
+	vec3f lookPt; // Focus of camera (world frame)
+	vec3f upVctr; // Direction of "up"0f};
     // vec3f linClr = {0.0f,0.0f,0.0f};
 
 	/// Constructor ///

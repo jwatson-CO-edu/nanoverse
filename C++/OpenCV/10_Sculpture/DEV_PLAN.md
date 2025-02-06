@@ -15,9 +15,9 @@
     - `[Y]` Decide what the transform means, relative or absolute!, 2025-02-02: Relative!
 * `[>]` Generate PCD for registered image pair
     - `[Y]` Fetch Claude response, 2025-02-05: THERE WERE PROBLEMS
-    - `[>]` ISSUE: SIZE AND TYPE MISMATCH IN GENERATED CODE
-        * `[>]` Fetch human example of `cv::triangulatePoints`
-        * `[ ]` Step-by-Step rebuild
+    - `[Y]` ISSUE: SIZE AND TYPE MISMATCH IN GENERATED CODE, 2025-02-05: Just use `double`/`CV_64F`
+        * `[N]` Fetch human example of `cv::triangulatePoints`, 2025-02-05: Just use `double`/`CV_64F`
+        * `[N]` Step-by-Step rebuild, 2025-02-05: Just use `double`/`CV_64F`
     - `[ ]` Visualize the PCD! Does it make sense?
     - `[ ]` Store the result struct in the SECOND node!
     - `{?}` Is there an **EXISTING** struct/class that I SHOULD use?

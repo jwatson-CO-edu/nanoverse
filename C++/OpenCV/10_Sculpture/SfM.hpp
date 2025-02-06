@@ -1,5 +1,11 @@
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
+// Defines //
+#define LEN 8192  // Maximum length of text string
+#define _USE_MATH_DEFINES
+//  OpenGL with prototypes for glext
+#define GL_GLEXT_PROTOTYPES // Important for all of your programs
+
 ///// Includes /////
 
 /// Standard ///
@@ -7,6 +13,8 @@
 using std::cout, std::cerr, std::endl, std::flush;
 #include <vector>
 using std::vector;
+#include <array>
+using std::array;
 #include <string>
 using std::string, std::to_string, std::stof;
 #include <memory>
@@ -17,7 +25,7 @@ using std::filesystem::directory_iterator;
 #include <fstream>
 using std::ifstream, std::ofstream;
 
-/// Special ///
+/// OpenCV ///
 #include <opencv2/opencv.hpp>
 #include "opencv2/core.hpp"
 #include <opencv2/core/utility.hpp>
@@ -25,10 +33,33 @@ using cv::Mat, cv::String, cv::Vec, cv::Ptr, cv::Range, cv::Size, cv::imshow, cv
 #include <opencv2/imgcodecs.hpp>
 using cv::imread, cv::IMREAD_COLOR, cv::IMREAD_GRAYSCALE;
 #include "opencv2/features2d.hpp"
-using cv::Ptr, cv::KeyPoint, cv::Point2f, cv::Point2i, cv::Point3f, cv::DMatch, 
+using cv::Ptr, cv::KeyPoint, cv::Point2d, cv::Point2i, cv::Point3d, cv::DMatch, 
       cv::FeatureDetector, cv::Feature2D, cv::AKAZE, cv::DescriptorMatcher;
 using std::invalid_argument; // Who included `<stdexcept>`?
 
+/// OpenGL ///
+
+
+
+// Libraries //
+#include <GL/glut.h>
+#include <GL/glu.h>
+#include <GL/gl.h>
+
+
+///// Defines /////
+
+// Cosine and Sine in degrees
+// Author: Willem A. (Vlakkies) Schreüder  
+#define Cos(x)( cos( (x) * 3.1415927 / 180 ) )
+#define Sin(x)( sin( (x) * 3.1415927 / 180 ) )
+#define Cosf(x)( (float)cos( (x) * 3.1415927 / 180 ) )
+#define Sinf(x)( (float)sin( (x) * 3.1415927 / 180 ) )
+
+///// Aliases /////
+typedef unsigned char  ubyte;
+typedef array<double,2> vec2d;
+typedef array<double,3> vec3d;
 
 ////////// STANDARD CONTAINERS /////////////////////////////////////////////////////////////////////
 
@@ -95,8 +126,8 @@ string get_line_arg( string line ); // Get everything after the last ':' in a st
 
 ////////// UTILITY FUNCTIONS ///////////////////////////////////////////////////////////////////////
 
-// Deserialize an OpenCV `CV_32F` matrix stored row-major in a comma-separated list in a string
-Mat deserialize_2d_Mat_f( string input, int Mrows, int Ncols, char sep = ',' );
+// Deserialize an OpenCV `CV_64F` matrix stored row-major in a comma-separated list in a string
+Mat deserialize_2d_Mat_d( string input, int Mrows, int Ncols, char sep = ',' );
 
     
 
@@ -111,10 +142,10 @@ Mat load_cam_calibration( string cPath ); // Fetch the K matrix stored as plain 
 class CamData{ public:
     Mat     Kintrinsic;
     Point2i imgSize;
-    float   horzFOV_deg; // 65.0deg // https://www.camerafv5.com/devices/manufacturers/motorola/moto_g_power_sofia_0/
-    float   vertFOV_deg; // 51.1deg // https://www.camerafv5.com/devices/manufacturers/motorola/moto_g_power_sofia_0/
+    double   horzFOV_deg; // 65.0deg // https://www.camerafv5.com/devices/manufacturers/motorola/moto_g_power_sofia_0/
+    double   vertFOV_deg; // 51.1deg // https://www.camerafv5.com/devices/manufacturers/motorola/moto_g_power_sofia_0/
 
-    CamData( string kPath, string imgDir, float horzFOV_ = 65.0f, float vertFOV_ = 51.1f, string ext = "jpg" );
+    CamData( string kPath, string imgDir, double horzFOV_ = 65.0f, double vertFOV_ = 51.1f, string ext = "jpg" );
 };
 
 
@@ -129,13 +160,13 @@ struct TwoViewResult{
     /// Stage 1 ///
     Mat /*-------*/ R; // Rotation matrix
     Mat /*-------*/ t; // Translation vector
-    vector<Point2f> matched_points1;
-    vector<Point2f> matched_points2;
+    vector<Point2d> matched_points1;
+    vector<Point2d> matched_points2;
     vector<DMatch>  good_matches;
     bool /*------*/ success;
 
     /// Stage 2 ///
-    vector<Point3f> PCD;
+    vector<Point3d> PCD;
 };
 
 
@@ -149,17 +180,17 @@ class TwoViewCalculator{ public:
     Ptr<DescriptorMatcher> matcher;
     
     // Parameters for feature detection and matching
-    float ratioThresh;
-    float ransacThresh;
-    float confidence;
+    double ratioThresh;
+    double ransacThresh;
+    double confidence;
 
-    TwoViewCalculator( float ratioThresh_ = 0.7f, float ransacThresh_ = 2.5f, float confidence_ = 0.99f );
+    TwoViewCalculator( double ratioThresh_ = 0.7f, double ransacThresh_ = 2.5f, double confidence_ = 0.99f );
 
     TwoViewResult estimate_pose( const CamData& camInfo,
                               const vector<KeyPoint>& keypoints1, const Mat& descriptors1, 
                               const vector<KeyPoint>& keypoints2, const Mat& descriptors2 );
 
-    vector<Point3f> generate_point_cloud( const vector<Point2f>& keypoints1, const vector<Point2f>& keypoints2,
+    vector<Point3d> generate_point_cloud( const vector<Point2d>& keypoints1, const vector<Point2d>& keypoints2,
                                           const Mat& R, const Mat& t, const CamData& camInfo );
 
     static Mat visualize_matches( const Mat& img1, const vector<KeyPoint>& keypoints1,
@@ -198,3 +229,55 @@ class ImgNode{ public:
 vector<NodePtr> images_to_nodes( string path, string ext = "jpg" ); // Populate a vector of nodes with paths and images
 
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////// OGL_Display.cpp /////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+/////////// GRAPHICS STRUCTS ///////////////////////////////////////////////////////////////////////
+
+class Camera3D{ public:
+	// Camera state goes here
+
+	/// Members ///
+	vec3d eyeLoc; // Camera location (world frame)
+	vec3d lookPt; // Focus of camera (world frame)
+	vec3d upVctr; // Direction of "up"0f};
+
+    Camera3D();
+    void look(); // Set camera position, target, and orientation
+    void set_position( const vec3d& loc ); // Move the camera to `loc` and set view
+    void set_target( const vec3d& target ); // Point the camera at `target` and set view
+
+};
+
+enum VIEWMODE{ ORTHO, PERSP };
+
+
+class OGL_window{ public:
+	// Manage window things
+
+    /// Singleton ///
+    static OGL_window& make_window( int width , int height, string name = "WINDOW" );
+	
+	/// Members ///
+	VIEWMODE CURRVIEW; // View type
+	GLdouble dim; // ?? Dimension of orthogonal box ??
+	GLdouble w2h; // Width:Height Ratio
+	GLdouble fov; // Field Of View angle [deg]
+    Camera3D cam; // Camera
+    
+    /// Callback Pointers ///
+    void (*draw_cb)(); // Drawing function
+    void (*idle_cb)(); // Idle function
+
+    OGL_window( VIEWMODE view = PERSP );
+
+    void create( int width, int height, string name = "WINDOW" );
+    void Project(); // Set projection
+    void OGL_frame_start(); // Do this before drawing anything
+    void OGL_frame_end(); // Do this after drawing everything, Flush and swap
+    void set_callbacks( void (*draw_cb_)(), void (*idle_cb_)() = NULL );
+    void run();
+};

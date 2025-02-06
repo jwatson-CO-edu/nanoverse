@@ -46,7 +46,7 @@ Mat load_cam_calibration( string cPath ){
     Mat matx;
     vector<string> lines = read_lines( cPath );
     if( lines.size() ){
-        matx = deserialize_2d_Mat_f( get_line_arg( lines[0] ), 3, 3, ',' );
+        matx = deserialize_2d_Mat_d( get_line_arg( lines[0] ), 3, 3, ',' );
         cout << "Camera Calibration Matrix from " << cPath << ":" << endl;
         cout << matx << endl;
     }else{
@@ -55,7 +55,7 @@ Mat load_cam_calibration( string cPath ){
     return matx;
 }
 
-CamData::CamData( string kPath, string imgDir, float horzFOV_, float vertFOV_, string ext ){
+CamData::CamData( string kPath, string imgDir, double horzFOV_, double vertFOV_, string ext ){
 
     vector<Mat>    image;
     vector<String> fNames;
@@ -68,7 +68,7 @@ CamData::CamData( string kPath, string imgDir, float horzFOV_, float vertFOV_, s
 }
 
 
-TwoViewCalculator::TwoViewCalculator( float ratioThresh_, float ransacThresh_, float confidence_ ) {
+TwoViewCalculator::TwoViewCalculator( double ratioThresh_, double ransacThresh_, double confidence_ ) {
     // Use FLANN matcher for efficient matching
     matcher /**/ = DescriptorMatcher::create( DescriptorMatcher::BRUTEFORCE_HAMMING );
     ratioThresh  = ratioThresh_;
@@ -78,8 +78,8 @@ TwoViewCalculator::TwoViewCalculator( float ratioThresh_, float ransacThresh_, f
     
     
 TwoViewResult TwoViewCalculator::estimate_pose( const CamData& camInfo,
-                                             const vector<KeyPoint>& keypoints1, const Mat& descriptors1, 
-                                             const vector<KeyPoint>& keypoints2, const Mat& descriptors2 ){
+                                                const vector<KeyPoint>& keypoints1, const Mat& descriptors1, 
+                                                const vector<KeyPoint>& keypoints2, const Mat& descriptors2 ){
     // Use keypoint collections from two images to calculate a relative pose
     // https://claude.site/artifacts/6b2b5025-4cdf-43cd-9762-b8f4fdb74d90
     TwoViewResult result;
@@ -105,8 +105,8 @@ TwoViewResult TwoViewCalculator::estimate_pose( const CamData& camInfo,
     }
     
     // Step 4: Extract matched point coordinates
-    vector<Point2f>& points1 = result.matched_points1;
-    vector<Point2f>& points2 = result.matched_points2;
+    vector<Point2d>& points1 = result.matched_points1;
+    vector<Point2d>& points2 = result.matched_points2;
     
     for (const auto& match : good_matches) {
         points1.push_back(keypoints1[match.queryIdx].pt);
@@ -155,8 +155,9 @@ Mat TwoViewCalculator::visualize_matches( const Mat& img1, const vector<KeyPoint
     return output;
 }
 
-vector<Point3f> TwoViewCalculator::generate_point_cloud( 
-    const vector<Point2f>& keypoints1, const vector<Point2f>& keypoints2,
+
+vector<Point3d> TwoViewCalculator::generate_point_cloud( 
+    const vector<Point2d>& keypoints1, const vector<Point2d>& keypoints2,
     const Mat& R, const Mat& t, const CamData& camInfo ){
     // https://claude.site/artifacts/f4a5b5fd-b317-4c6f-b42d-f35b92d03cbf
     // FIXME: GENERATED CODE NOT TRUSTWORTHY!
@@ -169,11 +170,11 @@ vector<Point3f> TwoViewCalculator::generate_point_cloud(
     }
 
     // Construct projection matrices
-    Mat P1 = camInfo.Kintrinsic * Mat::eye( 3, 4, CV_32F );  // First camera matrix [K|0]
+    Mat P1 = camInfo.Kintrinsic * Mat::eye( 3, 4, CV_64F );  // First camera matrix [K|0]
     cout << "Calculated projection!" << endl;
     
     // Create second camera matrix [K(R|t)]
-    Mat P2( 3, 4, CV_32F );
+    Mat P2( 3, 4, CV_64F );
     cv::hconcat( R, t, P2 );
     cout << "Concatenated!" << endl;
     cout << camInfo.Kintrinsic.size() << " x " << P2.size() << endl; // FIXME: DIMENSIONS NOT ALIGNED?
@@ -181,33 +182,33 @@ vector<Point3f> TwoViewCalculator::generate_point_cloud(
     P2 = camInfo.Kintrinsic * P2;
     cout << "Calculated second camera matrix!" << endl;
 
-    vector<Point3f> points3D;
+    vector<Point3d> points3D;
     points3D.reserve( keypoints1.size() );
 
     // Triangulate each pair of corresponding points
     for (size_t i = 0; i < keypoints1.size(); i++) {
         // Convert points to normalized homogeneous coordinates
-        Point2f pt1 = keypoints1[i];
-        Point2f pt2 = keypoints2[i];
+        Point2d pt1 = keypoints1[i];
+        Point2d pt2 = keypoints2[i];
 
         // Create matrices for triangulation
         Mat point4D;
-        Mat points1( 2, 1, CV_32F );
-        Mat points2( 2, 1, CV_32F );
-        points1.at<float>(0) = pt1.x;
-        points1.at<float>(1) = pt1.y;
-        points2.at<float>(0) = pt2.x;
-        points2.at<float>(1) = pt2.y;
+        Mat points1( 2, 1, CV_64F );
+        Mat points2( 2, 1, CV_64F );
+        points1.at<double>(0) = pt1.x;
+        points1.at<double>(1) = pt1.y;
+        points2.at<double>(0) = pt2.x;
+        points2.at<double>(1) = pt2.y;
 
         // Triangulate the point
         cv::triangulatePoints( P1, P2, points1, points2, point4D );
 
         // Convert homogeneous coordinates to 3D point
-        point4D = point4D / point4D.at<float>(3);
-        Point3f point3D(
-            point4D.at<float>(0),
-            point4D.at<float>(1),
-            point4D.at<float>(2)
+        point4D = point4D / point4D.at<double>(3);
+        Point3d point3D(
+            point4D.at<double>(0),
+            point4D.at<double>(1),
+            point4D.at<double>(2)
         );
 
         // Add to point cloud

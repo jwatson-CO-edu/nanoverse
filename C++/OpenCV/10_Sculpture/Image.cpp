@@ -1,3 +1,4 @@
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 #include "SfM.hpp"
 
 ////////// KAZE ////////////////////////////////////////////////////////////////////////////////////
@@ -120,9 +121,9 @@ vector<string> read_lines( string path ){
 
 ////////// UTILITY FUNCTIONS ///////////////////////////////////////////////////////////////////////
 
-Mat deserialize_2d_Mat_f( string input, int Mrows, int Ncols, char sep ){
-    // Deserialize an OpenCV `CV_32F` matrix stored row-major in a comma-separated list in a string
-    Mat rtnMat = Mat::zeros( Mrows, Ncols, CV_32F );
+Mat deserialize_2d_Mat_d( string input, int Mrows, int Ncols, char sep ){
+    // Deserialize an OpenCV `CV_64F` matrix stored row-major in a comma-separated list in a string
+    Mat rtnMat = Mat::zeros( Mrows, Ncols, CV_64F );
 
     // cout << "Got input: " << input << endl;
 
@@ -133,7 +134,7 @@ Mat deserialize_2d_Mat_f( string input, int Mrows, int Ncols, char sep ){
 
     if( tokens.size() < Mrows*Ncols )  return rtnMat; // Return the zero matrix if there are insufficient elements
     int k = 0;
-    float val;
+    double val;
     string item;
     for( int i = 0; i < Mrows; ++i ){
         for( int j = 0; j < Ncols; ++j ){
@@ -143,10 +144,11 @@ Mat deserialize_2d_Mat_f( string input, int Mrows, int Ncols, char sep ){
             // item += '\0'
             // cout << ", " << stof( tokens[k] ) << flush;
             try{
-                rtnMat.at<float>(i,j) = stof( tokens[k] );
+                // rtnMat.at<double>(i,j) = stof( tokens[k] );
+                rtnMat.at<double>(i,j) = stod( tokens[k] );
             }catch (const std::out_of_range& e) {
                 cout << "Out of Range error." << endl;
-                rtnMat.at<float>(i,j) = nanf("");
+                rtnMat.at<double>(i,j) = nanf("");
             }
             ++k;
         }
