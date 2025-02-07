@@ -1,0 +1,9 @@
+// cls && g++ 01_pcd-display.cpp OGL_Display.cpp Structure.cpp Image.cpp `pkg-config --cflags --libs opencv4` -std=c++17 -O3 -Wall -lm -lglut -lGLU -lGL -lopencv_xfeatures2d -I /usr/local/include/opencv4/ -o 01_pcd-show.out
+
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
+#include "SfM.hpp"
+
+
+
+////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
+vector<Point3d> pts;
