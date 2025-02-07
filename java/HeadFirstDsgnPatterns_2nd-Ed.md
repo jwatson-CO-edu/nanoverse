@@ -18,6 +18,8 @@
 * A class should have only one responsibility
     - Every responsibility of a class is an area of potential change
     - We say that a module or class has **high cohesion** when it is designed around a set of related functions
+* Dependency Injection: Delegating responsibility to member objects
+
 
 # Observer Pattern
 * One-to-Many Relationships

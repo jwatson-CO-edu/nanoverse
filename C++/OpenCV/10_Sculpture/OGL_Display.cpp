@@ -1,3 +1,6 @@
+#ifndef SFM_HPP // This pattern is to prevent symbols to be loaded multiple times
+#define SFM_HPP // from multiple imports
+
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 #include "SfM.hpp"
 
@@ -49,15 +52,71 @@ void Camera3D::set_target( const vec3d& target ){
 }
 
 
+CAD_Camera3D::CAD_Camera3D():Camera3D(){};
+
+
+vec3d operator-( const vec3d& left, const vec3d& right ){
+    return vec3d{
+        left[0] - right[0],
+        left[1] - right[1],
+        left[2] - right[2]
+    };
+}
+
+
+vec3d operator+( const vec3d& left, const vec3d& right ){
+    return vec3d{
+        left[0] + right[0],
+        left[1] + right[1],
+        left[2] + right[2]
+    };
+}
+
+
+double magnitude( const vec3d& cartCoords ){
+    return sqrt( pow( cartCoords[0], 2 ) + pow( cartCoords[1], 2 )  + pow( cartCoords[2], 2 ) );
+}
+
+
+vec3d cart_2_spherical( const vec3d& cartCoords ){
+    double radius = magnitude( cartCoords );
+    double theta  = atan2( cartCoords[1], cartCoords[0] );
+    double xyLen  = sqrt( pow( cartCoords[0], 2 ) + pow( cartCoords[1], 2 ) );
+    double phi    = atan2( cartCoords[2], xyLen );
+    return vec3d{ radius, theta, phi };
+}
+
+
+vec3d spherical_2_cart( const vec3d& sphrCoords ){
+    double radius = sphrCoords[0];
+    double xyLen  = radius * cos( sphrCoords[2] );
+    return vec3d{
+        xyLen  * cos( sphrCoords[0] ),
+        xyLen  * sin( sphrCoords[0] ),
+        radius * sin( sphrCoords[2] )
+    };
+}
+
+
+void CAD_Camera3D::rotate_spherical( double delTheta, double delPhi ){
+    vec3d antiLookSeg = eyeLoc - lookPt;
+    vec3d antiLookSph = cart_2_spherical( antiLookSeg );
+    antiLookSph[1] += delTheta;
+    antiLookSph[2] += delPhi;
+    vec3d eyeDiff = spherical_2_cart( antiLookSph );
+    eyeLoc = lookPt + eyeDiff;
+}
+
+
 
 ///// OGL_window //////////////////////////////////////////////////////////
 static OGL_window instance;
 
 OGL_window::OGL_window( VIEWMODE view ){
     CURRVIEW = view;
-    dim /**/ =  1; 
-    w2h /**/ =  1; 
-    fov /**/ = 55; 
+    dim /**/ =  1.0; 
+    w2h /**/ =  1.0; 
+    fov /**/ = 55.0; 
     cam /**/ = Camera3D();
 }
 
@@ -104,7 +163,7 @@ void OGL_window::Project(){
         case PERSP:
             gluPerspective( (double) fov , // -- Field of view angle, in degrees, in the y direction.
                             (double) w2h , // -- Aspect ratio , the field of view in the x direction. Ratio of x (width) to y (height).
-                            (double) dim/4.0 , //- Specifies the distance from the viewer to the near clipping plane (always positive).
+                            (double) dim/16.0 , //- Specifies the distance from the viewer to the near clipping plane (always positive).
                             (double) 4.0*dim ); // Specifies the distance from the viewer to the far clipping plane (always positive).
             break;
     }
@@ -159,6 +218,7 @@ void idle(){
 
 void display(){
     // Don't bother the user with frame setup and cleanup
+    cout << "! DRAW !" << endl;
     instance.cam.look();
     instance.OGL_frame_start();
     instance.draw_cb();
@@ -167,7 +227,7 @@ void display(){
 
 
 void OGL_window::set_callbacks( void (*draw_cb_)(), void (*idle_cb_)() ){
-    cout << "About to set callbacls ..." << endl;
+    cout << "About to set callbacks ..." << endl;
     draw_cb = draw_cb_;
     idle_cb = (idle_cb_ ? idle_cb_ : dummy_cb );
 
@@ -204,3 +264,6 @@ void OGL_window::set_eye_target( const Point3d& eye, const Point3d& target ){
     cam.set_position( vec3d{ eye.x, eye.y, eye.z } );
     cam.set_target( vec3d{ target.x, target.y, target.z } );
 }
+
+////////// END /////////////////////////////////////////////////////////////////////////////////////
+#endif;

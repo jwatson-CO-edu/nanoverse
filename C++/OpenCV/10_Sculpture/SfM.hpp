@@ -26,6 +26,8 @@ using std::filesystem::directory_iterator;
 using std::ifstream, std::ofstream;
 #include <algorithm>
 using std::min, std::max;
+#include <cmath>
+using std::cos, std::sin, std::atan2, std::acos, std::pow, std::sqrt;
 
 /// OpenCV ///
 #include <opencv2/opencv.hpp>
@@ -252,6 +254,14 @@ class Camera3D{ public:
     void set_target( const vec3d& target ); // Point the camera at `target` and set view
 
 };
+
+
+
+class CAD_Camera3D : public Camera3D {
+    CAD_Camera3D();
+    void rotate_spherical( double theta, double phi );
+};
+
 
 enum VIEWMODE{ ORTHO, PERSP };
 
