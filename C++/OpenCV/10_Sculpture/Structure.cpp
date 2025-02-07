@@ -156,16 +156,14 @@ Mat TwoViewCalculator::visualize_matches( const Mat& img1, const vector<KeyPoint
 }
 
 
-vector<Point3d> TwoViewCalculator::generate_point_cloud( 
-    const vector<Point2d>& keypoints1, const vector<Point2d>& keypoints2,
-    const Mat& R, const Mat& t, const CamData& camInfo ){
+void TwoViewCalculator::generate_point_cloud( const CamData& camInfo, TwoViewResult& result ){
     // https://claude.site/artifacts/f4a5b5fd-b317-4c6f-b42d-f35b92d03cbf
-    // FIXME: GENERATED CODE NOT TRUSTWORTHY!
+    
     // Check input validity
-    if (keypoints1.size() != keypoints2.size() || keypoints1.empty()) {
+    if (result.matched_points1.size() != result.matched_points2.size() || result.matched_points1.empty()) {
         throw invalid_argument( "Keypoint vectors must be non-empty and of equal size" );
     }
-    if( R.size() != Size(3, 3) || t.size() != Size(1, 3) || camInfo.Kintrinsic.size() != Size(3, 3) ){
+    if( result.R.size() != Size(3, 3) || result.t.size() != Size(1, 3) || camInfo.Kintrinsic.size() != Size(3, 3) ){
         throw invalid_argument( "Invalid matrix dimensions" );
     }
 
@@ -175,21 +173,24 @@ vector<Point3d> TwoViewCalculator::generate_point_cloud(
     
     // Create second camera matrix [K(R|t)]
     Mat P2( 3, 4, CV_64F );
-    cv::hconcat( R, t, P2 );
+    cv::hconcat( result.R, result.t, P2 );
     cout << "Concatenated!" << endl;
-    cout << camInfo.Kintrinsic.size() << " x " << P2.size() << endl; // FIXME: DIMENSIONS NOT ALIGNED?
-    cout << camInfo.Kintrinsic.type() << " x " << P2.type() << endl; // ERROR: THESE ARE DIFFERENT TYPES!
+    cout << camInfo.Kintrinsic.size() << " x " << P2.size() << endl; 
+    cout << camInfo.Kintrinsic.type() << " x " << P2.type() << endl; 
     P2 = camInfo.Kintrinsic * P2;
     cout << "Calculated second camera matrix!" << endl;
 
+    Point3d /*---*/ avgPnt{ 0.0, 0.0, 0.0 };
     vector<Point3d> points3D;
-    points3D.reserve( keypoints1.size() );
+    array<Point3d,2> bBox = { Point3d{1e6,1e6,1e6,}, Point3d{-1e6,-1e6,-1e6,} };
+
+    points3D.reserve( result.matched_points1.size() );
 
     // Triangulate each pair of corresponding points
-    for (size_t i = 0; i < keypoints1.size(); i++) {
+    for (size_t i = 0; i < result.matched_points1.size(); i++) {
         // Convert points to normalized homogeneous coordinates
-        Point2d pt1 = keypoints1[i];
-        Point2d pt2 = keypoints2[i];
+        Point2d pt1 = result.matched_points1[i];
+        Point2d pt2 = result.matched_points2[i];
 
         // Create matrices for triangulation
         Mat point4D;
@@ -213,9 +214,20 @@ vector<Point3d> TwoViewCalculator::generate_point_cloud(
 
         // Add to point cloud
         points3D.push_back( point3D );
+        avgPnt += point3D;
+        bBox[0].x = min( bBox[0].x, point3D.x );
+        bBox[1].x = max( bBox[1].x, point3D.x );
+        bBox[0].y = min( bBox[0].y, point3D.y );
+        bBox[1].y = max( bBox[1].y, point3D.y );
+        bBox[0].z = min( bBox[0].z, point3D.z );
+        bBox[1].z = max( bBox[1].z, point3D.z );
     }
 
-    cout << endl << points3D << endl << endl; 
+    avgPnt /= (double) points3D.size();
 
-    return points3D;
+    cout << "PCD Centroid: " << avgPnt << endl << endl; 
+
+    result.PCD /**/ = points3D;
+    result.centroid = avgPnt;
+    result.bbox     = bBox;
 }

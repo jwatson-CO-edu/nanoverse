@@ -24,6 +24,8 @@ using std::filesystem::directory_iterator;
 #include <sys/stat.h>
 #include <fstream>
 using std::ifstream, std::ofstream;
+#include <algorithm>
+using std::min, std::max;
 
 /// OpenCV ///
 #include <opencv2/opencv.hpp>
@@ -152,12 +154,8 @@ class CamData{ public:
 struct TwoViewResult{
     // Contains info that can be computed by two (consecutive) views
     // Source: https://claude.ai/chat/b55bb623-d26f-42fe-9ece-c7fd3477e0ac
-    
-    /// Input ///
-    Mat view1;
-    Mat view2;
 
-    /// Stage 1 ///
+    /// Stage 1: Registration ///
     Mat /*-------*/ R; // Rotation matrix
     Mat /*-------*/ t; // Translation vector
     vector<Point2d> matched_points1;
@@ -165,8 +163,10 @@ struct TwoViewResult{
     vector<DMatch>  good_matches;
     bool /*------*/ success;
 
-    /// Stage 2 ///
-    vector<Point3d> PCD;
+    /// Stage 2: Point Cloud ///
+    vector<Point3d>  PCD;
+    Point3d /*----*/ centroid;
+    array<Point3d,2> bbox;
 };
 
 
@@ -186,12 +186,13 @@ class TwoViewCalculator{ public:
 
     TwoViewCalculator( double ratioThresh_ = 0.7f, double ransacThresh_ = 2.5f, double confidence_ = 0.99f );
 
+    /// Stage 1: Registration ///
     TwoViewResult estimate_pose( const CamData& camInfo,
-                              const vector<KeyPoint>& keypoints1, const Mat& descriptors1, 
-                              const vector<KeyPoint>& keypoints2, const Mat& descriptors2 );
+                                 const vector<KeyPoint>& keypoints1, const Mat& descriptors1, 
+                                 const vector<KeyPoint>& keypoints2, const Mat& descriptors2 );
 
-    vector<Point3d> generate_point_cloud( const vector<Point2d>& keypoints1, const vector<Point2d>& keypoints2,
-                                          const Mat& R, const Mat& t, const CamData& camInfo );
+    /// Stage 2: Point Cloud ///
+    void generate_point_cloud( const CamData& camInfo, TwoViewResult& result );
 
     static Mat visualize_matches( const Mat& img1, const vector<KeyPoint>& keypoints1,
                                   const Mat& img2, const vector<KeyPoint>& keypoints2,
@@ -280,4 +281,6 @@ class OGL_window{ public:
     void OGL_frame_end(); // Do this after drawing everything, Flush and swap
     void set_callbacks( void (*draw_cb_)(), void (*idle_cb_)() = NULL );
     void run();
+
+    void set_eye_target( const Point3d& eye, const Point3d& target );
 };

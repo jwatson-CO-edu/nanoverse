@@ -198,3 +198,9 @@ void OGL_window::run(){
     // Pass control to GLUT so it can interact with the user
 	glutMainLoop();
 }
+
+
+void OGL_window::set_eye_target( const Point3d& eye, const Point3d& target ){
+    cam.set_position( vec3d{ eye.x, eye.y, eye.z } );
+    cam.set_target( vec3d{ target.x, target.y, target.z } );
+}

@@ -22,7 +22,6 @@ vector<string> split_string_on_char( string input, char ch ){
     // Return a vector of strings found in `input` separated by whitespace
     vector<string> rtnWords;
     string /*---*/ currWord;
-    char /*-----*/ currChar;
     input += ch; // Separator hack
 
     for( char& currChar : input ){
@@ -132,9 +131,8 @@ Mat deserialize_2d_Mat_d( string input, int Mrows, int Ncols, char sep ){
     // for( string& token : tokens ) cout << '\t' << token << endl;
 
 
-    if( tokens.size() < Mrows*Ncols )  return rtnMat; // Return the zero matrix if there are insufficient elements
+    if( tokens.size() < ((size_t) Mrows*Ncols) )  return rtnMat; // Return the zero matrix if there are insufficient elements
     int k = 0;
-    double val;
     string item;
     for( int i = 0; i < Mrows; ++i ){
         for( int j = 0; j < Ncols; ++j ){

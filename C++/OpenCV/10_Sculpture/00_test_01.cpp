@@ -26,16 +26,15 @@ int main(){
     TwoViewCalculator est{};
 
     TwoViewResult res = est.estimate_pose( camInfo, 
-                                        nodes[0]->keyPts, nodes[0]->kpDesc, 
-                                        nodes[1]->keyPts, nodes[1]->kpDesc );
+                                           nodes[0]->keyPts, nodes[0]->kpDesc, 
+                                           nodes[1]->keyPts, nodes[1]->kpDesc );
 
     cout << "There are " << res.good_matches.size() << " good matches!" << endl;
     cout << "Translation:\n" << res.t << endl;
     cout << "Rotation:\n" << res.R << endl;
     cout << res.matched_points1.size() << ", " << res.matched_points2.size() << ", " << res.success << endl;
 
-    est.generate_point_cloud( res.matched_points1, res.matched_points2,
-                              res.R, res.t, camInfo );
+    est.generate_point_cloud( camInfo, res );
 
     
 

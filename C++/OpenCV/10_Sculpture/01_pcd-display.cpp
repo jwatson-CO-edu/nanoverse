@@ -41,14 +41,17 @@ int main(){
     cout << "Rotation:\n" << res.R << endl;
     cout << res.matched_points1.size() << ", " << res.matched_points2.size() << ", " << res.success << endl;
 
-    pts = est.generate_point_cloud( res.matched_points1, res.matched_points2, res.R, res.t, camInfo );
+    est.generate_point_cloud( camInfo, res );
+    pts = res.PCD;
 
     
 
     // cout << "Returned a " <<  <<  "x" << " matrix"
 
     OGL_window& win = OGL_window::make_window( 800, 800, "PCD" );
+    win.dim = max( max( res.bbox[1].x, res.bbox[1].y ), res.bbox[1].z );
     win.set_callbacks( draw );
+    win.set_eye_target( res.bbox[1], res.centroid );
     win.run();
 
     return 0;
