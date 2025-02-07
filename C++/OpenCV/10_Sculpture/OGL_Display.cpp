@@ -91,8 +91,8 @@ vec3d spherical_2_cart( const vec3d& sphrCoords ){
     double radius = sphrCoords[0];
     double xyLen  = radius * cos( sphrCoords[2] );
     return vec3d{
-        xyLen  * cos( sphrCoords[0] ),
-        xyLen  * sin( sphrCoords[0] ),
+        xyLen  * cos( sphrCoords[1] ),
+        xyLen  * sin( sphrCoords[1] ),
         radius * sin( sphrCoords[2] )
     };
 }
