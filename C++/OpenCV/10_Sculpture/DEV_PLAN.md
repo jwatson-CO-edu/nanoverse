@@ -13,11 +13,15 @@
 ## 2 Image Sequence
 * `[Y]` Load images into nodes, 2025-02-02: Same as it ever was!
     - `[Y]` Find AKAZE (Again), 2025-02-02: Same as it ever was!
-* `[Y]` Keypoint registration, 2025-02-03: Copy and Paste!
+
+* `[>]` Keypoint registration, 2025-02-03: Copy and Paste!
     - `[Y]` Fetch Claude response, Compare to ChatGPT response, 2025-02-03: Copy and Paste!
     - `[Y]` KNN, 2025-02-03: Copy and Paste!
+    - `[>]` Save matching as a file and view it
+
 * `[Y]` Calc relative camera pose previous --to-> current, 2025-02-02: Relative!
     - `[Y]` Decide what the transform means, relative or absolute!, 2025-02-02: Relative!
+
 * `[>]` Generate PCD for registered image pair
     - `[Y]` Fetch Claude response, 2025-02-05: THERE WERE PROBLEMS
     - `[Y]` ISSUE: SIZE AND TYPE MISMATCH IN GENERATED CODE, 2025-02-05: Just use `double`/`CV_64F`
@@ -31,11 +35,11 @@
 
 ## 3 Image Sequence
 * `[ ]` ICP for PCD
+    - `[ ]` [ICP Registration Ref](https://docs.opencv.org/4.x/dc/d9b/classcv_1_1ppf__match__3d_1_1ICP.html)
     - `[ ]` Try N-dim ICP that includes the coordinates of the associated keypoints
 * `[ ]` Calc absolute camera pose previous --to-> current
 
 ## N Image Sequence
-* `[ ]` PCD consensus across pairs?
 * `[ ]` How to account for drift?
 * `[ ]` Consider loop closure
 

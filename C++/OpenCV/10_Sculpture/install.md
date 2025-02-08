@@ -1,6 +1,6 @@
 # OpenCV
 1. Install dependencies
-    * `sudo apt install libgtk2.0-dev libgtk-3-dev gnome-devel pkg-config`
+    * `sudo apt install libgtk2.0-dev libgtk-3-dev pkg-config`
 1. Nuke all previous installations!
     * `sudo rm /usr/{bin,lib}/*opencv*`, 
     * `sudo rm /usr/local/{bin,lib}/*opencv*`
@@ -16,9 +16,9 @@
     1. `cd ../opencv-4.9.0/`
     1. `mkdir -p build && cd build`
     1. `sudo mkdir /usr/local/include/bullet` , This is a hack for the sake of `opencv_contrib` version 4
-    1. `cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules -D OPENCV_ENABLE_NONFREE=ON -D OPENCV_GENERATE_PKGCONFIG=ON -D WITH_QT=OFF -D WITH_GTK=ON .. | tee CMakePrepInfo.txt`
+    1. `cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules -D PKG_CONFIG_PATH=/usr/lib/pkgconfig -D OPENCV_ENABLE_NONFREE=ON -D OPENCV_GENERATE_PKGCONFIG=ON -D WITH_QT=ON -D WITH_GTK=OFF .. | tee CMakePrepInfo.txt`
     1. `cat CMakePrepInfo.txt | grep opencv_contrib` , Verify that extra modules are going to be built
-    1. `make -j7 | tee makeBuildInfo.txt`
+    1. `unbuffer make -j6 | tee makeBuildInfo.txt`
     1. `cat makeBuildInfo.txt | grep xfeatures2d` , Verify that extra 2D features module was **actually** *built*
 1. Install OpenCV and Notify the Linker
     1. `sudo make install`
@@ -26,6 +26,40 @@
     1. `ls /usr/local/include/opencv4/opencv2/ | grep xfeatures2d` , Verify that extra 2D features module was **actually** *installed*
     1. `export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib` , Let the compiler find the shared object location
     1. Add `/usr/local/include/opencv4/` to the editor search path for this project.
+1. `sudo ldconfig`
+
+# Point Cloud Library (PCL)
+1. `sudo apt install libboost-all-dev vtk9 qtcreator libeigen3-dev liblz4-dev`
+
+## Eigen3 (C++ Linear Algebra)
+1. `cd /usr/include`
+1. `sudo ln -sf eigen3/Eigen Eigen`
+1. `sudo ln -sf eigen3/unsupported unsupported`
+
+## FLANN
+1. `cd /tmp/`
+1. `git clone https://github.com/flann-lib/flann.git`
+1. `cd flann`
+1. `git checkout 1.9.2`
+1. `mkdir build && cd $_`
+1. `cmake ..`
+1. `unbuffer make -j2 | tee makeBuildInfo.txt`
+1. `sudo make install`
+
+## PCL
+1. `cd /tmp/`
+1. `wget https://github.com/PointCloudLibrary/pcl/releases/download/pcl-1.14.1/source.tar.gz`
+1. `tar xvf source.tar.gz`
+1. `cd pcl/`
+1. `mkdir build && cd $_`
+1. `cmake ..`
+1. `unbuffer make -j6 | tee makeBuildInfo.txt`
+1. `sudo make install`
+
+## Finish
+1. `sudo ldconfig`
+
+# Suspended
 1. Build and Install MatIO
     1. `cd /tmp/`
     1. `git clone git://git.code.sf.net/p/matio/matio`
@@ -45,8 +79,3 @@
     1. `make`
     1. `sudo make install`
     
-<!-- # Eigen3
-1. `sudo apt install libeigen3-dev`
-1. `cd /usr/include`
-1. `sudo ln -sf eigen3/Eigen Eigen`
-1. `sudo ln -sf eigen3/unsupported unsupported` -->
