@@ -35,6 +35,9 @@
 ## Troubleshooting
 * `{?}` IF poor quality, THEN switch all OpenCV `Mat`s and calcs to `double`
 
+## OpenGL Interface
+* `[ ]` Switch homegrown vectors to GLM
+
 ## Textured Model
 * `[ ]` Cluster total PCD into "surfaces"
     - `[ ]` Surfaces **should** share edges!

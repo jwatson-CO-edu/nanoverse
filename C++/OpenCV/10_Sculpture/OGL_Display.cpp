@@ -303,6 +303,18 @@ void OGL_window::set_callbacks( void (*draw_cb_)(), void (*idle_cb_)() ){
 
     // Tell GLUT to call "reshape" when the window is resized
 	glutReshapeFunc( reshape );
+
+    // Tell GLUT to call "special" when an arrow key is pressed or released
+    // glutSpecialFunc( special_dn );
+    // glutSpecialUpFunc( special_up );
+
+    // Tell GLUT to call "mouse" when mouse input arrives
+    // glutMouseFunc( mouse ); // ------------ Clicks
+    // glutPassiveMotionFunc( mouse_move ); // Movement
+    
+    // Tell GLUT to call "key" when a key is pressed or released
+    // glutKeyboardFunc( key_dn );
+    // glutKeyboardUpFunc( key_up );
 }
 
 
