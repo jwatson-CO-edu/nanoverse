@@ -249,17 +249,12 @@ class Camera3D{ public:
 	vec3d upVctr; // Direction of "up"0f};
 
     Camera3D();
-    void look(); // Set camera position, target, and orientation
-    void set_position( const vec3d& loc ); // Move the camera to `loc` and set view
-    void set_target( const vec3d& target ); // Point the camera at `target` and set view
-
-};
-
-
-
-class CAD_Camera3D : public Camera3D {
-    CAD_Camera3D();
-    void rotate_spherical( double theta, double phi );
+    void look(); // ------------------------------------- Set camera position, target, and orientation
+    void set_position( const vec3d& loc ); // ----------- Move the camera to `loc` and set view
+    void set_target( const vec3d& target ); // ---------- Point the camera at `target` and set view
+    void rotate_spherical( double theta, double phi ); // Rotate the eye about the target in spherical coordinates
+    // Move the camera along the line of sight while preserving target and up, Enforce non-negative distance
+    void zoom_spherical( double delDist );
 };
 
 
@@ -274,10 +269,10 @@ class OGL_window{ public:
 	
 	/// Members ///
 	VIEWMODE CURRVIEW; // View type
-	GLdouble dim; // ?? Dimension of orthogonal box ??
-	GLdouble w2h; // Width:Height Ratio
-	GLdouble fov; // Field Of View angle [deg]
-    Camera3D cam; // Camera
+	GLdouble dim; // ---- View scale
+	GLdouble w2h; // ---- Width:Height Ratio
+	GLdouble fov; // ---- Field Of View angle [deg]
+    Camera3D cam; // ---- Camera
     
     /// Callback Pointers ///
     void (*draw_cb)(); // Drawing function
@@ -286,9 +281,9 @@ class OGL_window{ public:
     OGL_window( VIEWMODE view = PERSP );
 
     void create( int width, int height, string name = "WINDOW" );
-    void Project(); // Set projection
+    void Project(); // ------- Set projection
     void OGL_frame_start(); // Do this before drawing anything
-    void OGL_frame_end(); // Do this after drawing everything, Flush and swap
+    void OGL_frame_end(); // - Do this after drawing everything, Flush and swap
     void set_callbacks( void (*draw_cb_)(), void (*idle_cb_)() = NULL );
     void run();
 

@@ -52,10 +52,8 @@ void Camera3D::set_target( const vec3d& target ){
 }
 
 
-CAD_Camera3D::CAD_Camera3D():Camera3D(){};
-
-
 vec3d operator-( const vec3d& left, const vec3d& right ){
+    // Subtract two 3D vectors
     return vec3d{
         left[0] - right[0],
         left[1] - right[1],
@@ -64,7 +62,14 @@ vec3d operator-( const vec3d& left, const vec3d& right ){
 }
 
 
+vec3d operator-( const vec3d& vec ){
+    // Return the opposite of `vec`
+    return vec3d{ -vec[0], -vec[1], -vec[2] };
+}
+
+
 vec3d operator+( const vec3d& left, const vec3d& right ){
+    // Add two 3D vectors
     return vec3d{
         left[0] + right[0],
         left[1] + right[1],
@@ -73,13 +78,53 @@ vec3d operator+( const vec3d& left, const vec3d& right ){
 }
 
 
-double magnitude( const vec3d& cartCoords ){
+vec3d operator/( const vec3d& left, double right ){
+    // Divide a 3D vector by a scalar
+    return vec3d{
+        left[0] / right,
+        left[1] / right,
+        left[2] / right
+    };
+}
+
+
+vec3d operator*( const vec3d& left, double right ){
+    // Divide a 3D vector by a scalar
+    return vec3d{
+        left[0] * right,
+        left[1] * right,
+        left[2] * right
+    };
+}
+
+
+vec3d cross( const vec3d& a, const vec3d& b ){
+    // Compute a X b
+    return vec3d{
+        a[1]*b[2] - a[2]*b[1],
+        a[2]*b[0] - a[0]*b[2],
+        a[0]*b[1] - a[1]*b[0]
+    };
+}
+
+
+double norm( const vec3d& cartCoords ){
+    // Length of a 3D vector
     return sqrt( pow( cartCoords[0], 2 ) + pow( cartCoords[1], 2 )  + pow( cartCoords[2], 2 ) );
 }
 
 
+vec3d unit( const vec3d& vec ){
+    // Return the unit direction of the vector
+    double mag = norm( vec );
+    if( mag > 0.0 ){  return vec / mag; }
+    else{  return vec;  }
+}
+
+
 vec3d cart_2_spherical( const vec3d& cartCoords ){
-    double radius = magnitude( cartCoords );
+    // Cartesian to Spherical Coordinates
+    double radius = norm( cartCoords );
     double theta  = atan2( cartCoords[1], cartCoords[0] );
     double xyLen  = sqrt( pow( cartCoords[0], 2 ) + pow( cartCoords[1], 2 ) );
     double phi    = atan2( cartCoords[2], xyLen );
@@ -88,6 +133,7 @@ vec3d cart_2_spherical( const vec3d& cartCoords ){
 
 
 vec3d spherical_2_cart( const vec3d& sphrCoords ){
+    // Spherical to Cartesian Coordinates
     double radius = sphrCoords[0];
     double xyLen  = radius * cos( sphrCoords[2] );
     return vec3d{
@@ -98,13 +144,31 @@ vec3d spherical_2_cart( const vec3d& sphrCoords ){
 }
 
 
-void CAD_Camera3D::rotate_spherical( double delTheta, double delPhi ){
+void Camera3D::rotate_spherical( double delTheta, double delPhi ){
+    // Rotate the eye about the target in spherical coordinates
+    // 1. Move the eye
     vec3d antiLookSeg = eyeLoc - lookPt;
     vec3d antiLookSph = cart_2_spherical( antiLookSeg );
     antiLookSph[1] += delTheta;
     antiLookSph[2] += delPhi;
     vec3d eyeDiff = spherical_2_cart( antiLookSph );
     eyeLoc = lookPt + eyeDiff;
+    // 2. Recalc "up"
+    // NOTE: This function assumes that the caller does not exactly rotate the camera between horizontal and vertical in one step
+    vec3d xBasis = -eyeDiff;
+    vec3d yBasis = cross( upVctr, xBasis );
+    upVctr = unit( cross( xBasis, yBasis ) );
+}
+
+
+void Camera3D::zoom_spherical( double delDist ){
+    // Move the camera along the line of sight while preserving target and up, Enforce non-negative distance
+    vec3d  antiLookSeg = eyeLoc - lookPt;
+    double antiLookMag = norm( antiLookSeg );
+    vec3d  antiLookDir = unit( antiLookSeg );
+    antiLookMag = max( antiLookMag + delDist, 0.0 );
+    antiLookSeg = antiLookDir * antiLookMag;
+    eyeLoc = lookPt + antiLookSeg;
 }
 
 
