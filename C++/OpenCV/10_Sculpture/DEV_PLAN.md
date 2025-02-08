@@ -5,6 +5,11 @@
 
 # `DEV_PLAN`
 
+## Dependencies
+* `[ ]` Recompile OpenCV w/ image display
+* `[ ]` Build Point Cloud Library
+    - [Point Cloud Library (PCL) Build Instructions](https://pcl.readthedocs.io/projects/tutorials/en/latest/compiling_pcl_posix.html)
+
 ## 2 Image Sequence
 * `[Y]` Load images into nodes, 2025-02-02: Same as it ever was!
     - `[Y]` Find AKAZE (Again), 2025-02-02: Same as it ever was!
@@ -18,7 +23,9 @@
     - `[Y]` ISSUE: SIZE AND TYPE MISMATCH IN GENERATED CODE, 2025-02-05: Just use `double`/`CV_64F`
         * `[N]` Fetch human example of `cv::triangulatePoints`, 2025-02-05: Just use `double`/`CV_64F`
         * `[N]` Step-by-Step rebuild, 2025-02-05: Just use `double`/`CV_64F`
-    - `[ ]` Visualize the PCD! Does it make sense?
+    - `[>]` Visualize the PCD! Does it make sense?
+        * [PCL Cloud Viewer](http://pointclouds.org/documentation/classpcl_1_1visualization_1_1_cloud_viewer.html)
+        * [PCL Viewer Example](https://github.com/PointCloudLibrary/pcl/blob/master/doc/tutorials/content/sources/pcl_visualizer/pcl_visualizer_demo.cpp)
     - `[ ]` Store the result struct in the SECOND node!
     - `{?}` Is there an **EXISTING** struct/class that I SHOULD use?
 
