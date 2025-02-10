@@ -1,4 +1,5 @@
 # OpenCV
+**WARNING: This will take at least an hour to build!**
 1. Install dependencies
     * `sudo apt install libgtk2.0-dev libgtk-3-dev pkg-config`
 1. Nuke all previous installations!
@@ -26,9 +27,9 @@
     1. `ls /usr/local/include/opencv4/opencv2/ | grep xfeatures2d` , Verify that extra 2D features module was **actually** *installed*
     1. `export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib` , Let the compiler find the shared object location
     1. Add `/usr/local/include/opencv4/` to the editor search path for this project.
-1. `sudo ldconfig`
 
 # Point Cloud Library (PCL)
+**WARNING: This will take a while to build!**
 1. `sudo apt install libboost-all-dev vtk9 qtcreator libeigen3-dev liblz4-dev`
 
 ## Eigen3 (C++ Linear Algebra)
@@ -57,9 +58,10 @@
 1. `sudo make install`
 
 ## Finish
-1. `sudo ldconfig`
+1. `sudo ldconfig -v`
 
 # Suspended
+**WARNING**: Interoperability with MATLAB is a low priority! Not useful or fun!!
 1. Build and Install MatIO
     1. `cd /tmp/`
     1. `git clone git://git.code.sf.net/p/matio/matio`
