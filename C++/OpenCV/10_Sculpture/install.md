@@ -29,8 +29,8 @@
     1. Add `/usr/local/include/opencv4/` to the editor search path for this project.
 
 # Point Cloud Library (PCL)
-**WARNING: This will take a while to build!**
-1. `sudo apt install libboost-all-dev vtk9 qtcreator libeigen3-dev liblz4-dev`
+**WARNING: This will take more than an hour to build!**
+1. `sudo apt install libboost-all-dev qtcreator libvtk9-dev libvtk9-qt-dev libeigen3-dev liblz4-dev libqhull-dev`
 
 ## Eigen3 (C++ Linear Algebra)
 1. `cd /usr/include`
@@ -48,17 +48,20 @@
 1. `sudo make install`
 
 ## PCL
+**WARNING: This will take at least an hour to build!**
+1. `sudo swapoff -a`, Otherwise the session will slow down massively
 1. `cd /tmp/`
 1. `wget https://github.com/PointCloudLibrary/pcl/releases/download/pcl-1.14.1/source.tar.gz`
 1. `tar xvf source.tar.gz`
 1. `cd pcl/`
 1. `mkdir build && cd $_`
-1. `cmake ..`
+1. `unbuffer cmake .. | tee CMakeInfo.txt`
 1. `unbuffer make -j6 | tee makeBuildInfo.txt`
 1. `sudo make install`
 
 ## Finish
 1. `sudo ldconfig -v`
+1. Add to include paths: "/usr/local/include/pcl-1.14/"
 
 # Suspended
 **WARNING**: Interoperability with MATLAB is a low priority! Not useful or fun!!
