@@ -30,6 +30,9 @@
     - `[>]` Visualize the PCD! Does it make sense?
         * [PCL Cloud Viewer](http://pointclouds.org/documentation/classpcl_1_1visualization_1_1_cloud_viewer.html)
         * [PCL Viewer Example](https://github.com/PointCloudLibrary/pcl/blob/master/doc/tutorials/content/sources/pcl_visualizer/pcl_visualizer_demo.cpp)
+        * `[Y]` Install Point Cloud Library (PCL), 2025-02-12: INSTALLED and TESTED!
+        * `[>]` Load into PCL data struct
+        * `[ ]` Display, Does it look like the sculpture at all?
     - `[ ]` Store the result struct in the SECOND node!
     - `{?}` Is there an **EXISTING** struct/class that I SHOULD use?
 
@@ -40,6 +43,9 @@
 * `[ ]` Calc absolute camera pose previous --to-> current
 
 ## N Image Sequence
+* `[ ]` 1st Pass: Poses from registration
+* `[ ]` 2nd Pass: Pose refinement from ICP
+* `[ ]` 3rd Pass: Point merge and cleanup
 * `[ ]` How to account for drift?
 * `[ ]` Consider loop closure
 
