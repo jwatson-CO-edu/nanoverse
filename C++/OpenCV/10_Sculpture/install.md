@@ -61,7 +61,9 @@
 
 ## Finish
 1. `sudo ldconfig -v`
+1. Add to include paths: "/usr/include/vtk-9.1/"
 1. Add to include paths: "/usr/local/include/pcl-1.14/"
+
 
 # Suspended
 **WARNING**: Interoperability with MATLAB is a low priority! Not useful or fun!!

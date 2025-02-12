@@ -1,10 +1,8 @@
 /* \author Geoffrey Biggs */
-// #include <vtkNew.h>
-// #include <vtkVersion.h>
-
 
 #include <iostream>
 #include <thread>
+#include <chrono>
 
 #include <pcl/common/angles.h> // for pcl::deg2rad
 #include <pcl/features/normal_3d.h>
@@ -14,6 +12,25 @@
 
 using namespace std::chrono_literals;
 
+// --------------
+// -----Help-----
+// --------------
+void
+printUsage (const char* progName)
+{
+  std::cout << "\n\nUsage: "<<progName<<" [options]\n\n"
+            << "Options:\n"
+            << "-------------------------------------------\n"
+            << "-h           this help\n"
+            << "-s           Simple visualisation example\n"
+            << "-r           RGB colour visualisation example\n"
+            << "-c           Custom colour visualisation example\n"
+            << "-n           Normals visualisation example\n"
+            << "-a           Shapes visualisation example\n"
+            << "-v           Viewports example\n"
+            << "-i           Interaction Customization example\n"
+            << "\n\n";
+}
 
 
 pcl::visualization::PCLVisualizer::Ptr simpleVis (pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud)
