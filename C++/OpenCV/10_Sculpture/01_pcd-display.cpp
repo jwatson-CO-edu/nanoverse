@@ -47,11 +47,11 @@ int main(){
 
     double factor = 3;
 
-    OGL_window& win = OGL_window::make_window( 800, 800, "PCD" );
-    win.dim = max( max( res.bbox[1].x*factor, res.bbox[1].y*factor ), res.bbox[1].z*factor );
-    win.set_callbacks( draw );
-    win.set_eye_target( res.bbox[1]*factor*2.0, res.centroid );
-    win.run();
+    // OGL_window& win = OGL_window::make_window( 800, 800, "PCD" );
+    // win.dim = max( max( res.bbox[1].x*factor, res.bbox[1].y*factor ), res.bbox[1].z*factor );
+    // win.set_callbacks( draw );
+    // win.set_eye_target( res.bbox[1]*factor*2.0, res.centroid );
+    // win.run();
 
     return 0;
 }

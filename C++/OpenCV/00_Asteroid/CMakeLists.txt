@@ -19,7 +19,7 @@ set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/.." ) # Place the exec 
 ##### System #####
 
 find_package( OpenCV REQUIRED )
-if(OpenCV_FOUND)
+if( OpenCV_FOUND )
     message( STATUS "OpenCV found: ${OpenCV_VERSION}" )
 else()
     message( FATAL_ERROR "OpenCV not found" )

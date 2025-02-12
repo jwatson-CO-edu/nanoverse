@@ -30,7 +30,7 @@
 
 # Point Cloud Library (PCL)
 **WARNING: This will take more than an hour to build!**
-1. `sudo apt install libboost-all-dev qtcreator libvtk9-dev libvtk9-qt-dev libeigen3-dev liblz4-dev libqhull-dev`
+1. `sudo apt install libboost-all-dev qtcreator libvtk9-dev libvtk9-qt-dev libeigen3-dev liblz4-dev libqhull-dev expect`
 
 ## Eigen3 (C++ Linear Algebra)
 1. `cd /usr/include`
@@ -43,12 +43,12 @@
 1. `cd flann`
 1. `git checkout 1.9.2`
 1. `mkdir build && cd $_`
-1. `cmake ..`
-1. `unbuffer make -j2 | tee makeBuildInfo.txt`
+1. `unbuffer cmake .. | tee CMakeInfo.txt`
+1. `unbuffer make -j6 | tee makeBuildInfo.txt`
 1. `sudo make install`
 
 ## PCL
-**WARNING: This will take at least an hour to build!**
+**WARNING: This will take at least an hour to build! (Depending on your system)**
 1. `sudo swapoff -a`, Otherwise the session will slow down massively
 1. `cd /tmp/`
 1. `wget https://github.com/PointCloudLibrary/pcl/releases/download/pcl-1.14.1/source.tar.gz`
