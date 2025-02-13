@@ -12,16 +12,16 @@ string _IMG_PATH = "input/SfM/04_Test-01/";
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
-vector<Point3d> pts;
+// vector<Point3d> pts;
 
-void draw(){
-    glColor4d( 1.0, 1.0, 1.0, 1.0 );
-    glBegin( GL_POINTS );
-    for( Point3d& point : pts ){
-        glVertex3d( point.x, point.y, point.z );
-    }
-    glEnd();
-}
+// void draw(){
+//     glColor4d( 1.0, 1.0, 1.0, 1.0 );
+//     glBegin( GL_POINTS );
+//     for( Point3d& point : pts ){
+//         glVertex3d( point.x, point.y, point.z );
+//     }
+//     glEnd();
+// }
 
 int main(){
 
@@ -41,17 +41,15 @@ int main(){
     cout << res.matched_points1.size() << ", " << res.matched_points2.size() << ", " << res.success << endl;
 
     est.generate_point_cloud( camInfo, res );
-    pts = res.PCD;
+    // pts = res.PCD;
+    PCXYZPtr pcd = vec_Point3d_to_PointXYZ_pcd( res.PCD, true );
 
+    pcl::visualization::PCLVisualizer::Ptr viewer = simpleVis( pcd );
     
-
-    double factor = 3;
-
-    // OGL_window& win = OGL_window::make_window( 800, 800, "PCD" );
-    // win.dim = max( max( res.bbox[1].x*factor, res.bbox[1].y*factor ), res.bbox[1].z*factor );
-    // win.set_callbacks( draw );
-    // win.set_eye_target( res.bbox[1]*factor*2.0, res.centroid );
-    // win.run();
+    while( !viewer->wasStopped() ){
+        viewer->spinOnce( 100 );
+        std::this_thread::sleep_for( 100ms );
+    }
 
     return 0;
 }

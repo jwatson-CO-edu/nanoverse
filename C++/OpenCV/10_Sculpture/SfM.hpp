@@ -28,6 +28,9 @@ using std::ifstream, std::ofstream;
 using std::min, std::max;
 #include <cmath>
 using std::cos, std::sin, std::atan2, std::acos, std::pow, std::sqrt;
+#include <thread>
+#include <chrono>
+using namespace std::chrono_literals;
 
 /// OpenCV ///
 #include <opencv2/opencv.hpp>
@@ -41,8 +44,12 @@ using cv::Ptr, cv::KeyPoint, cv::Point2d, cv::Point2i, cv::Point3d, cv::DMatch,
       cv::FeatureDetector, cv::Feature2D, cv::AKAZE, cv::DescriptorMatcher;
 using std::invalid_argument; // Who included `<stdexcept>`?
 
-/// OpenGL ///
-
+/// Point Cloud Library ///
+#include <pcl/common/angles.h> // for pcl::deg2rad
+#include <pcl/features/normal_3d.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/visualization/pcl_visualizer.h>
+using pcl::PointXYZ;
 
 
 // Libraries //
@@ -61,9 +68,11 @@ using std::invalid_argument; // Who included `<stdexcept>`?
 #define Sinf(x)( (float)sin( (x) * 3.1415927 / 180 ) )
 
 ///// Aliases /////
-typedef unsigned char  ubyte;
-typedef array<double,2> vec2d;
-typedef array<double,3> vec3d;
+typedef unsigned char /*-----------------*/ ubyte;
+typedef array<double,2> /*---------------*/ vec2d;
+typedef array<double,3> /*---------------*/ vec3d;
+typedef pcl::PointCloud<pcl::PointXYZ> /**/ PCXYZ;
+typedef pcl::PointCloud<pcl::PointXYZ>::Ptr PCXYZPtr;
 
 ////////// STANDARD CONTAINERS /////////////////////////////////////////////////////////////////////
 
@@ -201,7 +210,8 @@ class TwoViewCalculator{ public:
                                   const TwoViewResult& result );
 };
 
-
+// Convert a vector of OpenCV `Point3d` to a PCL XYZ PCD
+PCXYZPtr vec_Point3d_to_PointXYZ_pcd( const vector<Point3d>& pntsList, bool atCentroid = false );
 
 ////////// POSE GRAPH //////////////////////////////////////////////////////////////////////////////
 
@@ -218,7 +228,7 @@ class ImgNode{ public:
     Point2i /*----*/ imgSize; //- Image size [px]
     vector<KeyPoint> keyPts; // - Keypoints for image
     Mat /*--------*/ kpDesc; // - Keypoint descriptors, needed for matching
-    TwoViewResult /*-*/ kpRes; // -- Result of keypoint matching
+    TwoViewResult    kpRes; // -- Result of keypoint matching
     NodePtr /*----*/ prev; // --- Parent `ImgNode`
     NodePtr /*----*/ next; // --- Successor `ImgNode`s
     Mat /*--------*/ relXform; // Transform relative to `prev` node
@@ -231,3 +241,14 @@ class ImgNode{ public:
 
 vector<NodePtr> images_to_nodes( string path, string ext = "jpg" ); // Populate a vector of nodes with paths and images
 
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////// Visualize.cpp ///////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////// PCD VIZ /////////////////////////////////////////////////////////////////////////////////
+
+// Open 3D viewer and add point cloud
+pcl::visualization::PCLVisualizer::Ptr simpleVis( pcl::PointCloud<pcl::PointXYZ>::Ptr cloud );
+    

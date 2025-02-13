@@ -3,5 +3,6 @@ if [ -d "build" ]; then
 fi
 mkdir build
 cd $_
-cmake ..
+unbuffer cmake .. | tee CMakeOutput.txt
 make
+# make VERBOSE=1

@@ -30,6 +30,8 @@
 
 # Point Cloud Library (PCL)
 **WARNING: This will take more than an hour to build!**
+1. `sudo add-apt-repository ppa:ubuntu-toolchain-r/test && sudo apt update`
+1. `sudo apt install gcc-10 gcc-10-base gcc-10-doc g++-10 libstdc++-10-dev libstdc++-10-doc`
 1. `sudo apt install libboost-all-dev qtcreator libvtk9-dev libvtk9-qt-dev libeigen3-dev liblz4-dev libqhull-dev expect`
 
 ## Eigen3 (C++ Linear Algebra)

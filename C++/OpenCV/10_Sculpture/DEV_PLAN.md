@@ -27,16 +27,18 @@
     - `[Y]` ISSUE: SIZE AND TYPE MISMATCH IN GENERATED CODE, 2025-02-05: Just use `double`/`CV_64F`
         * `[N]` Fetch human example of `cv::triangulatePoints`, 2025-02-05: Just use `double`/`CV_64F`
         * `[N]` Step-by-Step rebuild, 2025-02-05: Just use `double`/`CV_64F`
-    - `[>]` Visualize the PCD! Does it make sense?
+    - `[Y]` Visualize the PCD! Does it make sense?, 2025-02-13: IT SURE FUCKING DOES! YEAH!!
         * [PCL Cloud Viewer](http://pointclouds.org/documentation/classpcl_1_1visualization_1_1_cloud_viewer.html)
         * [PCL Viewer Example](https://github.com/PointCloudLibrary/pcl/blob/master/doc/tutorials/content/sources/pcl_visualizer/pcl_visualizer_demo.cpp)
         * `[Y]` Install Point Cloud Library (PCL), 2025-02-12: INSTALLED and TESTED!
-        * `[>]` Load into PCL data struct
-        * `[ ]` Display, Does it look like the sculpture at all?
-    - `[ ]` Store the result struct in the SECOND node!
+        * `[Y]` Load into PCL data struct, 2025-02-13: Need to add some typecasts to silence warnings
+        * `[Y]` Display, Does it look like the sculpture at all?, 2025-02-13: IT SURE FUCKING DOES! YEAH!!
+    - `[>]` Store the result struct in the SECOND node!
     - `{?}` Is there an **EXISTING** struct/class that I SHOULD use?
 
 ## 3 Image Sequence
+* `[ ]` Trim each local PCD to a Z-limit (distance from camera)
+* `[ ]` Consider eliminating the ground plane points
 * `[ ]` ICP for PCD
     - `[ ]` [ICP Registration Ref](https://docs.opencv.org/4.x/dc/d9b/classcv_1_1ppf__match__3d_1_1ICP.html)
     - `[ ]` Try N-dim ICP that includes the coordinates of the associated keypoints

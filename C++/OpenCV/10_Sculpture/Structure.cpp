@@ -231,3 +231,57 @@ void TwoViewCalculator::generate_point_cloud( const CamData& camInfo, TwoViewRes
     result.centroid = avgPnt;
     result.bbox     = bBox;
 }
+
+
+PointXYZ operator+( const PointXYZ& left, const PointXYZ& right ){
+    // Add two PCL points
+    return PointXYZ{
+        left.x + right.x,
+        left.y + right.y,
+        left.z + right.z
+    };
+}
+
+
+PointXYZ operator-( const PointXYZ& left, const PointXYZ& right ){
+    // Subtract two PCL points
+    return PointXYZ{
+        left.x - right.x,
+        left.y - right.y,
+        left.z - right.z
+    };
+}
+
+
+PointXYZ operator/( const PointXYZ& left, double right ){
+    // Divide a PCL point by a scalar
+    return PointXYZ{
+        left.x / right,
+        left.y / right,
+        left.z / right
+    };
+}
+
+
+PCXYZPtr vec_Point3d_to_PointXYZ_pcd( const vector<Point3d>& pntsList, bool atCentroid ){
+    // Convert a vector of OpenCV `Point3d` to a PCL XYZ PCD
+    PCXYZPtr rtnPCD{ new PCXYZ{} };
+    PointXYZ basicPoint;
+    PointXYZ centroid{ 0.0, 0.0, 0.0 };
+
+    if( atCentroid ){
+        for( const Point3d& pnt : pntsList ){
+            centroid = centroid + PointXYZ{ pnt.x, pnt.y, pnt.z };
+        }
+        centroid = centroid / (double) pntsList.size();
+    }
+
+    for( const Point3d& pnt : pntsList ){
+        basicPoint.x = pnt.x;
+        basicPoint.y = pnt.y;
+        basicPoint.z = pnt.z;
+        rtnPCD->push_back( basicPoint - centroid );
+    }
+
+    return rtnPCD;
+}
