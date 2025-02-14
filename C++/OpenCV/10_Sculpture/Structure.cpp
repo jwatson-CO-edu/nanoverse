@@ -314,3 +314,7 @@ vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo
     cout << endl;
     return rtnNds;
 }
+
+PCXYZPtr node_seq_to_PointXYZ_pcd( NodePtr firstNode ){
+    
+}
