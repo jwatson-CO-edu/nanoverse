@@ -27,13 +27,13 @@ int main(){
 
     CamData camInfo{ _CAL_PATH, _IMG_PATH }; // Default params are for Moto G Power (2022)
 
-    vector<NodePtr> nodes = images_to_nodes( _IMG_PATH, "jpg" );
+    vector<NodePtr> nodes = images_to_nodes( _IMG_PATH, "jpg", camInfo );
     
     TwoViewCalculator est{};
 
     TwoViewResult res = est.estimate_pose( camInfo, 
-                                        nodes[0]->keyPts, nodes[0]->kpDesc, 
-                                        nodes[1]->keyPts, nodes[1]->kpDesc );
+                                           nodes[0]->keyPts, nodes[0]->kpDesc, 
+                                           nodes[1]->keyPts, nodes[1]->kpDesc );
 
     cout << "There are " << res.good_matches.size() << " good matches!" << endl;
     cout << "Translation:\n" << res.t << endl;

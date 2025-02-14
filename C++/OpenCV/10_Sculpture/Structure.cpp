@@ -3,39 +3,7 @@
 
 
 
-////////// POSE GRAPH //////////////////////////////////////////////////////////////////////////////
 
-ImgNode::ImgNode( string path, const Mat& sourceImg ){
-    imgPth  = path;
-    image   = sourceImg;
-    imgSize = Point2i{ sourceImg.rows, sourceImg.cols };
-}
-
-
-vector<NodePtr> images_to_nodes( string path, string ext ){
-    // Populate a vector of nodes with paths and images
-    NodePtr /*---*/ node_i;
-    vector<NodePtr> rtnNds;
-    vector<string>  fNames;
-    vector<Mat>     images;
-    KAZE /*------*/ kazeMaker{};
-    fetch_images_at_path( path, fNames, images, 0, ext );
-    uint N = images.size();
-    cout << endl;
-    for( size_t i = 0; i < N; ++i ){
-        node_i = NodePtr{ new ImgNode{ fNames[i], images[i] } };
-        kazeMaker.get_KAZE_keypoints( images[i], node_i->keyPts, node_i->kpDesc );
-        // Assume pix were taken in a sequence
-        if( i > 0 ){  
-            node_i->prev = NodePtr{ rtnNds.back() };
-            rtnNds.back()->next = NodePtr{ node_i };
-        } 
-        rtnNds.push_back( NodePtr{ node_i } );
-        cout << node_i->keyPts.size() << " kp, " << flush;
-    }
-    cout << endl;
-    return rtnNds;
-}
 
 
 
@@ -236,9 +204,9 @@ void TwoViewCalculator::generate_point_cloud( const CamData& camInfo, TwoViewRes
 PointXYZ operator+( const PointXYZ& left, const PointXYZ& right ){
     // Add two PCL points
     return PointXYZ{
-        left.x + right.x,
-        left.y + right.y,
-        left.z + right.z
+        (float)(left.x + right.x),
+        (float)(left.y + right.y),
+        (float)(left.z + right.z)
     };
 }
 
@@ -246,9 +214,9 @@ PointXYZ operator+( const PointXYZ& left, const PointXYZ& right ){
 PointXYZ operator-( const PointXYZ& left, const PointXYZ& right ){
     // Subtract two PCL points
     return PointXYZ{
-        left.x - right.x,
-        left.y - right.y,
-        left.z - right.z
+        (float)(left.x - right.x),
+        (float)(left.y - right.y),
+        (float)(left.z - right.z)
     };
 }
 
@@ -256,9 +224,9 @@ PointXYZ operator-( const PointXYZ& left, const PointXYZ& right ){
 PointXYZ operator/( const PointXYZ& left, double right ){
     // Divide a PCL point by a scalar
     return PointXYZ{
-        left.x / right,
-        left.y / right,
-        left.z / right
+        (float)(left.x / right),
+        (float)(left.y / right),
+        (float)(left.z / right)
     };
 }
 
@@ -267,11 +235,11 @@ PCXYZPtr vec_Point3d_to_PointXYZ_pcd( const vector<Point3d>& pntsList, bool atCe
     // Convert a vector of OpenCV `Point3d` to a PCL XYZ PCD
     PCXYZPtr rtnPCD{ new PCXYZ{} };
     PointXYZ basicPoint;
-    PointXYZ centroid{ 0.0, 0.0, 0.0 };
+    PointXYZ centroid{ 0.0f, 0.0f, 0.0f };
 
     if( atCentroid ){
         for( const Point3d& pnt : pntsList ){
-            centroid = centroid + PointXYZ{ pnt.x, pnt.y, pnt.z };
+            centroid = centroid + PointXYZ{ (float) pnt.x, (float) pnt.y, (float) pnt.z };
         }
         centroid = centroid / (double) pntsList.size();
     }
@@ -284,4 +252,65 @@ PCXYZPtr vec_Point3d_to_PointXYZ_pcd( const vector<Point3d>& pntsList, bool atCe
     }
 
     return rtnPCD;
+}
+
+
+
+////////// POSE GRAPH //////////////////////////////////////////////////////////////////////////////
+
+ImgNode::ImgNode( string path, const Mat& sourceImg ){
+    imgPth  = path;
+    image   = sourceImg;
+    imgSize = Point2i{ sourceImg.rows, sourceImg.cols };
+}
+
+
+vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo ){
+    // Populate a vector of nodes with paths and images
+    NodePtr /*-----*/ node_i;
+    NodePtr /*-----*/ node_im1;
+    vector<NodePtr>   rtnNds;
+    vector<string>    fNames;
+    vector<Mat> /*-*/ images;
+    KAZE /*--------*/ kazeMaker{};
+    TwoViewResult     res;
+    TwoViewCalculator est{};
+    fetch_images_at_path( path, fNames, images, 0, ext );
+    uint N = images.size();
+    cout << endl;
+    for( size_t i = 0; i < N; ++i ){
+        node_i = NodePtr{ new ImgNode{ fNames[i], images[i] } };
+        kazeMaker.get_KAZE_keypoints( images[i], node_i->keyPts, node_i->kpDesc );
+        node_i->relXform = Mat::eye( 4, 4, CV_64F );
+        node_i->absXform = Mat::eye( 4, 4, CV_64F );
+        
+        // Assume pix were taken in a sequence
+        if( i > 0 ){  
+            node_im1     = NodePtr{ rtnNds.back() };
+            node_i->prev = node_im1;
+            rtnNds.back()->next = NodePtr{ node_i };
+
+            res = est.estimate_pose( 
+                camInfo, 
+                node_im1->keyPts, node_im1->kpDesc, 
+                node_i->keyPts  , node_i->kpDesc 
+            );
+            if( res.success ){
+                for( size_t j = 0; j < 3; ++j ){
+                    for( size_t k = 0; k < 3; ++k ){
+                        node_i->relXform.at<double>( j, k ) = res.R.at<double>( j, k );
+                    }
+                    node_i->relXform.at<double>( j, 3 ) = res.t.at<double>( j, 0 );
+                }
+                node_i->absXform = node_im1->absXform * node_i->relXform;
+                est.generate_point_cloud( camInfo, res );
+            }
+            node_i->imgRes2 = res;
+        }
+        
+        rtnNds.push_back( NodePtr{ node_i } );
+        cout << node_i->keyPts.size() << " kp, " << flush;
+    }
+    cout << endl;
+    return rtnNds;
 }

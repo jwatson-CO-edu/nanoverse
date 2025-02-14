@@ -14,6 +14,7 @@ set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/.." ) # Place the exec 
 include( CMakePrintHelpers )
 
 
+
 ########## DEPENDENCIES ############################################################################
 
 ##### Packages #####
@@ -29,11 +30,6 @@ find_package( VTK REQUIRED )
 find_package( PCL 1.2 REQUIRED )
 
 cmake_print_variables( PROJECT_SOURCE_DIR )
-
-
-
-
-
 
 
 
@@ -62,3 +58,12 @@ set( EXECUTABLE_NAME 02_visualizer_demo.out )
 add_executable( ${EXECUTABLE_NAME} 02_pcd-test.cpp )
 target_include_directories( ${EXECUTABLE_NAME} PUBLIC ${VTK_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} )
 target_link_libraries( ${EXECUTABLE_NAME} ${PCL_LIBRARIES} )
+
+
+##### 03: PCD from Three-Image Registration #####
+set( EXECUTABLE_NAME 03_three-image-pcd.out )
+add_executable( ${EXECUTABLE_NAME} 
+                03_three-image.cpp 
+                Visualize.cpp Structure.cpp Image.cpp )
+target_include_directories( ${EXECUTABLE_NAME} PUBLIC ${VTK_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} )
+target_link_libraries( ${EXECUTABLE_NAME} ${PCL_LIBRARIES} ${VTK_LIBRARIES} ${OpenCV_LIBS} )

@@ -21,7 +21,7 @@ int main(){
 
     CamData camInfo{ _CAL_PATH, _IMG_PATH }; // Default params are for Moto G Power (2022)
 
-    vector<NodePtr> nodes = images_to_nodes( _IMG_PATH, "jpg" );
+    vector<NodePtr> nodes = images_to_nodes( _IMG_PATH, "jpg", camInfo );
     
     TwoViewCalculator est{};
 

@@ -213,6 +213,8 @@ class TwoViewCalculator{ public:
 // Convert a vector of OpenCV `Point3d` to a PCL XYZ PCD
 PCXYZPtr vec_Point3d_to_PointXYZ_pcd( const vector<Point3d>& pntsList, bool atCentroid = false );
 
+
+
 ////////// POSE GRAPH //////////////////////////////////////////////////////////////////////////////
 
 class ImgNode;
@@ -228,7 +230,7 @@ class ImgNode{ public:
     Point2i /*----*/ imgSize; //- Image size [px]
     vector<KeyPoint> keyPts; // - Keypoints for image
     Mat /*--------*/ kpDesc; // - Keypoint descriptors, needed for matching
-    TwoViewResult    kpRes; // -- Result of keypoint matching
+    TwoViewResult    imgRes2; //- Result of keypoint matching
     NodePtr /*----*/ prev; // --- Parent `ImgNode`
     NodePtr /*----*/ next; // --- Successor `ImgNode`s
     Mat /*--------*/ relXform; // Transform relative to `prev` node
@@ -239,7 +241,7 @@ class ImgNode{ public:
 };
 
 
-vector<NodePtr> images_to_nodes( string path, string ext = "jpg" ); // Populate a vector of nodes with paths and images
+vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo ); // Populate a vector of nodes with paths and images
 
 
 
