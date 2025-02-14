@@ -5,7 +5,7 @@
 
 ////////// PCD VIZ /////////////////////////////////////////////////////////////////////////////////
 
-pcl::visualization::PCLVisualizer::Ptr simpleVis( pcl::PointCloud<pcl::PointXYZ>::Ptr cloud ){
+pcl::visualization::PCLVisualizer::Ptr simpleVis( PCXYZPtr cloud ){
     // --------------------------------------------
     // -----Open 3D viewer and add point cloud-----
     // --------------------------------------------

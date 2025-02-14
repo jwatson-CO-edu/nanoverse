@@ -17,17 +17,15 @@ int main(){
 
     CamData camInfo{ _CAL_PATH, _IMG_PATH }; // Default params are for Moto G Power (2022)
 
-    vector<NodePtr> nodes = images_to_nodes( _IMG_PATH, "jpg", camInfo );
+    vector<NodePtr> nodes    = images_to_nodes( _IMG_PATH, "jpg", camInfo, 4.0 );
+    PCXYZPtr /*--*/ totCloud = node_seq_to_PointXYZ_pcd( nodes[0] );
     
+    pcl::visualization::PCLVisualizer::Ptr viewer = simpleVis( totCloud );
     
-    // PCXYZPtr pcd = vec_Point3d_to_PointXYZ_pcd( res.PCD, true );
-
-    // pcl::visualization::PCLVisualizer::Ptr viewer = simpleVis( pcd );
-    
-    // while( !viewer->wasStopped() ){
-    //     viewer->spinOnce( 100 );
-    //     std::this_thread::sleep_for( 100ms );
-    // }
+    while( !viewer->wasStopped() ){
+        viewer->spinOnce( 100 );
+        std::this_thread::sleep_for( 100ms );
+    }
 
     return 0;
 }

@@ -46,17 +46,22 @@ using std::invalid_argument; // Who included `<stdexcept>`?
 
 /// Point Cloud Library ///
 #include <pcl/common/angles.h> // for pcl::deg2rad
+#include <pcl/common/transforms.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/visualization/pcl_visualizer.h>
-using pcl::PointXYZ;
+#include <pcl/console/print.h>
+using pcl::PointXYZ, pcl::transformPointCloud;
 
 
-// Libraries //
+// OpenGL //
 #include <GL/glut.h>
 #include <GL/glu.h>
 #include <GL/gl.h>
 
+// Eigen3 //
+#include <Eigen/Core> // The living heart of Eigen
+using matXef = Eigen::MatrixXf;
 
 ///// Defines /////
 
@@ -178,7 +183,13 @@ struct TwoViewResult{
     vector<Point3d>  PCD;
     Point3d /*----*/ centroid;
     array<Point3d,2> bbox;
+
+    /// Stage 3: Merge ///
+    PCXYZPtr relPCD; 
+    PCXYZPtr absPCD; 
 };
+
+TwoViewResult empty_result();
 
 
 class TwoViewCalculator{ public:
@@ -203,7 +214,7 @@ class TwoViewCalculator{ public:
                                  const vector<KeyPoint>& keypoints2, const Mat& descriptors2 );
 
     /// Stage 2: Point Cloud ///
-    void generate_point_cloud( const CamData& camInfo, TwoViewResult& result );
+    void generate_point_cloud( const CamData& camInfo, TwoViewResult& result, double zClip = 1e9 );
 
     static Mat visualize_matches( const Mat& img1, const vector<KeyPoint>& keypoints1,
                                   const Mat& img2, const vector<KeyPoint>& keypoints2,
@@ -240,7 +251,8 @@ class ImgNode{ public:
     
 };
 
-vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo ); // Populate a vector of nodes with paths and images
+// Populate a vector of nodes with paths and images
+vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo, double zClip = 1e9 ); 
 
 PCXYZPtr node_seq_to_PointXYZ_pcd( NodePtr firstNode );
 
@@ -251,5 +263,5 @@ PCXYZPtr node_seq_to_PointXYZ_pcd( NodePtr firstNode );
 ////////// PCD VIZ /////////////////////////////////////////////////////////////////////////////////
 
 // Open 3D viewer and add point cloud
-pcl::visualization::PCLVisualizer::Ptr simpleVis( pcl::PointCloud<pcl::PointXYZ>::Ptr cloud );
+pcl::visualization::PCLVisualizer::Ptr simpleVis( PCXYZPtr cloud );
     

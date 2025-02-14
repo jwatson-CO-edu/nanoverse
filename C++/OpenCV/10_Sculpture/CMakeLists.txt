@@ -41,7 +41,7 @@ add_executable( ${EXECUTABLE_NAME}
                 00_test_01.cpp 
                 Structure.cpp Image.cpp)
 target_include_directories( ${EXECUTABLE_NAME} PUBLIC ${VTK_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} )
-target_link_libraries( ${EXECUTABLE_NAME} ${VTK_LIBRARIES} ${OpenCV_LIBS} )
+target_link_libraries( ${EXECUTABLE_NAME} ${PCL_LIBRARIES} ${VTK_LIBRARIES} ${OpenCV_LIBS} )
 
 
 ##### 01: PCD from Two-Image Registration #####

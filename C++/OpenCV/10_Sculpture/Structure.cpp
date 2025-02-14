@@ -36,6 +36,13 @@ CamData::CamData( string kPath, string imgDir, double horzFOV_, double vertFOV_,
 }
 
 
+TwoViewResult empty_result(){
+    TwoViewResult rtnRes{};
+    rtnRes.success = false;
+    return rtnRes;
+}
+
+
 TwoViewCalculator::TwoViewCalculator( double ratioThresh_, double ransacThresh_, double confidence_ ) {
     // Use FLANN matcher for efficient matching
     matcher /**/ = DescriptorMatcher::create( DescriptorMatcher::BRUTEFORCE_HAMMING );
@@ -124,7 +131,7 @@ Mat TwoViewCalculator::visualize_matches( const Mat& img1, const vector<KeyPoint
 }
 
 
-void TwoViewCalculator::generate_point_cloud( const CamData& camInfo, TwoViewResult& result ){
+void TwoViewCalculator::generate_point_cloud( const CamData& camInfo, TwoViewResult& result, double zClip ){
     // https://claude.site/artifacts/f4a5b5fd-b317-4c6f-b42d-f35b92d03cbf
     
     // Check input validity
@@ -155,7 +162,7 @@ void TwoViewCalculator::generate_point_cloud( const CamData& camInfo, TwoViewRes
     points3D.reserve( result.matched_points1.size() );
 
     // Triangulate each pair of corresponding points
-    for (size_t i = 0; i < result.matched_points1.size(); i++) {
+    for( size_t i = 0; i < result.matched_points1.size(); i++ ){
         // Convert points to normalized homogeneous coordinates
         Point2d pt1 = result.matched_points1[i];
         Point2d pt2 = result.matched_points2[i];
@@ -174,21 +181,24 @@ void TwoViewCalculator::generate_point_cloud( const CamData& camInfo, TwoViewRes
 
         // Convert homogeneous coordinates to 3D point
         point4D = point4D / point4D.at<double>(3);
-        Point3d point3D(
-            point4D.at<double>(0),
-            point4D.at<double>(1),
-            point4D.at<double>(2)
-        );
 
-        // Add to point cloud
-        points3D.push_back( point3D );
-        avgPnt += point3D;
-        bBox[0].x = min( bBox[0].x, point3D.x );
-        bBox[1].x = max( bBox[1].x, point3D.x );
-        bBox[0].y = min( bBox[0].y, point3D.y );
-        bBox[1].y = max( bBox[1].y, point3D.y );
-        bBox[0].z = min( bBox[0].z, point3D.z );
-        bBox[1].z = max( bBox[1].z, point3D.z );
+        if( point4D.at<double>(2) <= zClip ){
+            Point3d point3D(
+                point4D.at<double>(0),
+                point4D.at<double>(1),
+                point4D.at<double>(2)
+            );
+    
+            // Add to point cloud
+            points3D.push_back( point3D );
+            avgPnt += point3D;
+            bBox[0].x = min( bBox[0].x, point3D.x );
+            bBox[1].x = max( bBox[1].x, point3D.x );
+            bBox[0].y = min( bBox[0].y, point3D.y );
+            bBox[1].y = max( bBox[1].y, point3D.y );
+            bBox[0].z = min( bBox[0].z, point3D.z );
+            bBox[1].z = max( bBox[1].z, point3D.z );
+        }
     }
 
     avgPnt /= (double) points3D.size();
@@ -262,10 +272,13 @@ ImgNode::ImgNode( string path, const Mat& sourceImg ){
     imgPth  = path;
     image   = sourceImg;
     imgSize = Point2i{ sourceImg.rows, sourceImg.cols };
+    prev    = NULL;
+    next    = NULL;
+    imgRes2 = empty_result();
 }
 
 
-vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo ){
+vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo, double zClip ){
     // Populate a vector of nodes with paths and images
     NodePtr /*-----*/ node_i;
     NodePtr /*-----*/ node_im1;
@@ -303,7 +316,9 @@ vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo
                     node_i->relXform.at<double>( j, 3 ) = res.t.at<double>( j, 0 );
                 }
                 node_i->absXform = node_im1->absXform * node_i->relXform;
-                est.generate_point_cloud( camInfo, res );
+                est.generate_point_cloud( camInfo, res, zClip );
+            }else{
+                cout << "WARNING: Disjoint sequence created at index " << i <<"!" << endl;
             }
             node_i->imgRes2 = res;
         }
@@ -315,6 +330,36 @@ vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo
     return rtnNds;
 }
 
+
+matXef OCV_matx_to_Eigen3_matx_f( const Mat& ocvMatx ){
+    matXef rtnMtx = matXef::Zero( ocvMatx.cols, ocvMatx.rows ); // Eigen3 is COLUMN MAJOR!
+    for( size_t i = 0; i < ocvMatx.rows; ++i ){
+        for( size_t j = 0; j < ocvMatx.cols; ++j ){
+            rtnMtx( j, i ) = (float) ocvMatx.at<double>( i, j );
+        }
+    }
+    return rtnMtx;
+}
+
+
 PCXYZPtr node_seq_to_PointXYZ_pcd( NodePtr firstNode ){
-    
+    NodePtr  currNode = firstNode;
+    PCXYZPtr rtnCloud{ new PCXYZ{} };
+    matXef   xform;
+    while( currNode ){
+        // 0. If there were points computed, Then get clouds
+        if( currNode->imgRes2.success ){
+            // 1. Store the relative cloud        
+            currNode->imgRes2.relPCD = vec_Point3d_to_PointXYZ_pcd( currNode->imgRes2.PCD, false );
+            // 2. Transform and Store the absolute cloud
+            xform = OCV_matx_to_Eigen3_matx_f( currNode->absXform );
+            transformPointCloud( *(currNode->imgRes2.relPCD), *(currNode->imgRes2.absPCD), xform );
+            // 3. Append points to the return cloud
+            for( size_t i = 0; i < currNode->imgRes2.relPCD->size(); ++i ){
+                rtnCloud->push_back( (*(currNode->imgRes2.relPCD))[i] );
+            }
+        }
+        currNode = currNode->next;
+    }
+    return rtnCloud;
 }
