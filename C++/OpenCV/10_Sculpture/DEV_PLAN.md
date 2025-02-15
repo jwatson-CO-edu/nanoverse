@@ -6,23 +6,20 @@
 # `DEV_PLAN`
 
 ## Dependencies
-* `[ ]` Recompile OpenCV w/ image display
-* `[ ]` Build Point Cloud Library
+* `[N]` Recompile OpenCV w/ image display, 2025-02-1X: Didn't work!
+* `[Y]` Build Point Cloud Library
     - [Point Cloud Library (PCL) Build Instructions](https://pcl.readthedocs.io/projects/tutorials/en/latest/compiling_pcl_posix.html)
 
 ## 2 Image Sequence
 * `[Y]` Load images into nodes, 2025-02-02: Same as it ever was!
     - `[Y]` Find AKAZE (Again), 2025-02-02: Same as it ever was!
-
 * `[>]` Keypoint registration, 2025-02-03: Copy and Paste!
     - `[Y]` Fetch Claude response, Compare to ChatGPT response, 2025-02-03: Copy and Paste!
     - `[Y]` KNN, 2025-02-03: Copy and Paste!
     - `[>]` Save matching as a file and view it
-
 * `[Y]` Calc relative camera pose previous --to-> current, 2025-02-02: Relative!
     - `[Y]` Decide what the transform means, relative or absolute!, 2025-02-02: Relative!
-
-* `[>]` Generate PCD for registered image pair
+* `[Y]` Generate PCD for registered image pair, 2025-02-15: Stored!
     - `[Y]` Fetch Claude response, 2025-02-05: THERE WERE PROBLEMS
     - `[Y]` ISSUE: SIZE AND TYPE MISMATCH IN GENERATED CODE, 2025-02-05: Just use `double`/`CV_64F`
         * `[N]` Fetch human example of `cv::triangulatePoints`, 2025-02-05: Just use `double`/`CV_64F`
@@ -33,15 +30,15 @@
         * `[Y]` Install Point Cloud Library (PCL), 2025-02-12: INSTALLED and TESTED!
         * `[Y]` Load into PCL data struct, 2025-02-13: Need to add some typecasts to silence warnings
         * `[Y]` Display, Does it look like the sculpture at all?, 2025-02-13: IT SURE FUCKING DOES! YEAH!!
-    - `[>]` Store the result struct in the SECOND node!
-    - `{?}` Is there an **EXISTING** struct/class that I SHOULD use?
+    - `[Y]` Store the result struct in the SECOND node!, 2025-02-15: Stored!
 
 ## 3 Image Sequence
-* `[ ]` Trim each local PCD to a Z-limit (distance from camera)
-* `[ ]` Consider eliminating the ground plane points
+* `[Y]` Trim each local PCD to a Z-limit (distance from camera), 2025-02-14: Tune manually for now
 * `[ ]` ICP for PCD
     - `[ ]` [ICP Registration Ref](https://docs.opencv.org/4.x/dc/d9b/classcv_1_1ppf__match__3d_1_1ICP.html)
     - `[ ]` Try N-dim ICP that includes the coordinates of the associated keypoints
+* `[ ]` Consider eliminating the ground plane points
+    - `{?}` Does this harm ICP performance?
 * `[ ]` Calc absolute camera pose previous --to-> current
 
 ## N Image Sequence

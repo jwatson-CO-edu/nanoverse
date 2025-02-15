@@ -7,8 +7,8 @@
 
 ////////// GLOBALS /////////////////////////////////////////////////////////////////////////////////
 string _CAL_PATH = "input/SfM/00_sculpture/moto-g-power-2022.intrinsic";
-// string _IMG_PATH = "input/SfM/09_Test-02/";
-string _IMG_PATH = "input/SfM/00_sculpture/";
+string _IMG_PATH = "input/SfM/09_Test-02/";
+// string _IMG_PATH = "input/SfM/00_sculpture/";
 
 
 

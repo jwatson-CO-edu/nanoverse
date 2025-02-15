@@ -51,7 +51,9 @@ using std::invalid_argument; // Who included `<stdexcept>`?
 #include <pcl/io/pcd_io.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/console/print.h>
-using pcl::PointXYZ, pcl::transformPointCloud;
+using PntPos = pcl::PointXYZ;
+using PntClr = pcl::PointXYZRGBA;
+using pcl::transformPointCloud;
 
 
 // OpenGL //
@@ -73,11 +75,15 @@ using matXef = Eigen::MatrixXf;
 #define Sinf(x)( (float)sin( (x) * 3.1415927 / 180 ) )
 
 ///// Aliases /////
-typedef unsigned char /*-----------------*/ ubyte;
-typedef array<double,2> /*---------------*/ vec2d;
-typedef array<double,3> /*---------------*/ vec3d;
-typedef pcl::PointCloud<pcl::PointXYZ> /**/ PCXYZ;
-typedef pcl::PointCloud<pcl::PointXYZ>::Ptr PCXYZPtr;
+typedef unsigned char /*----------*/ ubyte;
+typedef array<double,2> /*--------*/ vec2d;
+typedef array<double,3> /*--------*/ vec3d;
+typedef array<ubyte,4> /*---------*/ Color;
+typedef pcl::PointCloud<PntPos> /**/ PCPos;
+typedef pcl::PointCloud<PntPos>::Ptr PCPosPtr;
+typedef pcl::PointCloud<PntClr> /**/ PCClr;
+typedef pcl::PointCloud<PntClr>::Ptr PCClrPtr;
+
 
 ////////// STANDARD CONTAINERS /////////////////////////////////////////////////////////////////////
 
@@ -107,6 +113,7 @@ T get_last( const vector<T>& vec ){
     else
         throw std::out_of_range{ "get_last: Vector was EMPTY!" };
 }
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,8 +192,8 @@ struct TwoViewResult{
     array<Point3d,2> bbox;
 
     /// Stage 3: Merge ///
-    PCXYZPtr relPCD; 
-    PCXYZPtr absPCD; 
+    PCClrPtr relPCD; 
+    PCClrPtr absPCD; 
 };
 
 TwoViewResult empty_result();
@@ -222,7 +229,7 @@ class TwoViewCalculator{ public:
 };
 
 // Convert a vector of OpenCV `Point3d` to a PCL XYZ PCD
-PCXYZPtr vec_Point3d_to_PointXYZ_pcd( const vector<Point3d>& pntsList, bool atCentroid = false );
+PCPosPtr vec_Point3d_to_PntPos_pcd( const vector<Point3d>& pntsList, bool atCentroid = false );
 
 
 
@@ -254,7 +261,8 @@ class ImgNode{ public:
 // Populate a vector of nodes with paths and images
 vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo, double zClip = 1e9 ); 
 
-PCXYZPtr node_seq_to_PointXYZ_pcd( NodePtr firstNode );
+PCPosPtr node_seq_to_PntPos_pcd( NodePtr firstNode );
+PCClrPtr node_seq_to_PntClr_pcd( NodePtr firstNode, const Color& firstColor, const Color& lastColor );
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// Visualize.cpp ///////////////////////////////////////////////////////////////////////////
@@ -263,5 +271,5 @@ PCXYZPtr node_seq_to_PointXYZ_pcd( NodePtr firstNode );
 ////////// PCD VIZ /////////////////////////////////////////////////////////////////////////////////
 
 // Open 3D viewer and add point cloud
-pcl::visualization::PCLVisualizer::Ptr simpleVis( PCXYZPtr cloud );
+pcl::visualization::PCLVisualizer::Ptr simpleVis( PCPosPtr cloud );
     

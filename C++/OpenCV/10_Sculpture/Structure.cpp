@@ -23,6 +23,7 @@ Mat load_cam_calibration( string cPath ){
     return matx;
 }
 
+
 CamData::CamData( string kPath, string imgDir, double horzFOV_, double vertFOV_, string ext ){
 
     vector<Mat>    image;
@@ -144,16 +145,16 @@ void TwoViewCalculator::generate_point_cloud( const CamData& camInfo, TwoViewRes
 
     // Construct projection matrices
     Mat P1 = camInfo.Kintrinsic * Mat::eye( 3, 4, CV_64F );  // First camera matrix [K|0]
-    cout << "Calculated projection!" << endl;
+    // cout << "Calculated projection!" << endl;
     
     // Create second camera matrix [K(R|t)]
     Mat P2( 3, 4, CV_64F );
     cv::hconcat( result.R, result.t, P2 );
-    cout << "Concatenated!" << endl;
-    cout << camInfo.Kintrinsic.size() << " x " << P2.size() << endl; 
-    cout << camInfo.Kintrinsic.type() << " x " << P2.type() << endl; 
+    // cout << "Concatenated!" << endl;
+    // cout << camInfo.Kintrinsic.size() << " x " << P2.size() << endl; 
+    // cout << camInfo.Kintrinsic.type() << " x " << P2.type() << endl; 
     P2 = camInfo.Kintrinsic * P2;
-    cout << "Calculated second camera matrix!" << endl;
+    // cout << "Calculated second camera matrix!" << endl;
 
     Point3d /*---*/ avgPnt{ 0.0, 0.0, 0.0 };
     vector<Point3d> points3D;
@@ -211,9 +212,12 @@ void TwoViewCalculator::generate_point_cloud( const CamData& camInfo, TwoViewRes
 }
 
 
-PointXYZ operator+( const PointXYZ& left, const PointXYZ& right ){
+///// Point Cloud Element Operators ///////////////////////////////////////
+
+
+PntPos operator+( const PntPos& left, const PntPos& right ){
     // Add two PCL points
-    return PointXYZ{
+    return PntPos{
         (float)(left.x + right.x),
         (float)(left.y + right.y),
         (float)(left.z + right.z)
@@ -221,9 +225,9 @@ PointXYZ operator+( const PointXYZ& left, const PointXYZ& right ){
 }
 
 
-PointXYZ operator-( const PointXYZ& left, const PointXYZ& right ){
+PntPos operator-( const PntPos& left, const PntPos& right ){
     // Subtract two PCL points
-    return PointXYZ{
+    return PntPos{
         (float)(left.x - right.x),
         (float)(left.y - right.y),
         (float)(left.z - right.z)
@@ -231,9 +235,9 @@ PointXYZ operator-( const PointXYZ& left, const PointXYZ& right ){
 }
 
 
-PointXYZ operator/( const PointXYZ& left, double right ){
+PntPos operator/( const PntPos& left, double right ){
     // Divide a PCL point by a scalar
-    return PointXYZ{
+    return PntPos{
         (float)(left.x / right),
         (float)(left.y / right),
         (float)(left.z / right)
@@ -241,15 +245,62 @@ PointXYZ operator/( const PointXYZ& left, double right ){
 }
 
 
-PCXYZPtr vec_Point3d_to_PointXYZ_pcd( const vector<Point3d>& pntsList, bool atCentroid ){
+///// Color Point Cloud Element Operators /////////////////////////////////
+
+PntClr operator+( const PntClr& left, const PntClr& right ){
+    // Add two PCL points
+    return PntClr{
+        (float)(left.x + right.x),
+        (float)(left.y + right.y),
+        (float)(left.z + right.z),
+        (ubyte)((left.r + right.r)/2.0f),
+        (ubyte)((left.g + right.g)/2.0f),
+        (ubyte)((left.b + right.b)/2.0f),
+        (ubyte)max( left.a, right.a )
+    };
+}
+
+
+PntClr operator-( const PntClr& left, const PntClr& right ){
+    // Subtract two PCL points
+    return PntClr{
+        (float)(left.x - right.x),
+        (float)(left.y - right.y),
+        (float)(left.z - right.z),
+        (ubyte)((left.r + right.r)/2.0f),
+        (ubyte)((left.g + right.g)/2.0f),
+        (ubyte)((left.b + right.b)/2.0f),
+        (ubyte)max( left.a, right.a )
+    };
+}
+
+
+PntClr operator/( const PntClr& left, double right ){
+    // Subtract two PCL points
+    return PntClr{
+        (float)(left.x / right),
+        (float)(left.y / right),
+        (float)(left.z / right),
+        left.r,
+        left.g,
+        left.b,
+        left.a
+    };
+}
+
+
+
+///// Point Cloud Creation ////////////////////////////////////////////////
+
+PCPosPtr vec_Point3d_to_PntPos_pcd( const vector<Point3d>& pntsList, bool atCentroid ){
     // Convert a vector of OpenCV `Point3d` to a PCL XYZ PCD
-    PCXYZPtr rtnPCD{ new PCXYZ{} };
-    PointXYZ basicPoint;
-    PointXYZ centroid{ 0.0f, 0.0f, 0.0f };
+    PCPosPtr rtnPCD{ new PCPos{} };
+    PntPos basicPoint;
+    PntPos centroid{ 0.0f, 0.0f, 0.0f };
 
     if( atCentroid ){
         for( const Point3d& pnt : pntsList ){
-            centroid = centroid + PointXYZ{ (float) pnt.x, (float) pnt.y, (float) pnt.z };
+            centroid = centroid + PntPos{ (float) pnt.x, (float) pnt.y, (float) pnt.z };
         }
         centroid = centroid / (double) pntsList.size();
     }
@@ -258,6 +309,35 @@ PCXYZPtr vec_Point3d_to_PointXYZ_pcd( const vector<Point3d>& pntsList, bool atCe
         basicPoint.x = pnt.x;
         basicPoint.y = pnt.y;
         basicPoint.z = pnt.z;
+        rtnPCD->push_back( basicPoint - centroid );
+    }
+
+    return rtnPCD;
+}
+
+
+PCClrPtr vec_Point3d_to_PntClr_pcd( const vector<Point3d>& pntsList, const Color& setColor, bool atCentroid ){
+    // Convert a vector of OpenCV `Point3d` to a PCL XYZ PCD
+    PCClrPtr rtnPCD{ new PCClr{} };
+    PntClr basicPoint;
+    PntClr centroid{ 0.0f, 0.0f, 0.0f };
+
+    if( atCentroid ){
+        for( const Point3d& pnt : pntsList ){
+            centroid = centroid + PntClr{ (float) pnt.x, (float) pnt.y, (float) pnt.z,
+                                          setColor[0], setColor[1], setColor[2], setColor[3] };
+        }
+        centroid = centroid / (double) pntsList.size();
+    }
+
+    for( const Point3d& pnt : pntsList ){
+        basicPoint.x = pnt.x;
+        basicPoint.y = pnt.y;
+        basicPoint.z = pnt.z;
+        basicPoint.r = setColor[0];
+        basicPoint.g = setColor[1];
+        basicPoint.b = setColor[2];
+        basicPoint.a = setColor[3];
         rtnPCD->push_back( basicPoint - centroid );
     }
 
@@ -308,6 +388,9 @@ vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo
                 node_im1->keyPts, node_im1->kpDesc, 
                 node_i->keyPts  , node_i->kpDesc 
             );
+
+            cout << "Rotation:\n" << res.R << endl << "Translation:\n" << res.t << endl;
+
             if( res.success ){
                 for( size_t j = 0; j < 3; ++j ){
                     for( size_t k = 0; k < 3; ++k ){
@@ -316,7 +399,13 @@ vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo
                     // node_i->relXform.at<double>( j, 3 ) = res.t.at<double>( j, 0 );
                     node_i->relXform.at<double>( j, 3 ) = res.t.at<double>( j, 0 );
                 }
+
+                cout << "Realtive Pose:\n" << node_i->relXform << endl << endl;
+
                 node_i->absXform = node_im1->absXform * node_i->relXform;
+
+                cout << node_im1->absXform << "\nX\n" << node_i->relXform << "\n=\n" << node_i->absXform << endl << endl;
+
                 est.generate_point_cloud( camInfo, res, zClip );
             }else{
                 cout << "WARNING: Disjoint sequence created at index " << i <<"!" << endl;
@@ -333,33 +422,33 @@ vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo
 
 
 matXef OCV_matx_to_Eigen3_matx_f( const Mat& ocvMatx ){
-    matXef rtnMtx = matXef::Zero( ocvMatx.cols, ocvMatx.rows ); // Eigen3 is COLUMN MAJOR!
+    matXef rtnMtx = matXef::Zero( ocvMatx.rows, ocvMatx.cols ); // Eigen3: For matrices, the row index is always passed first. 
     for( size_t i = 0; i < ocvMatx.rows; ++i ){
         for( size_t j = 0; j < ocvMatx.cols; ++j ){
-            rtnMtx( j, i ) = (float) ocvMatx.at<double>( i, j );
+            rtnMtx( i, j ) = (float) ocvMatx.at<double>( i, j );
         }
     }
     return rtnMtx;
 }
 
 
-PCXYZPtr node_seq_to_PointXYZ_pcd( NodePtr firstNode ){
+PCPosPtr node_seq_to_PntPos_pcd( NodePtr firstNode ){
     NodePtr  currNode = firstNode;
-    PCXYZPtr rtnCloud{ new PCXYZ{} };
+    PCPosPtr rtnCloud{ new PCPos{} };
     matXef   xform;
     while( currNode ){
         // 0. If there were points computed, Then get clouds
         if( currNode->imgRes2.success ){
             // 1. Store the relative cloud        
-            currNode->imgRes2.relPCD = vec_Point3d_to_PointXYZ_pcd( currNode->imgRes2.PCD, false );
-            currNode->imgRes2.absPCD = PCXYZPtr{ new PCXYZ{} };
+            currNode->imgRes2.relPCD = vec_Point3d_to_PntPos_pcd( currNode->imgRes2.PCD, false );
+            currNode->imgRes2.absPCD = PCPosPtr{ new PCPos{} };
             // 2. Transform and Store the absolute cloud
             xform = OCV_matx_to_Eigen3_matx_f( currNode->absXform );
-            cout << xform << endl;
+            cout << endl << currNode->absXform << endl << xform << endl;
             transformPointCloud( *(currNode->imgRes2.relPCD), *(currNode->imgRes2.absPCD), xform );
             // 3. Append points to the return cloud
-            for( size_t i = 0; i < currNode->imgRes2.relPCD->size(); ++i ){
-                rtnCloud->push_back( (*(currNode->imgRes2.relPCD))[i] );
+            for( size_t i = 0; i < currNode->imgRes2.absPCD->size(); ++i ){
+                rtnCloud->push_back( (*(currNode->imgRes2.absPCD))[i] );
             }
         }
         currNode = currNode->next;
