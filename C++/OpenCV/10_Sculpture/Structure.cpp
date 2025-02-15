@@ -313,6 +313,7 @@ vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo
                     for( size_t k = 0; k < 3; ++k ){
                         node_i->relXform.at<double>( j, k ) = res.R.at<double>( j, k );
                     }
+                    // node_i->relXform.at<double>( j, 3 ) = res.t.at<double>( j, 0 );
                     node_i->relXform.at<double>( j, 3 ) = res.t.at<double>( j, 0 );
                 }
                 node_i->absXform = node_im1->absXform * node_i->relXform;
@@ -351,8 +352,10 @@ PCXYZPtr node_seq_to_PointXYZ_pcd( NodePtr firstNode ){
         if( currNode->imgRes2.success ){
             // 1. Store the relative cloud        
             currNode->imgRes2.relPCD = vec_Point3d_to_PointXYZ_pcd( currNode->imgRes2.PCD, false );
+            currNode->imgRes2.absPCD = PCXYZPtr{ new PCXYZ{} };
             // 2. Transform and Store the absolute cloud
             xform = OCV_matx_to_Eigen3_matx_f( currNode->absXform );
+            cout << xform << endl;
             transformPointCloud( *(currNode->imgRes2.relPCD), *(currNode->imgRes2.absPCD), xform );
             // 3. Append points to the return cloud
             for( size_t i = 0; i < currNode->imgRes2.relPCD->size(); ++i ){

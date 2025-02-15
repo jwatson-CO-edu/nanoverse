@@ -7,7 +7,8 @@
 
 ////////// GLOBALS /////////////////////////////////////////////////////////////////////////////////
 string _CAL_PATH = "input/SfM/00_sculpture/moto-g-power-2022.intrinsic";
-string _IMG_PATH = "input/SfM/09_Test-02/";
+// string _IMG_PATH = "input/SfM/09_Test-02/";
+string _IMG_PATH = "input/SfM/00_sculpture/";
 
 
 
@@ -17,7 +18,7 @@ int main(){
 
     CamData camInfo{ _CAL_PATH, _IMG_PATH }; // Default params are for Moto G Power (2022)
 
-    vector<NodePtr> nodes    = images_to_nodes( _IMG_PATH, "jpg", camInfo, 4.0 );
+    vector<NodePtr> nodes    = images_to_nodes( _IMG_PATH, "jpg", camInfo, 100.0 );
     PCXYZPtr /*--*/ totCloud = node_seq_to_PointXYZ_pcd( nodes[0] );
     
     pcl::visualization::PCLVisualizer::Ptr viewer = simpleVis( totCloud );
