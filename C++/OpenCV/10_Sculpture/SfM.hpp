@@ -36,7 +36,8 @@ using namespace std::chrono_literals;
 #include <opencv2/opencv.hpp>
 #include "opencv2/core.hpp"
 #include <opencv2/core/utility.hpp>
-using cv::Mat, cv::String, cv::Vec, cv::Ptr, cv::Range, cv::Size, cv::imshow, cv::waitKey;
+using cv::Mat, cv::String, cv::Vec, cv::Ptr, cv::Range, cv::Size, cv::imshow, cv::waitKey, cv::cvtColor,
+      cv::Scalar;
 #include <opencv2/imgcodecs.hpp>
 using cv::imread, cv::IMREAD_COLOR, cv::IMREAD_GRAYSCALE;
 #include "opencv2/features2d.hpp"
@@ -91,8 +92,9 @@ typedef pcl::PointCloud<PntClr>::Ptr PCClrPtr;
 #define WHITE Color{255,255,255,255}
 #define BLACK Color{0,0,0,255}
 
-////////// STANDARD CONTAINERS /////////////////////////////////////////////////////////////////////
 
+
+////////// STANDARD CONTAINERS /////////////////////////////////////////////////////////////////////
 
 template<typename T>
 bool p_vec_has_item( const vector<T>& vec, const T& item ){
@@ -151,16 +153,38 @@ vector<string> list_files_at_path_w_ext( string path, string ext, bool sortAlpha
 // Load all the images found at a path
 void fetch_images_at_path( string path, vector<string>& fNames, vector<Mat>& images, 
                            uint limit = 0, string ext = "jpg" );
-bool file_exists( const string& fName ); // Return true if the file exists , otherwise return false
+bool /*-----*/ file_exists( const string& fName ); // Return true if the file exists , otherwise return false
 vector<string> read_lines( string path ); // Return all the lines of text file as a string vector
-string get_line_arg( string line ); // Get everything after the last ':' in a string
+string /*---*/ get_line_arg( string line ); // Get everything after the last ':' in a string
+
 
 ////////// UTILITY FUNCTIONS ///////////////////////////////////////////////////////////////////////
 
 // Deserialize an OpenCV `CV_64F` matrix stored row-major in a comma-separated list in a string
-Mat deserialize_2d_Mat_d( string input, int Mrows, int Ncols, char sep = ',' );
+Mat    deserialize_2d_Mat_d( string input, int Mrows, int Ncols, char sep = ',' );
+matXef OCV_matx_to_Eigen3_matx_f( const Mat& ocvMatx ); // Transfer an OpenCV matrix to Eigen3 matrix
 
-    
+
+////////// OPERATORS ///////////////////////////////////////////////////////////////////////////////
+///// Point Cloud Element Operators ///////////////////////////////////////
+PntPos operator+( const PntPos& left, const PntPos& right ); // Add two PCL points
+PntPos operator-( const PntPos& left, const PntPos& right ); // Subtract two PCL points
+PntPos operator/( const PntPos& left, double right ); // Divide a PCL point by a scalar
+///// Color Point Cloud Element Operators /////////////////////////////////
+PntClr operator+( const PntClr& left, const PntClr& right ); // Add two PCL points
+PntClr operator-( const PntClr& left, const PntClr& right ); // Subtract two PCL points
+PntClr operator/( const PntClr& left, double right ); // Subtract two PCL points
+///// Color Operators /////////////////////////////////////////////////////
+XColor operator-( const XColor& left, const XColor& right ); // Subtract two eXteneded Colors
+XColor operator+( const XColor& left, const XColor& right ); // Add two eXteneded Colors
+XColor operator*( const XColor& left, double right ); // Scale an eXteneded Color
+Color  get_Color( const XColor& clr ); // Cast eXteneded Color to ubyte Color
+XColor get_XColor( const Color& clr ); // Cast ubyte Color to eXteneded Color
+
+
+////////// IMAGE ANALYSIS //////////////////////////////////////////////////////////////////////////
+double measure_sharpness( const Mat& image ); // A lower variance indicates more blur.
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// Structure.cpp ///////////////////////////////////////////////////////////////////////////
@@ -169,6 +193,7 @@ Mat deserialize_2d_Mat_d( string input, int Mrows, int Ncols, char sep = ',' );
 ////////// RELATIVE CAMERA POSE ////////////////////////////////////////////////////////////////////
 
 Mat load_cam_calibration( string cPath ); // Fetch the K matrix stored as plain text
+
 
 class CamData{ public:
     Mat     Kintrinsic;
@@ -204,6 +229,7 @@ struct TwoViewResult{
     PCClrPtr absCPCD; 
 };
 
+
 TwoViewResult empty_result();
 
 
@@ -236,6 +262,7 @@ class TwoViewCalculator{ public:
                                   const TwoViewResult& result );
 };
 
+
 // Convert a vector of OpenCV `Point3d` to a PCL XYZ PCD
 PCPosPtr vec_Point3d_to_PntPos_pcd( const vector<Point3d>& pntsList, bool atCentroid = false );
 
@@ -251,19 +278,19 @@ class ImgNode{ public:
     // NOTE: This class assumes that the pictures are taken in a sequence, Doubly-Linked List
     
     /// Members ///
-    string /*-----*/ imgPth; // - Image path
-    Mat /*--------*/ image; // -- Image data
-    Point2i /*----*/ imgSize; //- Image size [px]
-    vector<KeyPoint> keyPts; // - Keypoints for image
-    Mat /*--------*/ kpDesc; // - Keypoint descriptors, needed for matching
-    TwoViewResult    imgRes2; //- Result of keypoint matching
-    NodePtr /*----*/ prev; // --- Parent `ImgNode`
-    NodePtr /*----*/ next; // --- Successor `ImgNode`s
-    Mat /*--------*/ relXform; // Transform relative to `prev` node
-    Mat /*--------*/ absXform; // Camera pose for this image in the lab frame
+    string /*-----*/ imgPth; // -- Image path
+    Mat /*--------*/ image; // --- Image data
+    Point2i /*----*/ imgSize; // - Image size [px]
+    vector<KeyPoint> keyPts; // -- Keypoints for image
+    Mat /*--------*/ kpDesc; // -- Keypoint descriptors, needed for matching
+    TwoViewResult    imgRes2; // - Result of keypoint matching
+    NodePtr /*----*/ prev; // ---- Parent `ImgNode`
+    NodePtr /*----*/ next; // ---- Successor `ImgNode`s
+    Mat /*--------*/ relXform; //- Transform relative to `prev` node
+    Mat /*--------*/ absXform; //- Camera pose for this image in the lab frame
+    double /*-----*/ sharpness; // How clear is the image?
 
     ImgNode( string path, const Mat& sourceImg );
-    
 };
 
 // Populate a vector of nodes with paths and images

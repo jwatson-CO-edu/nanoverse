@@ -3,10 +3,6 @@
 
 
 
-
-
-
-
 ////////// RELATIVE CAMERA POSE ////////////////////////////////////////////////////////////////////
 
 Mat load_cam_calibration( string cPath ){
@@ -212,84 +208,6 @@ void TwoViewCalculator::generate_point_cloud( const CamData& camInfo, TwoViewRes
 }
 
 
-///// Point Cloud Element Operators ///////////////////////////////////////
-
-
-PntPos operator+( const PntPos& left, const PntPos& right ){
-    // Add two PCL points
-    return PntPos{
-        (float)(left.x + right.x),
-        (float)(left.y + right.y),
-        (float)(left.z + right.z)
-    };
-}
-
-
-PntPos operator-( const PntPos& left, const PntPos& right ){
-    // Subtract two PCL points
-    return PntPos{
-        (float)(left.x - right.x),
-        (float)(left.y - right.y),
-        (float)(left.z - right.z)
-    };
-}
-
-
-PntPos operator/( const PntPos& left, double right ){
-    // Divide a PCL point by a scalar
-    return PntPos{
-        (float)(left.x / right),
-        (float)(left.y / right),
-        (float)(left.z / right)
-    };
-}
-
-
-///// Color Point Cloud Element Operators /////////////////////////////////
-
-PntClr operator+( const PntClr& left, const PntClr& right ){
-    // Add two PCL points
-    return PntClr{
-        (float)(left.x + right.x),
-        (float)(left.y + right.y),
-        (float)(left.z + right.z),
-        (ubyte)((left.r + right.r)/2.0f),
-        (ubyte)((left.g + right.g)/2.0f),
-        (ubyte)((left.b + right.b)/2.0f),
-        (ubyte)max( left.a, right.a )
-    };
-}
-
-
-PntClr operator-( const PntClr& left, const PntClr& right ){
-    // Subtract two PCL points
-    return PntClr{
-        (float)(left.x - right.x),
-        (float)(left.y - right.y),
-        (float)(left.z - right.z),
-        (ubyte)((left.r + right.r)/2.0f),
-        (ubyte)((left.g + right.g)/2.0f),
-        (ubyte)((left.b + right.b)/2.0f),
-        (ubyte)max( left.a, right.a )
-    };
-}
-
-
-PntClr operator/( const PntClr& left, double right ){
-    // Subtract two PCL points
-    return PntClr{
-        (float)(left.x / right),
-        (float)(left.y / right),
-        (float)(left.z / right),
-        left.r,
-        left.g,
-        left.b,
-        left.a
-    };
-}
-
-
-
 ///// Point Cloud Creation ////////////////////////////////////////////////
 
 PCPosPtr vec_Point3d_to_PntPos_pcd( const vector<Point3d>& pntsList, bool atCentroid ){
@@ -373,9 +291,10 @@ vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo
     cout << endl;
     for( size_t i = 0; i < N; ++i ){
         node_i = NodePtr{ new ImgNode{ fNames[i], images[i] } };
+        node_i->relXform  = Mat::eye( 4, 4, CV_64F );
+        node_i->absXform  = Mat::eye( 4, 4, CV_64F );
+        node_i->sharpness = measure_sharpness( images[i] );
         kazeMaker.get_KAZE_keypoints( images[i], node_i->keyPts, node_i->kpDesc );
-        node_i->relXform = Mat::eye( 4, 4, CV_64F );
-        node_i->absXform = Mat::eye( 4, 4, CV_64F );
         
         // Assume pix were taken in a sequence
         if( i > 0 ){  
@@ -421,17 +340,6 @@ vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo
 }
 
 
-matXef OCV_matx_to_Eigen3_matx_f( const Mat& ocvMatx ){
-    matXef rtnMtx = matXef::Zero( ocvMatx.rows, ocvMatx.cols ); // Eigen3: For matrices, the row index is always passed first. 
-    for( size_t i = 0; i < ocvMatx.rows; ++i ){
-        for( size_t j = 0; j < ocvMatx.cols; ++j ){
-            rtnMtx( i, j ) = (float) ocvMatx.at<double>( i, j );
-        }
-    }
-    return rtnMtx;
-}
-
-
 PCPosPtr node_seq_to_PntPos_pcd( NodePtr firstNode ){
     NodePtr  currNode = firstNode;
     PCPosPtr rtnCloud{ new PCPos{} };
@@ -454,55 +362,6 @@ PCPosPtr node_seq_to_PntPos_pcd( NodePtr firstNode ){
         currNode = currNode->next;
     }
     return rtnCloud;
-}
-
-
-XColor operator-( const XColor& left, const XColor& right ){
-    return XColor{
-        left[0]-right[0],
-        left[1]-right[1],
-        left[2]-right[2],
-        max( left[3], right[3] )
-    };
-}
-
-
-XColor operator+( const XColor& left, const XColor& right ){
-    return XColor{
-        left[0]+right[0],
-        left[1]+right[1],
-        left[2]+right[2],
-        max( left[3], right[3] )
-    };
-}
-
-
-XColor operator*( const XColor& left, double right ){
-    return XColor{
-        (int)(left[0]*right),
-        (int)(left[1]*right),
-        (int)(left[2]*right),
-        (int)(left[3]*right)
-    };
-}
-
-Color get_Color( const XColor& clr ){
-    return Color{
-        (ubyte) max( 0, min( 255, clr[0] ) ),
-        (ubyte) max( 0, min( 255, clr[1] ) ),
-        (ubyte) max( 0, min( 255, clr[2] ) ),
-        (ubyte) max( 0, min( 255, clr[3] ) )
-    };
-}
-
-
-XColor get_XColor( const Color& clr ){
-    return XColor{
-        clr[0],
-        clr[1],
-        clr[2],
-        clr[3]
-    };
 }
 
 

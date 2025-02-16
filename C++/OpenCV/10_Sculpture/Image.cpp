@@ -154,5 +154,169 @@ Mat deserialize_2d_Mat_d( string input, int Mrows, int Ncols, char sep ){
     return rtnMat;
 }
 
+
 // Get everything after the last ':' in a string
 string get_line_arg( string line ){  return get_last( split_string_on_char( line, ':' ) );  }
+
+
+matXef OCV_matx_to_Eigen3_matx_f( const Mat& ocvMatx ){
+    // Transfer an OpenCV matrix to Eigen3 matrix
+    matXef rtnMtx = matXef::Zero( ocvMatx.rows, ocvMatx.cols ); // Eigen3: For matrices, the row index is always passed first. 
+    for( size_t i = 0; i < ocvMatx.rows; ++i ){
+        for( size_t j = 0; j < ocvMatx.cols; ++j ){
+            rtnMtx( i, j ) = (float) ocvMatx.at<double>( i, j );
+        }
+    }
+    return rtnMtx;
+}
+
+
+
+////////// OPERATORS ///////////////////////////////////////////////////////////////////////////////
+
+///// Point Cloud Element Operators ///////////////////////////////////////
+
+
+PntPos operator+( const PntPos& left, const PntPos& right ){
+    // Add two PCL points
+    return PntPos{
+        (float)(left.x + right.x),
+        (float)(left.y + right.y),
+        (float)(left.z + right.z)
+    };
+}
+
+
+PntPos operator-( const PntPos& left, const PntPos& right ){
+    // Subtract two PCL points
+    return PntPos{
+        (float)(left.x - right.x),
+        (float)(left.y - right.y),
+        (float)(left.z - right.z)
+    };
+}
+
+
+PntPos operator/( const PntPos& left, double right ){
+    // Divide a PCL point by a scalar
+    return PntPos{
+        (float)(left.x / right),
+        (float)(left.y / right),
+        (float)(left.z / right)
+    };
+}
+
+
+///// Color Point Cloud Element Operators /////////////////////////////////
+
+PntClr operator+( const PntClr& left, const PntClr& right ){
+    // Add two PCL points
+    return PntClr{
+        (float)(left.x + right.x),
+        (float)(left.y + right.y),
+        (float)(left.z + right.z),
+        (ubyte)((left.r + right.r)/2.0f),
+        (ubyte)((left.g + right.g)/2.0f),
+        (ubyte)((left.b + right.b)/2.0f),
+        (ubyte)max( left.a, right.a )
+    };
+}
+
+
+PntClr operator-( const PntClr& left, const PntClr& right ){
+    // Subtract two PCL points
+    return PntClr{
+        (float)(left.x - right.x),
+        (float)(left.y - right.y),
+        (float)(left.z - right.z),
+        (ubyte)((left.r + right.r)/2.0f),
+        (ubyte)((left.g + right.g)/2.0f),
+        (ubyte)((left.b + right.b)/2.0f),
+        (ubyte)max( left.a, right.a )
+    };
+}
+
+
+PntClr operator/( const PntClr& left, double right ){
+    // Subtract two PCL points
+    return PntClr{
+        (float)(left.x / right),
+        (float)(left.y / right),
+        (float)(left.z / right),
+        left.r,
+        left.g,
+        left.b,
+        left.a
+    };
+}
+
+
+///// Color Operators /////////////////////////////////////////////////////
+
+XColor operator-( const XColor& left, const XColor& right ){
+    // Subtract two eXteneded Colors
+    return XColor{
+        left[0]-right[0],
+        left[1]-right[1],
+        left[2]-right[2],
+        max( left[3], right[3] )
+    };
+}
+
+
+XColor operator+( const XColor& left, const XColor& right ){
+    // Add two eXteneded Colors
+    return XColor{
+        left[0]+right[0],
+        left[1]+right[1],
+        left[2]+right[2],
+        max( left[3], right[3] )
+    };
+}
+
+
+XColor operator*( const XColor& left, double right ){
+    // Scale an eXteneded Color
+    return XColor{
+        (int)(left[0]*right),
+        (int)(left[1]*right),
+        (int)(left[2]*right),
+        (int)(left[3]*right)
+    };
+}
+
+
+Color get_Color( const XColor& clr ){
+    // Cast eXteneded Color to ubyte Color
+    return Color{
+        (ubyte) max( 0, min( 255, clr[0] ) ),
+        (ubyte) max( 0, min( 255, clr[1] ) ),
+        (ubyte) max( 0, min( 255, clr[2] ) ),
+        (ubyte) max( 0, min( 255, clr[3] ) )
+    };
+}
+
+
+XColor get_XColor( const Color& clr ){
+    // Cast ubyte Color to eXteneded Color
+    return XColor{
+        clr[0],
+        clr[1],
+        clr[2],
+        clr[3]
+    };
+}
+
+
+
+////////// IMAGE ANALYSIS //////////////////////////////////////////////////////////////////////////
+
+double measure_sharpness( const Mat& grayImage ){
+    /* One common approach involves using the Laplacian operator to detect edges and then calculating 
+       the variance of the Laplacian response. A lower variance indicates more blur. */
+    Mat laplacianImage;
+    cv::Laplacian( grayImage, laplacianImage, CV_64F );
+    Scalar mean, stddev;
+    cv::meanStdDev( laplacianImage, mean, stddev );
+    return stddev[0] * stddev[0]; // Variance
+}
