@@ -33,12 +33,15 @@
     - `[Y]` Store the result struct in the SECOND node!, 2025-02-15: Stored!
 
 ## 3 Image Sequence
-* `[Y]` Trim each local PCD to a Z-limit (distance from camera), 2025-02-14: Tune manually for now
+* `[>]` Cleanup
+    - `[Y]` Trim each local PCD to a Z-limit (distance from camera), 2025-02-14: Tune manually for now
+    - `[>]` Try skipping blurry images, but only if the registration succeeds
+    - `[ ]` Consider eliminating the ground plane points
+        * `{?}` Does this harm ICP performance?
 * `[ ]` ICP for PCD
     - `[ ]` [ICP Registration Ref](https://docs.opencv.org/4.x/dc/d9b/classcv_1_1ppf__match__3d_1_1ICP.html)
     - `[ ]` Try N-dim ICP that includes the coordinates of the associated keypoints
-* `[ ]` Consider eliminating the ground plane points
-    - `{?}` Does this harm ICP performance?
+
 * `[ ]` Calc absolute camera pose previous --to-> current
 
 ## N Image Sequence
