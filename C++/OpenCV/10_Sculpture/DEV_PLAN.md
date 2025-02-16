@@ -13,10 +13,10 @@
 ## 2 Image Sequence, 2025-02-15: COMPLETE!
 * `[Y]` Load images into nodes, 2025-02-02: Same as it ever was!
     - `[Y]` Find AKAZE (Again), 2025-02-02: Same as it ever was!
-* `[>]` Keypoint registration, 2025-02-03: Copy and Paste!
+* `[Y]` Keypoint registration, 2025-02-03: Copy and Paste!
     - `[Y]` Fetch Claude response, Compare to ChatGPT response, 2025-02-03: Copy and Paste!
     - `[Y]` KNN, 2025-02-03: Copy and Paste!
-    - `[>]` Save matching as a file and view it
+    - `[N]` Save matching as a file and view it, 2025-02-15: Avoid serialization! YAGNI!
 * `[Y]` Calc relative camera pose previous --to-> current, 2025-02-02: Relative!
     - `[Y]` Decide what the transform means, relative or absolute!, 2025-02-02: Relative!
 * `[Y]` Generate PCD for registered image pair, 2025-02-15: Stored!
