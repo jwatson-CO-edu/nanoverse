@@ -10,7 +10,7 @@
 * `[Y]` Build Point Cloud Library
     - [Point Cloud Library (PCL) Build Instructions](https://pcl.readthedocs.io/projects/tutorials/en/latest/compiling_pcl_posix.html)
 
-## 2 Image Sequence
+## 2 Image Sequence, 2025-02-15: COMPLETE!
 * `[Y]` Load images into nodes, 2025-02-02: Same as it ever was!
     - `[Y]` Find AKAZE (Again), 2025-02-02: Same as it ever was!
 * `[>]` Keypoint registration, 2025-02-03: Copy and Paste!
@@ -32,28 +32,31 @@
         * `[Y]` Display, Does it look like the sculpture at all?, 2025-02-13: IT SURE FUCKING DOES! YEAH!!
     - `[Y]` Store the result struct in the SECOND node!, 2025-02-15: Stored!
 
-## 3 Image Sequence
+## 6 Image Sequence
+* `[Y]` Calc absolute camera pose previous --to-> current, 2025-02-13: YEAH!!
 * `[>]` Cleanup
     - `[Y]` Trim each local PCD to a Z-limit (distance from camera), 2025-02-14: Tune manually for now
     - `[>]` Try skipping blurry images, but only if the registration succeeds
-    - `[ ]` Consider eliminating the ground plane points
-        * `{?}` Does this harm ICP performance?
+    - `[ ]` Try skipping images with insufficient disparity, but only if the registration succeeds
 * `[ ]` ICP for PCD
     - `[ ]` [ICP Registration Ref](https://docs.opencv.org/4.x/dc/d9b/classcv_1_1ppf__match__3d_1_1ICP.html)
     - `[ ]` Try N-dim ICP that includes the coordinates of the associated keypoints
+    - `{?}` Consider eliminating the ground plane points, Does this harm ICP performance?
 
-* `[ ]` Calc absolute camera pose previous --to-> current
-
-## N Image Sequence
+## 12 Image Sequence
 * `[ ]` 1st Pass: Poses from registration
+    - `{?}` Populate synthetic keypoints in medium gaps? How to ensure they are close together?
+    - `{?}` Revive VFN?
 * `[ ]` 2nd Pass: Pose refinement from ICP
 * `[ ]` 3rd Pass: Point merge and cleanup
 * `[ ]` How to account for drift?
+
+## N Image Sequence
 * `[ ]` Consider loop closure
 
-
-
 ## Textured Model
+* `{?}` Revive VFN?
+    - `{?}` `DynVFN`: Queues of triples instead of matrices?
 * `[ ]` Cluster total PCD into "surfaces"
     - `[ ]` Surfaces **should** share edges!
 * `[ ]` Per PCD Surface
