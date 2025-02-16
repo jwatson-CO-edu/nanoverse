@@ -33,8 +33,16 @@
     - `[Y]` Store the result struct in the SECOND node!, 2025-02-15: Stored!
 
 ## 6 Image Sequence
+```C++
+Mat undistortedImg1, undistortedImg2;
+undistort(img1, undistortedImg1, cameraMatrix, distCoeffs);
+undistort(img2, undistortedImg2, cameraMatrix, distCoeffs);
+```  
 * `[Y]` Calc absolute camera pose previous --to-> current, 2025-02-13: YEAH!!
 * `[>]` Cleanup
+    - `[>]` !! UNDISTORT !!  
+        * `[>]` GET distortion params!
+        * `[ ]` UNDISTORT EVERY IMAGE!!
     - `[Y]` Trim each local PCD to a Z-limit (distance from camera), 2025-02-14: Tune manually for now
     - `[>]` Try skipping blurry images, but only if the registration succeeds
     - `[ ]` Try skipping images with insufficient disparity, but only if the registration succeeds
