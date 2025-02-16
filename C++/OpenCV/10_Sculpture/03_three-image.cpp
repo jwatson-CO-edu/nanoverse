@@ -19,9 +19,10 @@ int main(){
     CamData camInfo{ _CAL_PATH, _IMG_PATH }; // Default params are for Moto G Power (2022)
 
     vector<NodePtr> nodes    = images_to_nodes( _IMG_PATH, "jpg", camInfo, 100.0 );
-    PCXYZPtr /*--*/ totCloud = node_seq_to_PointXYZ_pcd( nodes[0] );
+    // PCPosPtr /*--*/ totCloud = node_seq_to_PntPos_pcd( nodes[0] );
+    PCClrPtr /*--*/ totCloud = node_seq_to_PntClr_pcd( nodes[0], GREEN, RED );
     
-    pcl::visualization::PCLVisualizer::Ptr viewer = simpleVis( totCloud );
+    pcl::visualization::PCLVisualizer::Ptr viewer = rgbaVis( totCloud );
     
     while( !viewer->wasStopped() ){
         viewer->spinOnce( 100 );

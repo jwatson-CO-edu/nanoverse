@@ -42,7 +42,7 @@ int main(){
 
     est.generate_point_cloud( camInfo, res );
     // pts = res.PCD;
-    PCXYZPtr pcd = vec_Point3d_to_PointXYZ_pcd( res.PCD, true );
+    PCPosPtr pcd = vec_Point3d_to_PntPos_pcd( res.PCD, true );
 
     pcl::visualization::PCLVisualizer::Ptr viewer = simpleVis( pcd );
     

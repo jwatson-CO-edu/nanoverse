@@ -78,12 +78,18 @@ using matXef = Eigen::MatrixXf;
 typedef unsigned char /*----------*/ ubyte;
 typedef array<double,2> /*--------*/ vec2d;
 typedef array<double,3> /*--------*/ vec3d;
+typedef array<int,4> /*-----------*/ XColor;
 typedef array<ubyte,4> /*---------*/ Color;
 typedef pcl::PointCloud<PntPos> /**/ PCPos;
 typedef pcl::PointCloud<PntPos>::Ptr PCPosPtr;
 typedef pcl::PointCloud<PntClr> /**/ PCClr;
 typedef pcl::PointCloud<PntClr>::Ptr PCClrPtr;
 
+#define RED Color{255,0,0,255}
+#define GREEN Color{0,255,0,255}
+#define BLUE Color{0,0,255,255}
+#define WHITE Color{255,255,255,255}
+#define BLACK Color{0,0,0,255}
 
 ////////// STANDARD CONTAINERS /////////////////////////////////////////////////////////////////////
 
@@ -192,8 +198,10 @@ struct TwoViewResult{
     array<Point3d,2> bbox;
 
     /// Stage 3: Merge ///
-    PCClrPtr relPCD; 
-    PCClrPtr absPCD; 
+    PCPosPtr relPCD; 
+    PCPosPtr absPCD; 
+    PCClrPtr relCPCD; 
+    PCClrPtr absCPCD; 
 };
 
 TwoViewResult empty_result();
@@ -274,4 +282,5 @@ PCClrPtr node_seq_to_PntClr_pcd( NodePtr firstNode, const Color& firstColor, con
 
 // Open 3D viewer and add point cloud
 pcl::visualization::PCLVisualizer::Ptr simpleVis( PCPosPtr cloud );
+pcl::visualization::PCLVisualizer::Ptr rgbaVis( PCClrPtr cloud );
     

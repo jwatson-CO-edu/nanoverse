@@ -455,3 +455,89 @@ PCPosPtr node_seq_to_PntPos_pcd( NodePtr firstNode ){
     }
     return rtnCloud;
 }
+
+
+XColor operator-( const XColor& left, const XColor& right ){
+    return XColor{
+        left[0]-right[0],
+        left[1]-right[1],
+        left[2]-right[2],
+        max( left[3], right[3] )
+    };
+}
+
+
+XColor operator+( const XColor& left, const XColor& right ){
+    return XColor{
+        left[0]+right[0],
+        left[1]+right[1],
+        left[2]+right[2],
+        max( left[3], right[3] )
+    };
+}
+
+
+XColor operator*( const XColor& left, double right ){
+    return XColor{
+        (int)(left[0]*right),
+        (int)(left[1]*right),
+        (int)(left[2]*right),
+        (int)(left[3]*right)
+    };
+}
+
+Color get_Color( const XColor& clr ){
+    return Color{
+        (ubyte) max( 0, min( 255, clr[0] ) ),
+        (ubyte) max( 0, min( 255, clr[1] ) ),
+        (ubyte) max( 0, min( 255, clr[2] ) ),
+        (ubyte) max( 0, min( 255, clr[3] ) )
+    };
+}
+
+
+XColor get_XColor( const Color& clr ){
+    return XColor{
+        clr[0],
+        clr[1],
+        clr[2],
+        clr[3]
+    };
+}
+
+
+PCClrPtr node_seq_to_PntClr_pcd( NodePtr firstNode, const Color& firstColor, const Color& lastColor ){
+    NodePtr  currNode = firstNode;
+    PCClrPtr rtnCloud{ new PCClr{} };
+    matXef   xform;
+    size_t   N;
+    size_t   i = 0;
+    XColor   span = get_XColor( lastColor ) - get_XColor( firstColor );
+    XColor   clr1 = get_XColor( firstColor );
+    Color    clr_i;
+    while( currNode ){
+        ++N;
+        currNode = currNode->next;
+    }
+    currNode = firstNode;
+    while( currNode ){
+        clr_i = get_Color( clr1 + span * (1.0*i/N) );
+        // 0. If there were points computed, Then get clouds
+        if( currNode->imgRes2.success ){
+            // 1. Store the relative cloud        
+            currNode->imgRes2.relCPCD = vec_Point3d_to_PntClr_pcd( currNode->imgRes2.PCD, clr_i, false );
+            currNode->imgRes2.absCPCD = PCClrPtr{ new PCClr{} };
+            // 2. Transform and Store the absolute cloud
+            xform = OCV_matx_to_Eigen3_matx_f( currNode->absXform );
+            cout << endl << currNode->absXform << endl << xform << endl;
+            transformPointCloud( *(currNode->imgRes2.relCPCD), *(currNode->imgRes2.absCPCD), xform );
+            // 3. Append points to the return cloud
+            for( size_t i = 0; i < currNode->imgRes2.absCPCD->size(); ++i ){
+                rtnCloud->push_back( (*(currNode->imgRes2.absCPCD))[i] );
+            }
+        }
+        currNode = currNode->next;
+        ++i;
+    }
+    return rtnCloud;
+}
