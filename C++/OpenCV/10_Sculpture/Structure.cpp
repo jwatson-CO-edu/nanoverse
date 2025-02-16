@@ -53,7 +53,7 @@ TwoViewResult TwoViewCalculator::estimate_pose( const CamData& camInfo,
                                                 const vector<KeyPoint>& keypoints1, const Mat& descriptors1, 
                                                 const vector<KeyPoint>& keypoints2, const Mat& descriptors2 ){
     // Use keypoint collections from two images to calculate a relative pose
-    // https://claude.site/artifacts/6b2b5025-4cdf-43cd-9762-b8f4fdb74d90
+    // Insiration: https://claude.site/artifacts/6b2b5025-4cdf-43cd-9762-b8f4fdb74d90
     TwoViewResult result;
     result.success = false;
             
@@ -129,7 +129,7 @@ Mat TwoViewCalculator::visualize_matches( const Mat& img1, const vector<KeyPoint
 
 
 void TwoViewCalculator::generate_point_cloud( const CamData& camInfo, TwoViewResult& result, double zClip ){
-    // https://claude.site/artifacts/f4a5b5fd-b317-4c6f-b42d-f35b92d03cbf
+    // Insiration: https://claude.site/artifacts/f4a5b5fd-b317-4c6f-b42d-f35b92d03cbf
     
     // Check input validity
     if (result.matched_points1.size() != result.matched_points2.size() || result.matched_points1.empty()) {

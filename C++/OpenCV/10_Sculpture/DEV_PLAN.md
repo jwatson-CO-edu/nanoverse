@@ -51,11 +51,7 @@
 * `[ ]` How to account for drift?
 * `[ ]` Consider loop closure
 
-## Troubleshooting
-* `{?}` IF poor quality, THEN switch all OpenCV `Mat`s and calcs to `double`
 
-## OpenGL Interface
-* `[ ]` Switch homegrown vectors to GLM
 
 ## Textured Model
 * `[ ]` Cluster total PCD into "surfaces"
@@ -101,6 +97,9 @@
     - `[ ]` Logos
     - `[ ]` How It Was Made
 
+## Troubleshooting
+
+## OpenGL Interface
 
 # Resources
 * [Raspi Capture Module](https://www.robotshop.com/products/arducam-12mp2-synchronized-stereo-camera-bundle-kit-for-raspberry-pi)

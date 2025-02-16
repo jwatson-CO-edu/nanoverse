@@ -207,7 +207,7 @@ class CamData{ public:
 
 struct TwoViewResult{
     // Contains info that can be computed by two (consecutive) views
-    // Source: https://claude.ai/chat/b55bb623-d26f-42fe-9ece-c7fd3477e0ac
+    // Insiration: https://claude.ai/chat/b55bb623-d26f-42fe-9ece-c7fd3477e0ac
 
     /// Stage 1: Registration ///
     Mat /*-------*/ R; // Rotation matrix
@@ -235,7 +235,7 @@ TwoViewResult empty_result();
 
 class TwoViewCalculator{ public:
     // Uses the keypoints of two images to estimate a relative camera pose between them
-    // Source: https://claude.ai/chat/b55bb623-d26f-42fe-9ece-c7fd3477e0ac
+    // Insiration: https://claude.ai/chat/b55bb623-d26f-42fe-9ece-c7fd3477e0ac
 
     // Camera intrinsic parameters - these would typically come from calibration
 
