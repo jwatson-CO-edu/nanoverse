@@ -60,10 +60,10 @@ target_include_directories( ${EXECUTABLE_NAME} PUBLIC ${VTK_INCLUDE_DIRS} ${PCL_
 target_link_libraries( ${EXECUTABLE_NAME} ${PCL_LIBRARIES} )
 
 
-##### 03: PCD from Three-Image Registration #####
-set( EXECUTABLE_NAME 03_three-image-pcd.out )
+##### 03: PCD from Six-Image Registration #####
+set( EXECUTABLE_NAME 03_six-image-pcd.out )
 add_executable( ${EXECUTABLE_NAME} 
-                03_three-image.cpp 
+                03_six-image.cpp 
                 Visualize.cpp Structure.cpp Image.cpp )
 target_include_directories( ${EXECUTABLE_NAME} PUBLIC ${VTK_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} )
 target_link_libraries( ${EXECUTABLE_NAME} ${PCL_LIBRARIES} ${VTK_LIBRARIES} ${OpenCV_LIBS} )

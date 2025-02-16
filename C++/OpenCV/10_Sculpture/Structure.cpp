@@ -5,18 +5,17 @@
 
 ////////// RELATIVE CAMERA POSE ////////////////////////////////////////////////////////////////////
 
-Mat load_cam_calibration( string cPath ){
+vector<Mat> load_cam_calibration( string cPath ){
     // Fetch the K matrix stored as plain text
-    Mat matx;
+    vector<Mat> K_and_D;
     vector<string> lines = read_lines( cPath );
     if( lines.size() ){
-        matx = deserialize_2d_Mat_d( get_line_arg( lines[0] ), 3, 3, ',' );
-        cout << "Camera Calibration Matrix from " << cPath << ":" << endl;
-        cout << matx << endl;
+        K_and_D.push_back( deserialize_2d_Mat_d( get_line_arg( lines[0] ), 3, 3, ',' ) );
+        K_and_D.push_back( deserialize_2d_Mat_d( get_line_arg( lines[1] ), 1, 5, ',' ) );
     }else{
         cout << "Calibration file " << cPath << " LACKS appropriate data!" << endl;
     }
-    return matx;
+    return K_and_D;
 }
 
 
@@ -24,9 +23,11 @@ CamData::CamData( string kPath, string imgDir, double horzFOV_, double vertFOV_,
 
     vector<Mat>    image;
     vector<String> fNames;
+    vector<Mat>    params = load_cam_calibration( kPath );
     fetch_images_at_path( imgDir, fNames, image, 1, ext );
 
-    Kintrinsic  = load_cam_calibration( kPath );
+    Kintrinsic  = params[0];
+    distortion  = params[1];
     imgSize     = Point2i{ image[0].rows, image[0].cols };
     horzFOV_deg = horzFOV_;
     vertFOV_deg = vertFOV_;
@@ -128,7 +129,7 @@ Mat TwoViewCalculator::visualize_matches( const Mat& img1, const vector<KeyPoint
 }
 
 
-void TwoViewCalculator::generate_point_cloud( const CamData& camInfo, TwoViewResult& result, double zClip ){
+void TwoViewCalculator::generate_point_cloud( const CamData& camInfo, TwoViewResult& result, double zMin, double zMax ){
     // Insiration: https://claude.site/artifacts/f4a5b5fd-b317-4c6f-b42d-f35b92d03cbf
     
     // Check input validity
@@ -141,20 +142,17 @@ void TwoViewCalculator::generate_point_cloud( const CamData& camInfo, TwoViewRes
 
     // Construct projection matrices
     Mat P1 = camInfo.Kintrinsic * Mat::eye( 3, 4, CV_64F );  // First camera matrix [K|0]
-    // cout << "Calculated projection!" << endl;
-    
     // Create second camera matrix [K(R|t)]
     Mat P2( 3, 4, CV_64F );
     cv::hconcat( result.R, result.t, P2 );
-    // cout << "Concatenated!" << endl;
-    // cout << camInfo.Kintrinsic.size() << " x " << P2.size() << endl; 
-    // cout << camInfo.Kintrinsic.type() << " x " << P2.type() << endl; 
     P2 = camInfo.Kintrinsic * P2;
-    // cout << "Calculated second camera matrix!" << endl;
-
-    Point3d /*---*/ avgPnt{ 0.0, 0.0, 0.0 };
-    vector<Point3d> points3D;
-    array<Point3d,2> bBox = { Point3d{1e6,1e6,1e6,}, Point3d{-1e6,-1e6,-1e6,} };
+    cout << endl << "P1:\n" << P1 << endl << "P2:\n" << P2 << endl;
+    
+    Point3d /*----*/ avgPnt{ 0.0, 0.0, 0.0 };
+    vector<Point3d>  points3D;
+    vector<Point3d>  finalPCD;
+    array<Point3d,2> bBox  = { Point3d{1e6,1e6,1e6,}, Point3d{-1e6,-1e6,-1e6,} };
+    // double /*-----*/ scale = norm( result.t, NORM_L2 );
 
     points3D.reserve( result.matched_points1.size() );
 
@@ -178,14 +176,16 @@ void TwoViewCalculator::generate_point_cloud( const CamData& camInfo, TwoViewRes
 
         // Convert homogeneous coordinates to 3D point
         point4D = point4D / point4D.at<double>(3);
+        // point4D = point4D * (scale / point4D.at<double>(3));
 
-        if( point4D.at<double>(2) <= zClip ){
+        if( (zMin <= point4D.at<double>(2)) && (point4D.at<double>(2) <= zMax ) ){
+
             Point3d point3D(
                 point4D.at<double>(0),
                 point4D.at<double>(1),
                 point4D.at<double>(2)
             );
-    
+
             // Add to point cloud
             points3D.push_back( point3D );
             avgPnt += point3D;
@@ -276,7 +276,7 @@ ImgNode::ImgNode( string path, const Mat& sourceImg ){
 }
 
 
-vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo, double zClip ){
+vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo, double zMin, double zMax, double minSharp ){
     // Populate a vector of nodes with paths and images
     NodePtr /*-----*/ node_i;
     NodePtr /*-----*/ node_im1;
@@ -286,15 +286,26 @@ vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo
     KAZE /*--------*/ kazeMaker{};
     TwoViewResult     res;
     TwoViewCalculator est{};
+    Mat /*---------*/ undistImg;
+    double /*------*/ avgSharp = 0.0;
     fetch_images_at_path( path, fNames, images, 0, ext );
     uint N = images.size();
     cout << endl;
     for( size_t i = 0; i < N; ++i ){
-        node_i = NodePtr{ new ImgNode{ fNames[i], images[i] } };
+        undistort( images[i], undistImg, camInfo.Kintrinsic, camInfo.distortion );
+        node_i = NodePtr{ new ImgNode{ fNames[i], undistImg } };
         node_i->relXform  = Mat::eye( 4, 4, CV_64F );
         node_i->absXform  = Mat::eye( 4, 4, CV_64F );
         node_i->sharpness = measure_sharpness( images[i] );
+        avgSharp += node_i->sharpness;
         kazeMaker.get_KAZE_keypoints( images[i], node_i->keyPts, node_i->kpDesc );
+
+        cout << "This Image: " << node_i->keyPts.size() << " kp, Sharpness: " << node_i->sharpness << endl;
+
+        if( node_i->sharpness < minSharp ){
+            cout << "Image " << i << " TOO BLURRY!" << endl;
+            continue;
+        }
         
         // Assume pix were taken in a sequence
         if( i > 0 ){  
@@ -325,7 +336,7 @@ vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo
 
                 cout << node_im1->absXform << "\nX\n" << node_i->relXform << "\n=\n" << node_i->absXform << endl << endl;
 
-                est.generate_point_cloud( camInfo, res, zClip );
+                est.generate_point_cloud( camInfo, res, zMin, zMax );
             }else{
                 cout << "WARNING: Disjoint sequence created at index " << i <<"!" << endl;
             }
@@ -333,9 +344,9 @@ vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo
         }
         
         rtnNds.push_back( NodePtr{ node_i } );
-        cout << node_i->keyPts.size() << " kp, " << flush;
     }
-    cout << endl;
+    avgSharp /= (double) N;
+    cout << endl << "Average Sharpness for Series: " << avgSharp << endl;
     return rtnNds;
 }
 

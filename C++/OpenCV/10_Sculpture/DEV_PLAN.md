@@ -40,16 +40,19 @@ undistort(img2, undistortedImg2, cameraMatrix, distCoeffs);
 ```  
 * `[Y]` Calc absolute camera pose previous --to-> current, 2025-02-13: YEAH!!
 * `[>]` Cleanup
-    - `[>]` !! UNDISTORT !!  
-        * `[>]` GET distortion params!
-        * `[ ]` UNDISTORT EVERY IMAGE!!
+    - `[Y]` !! UNDISTORT !!, 2025-02-16: Marginal improvement
+        * `[Y]` GET distortion params!, 2025-02-16: Marginal improvement
+        * `[Y]` UNDISTORT EVERY IMAGE!!, 2025-02-16: Marginal improvement
     - `[Y]` Trim each local PCD to a Z-limit (distance from camera), 2025-02-14: Tune manually for now
-    - `[>]` Try skipping blurry images, but only if the registration succeeds
+    - `[Y]` Try skipping blurry images, but only if the registration succeeds, 2025-02-16: Less distortion, but weird scaling issue!
+    - `{?}` Consider eliminating the ground plane points
+        * `{?}` Does this harm ICP performance?
+        * `{?}` Does finding the plane help align for ICP?
     - `[ ]` Try skipping images with insufficient disparity, but only if the registration succeeds
 * `[ ]` ICP for PCD
     - `[ ]` [ICP Registration Ref](https://docs.opencv.org/4.x/dc/d9b/classcv_1_1ppf__match__3d_1_1ICP.html)
     - `[ ]` Try N-dim ICP that includes the coordinates of the associated keypoints
-    - `{?}` Consider eliminating the ground plane points, Does this harm ICP performance?
+    
 
 ## 12 Image Sequence
 * `[ ]` 1st Pass: Poses from registration

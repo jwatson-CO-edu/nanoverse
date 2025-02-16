@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-import os
 import glob
  
 _SHOW_IMAGES = False
@@ -21,7 +20,7 @@ objp[0,:,:2] = np.mgrid[0:CHECKERBOARD[0], 0:CHECKERBOARD[1]].T.reshape(-1, 2)
 prev_img_shape = None
  
 # Extracting path of individual image stored in a given directory
-images = glob.glob( './data/SfM/zz_Calibration/*.jpg' )
+images = glob.glob( '../input/SfM/zz_Calibration/*.jpg' )
 N      = len( images )
 print( f"Found {N} calibration images!" )
 
@@ -62,7 +61,7 @@ for i, fname in enumerate( images ):
 if _SHOW_IMAGES:
     cv2.destroyAllWindows()
  
-h,w = img.shape[:2]
+
  
 """
 Performing camera calibration by 

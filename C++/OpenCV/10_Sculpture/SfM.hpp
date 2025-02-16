@@ -1,11 +1,5 @@
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
-// Defines //
-#define LEN 8192  // Maximum length of text string
-#define _USE_MATH_DEFINES
-//  OpenGL with prototypes for glext
-#define GL_GLEXT_PROTOTYPES // Important for all of your programs
-
 ///// Includes /////
 
 /// Standard ///
@@ -37,13 +31,17 @@ using namespace std::chrono_literals;
 #include "opencv2/core.hpp"
 #include <opencv2/core/utility.hpp>
 using cv::Mat, cv::String, cv::Vec, cv::Ptr, cv::Range, cv::Size, cv::imshow, cv::waitKey, cv::cvtColor,
-      cv::Scalar;
+      cv::Scalar, cv::undistort, cv::NORM_L2;
 #include <opencv2/imgcodecs.hpp>
 using cv::imread, cv::IMREAD_COLOR, cv::IMREAD_GRAYSCALE;
 #include "opencv2/features2d.hpp"
 using cv::Ptr, cv::KeyPoint, cv::Point2d, cv::Point2i, cv::Point3d, cv::DMatch, 
       cv::FeatureDetector, cv::Feature2D, cv::AKAZE, cv::DescriptorMatcher;
 using std::invalid_argument; // Who included `<stdexcept>`?
+
+// Eigen3 //
+#include <Eigen/Core> // The living heart of Eigen
+using matXef = Eigen::MatrixXf;
 
 /// Point Cloud Library ///
 #include <pcl/common/angles.h> // for pcl::deg2rad
@@ -55,25 +53,10 @@ using std::invalid_argument; // Who included `<stdexcept>`?
 using PntPos = pcl::PointXYZ;
 using PntClr = pcl::PointXYZRGBA;
 using pcl::transformPointCloud;
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/sample_consensus/model_types.h> 
+#include <pcl/segmentation/sac_segmentation.h>
 
-
-// OpenGL //
-#include <GL/glut.h>
-#include <GL/glu.h>
-#include <GL/gl.h>
-
-// Eigen3 //
-#include <Eigen/Core> // The living heart of Eigen
-using matXef = Eigen::MatrixXf;
-
-///// Defines /////
-
-// Cosine and Sine in degrees
-// Author: Willem A. (Vlakkies) Schreüder  
-#define Cos(x)( cos( (x) * 3.1415927 / 180 ) )
-#define Sin(x)( sin( (x) * 3.1415927 / 180 ) )
-#define Cosf(x)( (float)cos( (x) * 3.1415927 / 180 ) )
-#define Sinf(x)( (float)sin( (x) * 3.1415927 / 180 ) )
 
 ///// Aliases /////
 typedef unsigned char /*----------*/ ubyte;
@@ -85,7 +68,11 @@ typedef pcl::PointCloud<PntPos> /**/ PCPos;
 typedef pcl::PointCloud<PntPos>::Ptr PCPosPtr;
 typedef pcl::PointCloud<PntClr> /**/ PCClr;
 typedef pcl::PointCloud<PntClr>::Ptr PCClrPtr;
+typedef pcl::PointIndices /*------*/ Indices;
+typedef Indices::Ptr /*-----------*/ IndicesPtr;
 
+
+///// Defines /////
 #define RED Color{255,0,0,255}
 #define GREEN Color{0,255,0,255}
 #define BLUE Color{0,0,255,255}
@@ -192,12 +179,13 @@ double measure_sharpness( const Mat& image ); // A lower variance indicates more
 
 ////////// RELATIVE CAMERA POSE ////////////////////////////////////////////////////////////////////
 
-Mat load_cam_calibration( string cPath ); // Fetch the K matrix stored as plain text
+vector<Mat> load_cam_calibration( string cPath ); // Fetch the K matrix && Distortion stored as plain text
 
 
 class CamData{ public:
-    Mat     Kintrinsic;
-    Point2i imgSize;
+    Mat /**/ Kintrinsic;
+    Mat /**/ distortion;
+    Point2i  imgSize;
     double   horzFOV_deg; // 65.0deg // https://www.camerafv5.com/devices/manufacturers/motorola/moto_g_power_sofia_0/
     double   vertFOV_deg; // 51.1deg // https://www.camerafv5.com/devices/manufacturers/motorola/moto_g_power_sofia_0/
 
@@ -255,7 +243,7 @@ class TwoViewCalculator{ public:
                                  const vector<KeyPoint>& keypoints2, const Mat& descriptors2 );
 
     /// Stage 2: Point Cloud ///
-    void generate_point_cloud( const CamData& camInfo, TwoViewResult& result, double zClip = 1e9 );
+    void generate_point_cloud( const CamData& camInfo, TwoViewResult& result, double zMin = 0.0, double zMax = 1e9 );
 
     static Mat visualize_matches( const Mat& img1, const vector<KeyPoint>& keypoints1,
                                   const Mat& img2, const vector<KeyPoint>& keypoints2,
@@ -294,7 +282,9 @@ class ImgNode{ public:
 };
 
 // Populate a vector of nodes with paths and images
-vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo, double zClip = 1e9 ); 
+vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo, 
+                                 double zMin = 0.0, double zMax = 1e9, double minSharp = 150.0 ); 
+// vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo ); 
 
 PCPosPtr node_seq_to_PntPos_pcd( NodePtr firstNode );
 PCClrPtr node_seq_to_PntClr_pcd( NodePtr firstNode, const Color& firstColor, const Color& lastColor );
