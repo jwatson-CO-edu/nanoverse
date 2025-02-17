@@ -7,6 +7,8 @@
 using std::cout, std::cerr, std::endl, std::flush;
 #include <vector>
 using std::vector;
+#include <list> // `push_back` is **constant time**
+using std::list; 
 #include <array>
 using std::array;
 #include <string>
@@ -56,6 +58,7 @@ using pcl::transformPointCloud;
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h> 
 #include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/filters/extract_indices.h>
 
 
 ///// Aliases /////
@@ -193,6 +196,14 @@ class CamData{ public:
 };
 
 
+struct PlanePoints{
+    // Represents a plane ID/removal operation
+    vector<double> planeEq;
+    double /*---*/ margin;
+    PCPosPtr /*-*/ inliers;
+};
+
+
 struct TwoViewResult{
     // Contains info that can be computed by two (consecutive) views
     // Insiration: https://claude.ai/chat/b55bb623-d26f-42fe-9ece-c7fd3477e0ac
@@ -207,14 +218,15 @@ struct TwoViewResult{
 
     /// Stage 2: Point Cloud ///
     vector<Point3d>  PCD;
+    PCPosPtr /*---*/ relPCD; 
+    PCPosPtr /*---*/ absPCD; 
+    PCClrPtr /*---*/ relCPCD; 
+    PCClrPtr /*---*/ absCPCD; 
     Point3d /*----*/ centroid;
     array<Point3d,2> bbox;
-
-    /// Stage 3: Merge ///
-    PCPosPtr relPCD; 
-    PCPosPtr absPCD; 
-    PCClrPtr relCPCD; 
-    PCClrPtr absCPCD; 
+    
+    /// Stage 3: Clean ///
+    list<PlanePoints> removedPlanes;
 };
 
 

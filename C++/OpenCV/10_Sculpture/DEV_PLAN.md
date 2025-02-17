@@ -45,14 +45,25 @@ undistort(img2, undistortedImg2, cameraMatrix, distCoeffs);
         * `[Y]` UNDISTORT EVERY IMAGE!!, 2025-02-16: Marginal improvement
     - `[Y]` Trim each local PCD to a Z-limit (distance from camera), 2025-02-14: Tune manually for now
     - `[Y]` Try skipping blurry images, but only if the registration succeeds, 2025-02-16: Less distortion, but weird scaling issue!
-    - `{?}` Consider eliminating the ground plane points
+    - `[>]` Eliminate the ground plane points
+        * `[>]` Display resulting clouds
+        * `[ ]` Try removing planes until they are small (Assumption: If it's a big plane, it's probably the ground or a building!)
         * `{?}` Does this harm ICP performance?
         * `{?}` Does finding the plane help align for ICP?
-    - `[ ]` Try skipping images with insufficient disparity, but only if the registration succeeds
+    - `[N]` Try skipping images with insufficient disparity, but only if the registration succeeds, 2025-02-16: So far skipping for blurriness does not improve the distortion issue, So leave this one for now
 * `[ ]` ICP for PCD
     - `[ ]` [ICP Registration Ref](https://docs.opencv.org/4.x/dc/d9b/classcv_1_1ppf__match__3d_1_1ICP.html)
     - `[ ]` Try N-dim ICP that includes the coordinates of the associated keypoints
     
+
+## Troubleshooting
+* `{?}` Poor Point Cloud Alignment
+    - `{?}` [Find out what Homography is and if you can use it](https://docs.opencv.org/2.4/doc/tutorials/features2d/feature_homography/feature_homography.html)
+    - `{?}` Extended points with {3D Position, Color, Keypoint, ?Color Gradient?}
+        * `{?}` Is PCL able to do ICP with these points? What can?
+    - `{?}` Try to match meshes instead of points
+        * `{?}` Score = (Matched Area) * (1.0 / Distance)
+        * `{?}` Match {curvature, color}, Look at archaeological reconstruction papers?
 
 ## 12 Image Sequence
 * `[ ]` 1st Pass: Poses from registration
@@ -111,7 +122,8 @@ undistort(img2, undistortedImg2, cameraMatrix, distCoeffs);
     - `[ ]` Logos
     - `[ ]` How It Was Made
 
-## Troubleshooting
+
+
 
 ## OpenGL Interface
 

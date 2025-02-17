@@ -129,6 +129,64 @@ Mat TwoViewCalculator::visualize_matches( const Mat& img1, const vector<KeyPoint
 }
 
 
+///// Point Cloud Creation ////////////////////////////////////////////////
+
+PCPosPtr vec_Point3d_to_PntPos_pcd( const vector<Point3d>& pntsList, bool atCentroid ){
+    // Convert a vector of OpenCV `Point3d` to a PCL XYZ PCD
+    PCPosPtr rtnPCD{ new PCPos{} };
+    PntPos basicPoint;
+    PntPos centroid{ 0.0f, 0.0f, 0.0f };
+
+    if( atCentroid ){
+        for( const Point3d& pnt : pntsList ){
+            centroid = centroid + PntPos{ (float) pnt.x, (float) pnt.y, (float) pnt.z };
+        }
+        centroid = centroid / (double) pntsList.size();
+    }
+
+    for( const Point3d& pnt : pntsList ){
+        basicPoint.x = pnt.x;
+        basicPoint.y = pnt.y;
+        basicPoint.z = pnt.z;
+        rtnPCD->push_back( basicPoint - centroid );
+    }
+
+    return rtnPCD;
+}
+
+
+PCClrPtr vec_Point3d_to_PntClr_pcd( const vector<Point3d>& pntsList, const Color& setColor, bool atCentroid ){
+    // Convert a vector of OpenCV `Point3d` to a PCL XYZ PCD
+    PCClrPtr rtnPCD{ new PCClr{} };
+    PntClr basicPoint;
+    PntClr centroid{ 0.0f, 0.0f, 0.0f };
+
+    if( atCentroid ){
+        for( const Point3d& pnt : pntsList ){
+            centroid = centroid + PntClr{ (float) pnt.x, (float) pnt.y, (float) pnt.z,
+                                          setColor[0], setColor[1], setColor[2], setColor[3] };
+        }
+        centroid = centroid / (double) pntsList.size();
+    }
+
+    for( const Point3d& pnt : pntsList ){
+        basicPoint.x = pnt.x;
+        basicPoint.y = pnt.y;
+        basicPoint.z = pnt.z;
+        basicPoint.r = setColor[0];
+        basicPoint.g = setColor[1];
+        basicPoint.b = setColor[2];
+        basicPoint.a = setColor[3];
+        rtnPCD->push_back( basicPoint - centroid );
+    }
+
+    return rtnPCD;
+}
+
+
+///// Result Struct ///////////////////////////////////////////////////////
+
+
 void TwoViewCalculator::generate_point_cloud( const CamData& camInfo, TwoViewResult& result, double zMin, double zMax ){
     // Insiration: https://claude.site/artifacts/f4a5b5fd-b317-4c6f-b42d-f35b92d03cbf
     
@@ -203,63 +261,9 @@ void TwoViewCalculator::generate_point_cloud( const CamData& camInfo, TwoViewRes
     cout << "PCD Centroid: " << avgPnt << endl << endl; 
 
     result.PCD /**/ = points3D;
+    result.relPCD   = vec_Point3d_to_PntPos_pcd( points3D, false );
     result.centroid = avgPnt;
     result.bbox     = bBox;
-}
-
-
-///// Point Cloud Creation ////////////////////////////////////////////////
-
-PCPosPtr vec_Point3d_to_PntPos_pcd( const vector<Point3d>& pntsList, bool atCentroid ){
-    // Convert a vector of OpenCV `Point3d` to a PCL XYZ PCD
-    PCPosPtr rtnPCD{ new PCPos{} };
-    PntPos basicPoint;
-    PntPos centroid{ 0.0f, 0.0f, 0.0f };
-
-    if( atCentroid ){
-        for( const Point3d& pnt : pntsList ){
-            centroid = centroid + PntPos{ (float) pnt.x, (float) pnt.y, (float) pnt.z };
-        }
-        centroid = centroid / (double) pntsList.size();
-    }
-
-    for( const Point3d& pnt : pntsList ){
-        basicPoint.x = pnt.x;
-        basicPoint.y = pnt.y;
-        basicPoint.z = pnt.z;
-        rtnPCD->push_back( basicPoint - centroid );
-    }
-
-    return rtnPCD;
-}
-
-
-PCClrPtr vec_Point3d_to_PntClr_pcd( const vector<Point3d>& pntsList, const Color& setColor, bool atCentroid ){
-    // Convert a vector of OpenCV `Point3d` to a PCL XYZ PCD
-    PCClrPtr rtnPCD{ new PCClr{} };
-    PntClr basicPoint;
-    PntClr centroid{ 0.0f, 0.0f, 0.0f };
-
-    if( atCentroid ){
-        for( const Point3d& pnt : pntsList ){
-            centroid = centroid + PntClr{ (float) pnt.x, (float) pnt.y, (float) pnt.z,
-                                          setColor[0], setColor[1], setColor[2], setColor[3] };
-        }
-        centroid = centroid / (double) pntsList.size();
-    }
-
-    for( const Point3d& pnt : pntsList ){
-        basicPoint.x = pnt.x;
-        basicPoint.y = pnt.y;
-        basicPoint.z = pnt.z;
-        basicPoint.r = setColor[0];
-        basicPoint.g = setColor[1];
-        basicPoint.b = setColor[2];
-        basicPoint.a = setColor[3];
-        rtnPCD->push_back( basicPoint - centroid );
-    }
-
-    return rtnPCD;
 }
 
 
