@@ -34,7 +34,8 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = 'duckworld.Main'
+    // mainClass = 'duckworld.Main'
+    mainClass = 'Main'
 }
 
 tasks.named('test') {
