@@ -184,6 +184,35 @@ PCClrPtr vec_Point3d_to_PntClr_pcd( const vector<Point3d>& pntsList, const Color
 }
 
 
+PCClrPtr vec_PntPos_to_PntClr_pcd( const PCPosPtr pntsList, const Color& setColor, bool atCentroid ){
+    // Convert a vector of OpenCV `Point3d` to a PCL XYZ PCD
+    PCClrPtr rtnPCD{ new PCClr{} };
+    PntClr basicPoint;
+    PntClr centroid{ 0.0f, 0.0f, 0.0f };
+
+    if( atCentroid ){
+        for( const PntPos& pnt : *pntsList ){
+            centroid = centroid + PntClr{ (float) pnt.x, (float) pnt.y, (float) pnt.z,
+                                          setColor[0], setColor[1], setColor[2], setColor[3] };
+        }
+        centroid = centroid / (double) pntsList->size();
+    }
+
+    for( const PntPos& pnt : *pntsList ){
+        basicPoint.x = pnt.x;
+        basicPoint.y = pnt.y;
+        basicPoint.z = pnt.z;
+        basicPoint.r = setColor[0];
+        basicPoint.g = setColor[1];
+        basicPoint.b = setColor[2];
+        basicPoint.a = setColor[3];
+        rtnPCD->push_back( basicPoint - centroid );
+    }
+
+    return rtnPCD;
+}
+
+
 ///// Result Struct ///////////////////////////////////////////////////////
 
 
@@ -355,7 +384,7 @@ vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo
 }
 
 
-PCPosPtr node_seq_to_PntPos_pcd( NodePtr firstNode ){
+PCPosPtr node_seq_to_PntPos_pcd( NodePtr firstNode, bool suppressCloud ){
     NodePtr  currNode = firstNode;
     PCPosPtr rtnCloud{ new PCPos{} };
     matXef   xform;
@@ -369,9 +398,12 @@ PCPosPtr node_seq_to_PntPos_pcd( NodePtr firstNode ){
             xform = OCV_matx_to_Eigen3_matx_f( currNode->absXform );
             cout << endl << currNode->absXform << endl << xform << endl;
             transformPointCloud( *(currNode->imgRes2.relPCD), *(currNode->imgRes2.absPCD), xform );
-            // 3. Append points to the return cloud
-            for( size_t i = 0; i < currNode->imgRes2.absPCD->size(); ++i ){
-                rtnCloud->push_back( (*(currNode->imgRes2.absPCD))[i] );
+
+            if( !suppressCloud ){
+                // 3. Append points to the return cloud
+                for( size_t i = 0; i < currNode->imgRes2.absPCD->size(); ++i ){
+                    rtnCloud->push_back( (*(currNode->imgRes2.absPCD))[i] );
+                }
             }
         }
         currNode = currNode->next;
@@ -380,7 +412,7 @@ PCPosPtr node_seq_to_PntPos_pcd( NodePtr firstNode ){
 }
 
 
-PCClrPtr node_seq_to_PntClr_pcd( NodePtr firstNode, const Color& firstColor, const Color& lastColor ){
+PCClrPtr colorize_node_seq_pcd( NodePtr firstNode, const Color& firstColor, const Color& lastColor, bool suppressCloud ){
     NodePtr  currNode = firstNode;
     PCClrPtr rtnCloud{ new PCClr{} };
     matXef   xform;
@@ -389,6 +421,11 @@ PCClrPtr node_seq_to_PntClr_pcd( NodePtr firstNode, const Color& firstColor, con
     XColor   span = get_XColor( lastColor ) - get_XColor( firstColor );
     XColor   clr1 = get_XColor( firstColor );
     Color    clr_i;
+
+    if( firstNode->imgRes2.relPCD->size() == 0 ){
+        node_seq_to_PntPos_pcd( firstNode, true );
+    }
+
     while( currNode ){
         ++N;
         currNode = currNode->next;
@@ -399,15 +436,14 @@ PCClrPtr node_seq_to_PntClr_pcd( NodePtr firstNode, const Color& firstColor, con
         // 0. If there were points computed, Then get clouds
         if( currNode->imgRes2.success ){
             // 1. Store the relative cloud        
-            currNode->imgRes2.relCPCD = vec_Point3d_to_PntClr_pcd( currNode->imgRes2.PCD, clr_i, false );
-            currNode->imgRes2.absCPCD = PCClrPtr{ new PCClr{} };
-            // 2. Transform and Store the absolute cloud
-            xform = OCV_matx_to_Eigen3_matx_f( currNode->absXform );
-            cout << endl << currNode->absXform << endl << xform << endl;
-            transformPointCloud( *(currNode->imgRes2.relCPCD), *(currNode->imgRes2.absCPCD), xform );
-            // 3. Append points to the return cloud
-            for( size_t i = 0; i < currNode->imgRes2.absCPCD->size(); ++i ){
-                rtnCloud->push_back( (*(currNode->imgRes2.absCPCD))[i] );
+            currNode->imgRes2.relCPCD = vec_PntPos_to_PntClr_pcd( currNode->imgRes2.relPCD, clr_i, false );
+            currNode->imgRes2.absCPCD = vec_PntPos_to_PntClr_pcd( currNode->imgRes2.absPCD, clr_i, false );
+            
+            if( !suppressCloud ){
+                // 3. Append points to the return cloud
+                for( size_t i = 0; i < currNode->imgRes2.absCPCD->size(); ++i ){
+                    rtnCloud->push_back( (*(currNode->imgRes2.absCPCD))[i] );
+                }
             }
         }
         currNode = currNode->next;

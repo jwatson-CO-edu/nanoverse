@@ -10,6 +10,8 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/console/parse.h>
 
+#include "SfM.hpp"
+
 using namespace std::chrono_literals;
 
 // --------------
@@ -33,35 +35,35 @@ printUsage (const char* progName)
 }
 
 
-pcl::visualization::PCLVisualizer::Ptr simpleVis (pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud)
-{
-  // --------------------------------------------
-  // -----Open 3D viewer and add point cloud-----
-  // --------------------------------------------
-  pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
-  viewer->setBackgroundColor (0, 0, 0);
-  viewer->addPointCloud<pcl::PointXYZ> (cloud, "sample cloud");
-  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
-  viewer->addCoordinateSystem (1.0);
-  viewer->initCameraParameters ();
-  return (viewer);
-}
+// pcl::visualization::PCLVisualizer::Ptr simpleVis (pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud)
+// {
+//   // --------------------------------------------
+//   // -----Open 3D viewer and add point cloud-----
+//   // --------------------------------------------
+//   pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+//   viewer->setBackgroundColor (0, 0, 0);
+//   viewer->addPointCloud<pcl::PointXYZ> (cloud, "sample cloud");
+//   viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
+//   viewer->addCoordinateSystem (1.0);
+//   viewer->initCameraParameters ();
+//   return (viewer);
+// }
 
 
-pcl::visualization::PCLVisualizer::Ptr rgbVis (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud)
-{
-  // --------------------------------------------
-  // -----Open 3D viewer and add point cloud-----
-  // --------------------------------------------
-  pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
-  viewer->setBackgroundColor (0, 0, 0);
-  pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(cloud);
-  viewer->addPointCloud<pcl::PointXYZRGB> (cloud, rgb, "sample cloud");
-  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud");
-  viewer->addCoordinateSystem (1.0);
-  viewer->initCameraParameters ();
-  return (viewer);
-}
+// pcl::visualization::PCLVisualizer::Ptr rgbVis (pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr cloud)
+// {
+//   // --------------------------------------------
+//   // -----Open 3D viewer and add point cloud-----
+//   // --------------------------------------------
+//   pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+//   viewer->setBackgroundColor (0, 0, 0);
+//   pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGBA> rgb(cloud);
+//   viewer->addPointCloud<pcl::PointXYZRGBA> (cloud, rgb, "sample cloud");
+//   viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud");
+//   viewer->addCoordinateSystem (1.0);
+//   viewer->initCameraParameters ();
+//   return (viewer);
+// }
 
 
 pcl::visualization::PCLVisualizer::Ptr customColourVis (pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud)
@@ -81,32 +83,32 @@ pcl::visualization::PCLVisualizer::Ptr customColourVis (pcl::PointCloud<pcl::Poi
 
 
 pcl::visualization::PCLVisualizer::Ptr normalsVis (
-    pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::PointCloud<pcl::Normal>::ConstPtr normals)
+    pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr cloud, pcl::PointCloud<pcl::Normal>::ConstPtr normals)
 {
   // --------------------------------------------------------
   // -----Open 3D viewer and add point cloud and normals-----
   // --------------------------------------------------------
   pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
   viewer->setBackgroundColor (0, 0, 0);
-  pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(cloud);
-  viewer->addPointCloud<pcl::PointXYZRGB> (cloud, rgb, "sample cloud");
+  pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGBA> rgb(cloud);
+  viewer->addPointCloud<pcl::PointXYZRGBA> (cloud, rgb, "sample cloud");
   viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud");
-  viewer->addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal> (cloud, normals, 10, 0.05, "normals");
+  viewer->addPointCloudNormals<pcl::PointXYZRGBA, pcl::Normal> (cloud, normals, 10, 0.05, "normals");
   viewer->addCoordinateSystem (1.0);
   viewer->initCameraParameters ();
   return (viewer);
 }
 
 
-pcl::visualization::PCLVisualizer::Ptr shapesVis (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud)
+pcl::visualization::PCLVisualizer::Ptr shapesVis (pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr cloud)
 {
   // --------------------------------------------
   // -----Open 3D viewer and add point cloud-----
   // --------------------------------------------
   pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
   viewer->setBackgroundColor (0, 0, 0);
-  pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(cloud);
-  viewer->addPointCloud<pcl::PointXYZRGB> (cloud, rgb, "sample cloud");
+  pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGBA> rgb(cloud);
+  viewer->addPointCloud<pcl::PointXYZRGBA> (cloud, rgb, "sample cloud");
   viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud");
   viewer->addCoordinateSystem (1.0);
   viewer->initCameraParameters ();
@@ -114,7 +116,7 @@ pcl::visualization::PCLVisualizer::Ptr shapesVis (pcl::PointCloud<pcl::PointXYZR
   //------------------------------------
   //-----Add shapes at cloud points-----
   //------------------------------------
-  viewer->addLine<pcl::PointXYZRGB> ((*cloud)[0],
+  viewer->addLine<pcl::PointXYZRGBA> ((*cloud)[0],
                                      (*cloud)[cloud->size() - 1], "line");
   viewer->addSphere ((*cloud)[0], 0.2, 0.5, 0.5, 0.0, "sphere");
 
@@ -142,7 +144,7 @@ pcl::visualization::PCLVisualizer::Ptr shapesVis (pcl::PointCloud<pcl::PointXYZR
 
 
 pcl::visualization::PCLVisualizer::Ptr viewportsVis (
-    pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::PointCloud<pcl::Normal>::ConstPtr normals1, pcl::PointCloud<pcl::Normal>::ConstPtr normals2)
+    pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr cloud, pcl::PointCloud<pcl::Normal>::ConstPtr normals1, pcl::PointCloud<pcl::Normal>::ConstPtr normals2)
 {
   // --------------------------------------------------------
   // -----Open 3D viewer and add point cloud and normals-----
@@ -154,22 +156,22 @@ pcl::visualization::PCLVisualizer::Ptr viewportsVis (
   viewer->createViewPort(0.0, 0.0, 0.5, 1.0, v1);
   viewer->setBackgroundColor (0, 0, 0, v1);
   viewer->addText("Radius: 0.01", 10, 10, "v1 text", v1);
-  pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(cloud);
-  viewer->addPointCloud<pcl::PointXYZRGB> (cloud, rgb, "sample cloud1", v1);
+  pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGBA> rgb(cloud);
+  viewer->addPointCloud<pcl::PointXYZRGBA> (cloud, rgb, "sample cloud1", v1);
 
   int v2(0);
   viewer->createViewPort(0.5, 0.0, 1.0, 1.0, v2);
   viewer->setBackgroundColor (0.3, 0.3, 0.3, v2);
   viewer->addText("Radius: 0.1", 10, 10, "v2 text", v2);
-  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> single_color(cloud, 0, 255, 0);
-  viewer->addPointCloud<pcl::PointXYZRGB> (cloud, single_color, "sample cloud2", v2);
+  pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGBA> single_color(cloud, 0, 255, 0);
+  viewer->addPointCloud<pcl::PointXYZRGBA> (cloud, single_color, "sample cloud2", v2);
 
   viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud1");
   viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud2");
   viewer->addCoordinateSystem (1.0);
 
-  viewer->addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal> (cloud, normals1, 10, 0.05, "normals1", v1);
-  viewer->addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal> (cloud, normals2, 10, 0.05, "normals2", v2);
+  viewer->addPointCloudNormals<pcl::PointXYZRGBA, pcl::Normal> (cloud, normals1, 10, 0.05, "normals1", v1);
+  viewer->addPointCloudNormals<pcl::PointXYZRGBA, pcl::Normal> (cloud, normals2, 10, 0.05, "normals2", v2);
 
   return (viewer);
 }
@@ -236,7 +238,7 @@ main (int argc, char** argv)
     printUsage (argv[0]);
     return 0;
   }
-  bool simple(false), rgb(false), custom_c(false), normals(false),
+  bool simple(false), rgba(false), custom_c(false), normals(false),
     shapes(false), viewports(false), interaction_customization(false);
   if (pcl::console::find_argument (argc, argv, "-s") >= 0)
   {
@@ -248,9 +250,9 @@ main (int argc, char** argv)
     custom_c = true;
     std::cout << "Custom colour visualisation example\n";
   }
-  else if (pcl::console::find_argument (argc, argv, "-r") >= 0)
+  else if (pcl::console::find_argument (argc, argv, "-a") >= 0)
   {
-    rgb = true;
+    rgba = true;
     std::cout << "RGB colour visualisation example\n";
   }
   else if (pcl::console::find_argument (argc, argv, "-n") >= 0)
@@ -283,7 +285,7 @@ main (int argc, char** argv)
   // -----Create example point cloud-----
   // ------------------------------------
   pcl::PointCloud<pcl::PointXYZ>::Ptr basic_cloud_ptr (new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_ptr (new pcl::PointCloud<pcl::PointXYZRGB>);
+  pcl::PointCloud<pcl::PointXYZRGBA>::Ptr point_cloud_ptr (new pcl::PointCloud<pcl::PointXYZRGBA>);
   std::cout << "Generating example point clouds.\n\n";
   // We're going to make an ellipse extruded along the z-axis. The colour for
   // the XYZRGB cloud will gradually go from red to green to blue.
@@ -298,13 +300,14 @@ main (int argc, char** argv)
       basic_point.z = z;
       basic_cloud_ptr->points.push_back(basic_point);
 
-      pcl::PointXYZRGB point;
+      pcl::PointXYZRGBA point;
       point.x = basic_point.x;
       point.y = basic_point.y;
       point.z = basic_point.z;
       point.r = r;
       point.g = g;
       point.b = b;
+      point.a = 1.0;
       point_cloud_ptr->points.push_back (point);
     }
     if (z < 0.0)
@@ -326,9 +329,9 @@ main (int argc, char** argv)
   // ----------------------------------------------------------------
   // -----Calculate surface normals with a search radius of 0.05-----
   // ----------------------------------------------------------------
-  pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
+  pcl::NormalEstimation<pcl::PointXYZRGBA, pcl::Normal> ne;
   ne.setInputCloud (point_cloud_ptr);
-  pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
+  pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBA> ());
   ne.setSearchMethod (tree);
   pcl::PointCloud<pcl::Normal>::Ptr cloud_normals1 (new pcl::PointCloud<pcl::Normal>);
   ne.setRadiusSearch (0.05);
@@ -346,9 +349,9 @@ main (int argc, char** argv)
   {
     viewer = simpleVis(basic_cloud_ptr);
   }
-  else if (rgb)
+  else if (rgba)
   {
-    viewer = rgbVis(point_cloud_ptr);
+    viewer = rgbaVis(point_cloud_ptr);
   }
   else if (custom_c)
   {

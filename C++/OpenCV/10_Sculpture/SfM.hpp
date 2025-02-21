@@ -62,25 +62,29 @@ using pcl::transformPointCloud;
 
 
 ///// Aliases /////
-typedef unsigned char /*----------*/ ubyte;
-typedef array<double,2> /*--------*/ vec2d;
-typedef array<double,3> /*--------*/ vec3d;
-typedef array<int,4> /*-----------*/ XColor;
-typedef array<ubyte,4> /*---------*/ Color;
+/// Basic ///
+typedef unsigned char   ubyte;
+typedef array<double,2> vec2d;
+typedef array<double,3> vec3d;
+typedef array<int,4>    XColor;
+typedef array<ubyte,4>  Color;
+/// PCL ///
 typedef pcl::PointCloud<PntPos> /**/ PCPos;
 typedef pcl::PointCloud<PntPos>::Ptr PCPosPtr;
 typedef pcl::PointCloud<PntClr> /**/ PCClr;
 typedef pcl::PointCloud<PntClr>::Ptr PCClrPtr;
 typedef pcl::PointIndices /*------*/ Indices;
 typedef Indices::Ptr /*-----------*/ IndicesPtr;
+/// PCL Viz ///
+typedef pcl::visualization::PCLVisualizer::Ptr VizPtr;
 
 
 ///// Defines /////
-#define RED Color{255,0,0,255}
-#define GREEN Color{0,255,0,255}
-#define BLUE Color{0,0,255,255}
+#define RED   Color{255,  0,0  ,255}
+#define GREEN Color{  0,255,0  ,255}
+#define BLUE  Color{  0,  0,255,255}
 #define WHITE Color{255,255,255,255}
-#define BLACK Color{0,0,0,255}
+#define BLACK Color{  0,  0,0  ,255}
 
 
 
@@ -265,6 +269,8 @@ class TwoViewCalculator{ public:
 
 // Convert a vector of OpenCV `Point3d` to a PCL XYZ PCD
 PCPosPtr vec_Point3d_to_PntPos_pcd( const vector<Point3d>& pntsList, bool atCentroid = false );
+// Convert a PCL XYZ PCD to a PCL XYZRGBA PCD
+PCClrPtr vec_PntPos_to_PntClr_pcd( const PCPosPtr pntsList, const Color& setColor, bool atCentroid = false );
 
 
 
@@ -298,8 +304,8 @@ vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo
                                  double zMin = 0.0, double zMax = 1e9, double minSharp = 150.0 ); 
 // vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo ); 
 
-PCPosPtr node_seq_to_PntPos_pcd( NodePtr firstNode );
-PCClrPtr node_seq_to_PntClr_pcd( NodePtr firstNode, const Color& firstColor, const Color& lastColor );
+PCPosPtr node_seq_to_PntPos_pcd( NodePtr firstNode, bool suppressCloud = false );
+PCClrPtr colorize_node_seq_pcd( NodePtr firstNode, const Color& firstColor, const Color& lastColor, bool suppressCloud = false );
 
 
 
