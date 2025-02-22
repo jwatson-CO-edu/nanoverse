@@ -3,7 +3,16 @@
 
 ////////// KAZE ////////////////////////////////////////////////////////////////////////////////////
 
-KAZE::KAZE(){  akaze = AKAZE::create();  }
+KAZE::KAZE(){  akaze = AKAZE::create(
+    cv::AKAZE::DESCRIPTOR_MLDB, // descriptor_type
+    0, // descriptor_size
+    3, // descriptor_channels
+    0.000325, // threshold
+    4, // nOctaves
+    4, // nOctaveLayers
+    cv::KAZE::DIFF_PM_G2, // diffusivity
+    -1 // max_points
+);  }
 
 void KAZE::get_KAZE_keypoints( const Mat& img, vector<KeyPoint>& kptsOut, Mat& descOut ){
     akaze->detectAndCompute( img, cv::noArray(), kptsOut, descOut, false );

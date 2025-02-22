@@ -18,7 +18,7 @@ int main( int argc, char* argv[] ){
 
     vector<NodePtr> nodes = images_to_nodes( _IMG_PATH, "jpg", camInfo, 5.0, 40.0, 50.0 );
 
-    // remove_major_planes_from_clouds( nodes[0], 1.25 ); // 2.5 // 5.0
+    remove_major_planes_from_clouds( nodes[0], 1.25 ); // 2.5 // 5.0
 
     cout << "About to colorize nodes ..." << endl;
     node_seq_to_PntPos_pcd( nodes[0], true );
