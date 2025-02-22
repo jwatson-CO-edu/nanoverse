@@ -47,6 +47,7 @@ undistort(img2, undistortedImg2, cameraMatrix, distCoeffs);
             - `[ ]` Divide image into regular grid
             - `[ ]` Calc keypoint density per sector
             - `[ ]` Populate a fine regular grid of keypoints in each sparse sector
+                * `[ ]` Finer grid in the middle, assuming it is the ROI
             - `[ ]` Append enhanced points to the above-threshold points
             - `[ ]` Evaluate
         * `[ ]` Delaunay Method, Possibly follows the shapes of voids as they transform?
