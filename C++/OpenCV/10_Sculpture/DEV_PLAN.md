@@ -43,12 +43,20 @@ undistort(img2, undistortedImg2, cameraMatrix, distCoeffs);
 * `[ ]` Keypoint Enhancement, ISSUE: THERE ARE BROAD REGIONS ON EACH IMAGE WITHOUT KEYPOINTS
     - `[ ]` Try reducing any threshold params for `AKAZE`
     - `{?}` Can you calc a keypoint for an arbitrary point on the image?
-        * `[ ]` "Geo.hpp" comes before "SfM.hpp"
-        * `[ ]` Tringulate existing keypoints
-        * `[ ]` Identify sparse patches
-        * `[ ]` Calc PCA and Centroid for each patch
-        * `[ ]` **Subdivide** (by divisor, *not* by unit) patch with a grid of PCA-aligned points, Calc in image space
-        * `[ ]` Append enhanced points to the above-threshold points
+        * `[ ]` Grid Method, Easier
+            - `[ ]` Divide image into regular grid
+            - `[ ]` Calc keypoint density per sector
+            - `[ ]` Populate a fine regular grid of keypoints in each sparse sector
+            - `[ ]` Append enhanced points to the above-threshold points
+            - `[ ]` Evaluate
+        * `[ ]` Delaunay Method, Possibly follows the shapes of voids as they transform?
+            - `[ ]` "Geo.hpp" comes before "SfM.hpp"
+            - `[ ]` Tringulate existing keypoints
+            - `[ ]` Identify sparse patches
+            - `[ ]` Calc PCA and Centroid for each patch
+            - `[ ]` **Subdivide** (by divisor, *not* by unit) patch with a grid of PCA-aligned points, Calc in image space
+            - `[ ]` Append enhanced points to the above-threshold points
+            - `[ ]` Evaluate
 
 * `[ ]` ICP for PCD
     - `[ ]` [ICP Registration Ref](https://docs.opencv.org/4.x/dc/d9b/classcv_1_1ppf__match__3d_1_1ICP.html)
