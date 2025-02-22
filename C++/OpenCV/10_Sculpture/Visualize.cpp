@@ -44,7 +44,6 @@ pcl::ModelCoefficients get_coeffs( const vector<double>& coeffsVec ){
     return rtnCoeffs;
 }
 
- 
     
 
 ////////// STRUCTURE VIZ ///////////////////////////////////////////////////////////////////////////
@@ -53,17 +52,21 @@ VizPtr viz_current_soln( const NodePtr firstNode ){
     VizPtr   viewer{ new VizPCL( "3D Viewer" ) };
     NodePtr  currNode = firstNode;
     PCClrPtr totCloud = PCClrPtr{ new PCClr{} };
+    size_t   i /*--*/ = 0;
     
     while( currNode ){
         if( currNode->imgRes2.success ){
             
             *totCloud += *(currNode->imgRes2.absCPCD);
             for( const PlanePoints& plane : currNode->imgRes2.removedPlanes ){
-                viewer->addPlane( get_coeffs( plane.planeEq ) );
+                viewer->addPlane( get_coeffs( plane.planeEq ), string_format( "plane_%lu", i ) );
             }
         }
         currNode = currNode->next;
+        ++i;
     }
+
+    cout << "Total cloud has " << totCloud->size() << " points!, About to display ..." << endl;
 
     viewer->addPointCloud( totCloud );
     return viewer;

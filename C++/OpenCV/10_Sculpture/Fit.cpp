@@ -52,21 +52,25 @@ void remove_one_plane_RANSAC( TwoViewResult& res, double dThresh ){
     } );
 
     // Extract **Outliers**
-    cout << "About to remove " << inliers->indices.size() << " points!" << endl;
     extractor.setNegative( true ); // To extract points NOT in the indices
     extractor.setIndices( inliers );
     extractor.filter( *res.relPCD );
+    cout << "Removed:Retained " << inliers->indices.size() << ":" << res.relPCD->size() << " points!" << endl;
 }
 
 
 void remove_major_planes_from_clouds( const NodePtr firstNode, double dThresh ){
     // Remove a plane from each of the relative point clouds
     NodePtr currNode = firstNode;
+    size_t  i /*--*/ = 0;
     while( currNode ){
+        cout << "Processing node " << i << " ... ";
         // 0. If there were points computed, Then prune cloud
         if( currNode->imgRes2.success ){
             remove_one_plane_RANSAC( currNode->imgRes2, dThresh );
         }
+        cout << "DONE!" << endl;
         currNode = currNode->next;
+        ++i;
     }
 }

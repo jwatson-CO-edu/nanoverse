@@ -119,6 +119,21 @@ T get_last( const vector<T>& vec ){
 
 
 
+////////// STRINGS /////////////////////////////////////////////////////////////////////////////////
+
+template<typename ... Args>
+string string_format( const string& format, Args ... args ){
+    // The C++ version of `sprintf`
+    // Author: iFreilicht, https://stackoverflow.com/a/26221725
+    int size_s = std::snprintf( nullptr, 0, format.c_str(), args ... ) + 1; // Extra space for '\0'
+    if( size_s <= 0 ){ throw std::runtime_error( "Error during formatting." ); }
+    auto size = static_cast<size_t>( size_s );
+    std::unique_ptr<char[]> buf( new char[ size ] );
+    std::snprintf( buf.get(), size, format.c_str(), args ... );
+    return std::string( buf.get(), buf.get() + size - 1 ); // We don't want the '\0' inside
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// Image.cpp ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -319,6 +334,11 @@ PCClrPtr colorize_node_seq_pcd( NodePtr firstNode, const Color& firstColor, cons
 // Open 3D viewer and add point cloud
 VizPtr simpleVis( PCPosPtr cloud );
 VizPtr rgbaVis( PCClrPtr cloud );
+
+
+////////// STRUCTURE VIZ ///////////////////////////////////////////////////////////////////////////
+
+VizPtr viz_current_soln( const NodePtr firstNode );
 
 
 

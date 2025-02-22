@@ -80,10 +80,10 @@ void fetch_images_at_path( string path, vector<string>& fNames, vector<Mat>& ima
     fNames.clear();
     images.clear();
     fNames = list_files_at_path_w_ext( path, ext, true );
-    uint /*-----*/ Nimg   = fNames.size();
+    uint /*-----*/ Nimg = fNames.size();
     Mat /*------*/ img;  
     uint /*-----*/ i = 0;
-    cout << "Found: " << Nimg << " files ... " << flush;
+    cout << "Found: " << Nimg << " files ... " << endl;
     for( string fName : fNames ){
         if( (limit > 0) && (i > (limit-1)) ) break;
         cout << "Found: " << fName << " ... " << flush;

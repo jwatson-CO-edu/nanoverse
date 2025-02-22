@@ -394,7 +394,7 @@ PCPosPtr node_seq_to_PntPos_pcd( NodePtr firstNode, bool suppressCloud ){
             currNode->imgRes2.absPCD = PCPosPtr{ new PCPos{} };
             // 2. Transform and Store the absolute cloud
             xform = OCV_matx_to_Eigen3_matx_f( currNode->absXform );
-            cout << endl << currNode->absXform << endl << xform << endl;
+            // cout << endl << currNode->absXform << endl << xform << endl;
             transformPointCloud( *(currNode->imgRes2.relPCD), *(currNode->imgRes2.absPCD), xform );
 
             if( !suppressCloud ){
