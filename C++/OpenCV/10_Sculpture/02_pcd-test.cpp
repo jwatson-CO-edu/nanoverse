@@ -66,8 +66,7 @@ printUsage (const char* progName)
 // }
 
 
-pcl::visualization::PCLVisualizer::Ptr customColourVis (pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud)
-{
+pcl::visualization::PCLVisualizer::Ptr customColourVis( pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud ){
   // --------------------------------------------
   // -----Open 3D viewer and add point cloud-----
   // --------------------------------------------
@@ -82,9 +81,8 @@ pcl::visualization::PCLVisualizer::Ptr customColourVis (pcl::PointCloud<pcl::Poi
 }
 
 
-pcl::visualization::PCLVisualizer::Ptr normalsVis (
-    pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr cloud, pcl::PointCloud<pcl::Normal>::ConstPtr normals)
-{
+pcl::visualization::PCLVisualizer::Ptr normalsVis( pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr cloud, 
+                                                   pcl::PointCloud<pcl::Normal>::ConstPtr normals ){
   // --------------------------------------------------------
   // -----Open 3D viewer and add point cloud and normals-----
   // --------------------------------------------------------
@@ -100,8 +98,7 @@ pcl::visualization::PCLVisualizer::Ptr normalsVis (
 }
 
 
-pcl::visualization::PCLVisualizer::Ptr shapesVis (pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr cloud)
-{
+pcl::visualization::PCLVisualizer::Ptr shapesVis( pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr cloud ){
   // --------------------------------------------
   // -----Open 3D viewer and add point cloud-----
   // --------------------------------------------
@@ -143,9 +140,9 @@ pcl::visualization::PCLVisualizer::Ptr shapesVis (pcl::PointCloud<pcl::PointXYZR
 }
 
 
-pcl::visualization::PCLVisualizer::Ptr viewportsVis (
-    pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr cloud, pcl::PointCloud<pcl::Normal>::ConstPtr normals1, pcl::PointCloud<pcl::Normal>::ConstPtr normals2)
-{
+pcl::visualization::PCLVisualizer::Ptr viewportsVis( pcl::PointCloud<pcl::PointXYZRGBA>::ConstPtr cloud, 
+                                                     pcl::PointCloud<pcl::Normal>::ConstPtr normals1, 
+                                                     pcl::PointCloud<pcl::Normal>::ConstPtr normals2 ){
   // --------------------------------------------------------
   // -----Open 3D viewer and add point cloud and normals-----
   // --------------------------------------------------------
@@ -178,9 +175,8 @@ pcl::visualization::PCLVisualizer::Ptr viewportsVis (
 
 
 unsigned int text_id = 0;
-void keyboardEventOccurred (const pcl::visualization::KeyboardEvent &event,
-                            void* viewer_void)
-{
+void keyboardEventOccurred( const pcl::visualization::KeyboardEvent &event,
+                            void* viewer_void ){
   pcl::visualization::PCLVisualizer *viewer = static_cast<pcl::visualization::PCLVisualizer *> (viewer_void);
   if (event.getKeySym () == "r" && event.keyDown ())
   {
@@ -196,9 +192,8 @@ void keyboardEventOccurred (const pcl::visualization::KeyboardEvent &event,
   }
 }
 
-void mouseEventOccurred (const pcl::visualization::MouseEvent &event,
-                         void* viewer_void)
-{
+void mouseEventOccurred( const pcl::visualization::MouseEvent &event,
+                         void* viewer_void ){
   pcl::visualization::PCLVisualizer *viewer = static_cast<pcl::visualization::PCLVisualizer *> (viewer_void);
   if (event.getButton () == pcl::visualization::MouseEvent::LeftButton &&
       event.getType () == pcl::visualization::MouseEvent::MouseButtonRelease)
@@ -211,8 +206,7 @@ void mouseEventOccurred (const pcl::visualization::MouseEvent &event,
   }
 }
 
-pcl::visualization::PCLVisualizer::Ptr interactionCustomizationVis ()
-{
+pcl::visualization::PCLVisualizer::Ptr interactionCustomizationVis(){
   pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
   viewer->setBackgroundColor (0, 0, 0);
   viewer->addCoordinateSystem (1.0);
@@ -227,56 +221,38 @@ pcl::visualization::PCLVisualizer::Ptr interactionCustomizationVis ()
 // --------------
 // -----Main-----
 // --------------
-int
-main (int argc, char** argv)
-{
+int main( int argc, char** argv ){
   // --------------------------------------
   // -----Parse Command Line Arguments-----
   // --------------------------------------
-  if (pcl::console::find_argument (argc, argv, "-h") >= 0)
-  {
+  if( pcl::console::find_argument( argc, argv, "-h" ) >= 0 ){
     printUsage (argv[0]);
     return 0;
   }
   bool simple(false), rgba(false), custom_c(false), normals(false),
-    shapes(false), viewports(false), interaction_customization(false);
-  if (pcl::console::find_argument (argc, argv, "-s") >= 0)
-  {
+       shapes(false), viewports(false), interaction_customization(false);
+  if( pcl::console::find_argument (argc, argv, "-s") >= 0 ){
     simple = true;
     std::cout << "Simple visualisation example\n";
-  }
-  else if (pcl::console::find_argument (argc, argv, "-c") >= 0)
-  {
+  }else if( pcl::console::find_argument (argc, argv, "-c") >= 0 ){
     custom_c = true;
     std::cout << "Custom colour visualisation example\n";
-  }
-  else if (pcl::console::find_argument (argc, argv, "-a") >= 0)
-  {
+  }else if( pcl::console::find_argument (argc, argv, "-a") >= 0 ){
     rgba = true;
     std::cout << "RGB colour visualisation example\n";
-  }
-  else if (pcl::console::find_argument (argc, argv, "-n") >= 0)
-  {
+  }else if( pcl::console::find_argument (argc, argv, "-n") >= 0 ){
     normals = true;
     std::cout << "Normals visualisation example\n";
-  }
-  else if (pcl::console::find_argument (argc, argv, "-a") >= 0)
-  {
+  }else if( pcl::console::find_argument (argc, argv, "-a") >= 0 ){
     shapes = true;
     std::cout << "Shapes visualisation example\n";
-  }
-  else if (pcl::console::find_argument (argc, argv, "-v") >= 0)
-  {
+  }else if( pcl::console::find_argument (argc, argv, "-v") >= 0 ){
     viewports = true;
     std::cout << "Viewports example\n";
-  }
-  else if (pcl::console::find_argument (argc, argv, "-i") >= 0)
-  {
+  }else if( pcl::console::find_argument (argc, argv, "-i") >= 0 ){
     interaction_customization = true;
     std::cout << "Interaction Customization example\n";
-  }
-  else
-  {
+  }else{
     printUsage (argv[0]);
     return 0;
   }
@@ -290,10 +266,8 @@ main (int argc, char** argv)
   // We're going to make an ellipse extruded along the z-axis. The colour for
   // the XYZRGB cloud will gradually go from red to green to blue.
   std::uint8_t r(255), g(15), b(15);
-  for (float z(-1.0); z <= 1.0; z += 0.05)
-  {
-    for (float angle(0.0); angle <= 360.0; angle += 5.0)
-    {
+  for( float z(-1.0); z <= 1.0; z += 0.05 ){
+    for( float angle(0.0); angle <= 360.0; angle += 5.0 ){
       pcl::PointXYZ basic_point;
       basic_point.x = 0.5 * std::cos (pcl::deg2rad(angle));
       basic_point.y = sinf (pcl::deg2rad(angle));
@@ -310,13 +284,10 @@ main (int argc, char** argv)
       point.a = 1.0;
       point_cloud_ptr->points.push_back (point);
     }
-    if (z < 0.0)
-    {
+    if( z < 0.0 ){
       r -= 12;
       g += 12;
-    }
-    else
-    {
+    }else{
       g -= 12;
       b += 12;
     }
@@ -330,55 +301,41 @@ main (int argc, char** argv)
   // -----Calculate surface normals with a search radius of 0.05-----
   // ----------------------------------------------------------------
   pcl::NormalEstimation<pcl::PointXYZRGBA, pcl::Normal> ne;
-  ne.setInputCloud (point_cloud_ptr);
-  pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBA> ());
+  ne.setInputCloud( point_cloud_ptr );
+  pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree( new pcl::search::KdTree<pcl::PointXYZRGBA>() );
   ne.setSearchMethod (tree);
-  pcl::PointCloud<pcl::Normal>::Ptr cloud_normals1 (new pcl::PointCloud<pcl::Normal>);
-  ne.setRadiusSearch (0.05);
-  ne.compute (*cloud_normals1);
+  pcl::PointCloud<pcl::Normal>::Ptr cloud_normals1( new pcl::PointCloud<pcl::Normal> );
+  ne.setRadiusSearch( 0.05 );
+  ne.compute( *cloud_normals1 );
 
   // ---------------------------------------------------------------
   // -----Calculate surface normals with a search radius of 0.1-----
   // ---------------------------------------------------------------
-  pcl::PointCloud<pcl::Normal>::Ptr cloud_normals2 (new pcl::PointCloud<pcl::Normal>);
-  ne.setRadiusSearch (0.1);
-  ne.compute (*cloud_normals2);
+  pcl::PointCloud<pcl::Normal>::Ptr cloud_normals2( new pcl::PointCloud<pcl::Normal> );
+  ne.setRadiusSearch( 0.1 );
+  ne.compute( *cloud_normals2 );
 
   pcl::visualization::PCLVisualizer::Ptr viewer;
-  if (simple)
-  {
+  if( simple ){
     viewer = simpleVis(basic_cloud_ptr);
-  }
-  else if (rgba)
-  {
+  }else if( rgba ){
     viewer = rgbaVis(point_cloud_ptr);
-  }
-  else if (custom_c)
-  {
+  }else if( custom_c ){
     viewer = customColourVis(basic_cloud_ptr);
-  }
-  else if (normals)
-  {
+  }else if( normals ){
     viewer = normalsVis(point_cloud_ptr, cloud_normals2);
-  }
-  else if (shapes)
-  {
+  }else if( shapes ){
     viewer = shapesVis(point_cloud_ptr);
-  }
-  else if (viewports)
-  {
+  }else if( viewports ){
     viewer = viewportsVis(point_cloud_ptr, cloud_normals1, cloud_normals2);
-  }
-  else if (interaction_customization)
-  {
+  }else if( interaction_customization ){
     viewer = interactionCustomizationVis();
   }
 
   //--------------------
   // -----Main loop-----
   //--------------------
-  while (!viewer->wasStopped ())
-  {
+  while( !viewer->wasStopped() ){
     viewer->spinOnce (100);
     std::this_thread::sleep_for(100ms);
   }

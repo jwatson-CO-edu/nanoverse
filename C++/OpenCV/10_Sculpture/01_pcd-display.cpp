@@ -42,14 +42,14 @@ int main(){
 
     est.generate_point_cloud( camInfo, res );
     // pts = res.PCD;
-    PCPosPtr pcd = vec_Point3d_to_PntPos_pcd( res.PCD, true );
+    // PCPosPtr pcd = vec_Point3d_to_PntPos_pcd( res.PCD, true );
 
-    pcl::visualization::PCLVisualizer::Ptr viewer = simpleVis( pcd );
+    // pcl::visualization::PCLVisualizer::Ptr viewer = simpleVis( pcd );
     
-    while( !viewer->wasStopped() ){
-        viewer->spinOnce( 100 );
-        std::this_thread::sleep_for( 100ms );
-    }
+    // while( !viewer->wasStopped() ){
+    //     viewer->spinOnce( 100 );
+    //     std::this_thread::sleep_for( 100ms );
+    // }
 
     return 0;
 }

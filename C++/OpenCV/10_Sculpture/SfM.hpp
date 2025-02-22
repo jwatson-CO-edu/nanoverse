@@ -30,7 +30,7 @@ using namespace std::chrono_literals;
 
 /// OpenCV ///
 #include <opencv2/opencv.hpp>
-#include "opencv2/core.hpp"
+#include <opencv2/core.hpp>
 #include <opencv2/core/utility.hpp>
 using cv::Mat, cv::String, cv::Vec, cv::Ptr, cv::Range, cv::Size, cv::imshow, cv::waitKey, cv::cvtColor,
       cv::Scalar, cv::undistort, cv::NORM_L2;
@@ -76,6 +76,7 @@ typedef pcl::PointCloud<PntClr>::Ptr PCClrPtr;
 typedef pcl::PointIndices /*------*/ Indices;
 typedef Indices::Ptr /*-----------*/ IndicesPtr;
 /// PCL Viz ///
+typedef pcl::visualization::PCLVisualizer /**/ VizPCL;
 typedef pcl::visualization::PCLVisualizer::Ptr VizPtr;
 
 
@@ -221,9 +222,9 @@ struct TwoViewResult{
     bool /*------*/ success;
 
     /// Stage 2: Point Cloud ///
-    vector<Point3d>  PCD;
     PCPosPtr /*---*/ relPCD; 
     PCPosPtr /*---*/ absPCD; 
+    Color /*------*/ color;
     PCClrPtr /*---*/ relCPCD; 
     PCClrPtr /*---*/ absCPCD; 
     Point3d /*----*/ centroid;
@@ -316,6 +317,14 @@ PCClrPtr colorize_node_seq_pcd( NodePtr firstNode, const Color& firstColor, cons
 ////////// PCD VIZ /////////////////////////////////////////////////////////////////////////////////
 
 // Open 3D viewer and add point cloud
-pcl::visualization::PCLVisualizer::Ptr simpleVis( PCPosPtr cloud );
-pcl::visualization::PCLVisualizer::Ptr rgbaVis( PCClrPtr cloud );
+VizPtr simpleVis( PCPosPtr cloud );
+VizPtr rgbaVis( PCClrPtr cloud );
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////// Fit.cpp /////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
     
+// Remove a plane from each of the relative point clouds
+void remove_major_planes_from_clouds( const NodePtr firstNode, double dThresh );

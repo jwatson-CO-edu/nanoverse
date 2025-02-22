@@ -21,7 +21,7 @@ int main(){
     vector<NodePtr> nodes    = images_to_nodes( _IMG_PATH, "jpg", camInfo, 5.0, 40.0, 50.0 );
     PCClrPtr /*--*/ totCloud = colorize_node_seq_pcd( nodes[0], GREEN, RED );
     
-    pcl::visualization::PCLVisualizer::Ptr viewer = rgbaVis( totCloud );
+    VizPtr viewer = rgbaVis( totCloud );
     
     while( !viewer->wasStopped() ){
         viewer->spinOnce( 100 );

@@ -30,7 +30,7 @@ void remove_one_plane_RANSAC( TwoViewResult& res, double dThresh ){
     extractor.setInputCloud( res.relPCD );
 
     // Create segmentation object
-    pcl::SACSegmentation<pcl::PointXYZ> seg;
+    pcl::SACSegmentation<PntPos> seg;
     seg.setMethodType( pcl::SAC_RANSAC );
     seg.setOptimizeCoefficients( true );
     seg.setModelType( pcl::SACMODEL_PLANE );
@@ -59,3 +59,14 @@ void remove_one_plane_RANSAC( TwoViewResult& res, double dThresh ){
 }
 
 
+void remove_major_planes_from_clouds( const NodePtr firstNode, double dThresh ){
+    // Remove a plane from each of the relative point clouds
+    NodePtr currNode = firstNode;
+    while( currNode ){
+        // 0. If there were points computed, Then prune cloud
+        if( currNode->imgRes2.success ){
+            remove_one_plane_RANSAC( currNode->imgRes2, dThresh );
+        }
+        currNode = currNode->next;
+    }
+}

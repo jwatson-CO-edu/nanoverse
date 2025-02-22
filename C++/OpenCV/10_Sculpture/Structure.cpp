@@ -233,11 +233,11 @@ void TwoViewCalculator::generate_point_cloud( const CamData& camInfo, TwoViewRes
     Mat P2( 3, 4, CV_64F );
     cv::hconcat( result.R, result.t, P2 );
     P2 = camInfo.Kintrinsic * P2;
-    cout << endl << "P1:\n" << P1 << endl << "P2:\n" << P2 << endl;
+    // cout << endl << "P1:\n" << P1 << endl << "P2:\n" << P2 << endl;
     
     Point3d /*----*/ avgPnt{ 0.0, 0.0, 0.0 };
     vector<Point3d>  points3D;
-    vector<Point3d>  finalPCD;
+    result.relPCD = PCPosPtr{ new PCPos{} };
     array<Point3d,2> bBox  = { Point3d{1e6,1e6,1e6,}, Point3d{-1e6,-1e6,-1e6,} };
     // double /*-----*/ scale = norm( result.t, NORM_L2 );
 
@@ -289,7 +289,6 @@ void TwoViewCalculator::generate_point_cloud( const CamData& camInfo, TwoViewRes
 
     cout << "PCD Centroid: " << avgPnt << endl << endl; 
 
-    result.PCD /**/ = points3D;
     result.relPCD   = vec_Point3d_to_PntPos_pcd( points3D, false );
     result.centroid = avgPnt;
     result.bbox     = bBox;
@@ -352,7 +351,7 @@ vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo
                 node_i->keyPts  , node_i->kpDesc 
             );
 
-            cout << "Rotation:\n" << res.R << endl << "Translation:\n" << res.t << endl;
+            // cout << "Rotation:\n" << res.R << endl << "Translation:\n" << res.t << endl;
 
             if( res.success ){
                 for( size_t j = 0; j < 3; ++j ){
@@ -363,11 +362,11 @@ vector<NodePtr> images_to_nodes( string path, string ext, const CamData& camInfo
                     node_i->relXform.at<double>( j, 3 ) = res.t.at<double>( j, 0 );
                 }
 
-                cout << "Realtive Pose:\n" << node_i->relXform << endl << endl;
+                // cout << "Realtive Pose:\n" << node_i->relXform << endl << endl;
 
                 node_i->absXform = node_im1->absXform * node_i->relXform;
 
-                cout << node_im1->absXform << "\nX\n" << node_i->relXform << "\n=\n" << node_i->absXform << endl << endl;
+                // cout << node_im1->absXform << "\nX\n" << node_i->relXform << "\n=\n" << node_i->absXform << endl << endl;
 
                 est.generate_point_cloud( camInfo, res, zMin, zMax );
             }else{
@@ -392,7 +391,6 @@ PCPosPtr node_seq_to_PntPos_pcd( NodePtr firstNode, bool suppressCloud ){
         // 0. If there were points computed, Then get clouds
         if( currNode->imgRes2.success ){
             // 1. Store the relative cloud        
-            currNode->imgRes2.relPCD = vec_Point3d_to_PntPos_pcd( currNode->imgRes2.PCD, false );
             currNode->imgRes2.absPCD = PCPosPtr{ new PCPos{} };
             // 2. Transform and Store the absolute cloud
             xform = OCV_matx_to_Eigen3_matx_f( currNode->absXform );
@@ -422,10 +420,6 @@ PCClrPtr colorize_node_seq_pcd( NodePtr firstNode, const Color& firstColor, cons
     XColor   clr1 = get_XColor( firstColor );
     Color    clr_i;
 
-    if( firstNode->imgRes2.relPCD->size() == 0 ){
-        node_seq_to_PntPos_pcd( firstNode, true );
-    }
-
     while( currNode ){
         ++N;
         currNode = currNode->next;
@@ -436,6 +430,7 @@ PCClrPtr colorize_node_seq_pcd( NodePtr firstNode, const Color& firstColor, cons
         // 0. If there were points computed, Then get clouds
         if( currNode->imgRes2.success ){
             // 1. Store the relative cloud        
+            currNode->imgRes2.color   = clr_i;
             currNode->imgRes2.relCPCD = vec_PntPos_to_PntClr_pcd( currNode->imgRes2.relPCD, clr_i, false );
             currNode->imgRes2.absCPCD = vec_PntPos_to_PntClr_pcd( currNode->imgRes2.absPCD, clr_i, false );
             

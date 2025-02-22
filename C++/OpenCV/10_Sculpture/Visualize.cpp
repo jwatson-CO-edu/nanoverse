@@ -16,25 +16,55 @@ VizPtr simpleVis( PCPosPtr cloud ){
     viewer->setPointCloudRenderingProperties( pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud" );
     viewer->addCoordinateSystem( 1.0 );
     viewer->initCameraParameters( );
-    return ( viewer );
+    return viewer;
 }
 
 
 VizPtr rgbaVis( PCClrPtr cloud ){
-  // --------------------------------------------
-  // -----Open 3D viewer and add point cloud-----
-  // --------------------------------------------
-  // Source: https://github.com/PointCloudLibrary/pcl/blob/master/doc/tutorials/content/sources/pcl_visualizer/pcl_visualizer_demo.cpp
-  VizPtr viewer( new pcl::visualization::PCLVisualizer ("3D Viewer") );
-  viewer->setBackgroundColor( 0, 0, 0 );
-  pcl::visualization::PointCloudColorHandlerRGBField<PntClr> rgb( cloud );
-  viewer->addPointCloud<PntClr>( cloud, rgb, "sample cloud" );
-  viewer->setPointCloudRenderingProperties( pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud" );
-  viewer->addCoordinateSystem( 1.0 );
-  viewer->initCameraParameters();
-  return (viewer);
+    // --------------------------------------------
+    // -----Open 3D viewer and add point cloud-----
+    // --------------------------------------------
+    // Source: https://github.com/PointCloudLibrary/pcl/blob/master/doc/tutorials/content/sources/pcl_visualizer/pcl_visualizer_demo.cpp
+    VizPtr viewer( new VizPCL( "3D Viewer" ) );
+    viewer->setBackgroundColor( 0, 0, 0 );
+    pcl::visualization::PointCloudColorHandlerRGBField<PntClr> rgb( cloud );
+    viewer->addPointCloud<PntClr>( cloud, rgb, "sample cloud" );
+    viewer->setPointCloudRenderingProperties( pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud" );
+    viewer->addCoordinateSystem( 1.0 );
+    viewer->initCameraParameters();
+    return viewer;
 }
 
+pcl::ModelCoefficients get_coeffs( const vector<double>& coeffsVec ){
+    pcl::ModelCoefficients rtnCoeffs{};
+    rtnCoeffs.header.frame_id = "default";
+    rtnCoeffs.header.seq /**/ = 0;
+    rtnCoeffs.header.stamp    = 0;
+    for( const double& val : coeffsVec ){  rtnCoeffs.values.push_back( (float) val );  }
+    return rtnCoeffs;
+}
 
+ 
+    
 
 ////////// STRUCTURE VIZ ///////////////////////////////////////////////////////////////////////////
+
+VizPtr viz_current_soln( const NodePtr firstNode ){
+    VizPtr   viewer{ new VizPCL( "3D Viewer" ) };
+    NodePtr  currNode = firstNode;
+    PCClrPtr totCloud = PCClrPtr{ new PCClr{} };
+    
+    while( currNode ){
+        if( currNode->imgRes2.success ){
+            
+            *totCloud += *(currNode->imgRes2.absCPCD);
+            for( const PlanePoints& plane : currNode->imgRes2.removedPlanes ){
+                viewer->addPlane( get_coeffs( plane.planeEq ) );
+            }
+        }
+        currNode = currNode->next;
+    }
+
+    viewer->addPointCloud( totCloud );
+    return viewer;
+}

@@ -55,9 +55,11 @@ target_link_libraries( ${EXECUTABLE_NAME} ${PCL_LIBRARIES} ${VTK_LIBRARIES} ${Op
 
 ##### 02: PCL Visualizer Demo #####
 set( EXECUTABLE_NAME 02_visualizer_demo.out )
-add_executable( ${EXECUTABLE_NAME} 02_pcd-test.cpp )
+add_executable( ${EXECUTABLE_NAME} 
+                02_pcd-test.cpp 
+                Fit.cpp Visualize.cpp Structure.cpp Image.cpp )
 target_include_directories( ${EXECUTABLE_NAME} PUBLIC ${VTK_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} )
-target_link_libraries( ${EXECUTABLE_NAME} ${PCL_LIBRARIES} )
+target_link_libraries( ${EXECUTABLE_NAME} ${PCL_LIBRARIES} ${VTK_LIBRARIES} ${OpenCV_LIBS} )
 
 
 ##### 03: PCD from Six-Image Registration #####
@@ -65,5 +67,14 @@ set( EXECUTABLE_NAME 03_six-image-pcd.out )
 add_executable( ${EXECUTABLE_NAME} 
                 03_six-image.cpp 
                 Visualize.cpp Structure.cpp Image.cpp )
+target_include_directories( ${EXECUTABLE_NAME} PUBLIC ${VTK_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} )
+target_link_libraries( ${EXECUTABLE_NAME} ${PCL_LIBRARIES} ${VTK_LIBRARIES} ${OpenCV_LIBS} )
+
+
+##### 04: Clean Clouds from Six-Image Registration #####
+set( EXECUTABLE_NAME 04_six-img-cleanup.out )
+add_executable( ${EXECUTABLE_NAME} 
+                04_six-cleanup.cpp 
+                Fit.cpp Visualize.cpp Structure.cpp Image.cpp )
 target_include_directories( ${EXECUTABLE_NAME} PUBLIC ${VTK_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS} )
 target_link_libraries( ${EXECUTABLE_NAME} ${PCL_LIBRARIES} ${VTK_LIBRARIES} ${OpenCV_LIBS} )
