@@ -39,21 +39,34 @@ undistort(img1, undistortedImg1, cameraMatrix, distCoeffs);
 undistort(img2, undistortedImg2, cameraMatrix, distCoeffs);
 ```  
 * `[Y]` Calc absolute camera pose previous --to-> current, 2025-02-13: YEAH!!
-* `[>]` Cleanup
+
+* `[ ]` Keypoint Enhancement, ISSUE: THERE ARE BROAD REGIONS ON EACH IMAGE WITHOUT KEYPOINTS
+    - `[ ]` Try reducing any threshold params for `AKAZE`
+    - `{?}` Can you calc a keypoint for an arbitrary point on the image?
+        * `[ ]` "Geo.hpp" comes before "SfM.hpp"
+        * `[ ]` Tringulate existing keypoints
+        * `[ ]` Identify sparse patches
+        * `[ ]` Calc PCA and Centroid for each patch
+        * `[ ]` **Subdivide** (by divisor, *not* by unit) patch with a grid of PCA-aligned points, Calc in image space
+        * `[ ]` Append enhanced points to the above-threshold points
+
+* `[ ]` ICP for PCD
+    - `[ ]` [ICP Registration Ref](https://docs.opencv.org/4.x/dc/d9b/classcv_1_1ppf__match__3d_1_1ICP.html)
+    - `[ ]` Try N-dim ICP that includes the coordinates of the associated keypoints
+
+* `[P]` Cleanup, 2025-02-22: PAUSED
     - `[Y]` !! UNDISTORT !!, 2025-02-16: Marginal improvement
         * `[Y]` GET distortion params!, 2025-02-16: Marginal improvement
         * `[Y]` UNDISTORT EVERY IMAGE!!, 2025-02-16: Marginal improvement
     - `[Y]` Trim each local PCD to a Z-limit (distance from camera), 2025-02-14: Tune manually for now
     - `[Y]` Try skipping blurry images, but only if the registration succeeds, 2025-02-16: Less distortion, but weird scaling issue!
-    - `[>]` Eliminate the ground plane points
-        * `[>]` Display resulting clouds
-        * `[ ]` Try removing planes until they are small (Assumption: If it's a big plane, it's probably the ground or a building!)
+    - `[Y]` Eliminate the ground plane points, 2025-02-22: Removing the planes seems pointless as many pairs have very few points on the item of interest
+        * `[Y]` Display resulting clouds, 2025-02-22: Removing the planes seems pointless as many pairs have very few points on the item of interest
+        * `[N]` Try removing planes until they are small (Assumption: If it's a big plane, it's probably the ground or a building!), , 2025-02-22: Removing the planes seems pointless as many pairs have very few points on the item of interest
         * `{?}` Does this harm ICP performance?
         * `{?}` Does finding the plane help align for ICP?
     - `[N]` Try skipping images with insufficient disparity, but only if the registration succeeds, 2025-02-16: So far skipping for blurriness does not improve the distortion issue, So leave this one for now
-* `[ ]` ICP for PCD
-    - `[ ]` [ICP Registration Ref](https://docs.opencv.org/4.x/dc/d9b/classcv_1_1ppf__match__3d_1_1ICP.html)
-    - `[ ]` Try N-dim ICP that includes the coordinates of the associated keypoints
+
     
 
 ## Troubleshooting
@@ -67,8 +80,6 @@ undistort(img2, undistortedImg2, cameraMatrix, distCoeffs);
 
 ## 12 Image Sequence
 * `[ ]` 1st Pass: Poses from registration
-    - `{?}` Populate synthetic keypoints in medium gaps? How to ensure they are close together?
-    - `{?}` Revive VFN?
 * `[ ]` 2nd Pass: Pose refinement from ICP
 * `[ ]` 3rd Pass: Point merge and cleanup
 * `[ ]` How to account for drift?

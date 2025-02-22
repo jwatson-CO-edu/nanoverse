@@ -215,10 +215,10 @@ PntClr operator+( const PntClr& left, const PntClr& right ){
         (float)(left.x + right.x),
         (float)(left.y + right.y),
         (float)(left.z + right.z),
-        (ubyte)((left.r + right.r)/2.0f),
-        (ubyte)((left.g + right.g)/2.0f),
-        (ubyte)((left.b + right.b)/2.0f),
-        (ubyte)max( left.a, right.a )
+        left.r,
+        left.g,
+        left.b,
+        left.a
     };
 }
 
@@ -229,10 +229,10 @@ PntClr operator-( const PntClr& left, const PntClr& right ){
         (float)(left.x - right.x),
         (float)(left.y - right.y),
         (float)(left.z - right.z),
-        (ubyte)((left.r + right.r)/2.0f),
-        (ubyte)((left.g + right.g)/2.0f),
-        (ubyte)((left.b + right.b)/2.0f),
-        (ubyte)max( left.a, right.a )
+        left.r,
+        left.g,
+        left.b,
+        left.a
     };
 }
 
@@ -252,6 +252,22 @@ PntClr operator/( const PntClr& left, double right ){
 
 
 ///// Color Operators /////////////////////////////////////////////////////
+
+std::ostream& operator<<( std::ostream& os , const Color& clr ){ 
+	os << "[" << string_format( "%u", clr[0] ) <<  " , " 
+              << string_format( "%u", clr[1] ) <<  " , " 
+              << string_format( "%u", clr[2] ) <<  " , " 
+              << string_format( "%u", clr[3] ) << "]";
+	return os;
+}
+
+std::ostream& operator<<( std::ostream& os , const XColor& clr ){ 
+	os << "[" << string_format( "%i", clr[0] ) <<  " , " 
+              << string_format( "%i", clr[1] ) <<  " , " 
+              << string_format( "%i", clr[2] ) <<  " , " 
+              << string_format( "%i", clr[3] ) << "]";
+	return os;
+}
 
 XColor operator-( const XColor& left, const XColor& right ){
     // Subtract two eXteneded Colors

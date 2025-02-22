@@ -208,6 +208,7 @@ PCClrPtr vec_PntPos_to_PntClr_pcd( const PCPosPtr pntsList, const Color& setColo
         basicPoint.a = setColor[3];
         rtnPCD->push_back( basicPoint - centroid );
     }
+    cout << rtnPCD->back() << endl;
 
     return rtnPCD;
 }
@@ -414,11 +415,11 @@ PCClrPtr colorize_node_seq_pcd( NodePtr firstNode, const Color& firstColor, cons
     NodePtr  currNode = firstNode;
     PCClrPtr rtnCloud{ new PCClr{} };
     matXef   xform;
-    size_t   N;
+    size_t   N = 0;
     size_t   i = 0;
-    XColor   span = get_XColor( lastColor ) - get_XColor( firstColor );
-    XColor   clr1 = get_XColor( firstColor );
-    Color    clr_i;
+    XColor   span  = get_XColor( lastColor ) - get_XColor( firstColor );
+    XColor   clr1  = get_XColor( firstColor );
+    Color    clr_i = BLACK;
 
     while( currNode ){
         ++N;
@@ -427,6 +428,8 @@ PCClrPtr colorize_node_seq_pcd( NodePtr firstNode, const Color& firstColor, cons
     currNode = firstNode;
     while( currNode ){
         clr_i = get_Color( clr1 + span * (1.0*i/N) );
+        cout << "Current Color: " << clr_i << " = " << clr1 << " + " <<  span << " * " << "(" << 1.0*i << "/" << N << ")"
+             << " = " << clr1 << " + " <<  span * (1.0*i/N) << endl;
         // 0. If there were points computed, Then get clouds
         if( currNode->imgRes2.success ){
             // 1. Store the relative cloud        
@@ -436,8 +439,8 @@ PCClrPtr colorize_node_seq_pcd( NodePtr firstNode, const Color& firstColor, cons
             
             if( !suppressCloud ){
                 // 3. Append points to the return cloud
-                for( size_t i = 0; i < currNode->imgRes2.absCPCD->size(); ++i ){
-                    rtnCloud->push_back( (*(currNode->imgRes2.absCPCD))[i] );
+                for( size_t j = 0; j < currNode->imgRes2.absCPCD->size(); ++j ){
+                    rtnCloud->push_back( (*(currNode->imgRes2.absCPCD))[j] );
                 }
             }
         }

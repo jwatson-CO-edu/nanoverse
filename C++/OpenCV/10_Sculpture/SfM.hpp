@@ -1,3 +1,6 @@
+#ifndef SFM_HPP
+#define SFM_HPP
+
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
 ///// Includes /////
@@ -66,6 +69,7 @@ using pcl::transformPointCloud;
 typedef unsigned char   ubyte;
 typedef array<double,2> vec2d;
 typedef array<double,3> vec3d;
+typedef array<size_t,3> vec3u;
 typedef array<int,4>    XColor;
 typedef array<ubyte,4>  Color;
 /// PCL ///
@@ -134,6 +138,7 @@ string string_format( const string& format, Args ... args ){
 }
 
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// Image.cpp ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,6 +190,8 @@ PntClr operator+( const PntClr& left, const PntClr& right ); // Add two PCL poin
 PntClr operator-( const PntClr& left, const PntClr& right ); // Subtract two PCL points
 PntClr operator/( const PntClr& left, double right ); // Subtract two PCL points
 ///// Color Operators /////////////////////////////////////////////////////
+std::ostream& operator<<( std::ostream& os , const Color& clr );
+std::ostream& operator<<( std::ostream& os , const XColor& clr );
 XColor operator-( const XColor& left, const XColor& right ); // Subtract two eXteneded Colors
 XColor operator+( const XColor& left, const XColor& right ); // Add two eXteneded Colors
 XColor operator*( const XColor& left, double right ); // Scale an eXteneded Color
@@ -348,3 +355,8 @@ VizPtr viz_current_soln( const NodePtr firstNode );
     
 // Remove a plane from each of the relative point clouds
 void remove_major_planes_from_clouds( const NodePtr firstNode, double dThresh );
+
+
+////////// END /////////////////////////////////////////////////////////////////////////////////////
+
+#endif
