@@ -33,12 +33,10 @@
 1. `sudo add-apt-repository ppa:ubuntu-toolchain-r/test && sudo apt update`
 1. `sudo apt install gcc-10 gcc-10-base gcc-10-doc g++-10 libstdc++-10-dev libstdc++-10-doc`
 1. `sudo apt install libboost-all-dev qtcreator libvtk9-dev libvtk9-qt-dev libeigen3-dev liblz4-dev libqhull-dev expect`
-
 ## Eigen3 (C++ Linear Algebra)
 1. `cd /usr/include`
 1. `sudo ln -sf eigen3/Eigen Eigen`
 1. `sudo ln -sf eigen3/unsupported unsupported`
-
 ## FLANN
 1. `cd /tmp/`
 1. `git clone https://github.com/flann-lib/flann.git`
@@ -48,7 +46,6 @@
 1. `unbuffer cmake .. | tee CMakeInfo.txt`
 1. `unbuffer make -j6 | tee makeBuildInfo.txt`
 1. `sudo make install`
-
 ## PCL
 **WARNING: This will take at least an hour to build! (Depending on your system)**
 1. `sudo swapoff -a`, Otherwise the session will slow down massively
@@ -65,6 +62,66 @@
 1. `sudo ldconfig -v`
 1. Add to include paths: "/usr/include/vtk-9.1/"
 1. Add to include paths: "/usr/local/include/pcl-1.14/"
+
+# COLMAP
+## gtest
+1. `cd /tmp`
+1. `git clone https://github.com/google/googletest.git`
+1. `cd googletest/`
+1. `git checkout v1.16.0`
+1. `mkdir build && cd $_`
+1. `unbuffer cmake .. | tee CMakeOut.txt`
+1. `unbuffer make -j4 | tee MakeOut.txt`
+1. `sudo make install`
+## gflags
+1. `cd /tmp`
+1. `git clone https://github.com/gflags/gflags.git`
+1. `cd gflags`
+1. `git checkout v2.2.2`
+1. `mkdir build && cd $_`
+1. `unbuffer cmake .. | tee CMakeOut.txt`
+1. `unbuffer make -j4 | tee MakeOut.txt`
+1. `sude make install`
+## glog
+1. `cd /tmp`
+1. `git clone https://github.com/google/glog.git`
+1. `cd glog`
+1. `git checkout v0.7.0`
+1. `mkdir build && cd $_`
+1. `unbuffer cmake -DBUILD_SHARED_LIBS=OFF .. | tee CMakeOut.txt`, This flag prevents the `-fPIC` error!
+1. `unbuffer make -j4 | tee MakeOut.txt`
+1. `sude make install`
+## Ceres (Nonlinear) Solver
+1. `cd /tmp`
+1. `git clone https://github.com/ceres-solver/ceres-solver.git`
+1. `cd ceres-solver`
+1. `git checkout 2.2.0`
+1. `mkdir build && cd $_`
+1. `unbuffer cmake .. | tee CMakeOut.txt`
+1. `unbuffer make -j4 | tee MakeOut.txt`
+1. `sudo make install`
+## CGAL
+1. `cd /tmp`
+1. `git clone https://github.com/CGAL/cgal.git`
+1. `cd cgal`
+1. `git checkout v5.6.2`
+1. `mkdir build && cd $_`
+1. `unbuffer cmake -DCMAKE_BUILD_TYPE=Release .. | tee CMakeOut.txt`
+1. `sudo make install`
+## Other Dependencies
+1. `sudo apt install libmpfr-dev libgmp-dev libmetis-dev libfreeimage-dev`
+## COLMAP (Finally!)
+1. `cd /tmp`
+1. `git clone https://github.com/colmap/colmap.git`
+1. `cd colmap`
+1. `git checkout 3.11.1`
+1. `mkdir build && cd $_`
+1. `unbuffer cmake .. | tee CMakeOut.txt`
+1. `unbuffer make -j4 | tee MakeOut.txt`
+1. `sudo make install`
+
+## Finish
+1. `sudo ldconfig -v`
 
 
 # Suspended
