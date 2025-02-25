@@ -64,6 +64,7 @@
 1. Add to include paths: "/usr/local/include/pcl-1.14/"
 
 # COLMAP
+Version: 2025-02-25  
 ## gtest
 1. `cd /tmp`
 1. `git clone https://github.com/google/googletest.git`
@@ -81,7 +82,7 @@
 1. `mkdir build && cd $_`
 1. `unbuffer cmake .. | tee CMakeOut.txt`
 1. `unbuffer make -j4 | tee MakeOut.txt`
-1. `sude make install`
+1. `sudo make install`
 ## glog
 1. `cd /tmp`
 1. `git clone https://github.com/google/glog.git`
@@ -90,15 +91,26 @@
 1. `mkdir build && cd $_`
 1. `unbuffer cmake -DBUILD_SHARED_LIBS=OFF .. | tee CMakeOut.txt`, This flag prevents the `-fPIC` error!
 1. `unbuffer make -j4 | tee MakeOut.txt`
-1. `sude make install`
+1. `sudo make install`
 ## Ceres (Nonlinear) Solver
+### NOTE: You may need to upgrade gcc/++ first
+1. `sudo add-apt-repository ppa:ubuntu-toolchain-r/test`
+1. `sudo apt update`
+1. `sudo apt install gcc-13 g++-13`
+### Normal Install
 1. `cd /tmp`
 1. `git clone https://github.com/ceres-solver/ceres-solver.git`
 1. `cd ceres-solver`
 1. `git checkout 2.2.0`
 1. `mkdir build && cd $_`
+1. `export CC=/usr/bin/gcc-13`
+1. `export CXX=/usr/bin/g++-13`
+1. `export CUDA_ROOT=/usr/lib/cuda`, Sometimes in "/usr/local/cuda"
 1. `unbuffer cmake .. | tee CMakeOut.txt`
 1. `unbuffer make -j4 | tee MakeOut.txt`
+* 2025-02-25, ISSUE: ERRORS ON SCH WORKSTATION, DO I NEED TO LOG OUT TO SEE gcc CHANGE?
+    - https://github.com/NVIDIA/nccl/issues/650#issuecomment-2085731161
+    - https://github.com/NVIDIA/nccl/issues/650#issuecomment-2410637395
 1. `sudo make install`
 ## CGAL
 1. `cd /tmp`
