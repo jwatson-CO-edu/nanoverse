@@ -92,43 +92,24 @@ Version: 2025-02-25
 1. `unbuffer cmake -DBUILD_SHARED_LIBS=OFF .. | tee CMakeOut.txt`, This flag prevents the `-fPIC` error!
 1. `unbuffer make -j4 | tee MakeOut.txt`
 1. `sudo make install`
-## Ceres (Nonlinear) Solver
+## Other Dependencies
+1. `sudo apt install nvidia-cuda-toolkit-gcc libcgal-dev libceres-dev libmpfr-dev libgmp-dev libmetis-dev libfreeimage-dev`
+## COLMAP (Finally!)
 ### NOTE: You may need to upgrade gcc/++ first
 1. `sudo add-apt-repository ppa:ubuntu-toolchain-r/test`
 1. `sudo apt update`
 1. `sudo apt install gcc-13 g++-13`
-### Normal Install
-1. `cd /tmp`
-1. `git clone https://github.com/ceres-solver/ceres-solver.git`
-1. `cd ceres-solver`
-1. `git checkout 2.2.0`
-1. `mkdir build && cd $_`
-1. `export CC=/usr/bin/gcc-13`
-1. `export CXX=/usr/bin/g++-13`
-1. `export CUDA_ROOT=/usr/lib/cuda`, Sometimes in "/usr/local/cuda"
-1. `unbuffer cmake .. | tee CMakeOut.txt`
-1. `unbuffer make -j4 | tee MakeOut.txt`
-* 2025-02-25, ISSUE: ERRORS ON SCH WORKSTATION, DO I NEED TO LOG OUT TO SEE gcc CHANGE?
-    - https://github.com/NVIDIA/nccl/issues/650#issuecomment-2085731161
-    - https://github.com/NVIDIA/nccl/issues/650#issuecomment-2410637395
-1. `sudo make install`
-## CGAL
-1. `cd /tmp`
-1. `git clone https://github.com/CGAL/cgal.git`
-1. `cd cgal`
-1. `git checkout v5.6.2`
-1. `mkdir build && cd $_`
-1. `unbuffer cmake -DCMAKE_BUILD_TYPE=Release .. | tee CMakeOut.txt`
-1. `sudo make install`
-## Other Dependencies
-1. `sudo apt install libmpfr-dev libgmp-dev libmetis-dev libfreeimage-dev`
-## COLMAP (Finally!)
+### Normal Linux Install
 1. `cd /tmp`
 1. `git clone https://github.com/colmap/colmap.git`
 1. `cd colmap`
 1. `git checkout 3.11.1`
 1. `mkdir build && cd $_`
-1. `unbuffer cmake .. | tee CMakeOut.txt`
+1. `export CC=/usr/bin/gcc-13`
+1. `export CXX=/usr/bin/g++-13`
+1. `export CUDA_ROOT=/usr/lib/cuda`, NOTE: This may be different on your distro!
+1. `nvidia-smi --query-gpu=compute_cap --format=csv`, Choose the highest one?
+1. `unbuffer cmake .. -DCMAKE_CUDA_ARCHITECTURES=75 | tee CMakeOut.txt`
 1. `unbuffer make -j4 | tee MakeOut.txt`
 1. `sudo make install`
 
