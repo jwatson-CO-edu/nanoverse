@@ -1,5 +1,9 @@
 # Custom
 
+**/*.db
+**/*.bin
+**/*.ply
+**/*.vis
 **/*.jpg
 **/*.ShotPair
 **/*.CamShot
