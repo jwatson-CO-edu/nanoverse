@@ -1,3 +1,4 @@
+# sudo apt install expect
 if [ -d "build" ]; then
     rm -rf build
 fi
