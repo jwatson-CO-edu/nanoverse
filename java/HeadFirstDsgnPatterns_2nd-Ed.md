@@ -134,6 +134,25 @@
     - States should be loosely coupled with each other, if at all
 * Similar to Stategy Pattern, with the addition of rules that determine which state governs behavior at each any given time
 * Can be replaced by a **Behavior Tree**
+- State + Transition --> Decision: Next State
+    - One Class Per State
+    - One Method Per Transition
+    - Actually instantiate a new state object at the end of each transition
+- Transitions may be asynchronous
+    - A Transition often triggers a method
+- Every state must handle every transition, even if the transition is improper
+    - It's okay to ignore improper transitions
+- Beginning and end states should be indicated
+- Alternatives to Finite State Machines
+    - State-Centric State Machines
+    - State-Centric State Machines with Hidden Transitions
+    - Event-Centric State Machines
+    - Table-Driven State Machines
+- Problems
+    - The object will appear to change its class
+    - Does not support Open Closed Principle
+    - The design is not very object-oriented
+    - State transitions are not explicit
 
 # Proxy Pattern
 * Goal: Access Control
@@ -231,7 +250,26 @@
     - Replace Subclass with Delegate – prefer composition/delegation over inheritance
 
 
-# Code Smells
+## Antipatterns: This is just troubleshooting
+* Begin with a failed solution (instead of a problem)
+* Troubleshooting Template
+    - Failed Solution
+    - Background and Evidence
+    - Symtoms and Consequences
+    - Causes
+    - Refactored Solution
+* The output of the last iteration is the input of the next iteration
+* Common Causes
+    - Haste (leads to lack of testing)
+    - Apathy (not solving known problems)
+    - Narrow-mindedness (refusing to use best practices)
+    - Sloth (using easy answers, ignoring long term impact)
+    - Avarice (excessive complexity)
+    - Ignorance (failing to seek understanding) 
+    - Pride (not invented here)
+
+
+## Code Smells
 * Mysterious Name
 * Duplicated Code
 * Long Function
@@ -318,3 +356,26 @@
 * The Composite classes' encapsulation is broken when the Visitor is used.
 * Because the traversal function is involved, changes to the Composite structure are more difficult.
 
+## Other Other Patterns
+- Business Delegate – decouples presentation and business code – delegates business logic, lookups, and services for UI elements
+- Composite Entity – ripples updates and persistence of graph objects
+- Data Access Object – separates data access API from high level business objects (as with an ORM)
+- Front Controller – centralizes response to requests for authentication, authorization, logging, request tracking – passes requests to handlers – creates a dispatcher for incoming requests
+- Intercepting Filter – a filter for a request object, can be a chain of filters executing in order
+- Service Locator – Caches high-cost service object requests
+- Transfer (or Value) Object – Pass multi-attribute data sets from clients to servers
+
+# Dark / Abusive Patterns
+- Sneak into Basket: You attempt to purchase something, but somewhere in the purchasing journey the site sneaks an additional item into your basket, often through the use of an opt-out radio button or checkbox on a prior page
+- Roach Motel: You get into a situation very easily, but then you find it is hard to get out of it (e.g. a premium subscription)
+- Trick Questions: While filling in a form you respond to a question that tricks you into giving an answer you didn't intend. When glanced upon quickly the question appears to ask one thing, but when read carefully it asks another thing entirely
+- Privacy Zuckering: You are tricked into publicly sharing more information about yourself than you really intended to; Named after Facebook CEO Mark Zuckerberg
+- Misdirection: The design purposefully focuses your attention on one thing in order to distract your attention from another
+- Price Comparison Prevention: The retailer makes it hard for you to compare the price of an item with another item, so you cannot make an informed decision
+- Hidden Costs: You get to the last step of the checkout process, only to discover some unexpected charges have appeared, e.g. delivery charges, tax, etc
+- Confirm Shaming: The act of guilting the user into opting into something; the option to decline is worded in such a way as to shame the
+user into compliance
+- Bait and Switch: You set out to do one thing, but a different, undesirable thing happens instead
+- Forced Continuity: When your free trial with a service comes to an end and your credit card silently starts getting charged without any warning; in some cases this is made even worse by making it difficult to cancel the membership 
+- Friend Spam: The product asks for your email or social media permissions under the pretense it will be used for a desirable outcome (e.g. finding friends), but then spams all your contacts in a message that claims to be from you
+- Disguised Ads: Adverts that are disguised as other kinds of content or navigation, in order to get you to click on them
