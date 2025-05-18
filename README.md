@@ -368,7 +368,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     - `[ ]` Multiverse Marketing: Attract minds that are tired of the Hustle and Bustle to take up residence in Mu
 
 
-* `[ ]` Wild WAGONS West!
+### `[ ]` Wild WAGONS West!
     - Story: In an alternate 19th century on the continent of North America, the land is divided by geologic and political forces drastically different from what the pages of history have recorded in our world. Exciting opportunities are blossoming in the West, but reliable travel across the Great Divide has been impossible, until now. Abigail and Benson Weatherby have worked tirelessly to bring about the W.A.G.O.N.S.: Weatherby Automatic General Overland Nodal System, a self-contained land-train, habitat, and defensive structure that allows long-term journeys across inhospitable terrian where no road or rail may pass. 
     - Gameplay Concepts: 
         * Player manages food, fuel, and people in a journey to the "American" West
