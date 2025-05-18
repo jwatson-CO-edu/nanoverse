@@ -272,7 +272,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     - `[ ]` Slot for brain
     - `[ ]` Advanced Boids Demo
 
-* `[ ]` Planetary Decorator (My Ideal PC Game: Exploration + Casual Architecture + Procedural Generation)
+### `[ ]` Planetary Decorator (My Ideal PC Game: Exploration + Casual Architecture + Procedural Generation)
     - `[ ]` Godot tutorials
         * `[ ]` Godot C++ API Tuts
     - `[ ]` Terrain and Landscape generation
