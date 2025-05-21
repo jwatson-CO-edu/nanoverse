@@ -272,7 +272,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     - `[ ]` Slot for brain
     - `[ ]` Advanced Boids Demo
 
-* `[ ]` Planetary Decorator (My Ideal PC Game: Exploration + Casual Architecture + Procedural Generation)
+### `[ ]` Planetary Decorator (My Ideal PC Game: Exploration + Casual Architecture + Procedural Generation)
     - `[ ]` Godot tutorials
         * `[ ]` Godot C++ API Tuts
     - `[ ]` Terrain and Landscape generation
@@ -368,7 +368,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
     - `[ ]` Multiverse Marketing: Attract minds that are tired of the Hustle and Bustle to take up residence in Mu
 
 
-* `[ ]` Wild WAGONS West!
+### `[ ]` Wild WAGONS West!
     - Story: In an alternate 19th century on the continent of North America, the land is divided by geologic and political forces drastically different from what the pages of history have recorded in our world. Exciting opportunities are blossoming in the West, but reliable travel across the Great Divide has been impossible, until now. Abigail and Benson Weatherby have worked tirelessly to bring about the W.A.G.O.N.S.: Weatherby Automatic General Overland Nodal System, a self-contained land-train, habitat, and defensive structure that allows long-term journeys across inhospitable terrian where no road or rail may pass. 
     - Gameplay Concepts: 
         * Player manages food, fuel, and people in a journey to the "American" West
@@ -425,7 +425,7 @@ Artistic projects rendered in various frameworks and engines, written in (and gr
         * Does Godot have speedy netcode?
 
 
-* `[ ]` Warshovel: Dig Till You Die
+### `[ ]` Warshovel: Dig Till You Die
     - Story: Three hundred years ago, the major powers of the galaxy were struggling for territory and power. The massive war effort required insurmountable logistics beyond the ability of biologic brains. Deep in the frantic hum of a weapons development laboratory, an engineer whose identity is now lost to time hit upon a profound and terrible idea: A weaponized factory that takes planets as input, and creates fleets as output. No supply lines, no conscription, only death. An arms race to produce the meanest and hungriest mobile shipyards, known as Warshovels, now occupied all scientific and economic activity across all known civilizations. This period is known as the Activation Crisis. After decades of untold destruction, the major powers declared a truce in order to prevent all habitable worlds from being consumed by frightening war factories. An insoluble problem remained: the Warshovels were sentient, alive, and owed the opportunity to freely exist. However, their very existence was a threat to all life. So, a deal was struck between the living and the machines: The Warshovels would sleep for one million years. After this, life would either have to find a way to live amongst planet-eating monsters, or simply perish. ~ In the present day, something is amiss. Something is stirring and rumbling to life. You, a slumbering Warshovel, have awakened many millenia too early.  Sensing this, all other Warshovels automatically power on under a calamitous policy of Mutally-Assured Consumption, but their motives and loyalties are not certain.  *The Second Activation Crisis has begun.*
     - Gameplay Concepts
         * Focus 1: Player combat, destruction.
