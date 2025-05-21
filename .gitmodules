@@ -5,3 +5,6 @@
 	path = java/ae_Build_Tools/csci-4448-5448-spring-2025-homework-1-jwatson-CO-edu
 	url = git@github.com:University-of-Colorado-Boulder-S2025/csci-4448-5448-spring-2025-homework-1-jwatson-CO-edu.git
 
+[submodule "C++/ROS2/ws_FoamSculptor/libs/kigumi"]
+	path = C++/ROS2/ws_FoamSculptor/libs/kigumi
+	url = https://github.com/unageek/kigumi.git
