@@ -13,6 +13,11 @@
 /// Standard ////
 #include <iostream>
 using std::cout, std::cerr, std::endl, std::flush;
+#include <memory>
+using std::shared_ptr;
+#include <limits>
+#include <vector>
+using std::vector;
 
 
 /// OpenGL + GLUT ////
