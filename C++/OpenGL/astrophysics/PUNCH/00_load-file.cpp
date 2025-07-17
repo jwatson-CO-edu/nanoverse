@@ -91,6 +91,7 @@ class FITS_File { public:
     }
 
     void fetch_pixel_data( addr coords, long nelements ){
+        // FIXME: https://heasarc.gsfc.nasa.gov/docs/software/fitsio/quick/node9.html
         long pxlAdr[2];
         load_arr( coords, pxlAdr );
         fits_read_pix( fptr, datatype, pxlAdr, 
