@@ -10,7 +10,7 @@ using std::map;
 using std::cout, std::endl;
 #include <fitsio.h>
 
-#define FITS_CACHE_ROWS 100
+#define FITS_MAX_AXES 1000
 
 typedef vector<string> vstr;
 typedef array<long,2>  addr;
@@ -20,27 +20,21 @@ void load_arr( addr coords, long* arr ){
     for( size_t i = 0; i < coords.size(); ++i ){  arr[i] = coords[i];  }
 }
 
+// vector<char[ FLEN_CARD ]> cards;
+
 class FITS_File { public:
     // Fetch and manage FITS data in a sane manner
 
-    /// Helper Structs ///
-    enum CState { CNULL, READY, STALE };
-    struct CEntry {
-        CState state;
-        void*  row;
-    };
-    
     /// Data ///
-    fitsfile* /*---------------*/ fptr /*-*/ = nullptr;
-    void* /*-------------------*/ dataArr    = nullptr;
-    array<CEntry,FITS_CACHE_ROWS> cache /**/ = {CEntry{CNULL,nullptr}};
-    vector<char[ FLEN_CARD ]>     cards;
-    int /*---------------------*/ status; 
-    int /*---------------------*/ nkeys;
-    string /*------------------*/ path;
-    vstr /*--------------------*/ keys;
-    int /*---------------------*/ datatype;
-    int /*---------------------*/ Naxes;
+    fitsfile*     fptr    = nullptr;
+    void* /*---*/ dataArr = nullptr;
+    vector<char*> cards;
+    int /*-----*/ status; 
+    int /*-----*/ nkeys;
+    string /*--*/ path;
+    int /*-----*/ datatype;
+    int /*-----*/ Naxes;
+    int* /*----*/ axisDim;
     
     /// Null Values ///
     map<int,void*>   nullPxlVal;
@@ -99,8 +93,9 @@ class FITS_File { public:
 
     FITS_File( string path_ ){
         // Open FITS at path and init params
-        status = 0; /* MUST initialize status */
-        path   = path_;
+        status  = 0; /* MUST initialize status */
+        path    = path_;
+        axisDim = (int*) malloc( sizeof( int ) * FITS_MAX_AXES );
         fits_open_file( &fptr, path.c_str(), READONLY, &status );
         fits_get_hdrspace( fptr, &nkeys, NULL, &status );
         cards.reserve( nkeys );
@@ -113,11 +108,15 @@ class FITS_File { public:
 
     void load_keys(){
         // Load the string cards
-        for( int ii = 1; ii <= nkeys; ii++ ){ 
-            fits_read_record( fptr, ii, cards[ii-1], &status ); /* read keyword */
-            keys[ii-1] = string( cards[ii-1] );
-            printf( "key %i: %s\n", ii-1, cards[ii-1] );
+        for( int ii = 0; ii < nkeys; ii++ ){ 
+            cards[ii] = (char*) malloc( sizeof( char ) * FLEN_CARD );
+            if( cards[ii] == NULL ){  break;  }
+            fits_read_record( fptr, ii, cards[ii], &status ); /* read keyword */
+            printf( "key %i: %s\n", ii, cards[ii] );
         }
+        report_status( "Obtained HDU Keys" );
+        fits_read_key( fptr, int datatype, char *keyname,
+                        void *value, char *comment, int *status)
     }
 
     void close(){
@@ -147,6 +146,4 @@ class FITS_File { public:
 
 int main( int argc, char *argv[] ){
 
-
-    
 }
