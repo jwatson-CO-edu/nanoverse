@@ -1,4 +1,8 @@
 // g++ -I/opt/fits/include 00_load-file.cpp -L/opt/fits/lib -lcfitsio -lm
+
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
+
+///// Imports /////////////////////////////////////////////////////////////
 #include <string>
 using std::string, std::to_string;
 #include <vector>
@@ -9,19 +13,29 @@ using std::array;
 using std::map;
 #include <iostream>
 using std::cout, std::endl;
+#include <memory>
+using std::shared_ptr;
 #include <fitsio.h>
 
+///// Defines /////////////////////////////////////////////////////////////
 #define FITS_MAX_AXES 1000
 
+///// Aliases /////////////////////////////////////////////////////////////
 typedef vector<string> vstr;
 typedef array<long,2>  addr;
+
+
+
+////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
 
 void load_arr( addr coords, long* arr ){
     // Load a `std::array` into a C array
     for( size_t i = 0; i < coords.size(); ++i ){  arr[i] = coords[i];  }
 }
 
-// vector<char[ FLEN_CARD ]> cards;
+
+
+////////// FITS ////////////////////////////////////////////////////////////////////////////////////
 
 class FITS_File { public:
     // Fetch and manage FITS data in a sane manner
@@ -92,10 +106,20 @@ class FITS_File { public:
         cout << endl;
     } 
 
-    void get_HDU_value( string key, int datatype, void *value ){
+    void get_HDU_value( string key, int datatype_, void *value ){
+        // Fetch a Header Data Unit value 
         char* comment = nullptr;
-        fits_read_key( fptr, datatype, key.c_str(),
+        fits_read_key( fptr, datatype_, key.c_str(),
                        value, comment, &status);
+    }
+
+    double float_HDU_as_double( string key ){
+        // Fetch a Header Data Unit float and return as double
+        char* comment = nullptr;
+        float fltVal;
+        fits_read_key( fptr, TFLOAT, key.c_str(),
+                       &fltVal, comment, &status );
+        return (double) fltVal;
     }
 
     FITS_File( string path_ ){
@@ -120,8 +144,9 @@ class FITS_File { public:
         }
         cout << endl;
         report_status( "Image Dims" );
-        
     }
+
+    ~FITS_File(){  close();  }
 
     void display_keys(){
         // Load the string cards
@@ -134,6 +159,7 @@ class FITS_File { public:
         report_status( "Obtained HDU Keys" );
     }
 
+    // Get the extent of the dimension
     size_t get_dim( int index ){  if( index < Naxes ) return (size_t) axisDim[ index ]; else return 0;  }
 
     void close(){
@@ -160,7 +186,33 @@ class FITS_File { public:
         if( p_hasNull ){  cout << "Some pixels are NULL!" << endl;  }
     }
 };
+typedef shared_ptr<FITS_File> FitsPtr;
 
+
+
+////////// CUSTOM DATA FRAME ///////////////////////////////////////////////////////////////////////
+
+class Corona_Data_FITS { public:
+    // Container for 3D CME reconstuction data and params
+    FitsPtr dataFileFITS = nullptr;
+    double  xRefPxlVal;
+    double  yRefPxlVal;
+    double  xRadPerPxl;
+    double  yRadPerPxl;
+    double  dToSun;
+    double  radSun;
+    double  obsLat;
+    double  obsLng;
+
+    Corona_Data_FITS( string fitsPath ){
+        // Load all params relevent to 3D CME reconstruction
+        dataFileFITS = FitsPtr{ new FITS_File{ fitsPath } };        
+    }
+};
+
+
+
+////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 int main( int argc, char *argv[] ){
     string    fPath = "../data/cme0_dcmer_0000_bang_0000_pB/stepnum_005.fits";
     FITS_File fFile{ fPath };
