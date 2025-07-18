@@ -1,6 +1,6 @@
 // g++ -I/opt/fits/include 00_load-file.cpp -L/opt/fits/lib -lcfitsio -lm
 #include <string>
-using std::string;
+using std::string, std::to_string;
 #include <vector>
 using std::vector;
 #include <array>
@@ -88,9 +88,15 @@ class FITS_File { public:
     void report_status( string prefix = "" ){  
         /* print any error messages */
         if( prefix.size() == 0 ){  cout << "Status: ";  }else{  cout << prefix << ": ";  }
-        if( status ){  fits_report_error( stderr, status );  }  
+        if( status ){  fits_report_error( stderr, status );  }else{ cout << "No error!";  }
         cout << endl;
     } 
+
+    void get_HDU_value( string key, int datatype, void *value ){
+        char* comment = nullptr;
+        fits_read_key( fptr, datatype, key.c_str(),
+                       value, comment, &status);
+    }
 
     FITS_File( string path_ ){
         // Open FITS at path and init params
@@ -103,11 +109,21 @@ class FITS_File { public:
         fits_get_img_type( fptr, &datatype, &status );
         report_status( "Image Type" );
         fits_get_img_dim( fptr, &Naxes, &status );
+        display_keys();
+        cout << "There are " << Naxes << " axes." << endl;
+        axisDim = (int*) malloc( sizeof( int ) * Naxes );
+        for( int i = 0; i < Naxes; ++i ){
+            string key = "NAXIS" + to_string(i+1);
+            cout << key << " = ";
+            get_HDU_value( key, TINT, &axisDim[i] );
+            cout << axisDim[i] << ", ";
+        }
+        cout << endl;
         report_status( "Image Dims" );
-        load_keys();
+        
     }
 
-    void load_keys(){
+    void display_keys(){
         // Load the string cards
         for( int ii = 0; ii < nkeys; ii++ ){ 
             cards[ii] = (char*) malloc( sizeof( char ) * FLEN_CARD );
@@ -116,9 +132,9 @@ class FITS_File { public:
             printf( "key %i: %s\n", ii, cards[ii] );
         }
         report_status( "Obtained HDU Keys" );
-        // fits_read_key( fptr, int datatype, char *keyname,
-        //                 void *value, char *comment, int *status)
     }
+
+    size_t get_dim( int index ){  if( index < Naxes ) return (size_t) axisDim[ index ]; else return 0;  }
 
     void close(){
         // Close the file
