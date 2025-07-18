@@ -115,14 +115,13 @@ class FITS_File { public:
         char* comment = nullptr;
         fits_read_key( fptr, datatype_, key.c_str(),
                        value, comment, &status);
+        if( verbose && (comment != nullptr) ){  cout << key << ", Comment: " << comment << endl;  } 
     }
 
     double float_HDU_as_double( string key ){
         // Fetch a Header Data Unit float and return as double
-        char* comment = nullptr;
         float fltVal;
-        fits_read_key( fptr, TFLOAT, key.c_str(),
-                       &fltVal, comment, &status );
+        get_HDU_value( key, TFLOAT, &fltVal );
         if( verbose ){  cout << "For \"" << key << "\", got " << fltVal << " --> " << (double) fltVal << endl;  }
         return (double) fltVal;
     }
