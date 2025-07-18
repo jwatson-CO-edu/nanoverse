@@ -115,8 +115,8 @@ class FITS_File { public:
             printf( "key %i: %s\n", ii, cards[ii] );
         }
         report_status( "Obtained HDU Keys" );
-        fits_read_key( fptr, int datatype, char *keyname,
-                        void *value, char *comment, int *status)
+        // fits_read_key( fptr, int datatype, char *keyname,
+        //                 void *value, char *comment, int *status)
     }
 
     void close(){
@@ -145,5 +145,6 @@ class FITS_File { public:
 };
 
 int main( int argc, char *argv[] ){
-
+    string    fPath = "../data/cme0_dcmer_0000_bang_0000_pB/stepnum_005.fits";
+    FITS_File fFile{ fPath };
 }
