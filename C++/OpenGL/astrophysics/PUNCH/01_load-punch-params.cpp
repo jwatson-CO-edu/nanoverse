@@ -43,13 +43,14 @@ class FITS_File { public:
     /// Data ///
     fitsfile*     fptr    = nullptr;
     void* /*---*/ dataArr = nullptr;
+    int* /*----*/ axisDim = nullptr;
     vector<char*> cards;
     int /*-----*/ status; 
     int /*-----*/ nkeys;
     string /*--*/ path;
     int /*-----*/ datatype;
     int /*-----*/ Naxes;
-    int* /*----*/ axisDim;
+    
     
     /// Null Values ///
     map<int,void*>   nullPxlVal;
@@ -146,7 +147,14 @@ class FITS_File { public:
         report_status( "Image Dims" );
     }
 
-    ~FITS_File(){  close();  }
+    ~FITS_File(){  
+        // Free all dyn mem
+        close();  
+        if( fptr    != nullptr ){  free( fptr    );  }
+        if( dataArr != nullptr ){  free( dataArr );  }
+        if( axisDim != nullptr ){  free( axisDim );  }
+        for( char* card : cards ){  if( card != nullptr ){  free( card );  }  }
+    }
 
     void display_keys(){
         // Load the string cards
