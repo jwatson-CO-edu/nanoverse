@@ -50,6 +50,7 @@ class FITS_File { public:
     string /*--*/ path;
     int /*-----*/ datatype;
     int /*-----*/ Naxes;
+    bool /*----*/ verbose = true;
     
     
     /// Null Values ///
@@ -102,9 +103,11 @@ class FITS_File { public:
     
     void report_status( string prefix = "" ){  
         /* print any error messages */
-        if( prefix.size() == 0 ){  cout << "Status: ";  }else{  cout << prefix << ": ";  }
-        if( status ){  fits_report_error( stderr, status );  }else{ cout << "No error!";  }
-        cout << endl;
+        if( verbose ){
+            if( prefix.size() == 0 ){  cout << "Status: ";  }else{  cout << prefix << ": ";  }
+            if( status ){  fits_report_error( stderr, status );  }else{ cout << "No error!";  }
+            cout << endl;
+        }
     } 
 
     void get_HDU_value( string key, int datatype_, void *value ){
@@ -120,6 +123,7 @@ class FITS_File { public:
         float fltVal;
         fits_read_key( fptr, TFLOAT, key.c_str(),
                        &fltVal, comment, &status );
+        if( verbose ){  cout << "For \"" << key << "\", got " << fltVal << " --> " << (double) fltVal << endl;  }
         return (double) fltVal;
     }
 
@@ -134,14 +138,15 @@ class FITS_File { public:
         fits_get_img_type( fptr, &datatype, &status );
         report_status( "Image Type" );
         fits_get_img_dim( fptr, &Naxes, &status );
-        display_keys();
-        cout << "There are " << Naxes << " axes." << endl;
+        if( verbose ){  
+            display_keys();  
+            cout << "There are " << Naxes << " axes." << endl;
+        }
         axisDim = (int*) malloc( sizeof( int ) * Naxes );
         for( int i = 0; i < Naxes; ++i ){
             string key = "NAXIS" + to_string(i+1);
-            cout << key << " = ";
             get_HDU_value( key, TINT, &axisDim[i] );
-            cout << axisDim[i] << ", ";
+            if( verbose ){  cout << key << " = " << axisDim[i] << ", ";  }
         }
         cout << endl;
         report_status( "Image Dims" );
@@ -183,7 +188,7 @@ class FITS_File { public:
     }
 
     void fetch_pixel_data( addr coords, long nelements ){
-        // FIXME: https://heasarc.gsfc.nasa.gov/docs/software/fitsio/quick/node9.html
+        // FIXME: https://heasarc.gsfc.nasa.gov/docs/software/fitsio/quick/node9.html, UNTESTED
         int p_hasNull = 0;
         long pxlAdr[2];
         load_arr( coords, pxlAdr );
@@ -214,7 +219,11 @@ class Corona_Data_FITS { public:
 
     Corona_Data_FITS( string fitsPath ){
         // Load all params relevent to 3D CME reconstruction
-        dataFileFITS = FitsPtr{ new FITS_File{ fitsPath } };        
+        dataFileFITS = FitsPtr{ new FITS_File{ fitsPath } };    
+        xRefPxlVal   = dataFileFITS->float_HDU_as_double( "CRVAL1" );    
+        yRefPxlVal   = dataFileFITS->float_HDU_as_double( "CRVAL2" );    
+        xRadPerPxl   = dataFileFITS->float_HDU_as_double( "CDELT1" );    
+        yRadPerPxl   = dataFileFITS->float_HDU_as_double( "CDELT2" );    
     }
 };
 
