@@ -1,3 +1,4 @@
+// g++ -I/opt/fits/include 00_load-file.cpp -L/opt/fits/lib -lcfitsio -lm
 #include <string>
 using std::string;
 #include <vector>

@@ -1,0 +1,63 @@
+Image Type: 
+Image Dims: 
+key 0: 
+key 1: SIMPLE  =                    T /   Written by IDL:  Thu Jun 22 13:41:26 2023
+key 2: BITPIX  =                  -32 / Real*4 (floating point)
+key 3: NAXIS   =                    2 /
+key 4: NAXIS1  =                 1024 /
+key 5: NAXIS2  =                 1024 /
+key 6: EXTEND  =                    T /  Extensions may be present
+key 7: CTYPE1  = 'x       '           / East->West [radians in the celestial sphere]
+key 8: CTYPE2  = 'y       '           / South->North [radians in the celestial sphere]
+key 9: CRVAL1  =      -0.785398185253 / reference pixel value [rad]
+key 10: CRVAL2  =      -0.785398185253 / reference pixel value [rad]
+key 11: CRPIX1  =                    0 / reference pixel location [pix]
+key 12: CRPIX2  =                    0 / reference pixel location [pix]
+key 13: CDELT1  =     0.00153548032308 / [rad/pix]
+key 14: CDELT2  =     0.00153548032308 / [rad/pix]
+key 15: CROTA2  =              0.00000 / the angle between solar North and Y axis
+key 16: OBS_R0  =        214.610000610 / observer's distance from Sun's center [Rsun]
+key 17: OBS_LAT =        1.57079632679 / observer's latitude in spherical coords [rad]
+key 18: OBS_LON =        2.16724685463 / observer's longitude in spherical coords [rad]
+key 19: RSUN    =     0.00465958137977 / Sun's radius in the image coordinates [rad]
+key 20: INSTUMEN= 'pB      '           / synthetic brightness: pB=polar., tB=total
+key 21: CRN     =                 2095 / CR# of the WSA solution used as background
+key 22: DATE0   = '2010-05-27T07:04:39.000' / start of a *fictitous* event
+key 23: TIMEVAL =        250.605847951 / hours since the beginning of the simulation
+key 24: DATE_OBS= '2010-06-06T17:41:00.000' / *fictitious* time: date0+timeval/24
+key 25: GL_LAT  =              0.00000 / starting latitude of the CME [rad]
+key 26: GL_LON  =              6.02140 / starting longitude of the CME [rad]
+key 27: GL_FH   =              21.5000 / G&L parameter: frontheight [Rsun]
+key 28: GL_LA   =              45.0000 / G&L parameter: legsang [deg]
+key 29: GL_SIG1 =              90.0000 / G&L parameter: sig1 [deg]
+key 30: GL_TOPO =              4.50000 / G&L parameter: topmorph [unitless]
+key 31: GL_BPAR =           0.00300000 / G&L parameter: ao [unitless]
+key 32: GL_CMEV =              1700.00 / G&L parameter: CME start velocity [km/s]
+key 33: H5GRID  = 'heliogrid.h5'       / Gamera running parameter
+key 34: DOH5G   =                    T / Gamera running parameter
+key 35: ICTYPE  = 'user    '           / Gamera running parameter
+key 36: RUNID   = 'DOICMEM_00004'      / Gamera running parameter
+key 37: TFIN    =              287.500 / Gamera running parameter
+key 38: DPHI1D  =              5.00000 / Gamera running parameter
+key 39: DTOUT   =             0.400000 / Gamera running parameter
+key 40: DTOUT1D =            0.0600000 / Gamera running parameter
+key 41: N1D     =              5.00000 / Gamera running parameter
+key 42: T3DOUT  = '230.0   '           / Gamera running parameter
+key 43: TSHELLDU= '57.5    '           / Gamera running parameter
+key 44: TIMER   =                    F / Gamera running parameter
+key 45: TSOUT   =              100.000 / Gamera running parameter
+key 46: DOSPH   =                    T / Gamera running parameter
+key 47: DOARMOR =                    F / Gamera running parameter
+key 48: HISTORY NOTE 1: THIS IS NOT A SIMULATION OF A PARTICULAR EVENT.
+key 49: HISTORY NOTE 1: The simulation was *loosely*inspired* by a 2010-04-03 CME
+key 50: HISTORY NOTE 1: (center of the par. space), and date_start is the start
+key 51: HISTORY NOTE 1: time of that particular flare.
+key 52: HISTORY ---
+key 53: HISTORY NOTE 2: G&L pars: frontheight -- height of CME front at time=0
+key 54: HISTORY NOTE 2: G&L pars: legsang -- angular witdh of the CME
+key 55: HISTORY NOTE 2: G&L pars: sig1 -- rotation of CME w.r.t. the sol. surf. normal
+key 56: HISTORY NOTE 2: G&L pars: topmorph -- number of untethered 'critical points'
+key 57: HISTORY NOTE 2: G&L pars: ao -- multiplier of the magnetic field strength
+key 58: HISTORY ---
+key 59: HISTORY NOTE 3: background wind is for carr. rot. 2095, but the time
+Obtained HDU Keys: 
