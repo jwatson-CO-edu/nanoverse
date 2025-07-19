@@ -1,5 +1,6 @@
 # Custom
 
+**/*.png
 **/*.fits
 **/*.db
 **/*.bin

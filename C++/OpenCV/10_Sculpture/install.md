@@ -1,7 +1,7 @@
 # OpenCV
 **WARNING: This will take at least an hour to build!**
 1. Install dependencies
-    * `sudo apt install libgtk2.0-dev libgtk-3-dev pkg-config`
+    * `sudo apt install libgtk2.0-dev libgtk-3-dev pkg-config expect`
 1. Nuke all previous installations!
     * `sudo rm /usr/{bin,lib}/*opencv*`, 
     * `sudo rm /usr/local/{bin,lib}/*opencv*`
