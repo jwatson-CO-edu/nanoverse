@@ -1,4 +1,4 @@
-// g++ -I/opt/fits/include -I/usr/local/include/opencv4 01_load-punch-params.cpp -L/opt/fits/lib -lcfitsio -lm
+// g++ -I/opt/fits/include -I/usr/local/include/opencv4 01_load-punch-params.cpp `pkg-config --cflags --libs opencv4` -L/opt/fits/lib -lcfitsio -lm
 
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 
@@ -303,7 +303,7 @@ class Corona_Data_FITS { public:
         for( long i = 1; i <= xDim; i++ ){
             for( long j = 1; j <= yDim; j++ ){  
                 shw.at<unsigned char>(i-1,j-1) = static_cast<unsigned char>((img.at<float>(i-1,j-1)-valMin)/span*255.0);
-                cout << shw.at<unsigned char>(i-1,j-1) << ", ";
+                // cout << shw.at<unsigned char>(i-1,j-1) << ", ";
             }
         }
         cv::imwrite( "TestImg.png", shw );
