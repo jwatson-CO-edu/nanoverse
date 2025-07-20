@@ -18,6 +18,8 @@ using std::cout, std::endl;
 using std::shared_ptr;
 #include <algorithm>
 using std::min, std::max;
+#include <filesystem>
+using std::filesystem::directory_iterator;
 
 /// CFITSIO ///
 #include <fitsio.h>
@@ -49,16 +51,77 @@ std::ostream& operator<<( std::ostream& os , array<T,S> arr ){
 
 void load_arr( addr coords, long* arr ){
     // Load a `std::array` into a C array
-    arr[0] = coords[1];
-    arr[1] = coords[0];
-    // cout << "Loaded arr!: " << coords << endl;
+    arr[0] = coords[1]+1; // FITS is 1-indexed!
+    arr[1] = coords[0]+1; // FITS is column-major!
 }
+
 
 double* alloc_dbbl_arr( size_t N ){
     double* rtnPtr = nullptr;
     rtnPtr = (double*) malloc( sizeof( double ) * N );
     return rtnPtr;
 }
+
+
+vector<string> split_string_on_char( string input, char ch ){
+    // Return a vector of strings found in `input` separated by whitespace
+    vector<string> rtnWords;
+    string /*---*/ currWord;
+    char /*-----*/ currChar;
+    input += ch; // Separator hack
+
+    for( char& currChar : input ){
+        if( currChar == ch ){
+            if( currWord.length() > 0 )  rtnWords.push_back( currWord );
+            currWord = "";
+        }else{
+            currWord += currChar;
+        }
+    }
+    return rtnWords; 
+}
+
+
+vector<string> list_files_at_path( string path, bool sortAlpha = true ){
+    // List all the files found at a path
+    vector<string> rtnNams;
+    string /*---*/ path_i;
+    for (const auto & entry : directory_iterator( path ) ){  
+        path_i = entry.path().string();
+        rtnNams.push_back( path_i );  
+    }
+    if( sortAlpha )  std::sort( rtnNams.begin(),rtnNams.end() );
+    return rtnNams;
+}
+
+
+string to_upper( string input ){
+    // Return a version of the string that is upper case
+    string output;
+    for( char& c : input ){ output += toupper( c ); }
+    return output;
+}
+
+
+bool file_has_ext( string path, string ext ){
+    // Return true if a file has a 
+    vector<string> parts = split_string_on_char( path, '.' );
+    // cout << "There are " << parts.size() << " segments!" << endl;
+    return (to_upper( parts[ parts.size()-1 ] ) == to_upper( ext ));
+}
+
+
+vector<string> list_files_at_path_w_ext( string path, string ext, bool sortAlpha = true ){
+    vector<string> allPaths = list_files_at_path( path, sortAlpha );
+    vector<string> rtnPaths;
+    for( string fPath : allPaths ){
+        if( file_has_ext( fPath, ext ) )
+            rtnPaths.push_back( string( fPath ) );
+    }
+    return rtnPaths;
+}
+
+
 
 ////////// FITS ////////////////////////////////////////////////////////////////////////////////////
 
@@ -68,8 +131,8 @@ class FITS_File { public:
     /// Data ///
     fitsfile*     fptr    = nullptr;
     void* /*---*/ dataArr = nullptr;
-    int* /*---*/ axisDim = nullptr;
-    long* pxlAdr;
+    int* /*----*/ axisDim = nullptr;
+    long* /*---*/ pxlAdr;
     vector<char*> cards;
     int /*-----*/ status; 
     int /*-----*/ nkeys;
@@ -241,14 +304,13 @@ class FITS_File { public:
                        dataArr, 
                        &p_hasNull, &status);
         if( p_hasNull ){  cout << "Some pixels are NULL!" << endl;  }
-        // free( pxlAdr );
         return dataArr;
     }
 
     void* fetch_row( long row ){
         // Get data from an entire row
-        if( (row > 0) && (row <= get_dim(0)) ){
-            return fetch_pixel_data( {row, 1}, (long) get_dim(1) );
+        if( (row > -1) && (row < get_dim(0)) ){
+            return fetch_pixel_data( {row, 0}, (long) get_dim(1) );
         }else{  return nullptr;  }
     }
 };
@@ -260,61 +322,91 @@ typedef shared_ptr<FITS_File> FitsPtr;
 
 class Corona_Data_FITS { public:
     // Container for 3D CME reconstuction data and params
-    FitsPtr dataFileFITS = nullptr;
-    double  xRefPxlVal;
-    double  yRefPxlVal;
-    double  xRadPerPxl;
-    double  yRadPerPxl;
-    double  dToSun;
-    double  radSun;
-    double  obsLat;
-    double  obsLng;
-    Mat     img;
-    Mat     shw;
+    FitsPtr dataFileFITS = nullptr; // Pointer to the FITS wrapper
+    double  xRefPxlVal; // ----------- Reference Pixel Value, X
+    double  yRefPxlVal; // ----------- Reference Pixel Value, Y
+    double  xRadPerPxl; // ----------- Radians per Pixel, X
+    double  yRadPerPxl; // ----------- Radians per Pixel, Y
+    double  dToSun; // --------------- Distance to Sun
+    double  radSun; // --------------- Radius of Sun
+    double  obsLat; // --------------- Observer Latitude
+    double  obsLng; // --------------- Observer Longitude
+    Mat     img; // ------------------ Unpacked Image Data
+    Mat     shw; // ------------------ Debug Image Data (Greyscale, Offset & Scaled)
 
     Corona_Data_FITS( string fitsPath ){
         // Load all params relevent to 3D CME reconstruction
-        dataFileFITS  = FitsPtr{ new FITS_File{ fitsPath } };    
-        xRefPxlVal    = dataFileFITS->float_HDU_as_double( "CRVAL1" );    
-        yRefPxlVal    = dataFileFITS->float_HDU_as_double( "CRVAL2" );    
-        xRadPerPxl    = dataFileFITS->float_HDU_as_double( "CDELT1" );    
-        yRadPerPxl    = dataFileFITS->float_HDU_as_double( "CDELT2" );    
-        cout << (int) dataFileFITS->get_dim(0) << ", " << (int) dataFileFITS->get_dim(1) << endl;
-        img /*-----*/ = Mat( cv::Size( (int) dataFileFITS->get_dim(0), (int) dataFileFITS->get_dim(1) ), CV_32F, cv::Scalar(0.0) );
-        shw /*-----*/ = Mat( cv::Size( (int) dataFileFITS->get_dim(0), (int) dataFileFITS->get_dim(1) ), CV_8U , cv::Scalar(0) );
-        long  xDim  = dataFileFITS->get_dim(0);
-        long  yDim  = dataFileFITS->get_dim(1);
+        dataFileFITS = FitsPtr{ new FITS_File{ fitsPath } };    
+        xRefPxlVal   = dataFileFITS->float_HDU_as_double( "CRVAL1" );    
+        yRefPxlVal   = dataFileFITS->float_HDU_as_double( "CRVAL2" );    
+        xRadPerPxl   = dataFileFITS->float_HDU_as_double( "CDELT1" );    
+        yRadPerPxl   = dataFileFITS->float_HDU_as_double( "CDELT2" );    
+        img /*----*/ = Mat( cv::Size( (int) dataFileFITS->get_dim(0), (int) dataFileFITS->get_dim(1) ), CV_32F, cv::Scalar(0.0) );
+        shw /*----*/ = Mat( cv::Size( (int) dataFileFITS->get_dim(0), (int) dataFileFITS->get_dim(1) ), CV_8U , cv::Scalar(0)   );
+        long  xDim   = dataFileFITS->get_dim(0);
+        long  yDim   = dataFileFITS->get_dim(1);
         float* row_i = nullptr;
         float valMin =  1e9f;
         float valMax = -1e9f;
-        float span;
-        for( long i = 1; i <= xDim; i++ ){
+        float span   =  0.0f;
+        for( long i = 0; i < xDim; i++ ){
             row_i = (float*) dataFileFITS->fetch_row(i);
-            // cout << row_i << endl;
-            for( long j = 1; j <= yDim; j++ ){  
-                // cout << "[" << i << ", " << j << "]: ";
-                img.at<float>(i-1,j-1) = row_i[j-1]; 
-                valMin = min( row_i[j-1], valMin );
-                valMax = max( row_i[j-1], valMax );
+            for( long j = 0; j < yDim; j++ ){  
+                img.at<float>(i,j) = row_i[j]; 
+                valMin = min( row_i[j], valMin );
+                valMax = max( row_i[j], valMax );
             }
         }
+        /// Debug Info! ///
         cout << "Value Range: [" << valMin << ", " << valMax << "]" << endl;
         span = valMax - valMin;
-        for( long i = 1; i <= xDim; i++ ){
-            for( long j = 1; j <= yDim; j++ ){  
-                shw.at<unsigned char>(i-1,j-1) = static_cast<unsigned char>((img.at<float>(i-1,j-1)-valMin)/span*255.0);
-                // cout << shw.at<unsigned char>(i-1,j-1) << ", ";
+        for( long i = 0; i < xDim; i++ ){
+            for( long j = 0; j < yDim; j++ ){  
+                shw.at<unsigned char>(i,j) = static_cast<unsigned char>((img.at<float>(i,j)-valMin)/span*255.0);
             }
         }
-        cv::imwrite( "TestImg.png", shw );
+        vstr   pathParts = split_string_on_char( fitsPath    , '.' );
+        /*--*/ pathParts = split_string_on_char( pathParts[0], '/' );
+        string pngPath;   
+        if( pathParts.size() >= 2 )
+            pngPath = "output/" + pathParts[ pathParts.size()-2 ] + "+++" + pathParts[ pathParts.size()-1 ] + ".png";
+        else if( pathParts.size() >= 1 )
+            pngPath = "output/" + pathParts[ pathParts.size()-1 ] + ".png";
+        else
+            pngPath = "output/Test.png";
+        cv::imwrite( pngPath, shw );
     }
 };
+typedef shared_ptr<Corona_Data_FITS> CMEPtr;
+
+
 
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 int main( int argc, char *argv[] ){
-    string    fPath = "../data/cme0_dcmer_0000_bang_0000_pB/stepnum_005.fits";
-    // FITS_File fFile{ fPath };
-    Corona_Data_FITS fFile{ fPath };
+    map<string,vector<CMEPtr>> sunPix;
+    vstr dataDirs = {
+        "../data/cme0_dcmer_0000_bang_0000_pB",
+        "../data/cme0_dcmer_0000_bang_0000_tB",
+        "../data/cme0_dcmer_030E_bang_0000_pB",
+        "../data/cme0_dcmer_030E_bang_0000_tB",
+        "../data/cme0_dcmer_060W_bang_0000_pB",
+        "../data/cme0_dcmer_060W_bang_0000_tB",
+        "../data/cme0_dcmer_090E_bang_0000_pB",
+        "../data/cme0_dcmer_090E_bang_0000_tB"
+    };
+    vstr   filePaths;
+    vstr   parts;
+    string key;
+    for( const string& fDir : dataDirs ){
+        filePaths = list_files_at_path_w_ext( fDir, "fits" );
+        parts     = split_string_on_char( fDir, '/' );
+        key /*-*/ = parts[ parts.size()-1 ];
+        sunPix[ key ] = vector<CMEPtr>{};
+        for( const string& fPath : filePaths ){
+            cout << "Open " << fPath << endl;
+            sunPix[ key ].push_back( CMEPtr{ new Corona_Data_FITS{ fPath } } );
+        }
+    }
 }
