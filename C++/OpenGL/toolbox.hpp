@@ -19,12 +19,12 @@ using std::shared_ptr;
 #include <vector>
 using std::vector;
 
-
 /// OpenGL + GLUT ////
 #include <GL/glut.h>
 #include <GL/glu.h>
 #include <GL/gl.h>
 
+/// Graphics Language Math ////
 #include <glm/glm.hpp>
 using glm::vec2;
 using glm::vec3;
@@ -38,7 +38,6 @@ using glm::value_ptr;
 
 
 ////////// TYPE DEFINES ////////////////////////////////////////////////////////////////////////////
-
 typedef unsigned char ubyte;
 typedef unsigned int  uint;
 typedef unsigned long ulong;
