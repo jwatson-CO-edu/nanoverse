@@ -5,6 +5,7 @@
 ///// Polyhedral Net //////////////////////////////////////////////////////
 
 TriNet::TriNet( uint Ntri_, uint Nvrt_, bool textured = false ){
+    // FIXME: SWITCH TO LAZY MODEL
     Nvrt    = Nvrt_; // ------------------------------------ Number of vertices
     Ntri    = Ntri_; // ------------------------------------ Number of triangles
     V /*-*/ = (vec4f*) malloc( Nvrt_ * sizeof( vec4f ) ); // Vertices: _________ Nvrt X {x,y,z}
