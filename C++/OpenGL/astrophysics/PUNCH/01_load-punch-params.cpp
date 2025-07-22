@@ -17,7 +17,7 @@ using std::cout, std::endl;
 #include <memory>
 using std::shared_ptr;
 #include <algorithm>
-using std::min, std::max;
+using std::min, std::max, std::pow, std::sqrt;
 #include <filesystem>
 using std::filesystem::directory_iterator;
 
@@ -219,6 +219,15 @@ class FITS_File { public:
     }
 
 
+    float float_HDU( string key ){
+        // Fetch a Header Data Unit float and return as double
+        float fltVal;
+        get_HDU_value( key, TFLOAT, &fltVal );
+        if( verbose ){  cout << "For \"" << key << "\", got " << fltVal << " --> " << (double) fltVal << endl;  }
+        return fltVal;
+    }
+
+
     FITS_File( string path_ ){
         // Open FITS at path and init params
         status  = 0; /* MUST initialize status */
@@ -323,24 +332,24 @@ typedef shared_ptr<FITS_File> FitsPtr;
 class Corona_Data_FITS { public:
     // Container for 3D CME reconstuction data and params
     FitsPtr dataFileFITS = nullptr; // Pointer to the FITS wrapper
-    double  xRefPxlVal; // ----------- Reference Pixel Value, X
-    double  yRefPxlVal; // ----------- Reference Pixel Value, Y
-    double  xRadPerPxl; // ----------- Radians per Pixel, X
-    double  yRadPerPxl; // ----------- Radians per Pixel, Y
-    double  dToSun; // --------------- Distance to Sun
-    double  radSun; // --------------- Radius of Sun
-    double  obsLat; // --------------- Observer Latitude
-    double  obsLng; // --------------- Observer Longitude
+    float xRefPxlVal; // ----------- Reference Pixel Value, X
+    float yRefPxlVal; // ----------- Reference Pixel Value, Y
+    float xRadPerPxl; // ----------- Radians per Pixel, X
+    float yRadPerPxl; // ----------- Radians per Pixel, Y
+    float dToSun; // --------------- Distance to Sun
+    float radSun; // --------------- Radius of Sun
+    float obsLat; // --------------- Observer Latitude
+    float obsLng; // --------------- Observer Longitude
     Mat     img; // ------------------ Unpacked Image Data
     Mat     shw; // ------------------ Debug Image Data (Greyscale, Offset & Scaled)
 
     Corona_Data_FITS( string fitsPath ){
         // Load all params relevent to 3D CME reconstruction
         dataFileFITS = FitsPtr{ new FITS_File{ fitsPath } };    
-        xRefPxlVal   = dataFileFITS->float_HDU_as_double( "CRVAL1" );    
-        yRefPxlVal   = dataFileFITS->float_HDU_as_double( "CRVAL2" );    
-        xRadPerPxl   = dataFileFITS->float_HDU_as_double( "CDELT1" );    
-        yRadPerPxl   = dataFileFITS->float_HDU_as_double( "CDELT2" );    
+        xRefPxlVal   = dataFileFITS->float_HDU( "CRVAL1" );    
+        yRefPxlVal   = dataFileFITS->float_HDU( "CRVAL2" );    
+        xRadPerPxl   = dataFileFITS->float_HDU( "CDELT1" );    
+        yRadPerPxl   = dataFileFITS->float_HDU( "CDELT2" );    
         img /*----*/ = Mat( cv::Size( (int) dataFileFITS->get_dim(0), (int) dataFileFITS->get_dim(1) ), CV_32F, cv::Scalar(0.0) );
         shw /*----*/ = Mat( cv::Size( (int) dataFileFITS->get_dim(0), (int) dataFileFITS->get_dim(1) ), CV_8U , cv::Scalar(0)   );
         long  xDim   = dataFileFITS->get_dim(0);
@@ -379,6 +388,32 @@ class Corona_Data_FITS { public:
 };
 typedef shared_ptr<Corona_Data_FITS> CMEPtr;
 
+
+
+Mat calc_coords( string totalPath, string polarPath ){
+    // Calculate 3D coordinates from polarized data
+    Corona_Data_FITS tB_data{ totalPath };
+    Corona_Data_FITS pB_data{ polarPath };
+    long  xDim = tB_data.dataFileFITS->get_dim(0);
+    long  yDim = tB_data.dataFileFITS->get_dim(1);
+    long  hDim = yDim / 2;
+    float pxFromCenter  = 0.0f;
+    float epsilon = 0.0f;
+    float pB_over_tB = 0.0;
+    float bRatio /**/  = 0.0f;
+
+    Mat zetaPlus  = Mat( cv::Size( (int) tB_data.dataFileFITS->get_dim(0), (int) tB_data.dataFileFITS->get_dim(1) ), CV_32F, cv::Scalar(0.0) );
+    Mat zetaMinus = Mat( cv::Size( (int) tB_data.dataFileFITS->get_dim(0), (int) tB_data.dataFileFITS->get_dim(1) ), CV_32F, cv::Scalar(0.0) );
+
+    for( long i = 0; i < xDim; i++ ){
+        for( long j = 0; j < yDim; j++ ){  
+            pB_over_tB    = pB_data.img.at<float>(i,j) / tB_data.img.at<float>(i,j);
+            pxFromCenter  = sqrt( pow( abs( i-hDim ), 2.0f ) + pow( abs( j-hDim ), 2.0f ) );
+            epsilon       = pxFromCenter * tB_data.xRadPerPxl;
+            bRatio        = sqrt( (1.0f - pB_over_tB) / (1.0f + pB_over_tB) );
+        }
+    }
+}
 
 
 
