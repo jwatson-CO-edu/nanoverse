@@ -20,6 +20,8 @@ using std::shared_ptr;
 using std::min, std::max, std::pow, std::sqrt;
 #include <filesystem>
 using std::filesystem::directory_iterator;
+#include <cmath>
+using std::asin;
 
 /// CFITSIO ///
 #include <fitsio.h>
@@ -411,6 +413,8 @@ Mat calc_coords( string totalPath, string polarPath ){
             pxFromCenter  = sqrt( pow( abs( i-hDim ), 2.0f ) + pow( abs( j-hDim ), 2.0f ) );
             epsilon       = pxFromCenter * tB_data.xRadPerPxl;
             bRatio        = sqrt( (1.0f - pB_over_tB) / (1.0f + pB_over_tB) );
+            zetaPlus.at<float>(i,j)  = epsilon + asin(  bRatio );
+            zetaMinus.at<float>(i,j) = epsilon + asin( -bRatio );
         }
     }
 }
