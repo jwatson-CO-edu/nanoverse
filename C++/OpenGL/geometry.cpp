@@ -33,3 +33,12 @@ TriNet::~TriNet(){
     if(T){  free(T);  }; // Texture Coords: ___ Nvrt X {u,v}
     if(C){  free(C);  }; // Color Coords: _____ Nvrt X {x,y,z}
 };
+
+void TriNet::add_tri( const tri_v4f& tri ){
+    uint k = verts.size()*3;;
+    for( ubyte i = 0; i < 3; ++i ){
+        verts.push_back( vec4f{ tri[i][0], tri[i][1], tri[i][2], tri[i][3] } );
+        faces.push_back( vec3u{ k+0, k+1, k+2 } );
+        k += 3;
+    }
+}
