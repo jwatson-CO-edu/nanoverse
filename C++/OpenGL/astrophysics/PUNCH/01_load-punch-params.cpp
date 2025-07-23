@@ -31,8 +31,9 @@ using cv::Mat;
 
 /// Graphics Language Math ////
 #include <glm/glm.hpp>
-using glm::vec2;
-using glm::vec3;
+using glm::vec2, glm::vec3, glm::vec4, glm::mat4;
+#include <glm/gtc/matrix_transform.hpp>
+using glm::rotate;
 
 ///// Defines /////////////////////////////////////////////////////////////
 #define PUNCH_X_DIM 1024
@@ -43,6 +44,8 @@ typedef vector<string> vstr;
 typedef array<long,2>  addr;
 typedef vec2 /*-----*/ vec2f;
 typedef vec3 /*-----*/ vec3f;
+typedef vec4 /*-----*/ vec4f;
+typedef mat4 /*-----*/ mat4f;
 
 template<typename T, size_t S>
 std::ostream& operator<<( std::ostream& os , array<T,S> arr ){ 
@@ -128,6 +131,27 @@ vector<string> list_files_at_path_w_ext( string path, string ext, bool sortAlpha
             rtnPaths.push_back( string( fPath ) );
     }
     return rtnPaths;
+}
+
+
+mat4f R_x( float theta ){
+    mat4f rtnMtx = mat4f{ 1.0 };
+    rotate( rtnMtx, theta, vec3f{ 1.0, 0.0, 0.0 } );
+    return rtnMtx;
+}
+
+
+mat4f R_y( float theta ){
+    mat4f rtnMtx = mat4f{ 1.0 };
+    rotate( rtnMtx, theta, vec3f{ 0.0, 1.0, 0.0 } );
+    return rtnMtx;
+}
+
+
+mat4f R_z( float theta ){
+    mat4f rtnMtx = mat4f{ 1.0 };
+    rotate( rtnMtx, theta, vec3f{ 0.0, 0.0, 1.0 } );
+    return rtnMtx;
 }
 
 
@@ -336,6 +360,7 @@ typedef shared_ptr<FITS_File> FitsPtr;
 
 
 
+
 ////////// CUSTOM DATA FRAME ///////////////////////////////////////////////////////////////////////
 
 class Corona_Data_FITS { public:
@@ -411,21 +436,49 @@ Mat calc_coords( string totalPath, string polarPath ){
     float pB_over_tB = 0.0;
     float bRatio /**/  = 0.0f;
     float dSun = tB_data.dataFileFITS->float_HDU( "OBS_R0" );  
+    float angOffset = tB_data.xRefPxlVal;
+    float radPerPxl = tB_data.xRadPerPxl;
 
     float zetaPlus  = 0.0f;
     float zetaMinus = 0.0f;
+    float Op_sky /*---*/ = 0.0f;
+    float Ad_oos /*---*/ = 0.0f;
+    float dThom /*---*/ = 0.0f;
+    float dPxlPlus /*---*/ = 0.0f;
+    float dPxlMinus /*---*/ = 0.0f;
+    float dTilt /*---*/ = 0.0f;
 
-    vec3f ertLoc{ 0.0f, 0.0f, 0.0f }; // Place the Earth at the origin
-    vec3f sunLoc{ 0.0f, 0.0f, dSun }; // Place the Sun along the Z-axis
+    vec4f ertLoc{ 0.0f, 0.0f, 0.0f, 1.0f }; // Place the Earth at the origin
+    vec4f sunLoc{ 0.0f, 0.0f, dSun, 1.0f }; // Place the Sun along the Z-axis
+
+    mat4f xRot;
+    mat4f yRot;
+
+    vec4f posnPlus;
+    vec4f posnMinus;
 
     for( long i = 0; i < xDim; i++ ){
         for( long j = 0; j < yDim; j++ ){  
             pB_over_tB   = pB_data.img.at<float>(i,j) / tB_data.img.at<float>(i,j);
             pxFromCenter = sqrt( pow( abs( i-hDim ), 2.0f ) + pow( abs( j-hDim ), 2.0f ) );
-            epsilon /**/ = pxFromCenter * tB_data.xRadPerPxl;
+            epsilon /**/ = pxFromCenter * radPerPxl;
+            dThom = dSun * cos( epsilon );
             bRatio /*-*/ = sqrt( (1.0f - pB_over_tB) / (1.0f + pB_over_tB) );
             zetaPlus     = epsilon + asin(  bRatio );
             zetaMinus    = epsilon + asin( -bRatio );
+            xRot /*---*/ = R_x( j * radPerPxl + angOffset );
+            yRot /*---*/ = R_y( i * radPerPxl + angOffset );
+
+            Op_sky = dSun   * tan( epsilon );
+            Ad_oos = Op_sky * cos( epsilon );
+            dPxlPlus  = dThom + Ad_oos * tan( zetaPlus  - epsilon );
+            dPxlMinus = dThom + Ad_oos * tan( zetaMinus - epsilon );
+
+            posnPlus = vec4f{ 0.0, 0.0, dPxlPlus, 1.0 };
+            posnPlus = xRot * yRot * posnPlus;
+
+            posnMinus = vec4f{ 0.0, 0.0, dPxlMinus, 1.0 };
+            posnMinus = xRot * yRot * posnMinus;
         }
     }
 }
