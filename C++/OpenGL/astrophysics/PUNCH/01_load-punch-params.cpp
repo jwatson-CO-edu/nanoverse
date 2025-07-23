@@ -29,6 +29,11 @@ using std::asin;
 #include <opencv2/opencv.hpp>
 using cv::Mat;
 
+/// Graphics Language Math ////
+#include <glm/glm.hpp>
+using glm::vec2;
+using glm::vec3;
+
 ///// Defines /////////////////////////////////////////////////////////////
 #define PUNCH_X_DIM 1024
 #define PUNCH_Y_DIM 1024
@@ -36,6 +41,8 @@ using cv::Mat;
 ///// Aliases /////////////////////////////////////////////////////////////
 typedef vector<string> vstr;
 typedef array<long,2>  addr;
+typedef vec2 /*-----*/ vec2f;
+typedef vec3 /*-----*/ vec3f;
 
 template<typename T, size_t S>
 std::ostream& operator<<( std::ostream& os , array<T,S> arr ){ 
@@ -342,8 +349,8 @@ class Corona_Data_FITS { public:
     float radSun; // --------------- Radius of Sun
     float obsLat; // --------------- Observer Latitude
     float obsLng; // --------------- Observer Longitude
-    Mat     img; // ------------------ Unpacked Image Data
-    Mat     shw; // ------------------ Debug Image Data (Greyscale, Offset & Scaled)
+    Mat   img; // ------------------ Unpacked Image Data
+    Mat   shw; // ------------------ Debug Image Data (Greyscale, Offset & Scaled)
 
     Corona_Data_FITS( string fitsPath ){
         // Load all params relevent to 3D CME reconstruction
@@ -403,18 +410,22 @@ Mat calc_coords( string totalPath, string polarPath ){
     float epsilon = 0.0f;
     float pB_over_tB = 0.0;
     float bRatio /**/  = 0.0f;
+    float dSun = tB_data.dataFileFITS->float_HDU( "OBS_R0" );  
 
-    Mat zetaPlus  = Mat( cv::Size( (int) tB_data.dataFileFITS->get_dim(0), (int) tB_data.dataFileFITS->get_dim(1) ), CV_32F, cv::Scalar(0.0) );
-    Mat zetaMinus = Mat( cv::Size( (int) tB_data.dataFileFITS->get_dim(0), (int) tB_data.dataFileFITS->get_dim(1) ), CV_32F, cv::Scalar(0.0) );
+    float zetaPlus  = 0.0f;
+    float zetaMinus = 0.0f;
+
+    vec3f ertLoc{ 0.0f, 0.0f, 0.0f }; // Place the Earth at the origin
+    vec3f sunLoc{ 0.0f, 0.0f, dSun }; // Place the Sun along the Z-axis
 
     for( long i = 0; i < xDim; i++ ){
         for( long j = 0; j < yDim; j++ ){  
-            pB_over_tB    = pB_data.img.at<float>(i,j) / tB_data.img.at<float>(i,j);
-            pxFromCenter  = sqrt( pow( abs( i-hDim ), 2.0f ) + pow( abs( j-hDim ), 2.0f ) );
-            epsilon       = pxFromCenter * tB_data.xRadPerPxl;
-            bRatio        = sqrt( (1.0f - pB_over_tB) / (1.0f + pB_over_tB) );
-            zetaPlus.at<float>(i,j)  = epsilon + asin(  bRatio );
-            zetaMinus.at<float>(i,j) = epsilon + asin( -bRatio );
+            pB_over_tB   = pB_data.img.at<float>(i,j) / tB_data.img.at<float>(i,j);
+            pxFromCenter = sqrt( pow( abs( i-hDim ), 2.0f ) + pow( abs( j-hDim ), 2.0f ) );
+            epsilon /**/ = pxFromCenter * tB_data.xRadPerPxl;
+            bRatio /*-*/ = sqrt( (1.0f - pB_over_tB) / (1.0f + pB_over_tB) );
+            zetaPlus     = epsilon + asin(  bRatio );
+            zetaMinus    = epsilon + asin( -bRatio );
         }
     }
 }
