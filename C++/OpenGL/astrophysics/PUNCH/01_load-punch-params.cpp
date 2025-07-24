@@ -470,29 +470,40 @@ SolnPair calc_coords( string totalPath, string polarPath ){
     SolnPair rtnPair{ xDim, yDim, 3 };
 
     for( long i = 0; i < xDim; i++ ){
+        // Get Y rotation of the column
+        yRot = R_y( i * radPerPxl + angOffset );
         for( long j = 0; j < yDim; j++ ){  
+            // Get angle to object and distance to Thompson Surface
             pB_over_tB   = pB_data.img.at<float>(i,j) / tB_data.img.at<float>(i,j);
             pxFromCenter = sqrt( pow( abs( i-hDim ), 2.0f ) + pow( abs( j-hDim ), 2.0f ) );
             epsilon /**/ = pxFromCenter * radPerPxl;
-            dThom = dSun * cos( epsilon );
-            bRatio /*-*/ = sqrt( (1.0f - pB_over_tB) / (1.0f + pB_over_tB) );
-            zetaPlus     = epsilon + asin(  bRatio );
-            zetaMinus    = epsilon + asin( -bRatio );
-            xRot /*---*/ = R_x( j * radPerPxl + angOffset );
-            yRot /*---*/ = R_y( i * radPerPxl + angOffset );
-
-            Op_sky = dSun   * tan( epsilon );
-            Ad_oos = Op_sky * cos( epsilon );
+            dThom /*--*/ = dSun * cos( epsilon );
+            // Get possible Out-of-Sky angles: zeta
+            bRatio    = sqrt( (1.0f - pB_over_tB) / (1.0f + pB_over_tB) );
+            zetaPlus  = epsilon + asin(  bRatio );
+            zetaMinus = epsilon + asin( -bRatio );
+            // Get possible distances from sensor
+            Op_sky    = dSun   * tan( epsilon );
+            Ad_oos    = Op_sky * cos( epsilon );
             dPxlPlus  = dThom + Ad_oos * tan( zetaPlus  - epsilon );
             dPxlMinus = dThom + Ad_oos * tan( zetaMinus - epsilon );
-
+            // Get X rotation of the row
+            xRot = R_x( j * radPerPxl + angOffset );
+            // Get relative position of Near Solution
             posnPlus = vec4f{ 0.0, 0.0, dPxlPlus, 1.0 };
             posnPlus = xRot * yRot * posnPlus;
-
+            // Get relative position of Far Solution
             posnMinus = vec4f{ 0.0, 0.0, dPxlMinus, 1.0 };
             posnMinus = xRot * yRot * posnMinus;
+            // Load positions
+            for( long k = 0; k < 3; ++k ){
+                rtnPair.zetaPlus.at<float>(i,j,k)  = posnPlus[k];
+                rtnPair.zetaMinus.at<float>(i,j,k) = posnMinus[k];
+            }
         }
     }
+
+    return rtnPair;
 }
 
 
