@@ -398,8 +398,18 @@ class Corona_Data_FITS { public:
 typedef shared_ptr<Corona_Data_FITS> CMEPtr;
 
 
+class SolnPair{ public:
+    Mat zetaPlus;
+    Mat zetaMinus;
 
-Mat calc_coords( string totalPath, string polarPath ){
+    SolnPair( int width, int height, int depth ){
+        zetaPlus  = Mat( {width, height, depth}, CV_32F, cv::Scalar(0.0) );
+        zetaMinus = Mat( {width, height, depth}, CV_32F, cv::Scalar(0.0) );
+    }
+};
+
+
+SolnPair calc_coords( string totalPath, string polarPath ){
     // Calculate 3D coordinates from polarized data
     Corona_Data_FITS tB_data{ totalPath };
     Corona_Data_FITS pB_data{ polarPath };
@@ -417,6 +427,8 @@ Mat calc_coords( string totalPath, string polarPath ){
 
     vec3f ertLoc{ 0.0f, 0.0f, 0.0f }; // Place the Earth at the origin
     vec3f sunLoc{ 0.0f, 0.0f, dSun }; // Place the Sun along the Z-axis
+
+    SolnPair rtnPair{ xDim, yDim, 3 };
 
     for( long i = 0; i < xDim; i++ ){
         for( long j = 0; j < yDim; j++ ){  
