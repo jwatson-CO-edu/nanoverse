@@ -25,6 +25,7 @@ TriNet::TriNet( uint Ntri_, uint Nvrt_, bool textured = false ){
     }
 }
 
+
 TriNet::~TriNet(){
     free(V); // ----------- Vertices: _________ Nvrt X {x,y,z}
     free(F); // ----------- Faces: ____________ Ntri X {v1,v2,v3}, CCW order
@@ -34,6 +35,7 @@ TriNet::~TriNet(){
     if(C){  free(C);  }; // Color Coords: _____ Nvrt X {x,y,z}
 };
 
+
 void TriNet::add_tri( const tri_v4f& tri ){
     uint k = verts.size()*3;;
     for( ubyte i = 0; i < 3; ++i ){
@@ -41,4 +43,9 @@ void TriNet::add_tri( const tri_v4f& tri ){
         faces.push_back( vec3u{ k+0, k+1, k+2 } );
         k += 3;
     }
+}
+
+
+void TriNet::calc_flat_shading_normals(){
+
 }

@@ -434,7 +434,7 @@ class SolnPair{ public:
 };
 
 
-SolnPair calc_coords( string totalPath, string polarPath ){
+SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNorth_rad = 0.0f ){
     // Calculate 3D coordinates from polarized data
     Corona_Data_FITS tB_data{ totalPath };
     Corona_Data_FITS pB_data{ polarPath };
@@ -463,6 +463,7 @@ SolnPair calc_coords( string totalPath, string polarPath ){
 
     mat4f xRot;
     mat4f yRot;
+    mat4f zRot = R_z( angleFromSolarNorth_rad );
 
     vec4f posnPlus;
     vec4f posnMinus;
@@ -491,10 +492,10 @@ SolnPair calc_coords( string totalPath, string polarPath ){
             xRot = R_x( j * radPerPxl + angOffset );
             // Get relative position of Near Solution
             posnPlus = vec4f{ 0.0, 0.0, dPxlPlus, 1.0 };
-            posnPlus = xRot * yRot * posnPlus;
+            posnPlus = zRot * xRot * yRot * posnPlus;
             // Get relative position of Far Solution
             posnMinus = vec4f{ 0.0, 0.0, dPxlMinus, 1.0 };
-            posnMinus = xRot * yRot * posnMinus;
+            posnMinus = zRot * xRot * yRot * posnMinus;
             // Load positions
             for( long k = 0; k < 3; ++k ){
                 rtnPair.zetaPlus.at<float>(i,j,k)  = posnPlus[k];
