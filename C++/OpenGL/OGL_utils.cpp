@@ -1,7 +1,7 @@
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 #include <cstdarg>
 
-#include "toolbox.hpp"
+#include "include/toolbox.hpp"
 
 
 
@@ -26,7 +26,7 @@ mat4f identity_mtx44f( void ){  return mat4f( 1.0f );  }
 
 ////////// POLYHEDRA ///////////////////////////////////////////////////////////////////////////////
 
-static void Vertex( int th, int ph ){
+void Vertex( int th, int ph ){
     // Draw vertex in polar coordinates
     // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
     double x = Cos(th)*Cos(ph);

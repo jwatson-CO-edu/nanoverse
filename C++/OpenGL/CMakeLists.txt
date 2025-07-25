@@ -8,7 +8,7 @@ project( NanoverseCppOpenGL )
 ########## SETTINGS ################################################################################
 
 set( CMAKE_CXX_STANDARD 17 )
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -lglut -lGLU -lGL -lm")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -no-pie -O3 -Wall -lGL -lGLU -lglut -lm")
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/.." ) # Place the exec in the root directory
 include( CMakePrintHelpers )
@@ -20,11 +20,7 @@ include( CMakePrintHelpers )
 ##### Packages #####
 find_package( PkgConfig REQUIRED )
 find_package( OpenGL REQUIRED )
-
-# Find OpenGL utilities 
-find_library(GLU_LIBRARY GLU REQUIRED)
-# Find GLUT for window management 
-find_library(GLUT_LIBRARY glut REQUIRED)
+find_package( GLUT REQUIRED )
 
 find_package( OpenCV REQUIRED )
 if( OpenCV_FOUND )
@@ -38,20 +34,22 @@ cmake_print_variables( PROJECT_SOURCE_DIR )
 ##### Local Libraries #####
 
 add_library( OGL_LIB
-             geometry.cpp
+             SHARED
+             OGL_utils.cpp
              LightSource.cpp
-            #  load_assets.cpp 
-             OGL_utils.cpp )
+             load_assets.cpp )
 
-target_include_directories( OGL_LIB PUBLIC ${OPENGL_INCLUDE_DIRS} )
+target_include_directories( OGL_LIB PUBLIC include ${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS} )
+target_link_libraries( OGL_LIB PUBLIC ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} )
 
 ########## PROGRAMS ################################################################################
 
 ##### OpenGL Toys #########################################################
 
-##### 00: Relative Pose #####
-# set( EXECUTABLE_NAME 00_restart.out )
-# add_executable( ${EXECUTABLE_NAME} 00_restart.cpp )
-# target_link_libraries( ${EXECUTABLE_NAME} OGL_LIB )
+#### 00: Relative Pose #####
+set( EXECUTABLE_NAME 00_restart.out )
+add_executable( ${EXECUTABLE_NAME} 00_restart.cpp  )
+target_include_directories( ${EXECUTABLE_NAME} PRIVATE include ${OPENGL_INCLUDE_DIRS} )
+target_link_libraries( ${EXECUTABLE_NAME} PRIVATE OGL_LIB ${OPENGL_LIBRARIES} )
 
 ##### PUNCH Solar Observatory #########################################################

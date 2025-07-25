@@ -1,5 +1,5 @@
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
-#include "toolbox.hpp"
+#include "include/toolbox.hpp"
 
 ////////// PROGRAM SETTINGS ////////////////////////////////////////////////////////////////////////
 
@@ -128,4 +128,8 @@ void draw_Moon( Planet* texMoon, int emission, float shiny ){
     }
     glDisable( GL_TEXTURE_2D );
     glPopMatrix();
+}
+
+int main(){
+    
 }
