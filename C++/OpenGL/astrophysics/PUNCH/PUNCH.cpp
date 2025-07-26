@@ -1,0 +1,251 @@
+#include "../../include/PUNCH.hpp"
+
+////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
+
+void load_arr( addr coords, long* arr ){
+    // Load a `std::array` into a C array
+    arr[0] = coords[1]+1; // FITS is 1-indexed!
+    arr[1] = coords[0]+1; // FITS is column-major!
+}
+
+
+double* alloc_dbbl_arr( size_t N ){
+    double* rtnPtr = nullptr;
+    rtnPtr = (double*) malloc( sizeof( double ) * N );
+    return rtnPtr;
+}
+
+
+vstr split_string_on_char( string input, char ch ){
+    // Return a vector of strings found in `input` separated by whitespace
+    vstr   rtnWords;
+    string currWord;
+    char   currChar;
+    input += ch; // Separator hack
+
+    for( char& currChar : input ){
+        if( currChar == ch ){
+            if( currWord.length() > 0 )  rtnWords.push_back( currWord );
+            currWord = "";
+        }else{
+            currWord += currChar;
+        }
+    }
+    return rtnWords; 
+}
+
+
+vstr list_files_at_path( string path, bool sortAlpha ){
+    // List all the files found at a path
+    vstr   rtnNams;
+    string path_i;
+    for (const auto & entry : directory_iterator( path ) ){  
+        path_i = entry.path().string();
+        rtnNams.push_back( path_i );  
+    }
+    if( sortAlpha )  std::sort( rtnNams.begin(),rtnNams.end() );
+    return rtnNams;
+}
+
+
+string to_upper( string input ){
+    // Return a version of the string that is upper case
+    string output;
+    for( char& c : input ){ output += toupper( c ); }
+    return output;
+}
+
+
+bool file_has_ext( string path, string ext ){
+    // Return true if a file has a 
+    vector<string> parts = split_string_on_char( path, '.' );
+    // cout << "There are " << parts.size() << " segments!" << endl;
+    return (to_upper( parts[ parts.size()-1 ] ) == to_upper( ext ));
+}
+
+
+vstr list_files_at_path_w_ext( string path, string ext, bool sortAlpha ){
+    vstr allPaths = list_files_at_path( path, sortAlpha );
+    vstr rtnPaths;
+    for( string fPath : allPaths ){
+        if( file_has_ext( fPath, ext ) )
+            rtnPaths.push_back( string( fPath ) );
+    }
+    return rtnPaths;
+}
+
+
+mat4f R_x( float theta ){
+    mat4f rtnMtx = mat4f{ 1.0 };
+    rotate( rtnMtx, theta, vec3f{ 1.0, 0.0, 0.0 } );
+    return rtnMtx;
+}
+
+
+mat4f R_y( float theta ){
+    mat4f rtnMtx = mat4f{ 1.0 };
+    rotate( rtnMtx, theta, vec3f{ 0.0, 1.0, 0.0 } );
+    return rtnMtx;
+}
+
+
+mat4f R_z( float theta ){
+    mat4f rtnMtx = mat4f{ 1.0 };
+    rotate( rtnMtx, theta, vec3f{ 0.0, 0.0, 1.0 } );
+    return rtnMtx;
+}
+
+
+void FITS_File::setup_null_pixel_values(){
+    // Set a null value for each datatype
+    nullPxlVal[ TBYTE     ] = &TBYTE_NULL;
+    nullPxlVal[ TSBYTE    ] = &TSBYTE_NULL;
+    nullPxlVal[ TSHORT    ] = &TSHORT_NULL;
+    nullPxlVal[ TUSHORT   ] = &TUSHORT_NULL;
+    nullPxlVal[ TINT      ] = &TINT_NULL;
+    nullPxlVal[ TUINT     ] = &TUINT_NULL;
+    nullPxlVal[ TLONG     ] = &TLONG_NULL;
+    nullPxlVal[ TLONGLONG ] = &TLONGLONG_NULL;
+    nullPxlVal[ TULONG    ] = &TULONG_NULL;
+    nullPxlVal[ TFLOAT    ] = &TFLOAT_NULL;
+    nullPxlVal[ TDOUBLE   ] = &TDOUBLE_NULL;
+}
+
+size_t FITS_File::get_elem_size(){
+    // Get the size in bytes of each element
+    switch( datatype ){
+        case TBYTE:     return sizeof( unsigned char );
+        case TSBYTE:    return sizeof( signed char );
+        case TSHORT:    return sizeof( signed short );
+        case TUSHORT:   return sizeof( unsigned short );
+        case TINT: /**/ return sizeof( signed int );
+        case TUINT:     return sizeof( unsigned int );
+        case TLONG:     return sizeof( signed long );
+        case TLONGLONG: return sizeof( signed long long );
+        case TULONG:    return sizeof( unsigned long );
+        case TFLOAT:    return sizeof( float );
+        case TDOUBLE:   return sizeof( double );
+        default: /*--*/ return 0;
+    }
+}
+
+void FITS_File::report_status( string prefix ){  
+    /* print any error messages */
+    if( verbose ){
+        if( prefix.size() == 0 ){  cout << "Status: ";  }else{  cout << prefix << ": ";  }
+        if( status ){  fits_report_error( stderr, status );  }else{ cout << "No error!";  }
+        cout << endl;
+    }
+} 
+
+void FITS_File::get_HDU_value( string key, int datatype_, void *value ){
+    // Fetch a Header Data Unit value 
+    char* comment = nullptr;
+    fits_read_key( fptr, datatype_, key.c_str(),
+                    value, comment, &status);
+    if( verbose && (comment != nullptr) ){  cout << key << ", Comment: " << comment << endl;  } 
+}
+
+double FITS_File::float_HDU_as_double( string key ){
+    float fltVal;
+    get_HDU_value( key, TFLOAT, &fltVal );
+    if( verbose ){  cout << "For \"" << key << "\", got " << fltVal << " --> " << (double) fltVal << endl;  }
+    return (double) fltVal;
+}
+
+float FITS_File::float_HDU( string key ){
+    // Fetch a Header Data Unit float and return as double
+    float fltVal;
+    get_HDU_value( key, TFLOAT, &fltVal );
+    if( verbose ){  cout << "For \"" << key << "\", got " << fltVal << " --> " << (double) fltVal << endl;  }
+    return fltVal;
+}
+
+FITS_File::FITS_File( string path_ ){
+    // Open FITS at path and init params
+    status  = 0; /* MUST initialize status */
+    path    = path_;
+    pxlAdr  = (long*) malloc( sizeof( long ) * 2 );
+    fits_open_file( &fptr, path.c_str(), READONLY, &status );
+    fits_get_hdrspace( fptr, &nkeys, NULL, &status );
+    cards.reserve( nkeys );
+    fits_get_img_type( fptr, &datatype, &status );
+    switch( datatype ){
+        case -32:
+            datatype = TFLOAT;
+            break;
+        default:
+            // datatype = TBYTE;
+            break;
+    }
+    cout << "Data Type: " << datatype << endl;
+    report_status( "Image Type" );
+    fits_get_img_dim( fptr, &Naxes, &status );
+    if( verbose ){  
+        display_keys();  
+        cout << "There are " << Naxes << " axes." << endl;
+    }
+    axisDim = (int*) malloc( sizeof( long ) * Naxes );
+    for( int i = 0; i < Naxes; ++i ){
+        string key = "NAXIS" + to_string(i+1);
+        get_HDU_value( key, TINT, &axisDim[i] );
+        if( verbose ){  cout << key << " = " << axisDim[i] << ", ";  }
+    }
+    cout << endl;
+    report_status( "Image Dims" );
+}
+
+FITS_File::~FITS_File(){  
+    // Free all dyn mem
+    close(); // Frees the pointer
+    if( dataArr ){  free( dataArr );  }
+    if( axisDim ){  free( axisDim );  }
+    for( char* card : cards ){  if( card ){  free( card );  }  }
+}
+
+void FITS_File::display_keys(){
+    // Load the string cards
+    for( int ii = 0; ii < nkeys; ii++ ){ 
+        cards[ii] = (char*) malloc( sizeof( char ) * FLEN_CARD );
+        if( cards[ii] == NULL ){  break;  }
+        fits_read_record( fptr, ii, cards[ii], &status ); /* read keyword */
+        printf( "key %i: %s\n", ii, cards[ii] );
+    }
+    report_status( "Obtained HDU Keys" );
+}
+
+// Get the extent of the dimension
+long FITS_File::get_dim( int index ){  if( index < Naxes ) return (long) axisDim[ index ]; else return 0;  }
+
+void FITS_File::close(){
+    // Close the file
+    fits_close_file( fptr, &status );
+    report_status( "FILE CLOSE" );
+}
+
+bool FITS_File::malloc_arr( size_t Nelems ){
+    // Make space for a bulk pixel fetch
+    if( dataArr ){  free( dataArr );  }
+    dataArr = malloc( get_elem_size() * Nelems );
+    return (bool) dataArr;
+}
+
+void* FITS_File::fetch_pixel_data( addr coords, long nelements ){
+    // Wrapper to fetch pixel data from the FITS, return a pointer to the array
+    int p_hasNull = 0;
+    load_arr( coords, pxlAdr );
+    if( !malloc_arr( nelements ) ){  return nullptr;  }
+    fits_read_pix( fptr, datatype, pxlAdr, 
+                    nelements, nullPxlVal[ datatype ], 
+                    dataArr, 
+                    &p_hasNull, &status);
+    if( p_hasNull ){  cout << "Some pixels are NULL!" << endl;  }
+    return dataArr;
+}
+
+void* FITS_File::fetch_row( long row ){
+    // Get data from an entire row
+    if( (row > -1) && (row < get_dim(0)) ){
+        return fetch_pixel_data( {row, 0}, (long) get_dim(1) );
+    }else{  return nullptr;  }
+}

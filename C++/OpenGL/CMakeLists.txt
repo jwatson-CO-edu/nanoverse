@@ -46,10 +46,12 @@ target_link_libraries( OGL_LIB PUBLIC ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} )
 
 ##### OpenGL Toys #########################################################
 
-#### 00: Relative Pose #####
+#### 00: Compilation Test #####
 set( EXECUTABLE_NAME 00_restart.out )
 add_executable( ${EXECUTABLE_NAME} 00_restart.cpp  )
 target_include_directories( ${EXECUTABLE_NAME} PRIVATE include ${OPENGL_INCLUDE_DIRS} )
 target_link_libraries( ${EXECUTABLE_NAME} PRIVATE OGL_LIB ${OPENGL_LIBRARIES} )
+
+#### 01: Data Visualization Test #####
 
 ##### PUNCH Solar Observatory #########################################################

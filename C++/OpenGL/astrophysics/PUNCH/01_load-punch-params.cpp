@@ -360,7 +360,6 @@ typedef shared_ptr<FITS_File> FitsPtr;
 
 
 
-
 ////////// CUSTOM DATA FRAME ///////////////////////////////////////////////////////////////////////
 
 class Corona_Data_FITS { public:
@@ -503,10 +502,8 @@ SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNo
             }
         }
     }
-
     return rtnPair;
 }
-
 
 
 
