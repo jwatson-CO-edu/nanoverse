@@ -96,6 +96,8 @@ mat4f R_z( float theta ){
 }
 
 
+////////// FITS ////////////////////////////////////////////////////////////////////////////////////
+
 void FITS_File::setup_null_pixel_values(){
     // Set a null value for each datatype
     nullPxlVal[ TBYTE     ] = &TBYTE_NULL;
@@ -248,4 +250,125 @@ void* FITS_File::fetch_row( long row ){
     if( (row > -1) && (row < get_dim(0)) ){
         return fetch_pixel_data( {row, 0}, (long) get_dim(1) );
     }else{  return nullptr;  }
+}
+
+
+Corona_Data_FITS::Corona_Data_FITS( string fitsPath ){
+    // Load all params relevent to 3D CME reconstruction
+    dataFileFITS = FitsPtr{ new FITS_File{ fitsPath } };    
+    xRefPxlVal   = dataFileFITS->float_HDU( "CRVAL1" );    
+    yRefPxlVal   = dataFileFITS->float_HDU( "CRVAL2" );    
+    xRadPerPxl   = dataFileFITS->float_HDU( "CDELT1" );    
+    yRadPerPxl   = dataFileFITS->float_HDU( "CDELT2" );    
+    img /*----*/ = Mat( cv::Size( (int) dataFileFITS->get_dim(0), (int) dataFileFITS->get_dim(1) ), CV_32F, cv::Scalar(0.0) );
+    shw /*----*/ = Mat( cv::Size( (int) dataFileFITS->get_dim(0), (int) dataFileFITS->get_dim(1) ), CV_8U , cv::Scalar(0)   );
+    xDim   = dataFileFITS->get_dim(0);
+    yDim   = dataFileFITS->get_dim(1);
+    float* row_i = nullptr;
+    
+    float span   =  0.0f;
+    for( long i = 0; i < xDim; i++ ){
+        row_i = (float*) dataFileFITS->fetch_row(i);
+        for( long j = 0; j < yDim; j++ ){  
+            img.at<float>(i,j) = row_i[j]; 
+            dataFileFITS->valMin = min( row_i[j], dataFileFITS->valMin );
+            dataFileFITS->valMax = max( row_i[j], dataFileFITS->valMax );
+        }
+    }
+    /// Debug Info! ///
+    cout << "Value Range: [" << dataFileFITS->valMin << ", " << dataFileFITS->valMax << "]" << endl;
+    span = dataFileFITS->valMax - dataFileFITS->valMin;
+    for( long i = 0; i < xDim; i++ ){
+        for( long j = 0; j < yDim; j++ ){  
+            shw.at<unsigned char>(i,j) = static_cast<unsigned char>((img.at<float>(i,j)-dataFileFITS->valMin)/span*255.0);
+        }
+    }
+    vstr   pathParts = split_string_on_char( fitsPath    , '.' );
+    /*--*/ pathParts = split_string_on_char( pathParts[0], '/' );
+    string pngPath;   
+    if( pathParts.size() >= 2 )
+        pngPath = "output/" + pathParts[ pathParts.size()-2 ] + "+++" + pathParts[ pathParts.size()-1 ] + ".png";
+    else if( pathParts.size() >= 1 )
+        pngPath = "output/" + pathParts[ pathParts.size()-1 ] + ".png";
+    else
+        pngPath = "output/Test.png";
+    cv::imwrite( pngPath, shw );
+}
+
+
+
+////////// CORONAL MASS EJECTION 3D MAPPING ////////////////////////////////////////////////////////
+
+SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNorth_rad, float cutoffFrac ){
+    // Calculate 3D coordinates from polarized data
+    Corona_Data_FITS tB_data{ totalPath };
+    Corona_Data_FITS pB_data{ polarPath };
+    // Reconstruction params
+    long  xDim /*---*/ = tB_data.dataFileFITS->get_dim(0);
+    long  yDim /*---*/ = tB_data.dataFileFITS->get_dim(1);
+    long  hDim /*---*/ = yDim / 2;
+    float pxFromCenter = 0.0f;
+    float epsilon /**/ = 0.0f;
+    float pB_over_tB   = 0.0;
+    float bRatio /*-*/ = 0.0f;
+    float angOffset    = tB_data.xRefPxlVal;
+    float radPerPxl    = tB_data.xRadPerPxl;
+    float zetaPlus     = 0.0f;
+    float zetaMinus    = 0.0f;
+    float Op_sky /*-*/ = 0.0f;
+    float Ad_oos /*-*/ = 0.0f;
+    float dThom /*--*/ = 0.0f;
+    float dPxlPlus     = 0.0f;
+    float dPxlMinus    = 0.0f;
+    float dTilt /*--*/ = 0.0f;
+    float tThresh /**/ = tB_data.dataFileFITS->valMin * (tB_data.dataFileFITS->valMax - tB_data.dataFileFITS->valMin) * cutoffFrac;
+    // Locations
+    vec4f ertLoc{ 0.0f, 0.0f, 0.0f /*--*/ , 1.0f }; // Place the Earth at the origin
+    vec4f sunLoc{ 0.0f, 0.0f, tB_data.dSun, 1.0f }; // Place the Sun along the Z-axis
+    vec4f posnPlus;
+    vec4f posnMinus;
+    // Rotation matrices
+    mat4f xRot;
+    mat4f yRot;
+    mat4f zRot = R_z( angleFromSolarNorth_rad );
+    // Return Struct
+    SolnPair rtnPair{ xDim, yDim, 3 };
+
+    // Perform 
+    for( long i = 0; i < xDim; i++ ){
+        // Get Y rotation of the column
+        yRot = R_y( i * radPerPxl + angOffset );
+        for( long j = 0; j < yDim; j++ ){  
+            // Skip pixels w v small values
+            if( tB_data.img.at<float>(i,j) < tThresh ){  continue;  } 
+            // Get angle to object and distance to Thompson Surface
+            pB_over_tB   = pB_data.img.at<float>(i,j) / tB_data.img.at<float>(i,j);
+            pxFromCenter = sqrt( pow( abs( i-hDim ), 2.0f ) + pow( abs( j-hDim ), 2.0f ) );
+            epsilon /**/ = pxFromCenter * radPerPxl;
+            dThom /*--*/ = tB_data.dSun * cos( epsilon );
+            // Get possible Out-of-Sky angles: zeta
+            bRatio    = sqrt( (1.0f - pB_over_tB) / (1.0f + pB_over_tB) );
+            zetaPlus  = epsilon + asin(  bRatio );
+            zetaMinus = epsilon + asin( -bRatio );
+            // Get possible distances from sensor
+            Op_sky    = tB_data.dSun * tan( epsilon );
+            Ad_oos    = Op_sky * cos( epsilon );
+            dPxlPlus  = dThom + Ad_oos * tan( zetaPlus  - epsilon );
+            dPxlMinus = dThom + Ad_oos * tan( zetaMinus - epsilon );
+            // Get X rotation of the row
+            xRot = R_x( j * radPerPxl + angOffset );
+            // Get relative position of Near Solution
+            posnPlus = vec4f{ 0.0, 0.0, dPxlPlus, 1.0 };
+            posnPlus = zRot * xRot * yRot * posnPlus;
+            // Get relative position of Far Solution
+            posnMinus = vec4f{ 0.0, 0.0, dPxlMinus, 1.0 };
+            posnMinus = zRot * xRot * yRot * posnMinus;
+            // Load positions
+            for( long k = 0; k < 3; ++k ){
+                rtnPair.zetaPlus.at<float>(i,j,k)  = posnPlus[k];
+                rtnPair.zetaMinus.at<float>(i,j,k) = posnMinus[k];
+            }
+        }
+    }
+    return rtnPair;
 }

@@ -94,6 +94,8 @@ class FITS_File { public:
     int /*-----*/ datatype;
     int /*-----*/ Naxes;
     bool /*----*/ verbose = true;
+    float /*---*/ valMin  =  1e9f;
+    float /*---*/ valMax  = -1e9f;
     
     /// Null Values ///
     map<int,void*>   nullPxlVal;
@@ -128,5 +130,49 @@ class FITS_File { public:
     void* fetch_row( long row ); // Get data from an entire row
 };
 typedef shared_ptr<FITS_File> FitsPtr;
+
+
+
+////////// CUSTOM DATA FRAME ///////////////////////////////////////////////////////////////////////
+
+class Corona_Data_FITS { public:
+    // Container for 3D CME reconstuction data and params
+    FitsPtr dataFileFITS = nullptr; // Pointer to the FITS wrapper
+    long  xDim; // ----------------- Number of columns
+    long  yDim; // ----------------- Number of rows
+    float xRefPxlVal; // ----------- Reference Pixel Value, X
+    float yRefPxlVal; // ----------- Reference Pixel Value, Y
+    float xRadPerPxl; // ----------- Radians per Pixel, X
+    float yRadPerPxl; // ----------- Radians per Pixel, Y
+    float dToSun; // --------------- Distance to Sun
+    float radSun; // --------------- Radius of Sun
+    float obsLat; // --------------- Observer Latitude
+    float obsLng; // --------------- Observer Longitude
+    float dSun; // ----------------- Distance to the sun [Solar Radii]
+    
+    Mat   img; // ------------------ Unpacked Image Data
+    Mat   shw; // ------------------ Debug Image Data (Greyscale, Offset & Scaled)
+
+    Corona_Data_FITS( string fitsPath ); // Load all params relevent to 3D CME reconstruction
+};
+typedef shared_ptr<Corona_Data_FITS> CMEPtr;
+
+
+
+////////// CORONAL MASS EJECTION 3D MAPPING ////////////////////////////////////////////////////////
+
+class SolnPair{ public:
+    // Container for near and far solutions for each pixel
+    Mat zetaPlus;
+    Mat zetaMinus;
+
+    SolnPair( int width, int height, int depth ){
+        zetaPlus  = Mat( {width, height, depth}, CV_32F, cv::Scalar(0.0) );
+        zetaMinus = Mat( {width, height, depth}, CV_32F, cv::Scalar(0.0) );
+    }
+};
+
+// Calculate 3D coordinates from polarized data
+SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNorth_rad = 0.0f, float cutoffFrac = 0.5f );
 
 #endif

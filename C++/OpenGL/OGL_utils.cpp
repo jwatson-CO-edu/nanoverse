@@ -94,3 +94,22 @@ void Project( double fov, double asp, double dim ){
     //  Undo previous transformations
     glLoadIdentity();
 }
+
+
+
+////////// OPENGL POINTS //////////////////////////////////////////////////////////////////////////
+
+void glVtx4f( const vec4f v ){  glVertex4f( v.x , v.y , v.z, v.w );  } // Set vertex with a vector
+void glNrm4f( const vec4f n ){  glNormal3f( n.x , n.y , n.z      );  } // Set normal with a vector
+void glClr4f( const vec4f c ){  glColor4f(  c.r , c.g , c.b, c.a );  } // Set color with a vector
+
+
+
+////////// CAMERA //////////////////////////////////////////////////////////////////////////////////
+
+void look( const Camera3D camera ){
+    // Set camera position, target, and orientation
+    gluLookAt( (double) camera.eyeLoc[0], (double) camera.eyeLoc[1], (double) camera.eyeLoc[2],  
+               (double) camera.lookPt[0], (double) camera.lookPt[1], (double) camera.lookPt[2],  
+               (double) camera.upVctr[0], (double) camera.upVctr[1], (double) camera.upVctr[2] );
+}

@@ -86,8 +86,26 @@ void Vertex( int th, int ph );
 ////////// OPENGL SYSTEM ///////////////////////////////////////////////////////////////////////////
 void ErrCheck( const char* where );
 void Fatal( const char* format , ... );
-void Print(const char* format , ...);
+void Print( const char* format , ... );
 void Project( double fov, double asp, double dim );
+
+
+////////// OPENGL POINTS //////////////////////////////////////////////////////////////////////////
+void glVtx4f( const vec4f v ); // Set vertex with a vector
+void glNrm4f( const vec4f n ); // Set normal with a vector
+void glClr4f( const vec4f c ); // Set color with a vector
+
+
+////////// CAMERA //////////////////////////////////////////////////////////////////////////////////
+
+struct Camera3D{
+    // Camera state goes here
+    vec3f eyeLoc; // Camera location (world frame)
+    vec3f lookPt; // Focus of camera (world frame)
+    vec3f upVctr; // Direction of "up"
+};
+
+void look( const Camera3D camera ); // Set camera position, target, and orientation
 
 
 
@@ -97,7 +115,7 @@ void Project( double fov, double asp, double dim );
 // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
 
 unsigned int LoadTexBMP( const char* file );
-int  LoadOBJ( const char* file );
+int /*----*/ LoadOBJ( const char* file );
 
 
 

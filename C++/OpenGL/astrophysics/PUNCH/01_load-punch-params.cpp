@@ -365,6 +365,8 @@ typedef shared_ptr<FITS_File> FitsPtr;
 class Corona_Data_FITS { public:
     // Container for 3D CME reconstuction data and params
     FitsPtr dataFileFITS = nullptr; // Pointer to the FITS wrapper
+    long  xDim; // ----------------- Number of columns
+    long  yDim; // ----------------- Number of rows
     float xRefPxlVal; // ----------- Reference Pixel Value, X
     float yRefPxlVal; // ----------- Reference Pixel Value, Y
     float xRadPerPxl; // ----------- Radians per Pixel, X
@@ -373,6 +375,7 @@ class Corona_Data_FITS { public:
     float radSun; // --------------- Radius of Sun
     float obsLat; // --------------- Observer Latitude
     float obsLng; // --------------- Observer Longitude
+    float dSun; // ----------------- Distance to the sun [Solar Radii]
     Mat   img; // ------------------ Unpacked Image Data
     Mat   shw; // ------------------ Debug Image Data (Greyscale, Offset & Scaled)
 
@@ -385,8 +388,9 @@ class Corona_Data_FITS { public:
         yRadPerPxl   = dataFileFITS->float_HDU( "CDELT2" );    
         img /*----*/ = Mat( cv::Size( (int) dataFileFITS->get_dim(0), (int) dataFileFITS->get_dim(1) ), CV_32F, cv::Scalar(0.0) );
         shw /*----*/ = Mat( cv::Size( (int) dataFileFITS->get_dim(0), (int) dataFileFITS->get_dim(1) ), CV_8U , cv::Scalar(0)   );
-        long  xDim   = dataFileFITS->get_dim(0);
-        long  yDim   = dataFileFITS->get_dim(1);
+        xDim /*---*/ = dataFileFITS->get_dim(0);
+        yDim /*---*/ = dataFileFITS->get_dim(1);
+        dSun /*---*/ = dataFileFITS->float_HDU( "OBS_R0" );  
         float* row_i = nullptr;
         float valMin =  1e9f;
         float valMax = -1e9f;
@@ -422,6 +426,8 @@ class Corona_Data_FITS { public:
 typedef shared_ptr<Corona_Data_FITS> CMEPtr;
 
 
+////////// CORONAL MASS EJECTION 3D MAPPING ////////////////////////////////////////////////////////
+
 class SolnPair{ public:
     Mat zetaPlus;
     Mat zetaMinus;
@@ -431,6 +437,9 @@ class SolnPair{ public:
         zetaMinus = Mat( {width, height, depth}, CV_32F, cv::Scalar(0.0) );
     }
 };
+
+
+
 
 
 SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNorth_rad = 0.0f ){
@@ -444,7 +453,6 @@ SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNo
     float epsilon = 0.0f;
     float pB_over_tB = 0.0;
     float bRatio /**/  = 0.0f;
-    float dSun = tB_data.dataFileFITS->float_HDU( "OBS_R0" );  
     float angOffset = tB_data.xRefPxlVal;
     float radPerPxl = tB_data.xRadPerPxl;
 
@@ -457,8 +465,8 @@ SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNo
     float dPxlMinus /*---*/ = 0.0f;
     float dTilt /*---*/ = 0.0f;
 
-    vec4f ertLoc{ 0.0f, 0.0f, 0.0f, 1.0f }; // Place the Earth at the origin
-    vec4f sunLoc{ 0.0f, 0.0f, dSun, 1.0f }; // Place the Sun along the Z-axis
+    vec4f ertLoc{ 0.0f, 0.0f, 0.0f /*--*/ , 1.0f }; // Place the Earth at the origin
+    vec4f sunLoc{ 0.0f, 0.0f, tB_data.dSun, 1.0f }; // Place the Sun along the Z-axis
 
     mat4f xRot;
     mat4f yRot;
@@ -477,13 +485,13 @@ SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNo
             pB_over_tB   = pB_data.img.at<float>(i,j) / tB_data.img.at<float>(i,j);
             pxFromCenter = sqrt( pow( abs( i-hDim ), 2.0f ) + pow( abs( j-hDim ), 2.0f ) );
             epsilon /**/ = pxFromCenter * radPerPxl;
-            dThom /*--*/ = dSun * cos( epsilon );
+            dThom /*--*/ = tB_data.dSun * cos( epsilon );
             // Get possible Out-of-Sky angles: zeta
             bRatio    = sqrt( (1.0f - pB_over_tB) / (1.0f + pB_over_tB) );
             zetaPlus  = epsilon + asin(  bRatio );
             zetaMinus = epsilon + asin( -bRatio );
             // Get possible distances from sensor
-            Op_sky    = dSun   * tan( epsilon );
+            Op_sky    = tB_data.dSun * tan( epsilon );
             Ad_oos    = Op_sky * cos( epsilon );
             dPxlPlus  = dThom + Ad_oos * tan( zetaPlus  - epsilon );
             dPxlMinus = dThom + Ad_oos * tan( zetaMinus - epsilon );
