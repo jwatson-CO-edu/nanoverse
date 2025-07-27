@@ -33,7 +33,7 @@ lseg4f point_cross( const vec4f pnt, float width_m ){
     cross.push_back( seg4f{
         pnt + vec4f{ 0.0, 0.0, wHlf, 1.0 },
         pnt - vec4f{ 0.0, 0.0, wHlf, 1.0 }
-    } );
+    } ); 
     return cross;
 }
 
