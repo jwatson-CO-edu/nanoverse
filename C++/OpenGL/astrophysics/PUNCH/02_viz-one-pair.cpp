@@ -119,6 +119,18 @@ void display(){
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 int main( int argc, char* argv[] ){
+    ///// Make Calculations ///////////////////////////////////////////////
+    // 0. Load
+    string tPath = "/home/james/nanoverse/C++/OpenGL/astrophysics/data/cme0_dcmer_0000_bang_0000_tB/stepnum_005.fits";
+    string pPath = "/home/james/nanoverse/C++/OpenGL/astrophysics/data/cme0_dcmer_0000_bang_0000_pB/stepnum_005.fits";
+    // 1. Solve
+    SolnPair solnOne = calc_coords( tPath, pPath, 0.0f, 0.50f );
+    // 2. Near Points
+    // 3. Far Points
+    // 4. Color Change && Rays
+    // 5. Setup OpenGL
+    // 6. Render
+
 
     ///// Initialize GLUT /////////////////////////////////////////////////
     glutInit( &argc , argv );
@@ -134,22 +146,9 @@ int main( int argc, char* argv[] ){
     glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
     
     glEnable( GL_CULL_FACE );
-    //  OpenGL should normalize normal vectors
+    // OpenGL should normalize normal vectors
 	glEnable( GL_NORMALIZE );
     glDepthRange( 0.0f , 1.0f ); 
     glEnable( GL_BLEND );
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-
-
-    ///// Make Calculations ///////////////////////////////////////////////
-    // 0. Load
-    string tPath = "/home/james/nanoverse/C++/OpenGL/astrophysics/data/cme0_dcmer_0000_bang_0000_tB/stepnum_005.fits";
-    string pPath = "/home/james/nanoverse/C++/OpenGL/astrophysics/data/cme0_dcmer_0000_bang_0000_pB/stepnum_005.fits";
-    // 1. Solve
-    SolnPair solnOne = calc_coords( tPath, pPath, 0.0f, 0.50f );
-    // 2. Near Points
-    // 3. Far Points
-    // 4. Color Change && Rays
-    // 5. Setup OpenGL
-    // 6. Render
 }
