@@ -47,6 +47,17 @@ typedef vec4 /*----*/ vec4f;
 typedef mat4 /*----*/ mat4f;
 
 
+////////// GLOBAL SETTINGS /////////////////////////////////////////////////////////////////////////
+extern float _DRAW_DIST_MIN = 50.0f / 16.0f; // Scale Dimension
+extern float _DRAW_DIST_MAX = 50.0f * 16.0f; // Scale Dimension
+extern int   _FOV_DEG /*-*/ =   55; // - Field of view (for perspective)
+extern float _TARGET_FPS    =   60.0f; // Desired framerate
+extern int   _WINDOW_W /**/ = 1200;
+extern int   _WINDOW_H /**/ =  900;
+extern float _ASPECT_RAT    =    0.0f; // Aspect ratio
+
+
+
 ////////// VECTOR STRUCTS //////////////////////////////////////////////////////////////////////////
 
 typedef struct{
@@ -87,7 +98,10 @@ void Vertex( int th, int ph );
 void ErrCheck( const char* where );
 void Fatal( const char* format , ... );
 void Print( const char* format , ... );
-void Project( double fov, double asp, double dim );
+void project(); // ----------------------- Set projection
+void reshape( int width , int height ); // GLUT calls this routine when the window is resized
+void inline clear_screen(); // ----------- Erase the window and the depth buffer
+
 
 
 ////////// OPENGL POINTS //////////////////////////////////////////////////////////////////////////
@@ -98,14 +112,20 @@ void glClr4f( const vec4f c ); // Set color with a vector
 
 ////////// CAMERA //////////////////////////////////////////////////////////////////////////////////
 
-struct Camera3D{
+class Camera3D{ public:
     // Camera state goes here
     vec3f eyeLoc; // Camera location (world frame)
     vec3f lookPt; // Focus of camera (world frame)
     vec3f upVctr; // Direction of "up"
+
+    Camera3D( const vec3f& eyePsn, const vec3f& lukPnt, const vec3f& upDrct );
+
+    void look(); // Set camera position, target, and orientation
+    void move_to( const vec3f& eyePsn );
+    void look_at( const vec3f& lukPnt );
 };
 
-void look( const Camera3D camera ); // Set camera position, target, and orientation
+
 
 
 

@@ -61,7 +61,7 @@ void Fatal( const char* format , ... ){
 }
 
 
-void Print(const char* format , ...){
+void Print( const char* format , ... ){
     // Print raster letters to the viewport
     // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
     char    buf[LEN];
@@ -76,22 +76,42 @@ void Print(const char* format , ...){
 }
 
 
-void Project( double fov, double asp, double dim ){
-    // Set projection
-    // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
-    // 1. Tell OpenGL we want to manipulate the projection matrix
-    glMatrixMode( GL_PROJECTION );
-    // 2. Undo previous transformations
-    glLoadIdentity();
-    // 3. Perspective transformation
-    if( fov )
-        gluPerspective( fov, asp, dim/16, 16*dim );
-    // 4. Orthogonal transformation
-    else
-        glOrtho( -asp*dim, asp*dim, -dim, +dim, -dim, +dim );
-    //  Switch to manipulating the model matrix
-    glMatrixMode( GL_MODELVIEW );
-    //  Undo previous transformations
+void project(){
+	// Set projection
+	// Adapted from code provided by Willem A. (Vlakkies) Schreüder  
+	// NOTE: This function assumes that aspect rario will be computed by 'resize'
+	// 1. Tell OpenGL we want to manipulate the projection matrix
+	glMatrixMode( GL_PROJECTION );
+	// Undo previous transformations
+	glLoadIdentity();
+	gluPerspective( _FOV_DEG , // ------ Field of view angle, in degrees, in the y direction.
+					_ASPECT_RAT , // ----------- Aspect ratio , the field of view in the x direction. Ratio of x (width) to y (height).
+					_DRAW_DIST_MIN , //- Specifies the distance from the viewer to the near clipping plane (always positive).
+					_DRAW_DIST_MAX ); // Specifies the distance from the viewer to the far clipping plane (always positive).
+	// 2. Switch back to manipulating the model matrix
+	glMatrixMode( GL_MODELVIEW );
+	// 3. Undo previous transformations
+	glLoadIdentity();
+}
+
+
+void reshape( int width , int height ){
+	// GLUT calls this routine when the window is resized
+    // Adapted from code provided by Willem A. (Vlakkies) Schreüder  
+	// 1. Calc the aspect ratio: width to the height of the window
+	_ASPECT_RAT = ( height > 0 ) ? (float) width / height : 1;
+	// 2. Set the viewport to the entire window
+	glViewport( 0 , 0 , width , height );
+	// 3. Set projection
+	project();
+}
+
+
+void inline clear_screen(){
+    // Erase the window and the depth buffer
+    glClearDepth( 1.0f );
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
+    glEnable( GL_DEPTH_TEST );
     glLoadIdentity();
 }
 
@@ -107,9 +127,20 @@ void glClr4f( const vec4f c ){  glColor4f(  c.r , c.g , c.b, c.a );  } // Set co
 
 ////////// CAMERA //////////////////////////////////////////////////////////////////////////////////
 
-void look( const Camera3D camera ){
-    // Set camera position, target, and orientation
-    gluLookAt( (double) camera.eyeLoc[0], (double) camera.eyeLoc[1], (double) camera.eyeLoc[2],  
-               (double) camera.lookPt[0], (double) camera.lookPt[1], (double) camera.lookPt[2],  
-               (double) camera.upVctr[0], (double) camera.upVctr[1], (double) camera.upVctr[2] );
+Camera3D::Camera3D( const vec3f& eyePsn, const vec3f& lukPnt, const vec3f& upDrct ){
+    eyeLoc = eyePsn;
+    lookPt = lukPnt;
+    upVctr = upDrct;    
 }
+
+
+void Camera3D::look(){
+    // Set camera position, target, and orientation
+    gluLookAt( (double) eyeLoc[0], (double) eyeLoc[1], (double) eyeLoc[2],  
+               (double) lookPt[0], (double) lookPt[1], (double) lookPt[2],  
+               (double) upVctr[0], (double) upVctr[1], (double) upVctr[2] );
+}
+
+
+void Camera3D::move_to( const vec3f& eyePsn ){  eyeLoc = eyePsn;  }
+void Camera3D::look_at( const vec3f& lukPnt ){  lookPt = lukPnt;  }

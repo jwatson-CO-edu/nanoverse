@@ -6,6 +6,7 @@
 using std::list;
 /// Local ///
 #include "../include/PUNCH.hpp"
+#include "../include/toolbox.hpp"
 
 ///// Aliases /////////////////////////////////////////////////////////////
 typedef array<vec4f,2> seg4f;
@@ -78,14 +79,69 @@ lseg4f extract_point_rays_from_origin( const Mat& matx, float sqrThresh = 2.0f )
 
 
 
+////////// RENDERING ///////////////////////////////////////////////////////////////////////////////
+
+void draw_segments( const lseg4f& segments, const vec4f& color ){
+    // Draw a collection of segments
+    glClr4f( color );
+    glBegin( GL_LINE );
+    for( const seg4f& segment : segments ){
+        glVtx4f( segment[0] );
+        glVtx4f( segment[1] );
+    }
+    glEnd();
+}
+
+
+
 ////////// VARIABLES ///////////////////////////////////////////////////////////////////////////////
-lseg4f pointPaint;
-lseg4f camRays;
+lseg4f   pointPaint;
+lseg4f   camRays;
+vec4f    pointColor{ 255.0f/255.0f, 229.0f/255.0f, 115.0f/255.0f, 1.0f };
+vec4f    rayColor{   128.0f/255.0f, 128.0f/255.0f, 128.0f/255.0f, 0.5f };
+Camera3D cam{ vec3f{ 0.0f, 0.0f, 100.0f }, vec3f{ 0.0f, 0.0f, 200.0f }, vec3f{ 0.0f, 1.0f, 0.0f } };
+
+
+
+////////// RENDERING ///////////////////////////////////////////////////////////////////////////////
+
+void display(){
+    // Refresh display
+
+    // Erase the window and the depth buffer
+    clear_screen();
+
+    draw_segments( pointPaint, pointColor );
+    draw_segments( camRays   , rayColor );
+}
 
 
 
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 int main( int argc, char* argv[] ){
+
+    ///// Initialize GLUT /////////////////////////////////////////////////
+    glutInit( &argc , argv );
+
+    // Request window with size specified in pixels
+    glutInitWindowSize( _WINDOW_W, _WINDOW_H );
+
+    // Create the window
+    glutCreateWindow( "Vertex Array Object (VAO) Test" );
+
+    // NOTE: Set modes AFTER the window / graphics context has been created!
+    // Request double buffered, true color window 
+    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
+    
+    glEnable( GL_CULL_FACE );
+    //  OpenGL should normalize normal vectors
+	glEnable( GL_NORMALIZE );
+    glDepthRange( 0.0f , 1.0f ); 
+    glEnable( GL_BLEND );
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+
+    ///// Make Calculations ///////////////////////////////////////////////
     // 0. Load
     string tPath = "/home/james/nanoverse/C++/OpenGL/astrophysics/data/cme0_dcmer_0000_bang_0000_tB/stepnum_005.fits";
     string pPath = "/home/james/nanoverse/C++/OpenGL/astrophysics/data/cme0_dcmer_0000_bang_0000_pB/stepnum_005.fits";
