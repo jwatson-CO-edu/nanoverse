@@ -166,10 +166,7 @@ class SolnPair{ public:
     Mat zetaPlus;
     Mat zetaMinus;
 
-    SolnPair( int width, int height, int depth ){
-        zetaPlus  = Mat( {width, height, depth}, CV_32F, cv::Scalar(0.0) );
-        zetaMinus = Mat( {width, height, depth}, CV_32F, cv::Scalar(0.0) );
-    }
+    SolnPair( int width, int height, int depth );
 };
 
 // Calculate 3D coordinates from polarized data

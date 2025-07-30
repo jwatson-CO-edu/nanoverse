@@ -8,6 +8,15 @@ std::ostream& operator<<( std::ostream& os , const vec4f& arr ){
 	return os;
 }
 
+std::ostream& operator<<( std::ostream& os , const mat4f& arr ){
+    for( ubyte i = 0; i < 4; ++i ){
+        for( ubyte j = 0; j < 4; ++j ){
+            
+        } 
+    }
+    return os;
+}
+
 
 ////////// GLOBAL SETTINGS /////////////////////////////////////////////////////////////////////////
 float _DRAW_DIST_MIN = 50.0f / 16.0f; // Scale Dimension

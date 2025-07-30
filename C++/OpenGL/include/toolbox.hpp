@@ -49,6 +49,7 @@ typedef mat4 /*----*/ mat4f;
 
 
 std::ostream& operator<<( std::ostream& os , const vec4f& arr );
+std::ostream& operator<<( std::ostream& os , const mat4f& arr );
 
 
 

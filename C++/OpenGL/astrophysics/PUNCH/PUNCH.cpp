@@ -78,21 +78,21 @@ vstr list_files_at_path_w_ext( string path, string ext, bool sortAlpha ){
 
 mat4f R_x( float theta ){
     mat4f rtnMtx = mat4f{ 1.0 };
-    rotate( rtnMtx, theta, vec3f{ 1.0, 0.0, 0.0 } );
+    rtnMtx = rotate( rtnMtx, theta, vec3f{ 1.0, 0.0, 0.0 } );
     return rtnMtx;
 }
 
 
 mat4f R_y( float theta ){
     mat4f rtnMtx = mat4f{ 1.0 };
-    rotate( rtnMtx, theta, vec3f{ 0.0, 1.0, 0.0 } );
+    rtnMtx = rotate( rtnMtx, theta, vec3f{ 0.0, 1.0, 0.0 } );
     return rtnMtx;
 }
 
 
 mat4f R_z( float theta ){
     mat4f rtnMtx = mat4f{ 1.0 };
-    rotate( rtnMtx, theta, vec3f{ 0.0, 0.0, 1.0 } );
+    rtnMtx = rotate( rtnMtx, theta, vec3f{ 0.0, 0.0, 1.0 } );
     return rtnMtx;
 }
 
@@ -261,6 +261,7 @@ Corona_Data_FITS::Corona_Data_FITS( string fitsPath ){
     yRefPxlVal   = dataFileFITS->float_HDU( "CRVAL2" );    
     xRadPerPxl   = dataFileFITS->float_HDU( "CDELT1" );    
     yRadPerPxl   = dataFileFITS->float_HDU( "CDELT2" );    
+    dSun /*---*/ = dataFileFITS->float_HDU( "OBS_R0" );    
     img /*----*/ = Mat( cv::Size( (int) dataFileFITS->get_dim(0), (int) dataFileFITS->get_dim(1) ), CV_32F, cv::Scalar(0.0) );
     shw /*----*/ = Mat( cv::Size( (int) dataFileFITS->get_dim(0), (int) dataFileFITS->get_dim(1) ), CV_8U , cv::Scalar(0)   );
     xDim   = dataFileFITS->get_dim(0);
@@ -300,6 +301,13 @@ Corona_Data_FITS::Corona_Data_FITS( string fitsPath ){
 
 ////////// CORONAL MASS EJECTION 3D MAPPING ////////////////////////////////////////////////////////
 
+SolnPair::SolnPair( int width, int height, int depth ){
+    int sizes[] = {width, height, depth}; // Example: 3 "planes", each 4 rows x 5 columns
+    zetaPlus  = Mat( 3, sizes, CV_32F, cv::Scalar(0.0) );
+    zetaMinus = Mat( 3, sizes, CV_32F, cv::Scalar(0.0) );
+    cout << zetaMinus.size[0] << " x " << zetaMinus.size[1] << " || " << zetaMinus.size[0] << " x " << zetaMinus.size[1] << endl;
+}
+
 SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNorth_rad, float cutoffFrac ){
     // Calculate 3D coordinates from polarized data
     Corona_Data_FITS tB_data{ totalPath };
@@ -322,7 +330,7 @@ SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNo
     float dPxlPlus     = 0.0f;
     float dPxlMinus    = 0.0f;
     float dTilt /*--*/ = 0.0f;
-    float tThresh /**/ = tB_data.dataFileFITS->valMin * (tB_data.dataFileFITS->valMax - tB_data.dataFileFITS->valMin) * cutoffFrac;
+    float tThresh /**/ = tB_data.dataFileFITS->valMin + (tB_data.dataFileFITS->valMax - tB_data.dataFileFITS->valMin) * cutoffFrac;
     // Locations
     vec4f ertLoc{ 0.0f, 0.0f, 0.0f /*--*/ , 1.0f }; // Place the Earth at the origin
     vec4f sunLoc{ 0.0f, 0.0f, tB_data.dSun, 1.0f }; // Place the Sun along the Z-axis
@@ -338,7 +346,7 @@ SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNo
     // Perform 
     for( long i = 0; i < xDim; i++ ){
         // Get Y rotation of the column
-        yRot = R_y( i * radPerPxl + angOffset );
+        yRot = R_y( 1.0f * i * radPerPxl + angOffset );
         for( long j = 0; j < yDim; j++ ){  
             // Skip pixels w v small values
             if( tB_data.img.at<float>(i,j) < tThresh ){  continue;  } 
@@ -351,20 +359,23 @@ SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNo
             bRatio    = sqrt( (1.0f - pB_over_tB) / (1.0f + pB_over_tB) );
             zetaPlus  = epsilon + asin(  bRatio );
             zetaMinus = epsilon + asin( -bRatio );
+            // cout << zetaPlus << " // " << zetaMinus << endl;
             // Get possible distances from sensor
             Op_sky    = tB_data.dSun * tan( epsilon );
             Ad_oos    = Op_sky * cos( epsilon );
+            // cout << epsilon << " // " << tB_data.dSun << " // " << dThom << " // " << Op_sky << " // " << Ad_oos << endl;
             dPxlPlus  = dThom + Ad_oos * tan( zetaPlus  - epsilon );
             dPxlMinus = dThom + Ad_oos * tan( zetaMinus - epsilon );
+            // cout << dPxlPlus << " // " << dPxlMinus << endl;
             // Get X rotation of the row
-            xRot = R_x( j * radPerPxl + angOffset );
+            xRot = R_x( 1.0f * j * radPerPxl + angOffset );
             // Get relative position of Near Solution
             posnPlus = vec4f{ 0.0, 0.0, dPxlPlus, 1.0 };
             posnPlus = zRot * xRot * yRot * posnPlus;
             // Get relative position of Far Solution
             posnMinus = vec4f{ 0.0, 0.0, dPxlMinus, 1.0 };
             posnMinus = zRot * xRot * yRot * posnMinus;
-            cout << posnPlus << " // " << posnMinus << endl;
+            cout << i << " // " << j << ", " << 1.0f * i * radPerPxl + angOffset << " // " << 1.0f * j * radPerPxl + angOffset << ", " << posnPlus << " // " << posnMinus << endl;
             // Load positions
             for( long k = 0; k < 3; ++k ){
                 rtnPair.zetaPlus.at<float>(i,j,k)  = posnPlus[k];
