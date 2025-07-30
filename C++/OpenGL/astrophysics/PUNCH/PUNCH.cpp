@@ -1,3 +1,4 @@
+#include "../../include/toolbox.hpp"
 #include "../../include/PUNCH.hpp"
 
 ////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
@@ -363,6 +364,7 @@ SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNo
             // Get relative position of Far Solution
             posnMinus = vec4f{ 0.0, 0.0, dPxlMinus, 1.0 };
             posnMinus = zRot * xRot * yRot * posnMinus;
+            cout << posnPlus << " // " << posnMinus << endl;
             // Load positions
             for( long k = 0; k < 3; ++k ){
                 rtnPair.zetaPlus.at<float>(i,j,k)  = posnPlus[k];

@@ -48,6 +48,7 @@ typedef mat4 /*----*/ mat4f;
 
 
 
+std::ostream& operator<<( std::ostream& os , const vec4f& arr );
 
 
 
@@ -99,6 +100,7 @@ void set_near_far_draw_distance( float nearDist, float farDist ); // Set distanc
 
 ////////// OPENGL POINTS //////////////////////////////////////////////////////////////////////////
 void glVtx4f( const vec4f v ); // Set vertex with a vector
+void glVtx3f( const vec4f v ); // Set vertex with a vector
 void glNrm4f( const vec4f n ); // Set normal with a vector
 void glClr4f( const vec4f c ); // Set color with a vector
 

@@ -3,6 +3,12 @@
 
 #include "include/toolbox.hpp"
 
+std::ostream& operator<<( std::ostream& os , const vec4f& arr ){ 
+	os << "[" << arr.x << ", " << arr.y << ", " << arr.z << ", " << arr.w << "]";
+	return os;
+}
+
+
 ////////// GLOBAL SETTINGS /////////////////////////////////////////////////////////////////////////
 float _DRAW_DIST_MIN = 50.0f / 16.0f; // Scale Dimension
 float _DRAW_DIST_MAX = 50.0f * 16.0f; // Scale Dimension
@@ -11,6 +17,7 @@ float _TARGET_FPS    =   60.0f; // Desired framerate
 int   _WINDOW_W /**/ = 1200;
 int   _WINDOW_H /**/ =  900;
 float _ASPECT_RAT    =    0.0f; // Aspect ratio
+
 
 ////////// TRIGONOMETRY ////////////////////////////////////////////////////////////////////////////
 
@@ -120,7 +127,9 @@ void clear_screen(){
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
     glEnable( GL_DEPTH_TEST );
     glLoadIdentity();
+    ErrCheck( "clear_screen" );
 }
+
 
 void set_near_far_draw_distance( float nearDist, float farDist ){
     // Set distances for clipping planes
@@ -133,6 +142,7 @@ void set_near_far_draw_distance( float nearDist, float farDist ){
 ////////// OPENGL POINTS //////////////////////////////////////////////////////////////////////////
 
 void glVtx4f( const vec4f v ){  glVertex4f( v.x , v.y , v.z, v.w );  } // Set vertex with a vector
+void glVtx3f( const vec4f v ){  glVertex3f( v.x , v.y , v.z );  } // Set vertex with a vector
 void glNrm4f( const vec4f n ){  glNormal3f( n.x , n.y , n.z      );  } // Set normal with a vector
 void glClr4f( const vec4f c ){  glColor4f(  c.r , c.g , c.b, c.a );  } // Set color with a vector
 

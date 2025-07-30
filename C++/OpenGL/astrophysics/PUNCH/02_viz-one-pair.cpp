@@ -49,14 +49,18 @@ float normSqr( const vec4f pnt ){  return (normSqr( pnt[0], pnt[1], pnt[2] ) * p
 lseg4f extract_point_crosses( const Mat& matx, float width_m, float sqrThresh = 2.0f ){
     // Get segments that represent points
     lseg4f rtnSeg;
+    lseg4f temp;
     int    Mrows = matx.rows;
     int    Ncols = matx.cols;
     vec4f  point{ 0.0, 0.0, 0.0, 1.0 };
+    cout << "Matx: " << Mrows << " x " << Ncols << endl;
     for( int i = 0; i < Mrows; ++i ){
         for( int j = 0; j < Ncols; ++j ){
             for( int k = 0; k < 3; ++k ){  point[k] = matx.at<float>(i,j,k);  }   
+            cout << point << endl;
             if( normSqr( point ) >= sqrThresh ){
-                rtnSeg.splice( rtnSeg.end(), point_cross( point, width_m ) );
+                temp = point_cross( point, width_m );
+                rtnSeg.splice( rtnSeg.end(), temp, temp.begin(), temp.end() );
             }
         }
     }
@@ -67,6 +71,7 @@ lseg4f extract_point_crosses( const Mat& matx, float width_m, float sqrThresh = 
 lseg4f extract_point_rays_from_origin( const Mat& matx, float sqrThresh = 2.0f ){
     // Get segments that represent points
     lseg4f rtnSeg;
+    lseg4f temp;
     int    Mrows = matx.rows;
     int    Ncols = matx.cols;
     vec4f  point{ 0.0, 0.0, 0.0, 1.0 };
@@ -87,12 +92,28 @@ lseg4f extract_point_rays_from_origin( const Mat& matx, float sqrThresh = 2.0f )
 void draw_segments( const lseg4f& segments, const vec4f& color ){
     // Draw a collection of segments
     glClr4f( color );
-    glBegin( GL_LINE );
+    glBegin( GL_LINES );
+    cout << "There are " << segments.size() << " segments!" << endl;
     for( const seg4f& segment : segments ){
-        glVtx4f( segment[0] );
-        glVtx4f( segment[1] );
+        glVtx3f( segment[0] );
+        glVtx3f( segment[1] );
+        cout << segment[0] << ", " << segment[1] << endl;
     }
+    
     glEnd();
+    ErrCheck( "draw_segments" );
+}
+
+
+
+////////// SIMULATION //////////////////////////////////////////////////////////////////////////////
+
+void tick(){
+    // Background work
+    // 3. Set projection
+	project();
+    // Tell GLUT it is necessary to redisplay the scene
+	glutPostRedisplay();
 }
 
 
@@ -114,10 +135,12 @@ void display(){
     // Erase the window and the depth buffer
     clear_screen();
 
+    cam.look();
     ///// DRAW LOOP BEGIN /////////////////////////////////////////////////
     draw_segments( pointPaint, pointColor );
     draw_segments( camRays   , rayColor );
     ///// DRAW LOOP END ///////////////////////////////////////////////////
+    
 
     // Check for errors, Flush, and swap
 	ErrCheck( "display" );
@@ -130,18 +153,21 @@ void display(){
 ////////// MAIN ////////////////////////////////////////////////////////////////////////////////////
 int main( int argc, char* argv[] ){
     ///// Make Calculations ///////////////////////////////////////////////
+    lseg4f temp;
     // 0. Load
     string tPath = "/home/james/nanoverse/C++/OpenGL/astrophysics/data/cme0_dcmer_0000_bang_0000_tB/stepnum_005.fits";
     string pPath = "/home/james/nanoverse/C++/OpenGL/astrophysics/data/cme0_dcmer_0000_bang_0000_pB/stepnum_005.fits";
     // 1. Solve
     SolnPair solnOne = calc_coords( tPath, pPath, 0.0f, 0.50f );
     // 2. Near Points
-    pointPaint.splice( pointPaint.end(), extract_point_crosses( solnOne.zetaPlus, 2.0f, 2.0f ) );
+    temp = extract_point_crosses( solnOne.zetaPlus, 2.0f, 2.0f );
+    pointPaint.splice( pointPaint.end(), temp, temp.begin(), temp.end() );
     // 3. Far Points
-    pointPaint.splice( pointPaint.end(), extract_point_crosses( solnOne.zetaMinus, 2.0f, 2.0f ) );
-    camRays.splice( camRays.end(), extract_point_rays_from_origin( solnOne.zetaMinus, 2.0f ) );
+    temp = extract_point_crosses( solnOne.zetaMinus, 2.0f, 2.0f );
+    pointPaint.splice( pointPaint.end(), temp, temp.begin(), temp.end() );
+    camRays.splice( camRays.end(), temp, temp.begin(), temp.end() );
     
-
+    set_near_far_draw_distance( 50.0f, 500.0f );
 
     ///// Initialize GLUT /////////////////////////////////////////////////
     glutInit( &argc , argv );
@@ -170,9 +196,9 @@ int main( int argc, char* argv[] ){
     glutDisplayFunc( display );
 
     // Tell GLUT to call "idle" when there is nothing else to do
-    // glutIdleFunc( tick );
+    glutIdleFunc( tick );
     
-    //  Tell GLUT to call "reshape" when the window is resized
+    // Tell GLUT to call "reshape" when the window is resized
     glutReshapeFunc( reshape );
     
     //  Tell GLUT to call "special" when an arrow key is pressed or released
@@ -191,15 +217,10 @@ int main( int argc, char* argv[] ){
     printf( "Entering main loop ...\n" );
     
     // Pass control to GLUT so it can interact with the user
-    glutMainLoop();
+    // glutMainLoop();
     
-    
-    ///// Free Memory /////////////////////////////////////////////////////
-    printf( "Cleanup!\n" );
-    
-    // delete_VNCT_f( tank->body );
-
     printf( "\n### DONE ###\n\n" );
+
     //  Return code
     return 0;
 }
