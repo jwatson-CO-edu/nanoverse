@@ -12,6 +12,9 @@ using std::list;
 typedef array<vec4f,2> seg4f;
 typedef list<seg4f>    lseg4f;
 
+extern int _WINDOW_W;
+extern int _WINDOW_H;
+
 
 
 ////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
@@ -111,8 +114,15 @@ void display(){
     // Erase the window and the depth buffer
     clear_screen();
 
+    ///// DRAW LOOP BEGIN /////////////////////////////////////////////////
     draw_segments( pointPaint, pointColor );
     draw_segments( camRays   , rayColor );
+    ///// DRAW LOOP END ///////////////////////////////////////////////////
+
+    // Check for errors, Flush, and swap
+	ErrCheck( "display" );
+	glFlush();
+	glutSwapBuffers();
 }
 
 
@@ -126,10 +136,11 @@ int main( int argc, char* argv[] ){
     // 1. Solve
     SolnPair solnOne = calc_coords( tPath, pPath, 0.0f, 0.50f );
     // 2. Near Points
+    pointPaint.splice( pointPaint.end(), extract_point_crosses( solnOne.zetaPlus, 2.0f, 2.0f ) );
     // 3. Far Points
-    // 4. Color Change && Rays
-    // 5. Setup OpenGL
-    // 6. Render
+    pointPaint.splice( pointPaint.end(), extract_point_crosses( solnOne.zetaMinus, 2.0f, 2.0f ) );
+    camRays.splice( camRays.end(), extract_point_rays_from_origin( solnOne.zetaMinus, 2.0f ) );
+    
 
 
     ///// Initialize GLUT /////////////////////////////////////////////////
@@ -139,7 +150,7 @@ int main( int argc, char* argv[] ){
     glutInitWindowSize( _WINDOW_W, _WINDOW_H );
 
     // Create the window
-    glutCreateWindow( "Vertex Array Object (VAO) Test" );
+    glutCreateWindow( "Solar Data Test" );
 
     // NOTE: Set modes AFTER the window / graphics context has been created!
     // Request double buffered, true color window 
@@ -151,4 +162,44 @@ int main( int argc, char* argv[] ){
     glDepthRange( 0.0f , 1.0f ); 
     glEnable( GL_BLEND );
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+    ///// Initialize GLUT Callbacks ///////////////////////////////////////
+    printf( "About to assign callbacks ...\n" );
+
+    //  Tell GLUT to call "display" when the scene should be drawn
+    glutDisplayFunc( display );
+
+    // Tell GLUT to call "idle" when there is nothing else to do
+    // glutIdleFunc( tick );
+    
+    //  Tell GLUT to call "reshape" when the window is resized
+    glutReshapeFunc( reshape );
+    
+    //  Tell GLUT to call "special" when an arrow key is pressed or released
+    // glutSpecialFunc( special_dn );
+    // glutSpecialUpFunc( special_up );
+
+    //  Tell GLUT to call "mouse" when mouse input arrives
+    // glutMouseFunc( mouse ); // Clicks
+    // glutPassiveMotionFunc( mouse_move ); // Movement
+    
+    // //  Tell GLUT to call "key" when a key is pressed or released
+    // glutKeyboardFunc( key_dn );
+    // glutKeyboardUpFunc( key_up );
+
+    ///// GO ///// GO ///// GO ////////////////////////////////////////////
+    printf( "Entering main loop ...\n" );
+    
+    // Pass control to GLUT so it can interact with the user
+    glutMainLoop();
+    
+    
+    ///// Free Memory /////////////////////////////////////////////////////
+    printf( "Cleanup!\n" );
+    
+    // delete_VNCT_f( tank->body );
+
+    printf( "\n### DONE ###\n\n" );
+    //  Return code
+    return 0;
 }

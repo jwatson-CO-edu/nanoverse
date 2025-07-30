@@ -47,14 +47,7 @@ typedef vec4 /*----*/ vec4f;
 typedef mat4 /*----*/ mat4f;
 
 
-////////// GLOBAL SETTINGS /////////////////////////////////////////////////////////////////////////
-extern float _DRAW_DIST_MIN = 50.0f / 16.0f; // Scale Dimension
-extern float _DRAW_DIST_MAX = 50.0f * 16.0f; // Scale Dimension
-extern int   _FOV_DEG /*-*/ =   55; // - Field of view (for perspective)
-extern float _TARGET_FPS    =   60.0f; // Desired framerate
-extern int   _WINDOW_W /**/ = 1200;
-extern int   _WINDOW_H /**/ =  900;
-extern float _ASPECT_RAT    =    0.0f; // Aspect ratio
+
 
 
 
@@ -95,13 +88,13 @@ void Vertex( int th, int ph );
 
 
 ////////// OPENGL SYSTEM ///////////////////////////////////////////////////////////////////////////
-void ErrCheck( const char* where );
-void Fatal( const char* format , ... );
-void Print( const char* format , ... );
-void project(); // ----------------------- Set projection
-void reshape( int width , int height ); // GLUT calls this routine when the window is resized
-void inline clear_screen(); // ----------- Erase the window and the depth buffer
-
+void ErrCheck( const char* where ); // ------------------------------------ Check for OpenGL errors and print to `stderr`
+void Fatal( const char* format , ... ); // -------------------------------- Print message to `stderr` and exit
+void Print( const char* format , ... ); // -------------------------------- Print raster letters to the viewport
+void project(); // -------------------------------------------------------- Set projection
+void reshape( int width , int height ); // -------------------------------- GLUT calls this routine when the window is resized
+void clear_screen(); // -------------------------------------------- Erase the window and the depth buffer
+void set_near_far_draw_distance( float nearDist, float farDist ); // Set distances for clipping planes
 
 
 ////////// OPENGL POINTS //////////////////////////////////////////////////////////////////////////

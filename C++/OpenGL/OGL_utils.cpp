@@ -3,7 +3,14 @@
 
 #include "include/toolbox.hpp"
 
-
+////////// GLOBAL SETTINGS /////////////////////////////////////////////////////////////////////////
+float _DRAW_DIST_MIN = 50.0f / 16.0f; // Scale Dimension
+float _DRAW_DIST_MAX = 50.0f * 16.0f; // Scale Dimension
+int   _FOV_DEG /*-*/ =   55; // - Field of view (for perspective)
+float _TARGET_FPS    =   60.0f; // Desired framerate
+int   _WINDOW_W /**/ = 1200;
+int   _WINDOW_H /**/ =  900;
+float _ASPECT_RAT    =    0.0f; // Aspect ratio
 
 ////////// TRIGONOMETRY ////////////////////////////////////////////////////////////////////////////
 
@@ -43,7 +50,7 @@ void Vertex( int th, int ph ){
 
 
 void ErrCheck( const char* where ){
-   // Check for OpenGL errors and print to stderr
+   // Check for OpenGL errors and print to `stderr`
    // Author: Willem A. (Vlakkies) Schreüder, https://www.prinmath.com/
    int err = glGetError();
    if(err) cerr << "ERROR: " << gluErrorString(err) << ", " << where << "\n";
@@ -101,18 +108,24 @@ void reshape( int width , int height ){
 	// 1. Calc the aspect ratio: width to the height of the window
 	_ASPECT_RAT = ( height > 0 ) ? (float) width / height : 1;
 	// 2. Set the viewport to the entire window
-	glViewport( 0 , 0 , width , height );
+	glViewport( 0, 0, width, height );
 	// 3. Set projection
 	project();
 }
 
 
-void inline clear_screen(){
+void clear_screen(){
     // Erase the window and the depth buffer
     glClearDepth( 1.0f );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
     glEnable( GL_DEPTH_TEST );
     glLoadIdentity();
+}
+
+void set_near_far_draw_distance( float nearDist, float farDist ){
+    // Set distances for clipping planes
+    _DRAW_DIST_MIN = nearDist;
+    _DRAW_DIST_MAX = farDist;
 }
 
 

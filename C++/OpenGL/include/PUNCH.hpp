@@ -18,11 +18,11 @@ using std::cout, std::endl;
 #include <memory>
 using std::shared_ptr;
 #include <algorithm>
-using std::min, std::max, std::pow, std::sqrt;
+using std::min, std::max;
 #include <filesystem>
 using std::filesystem::directory_iterator;
 #include <cmath>
-using std::asin;
+using std::asin, std::pow, std::sqrt;
 
 /// CFITSIO ///
 #include <fitsio.h>
@@ -174,5 +174,6 @@ class SolnPair{ public:
 
 // Calculate 3D coordinates from polarized data
 SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNorth_rad = 0.0f, float cutoffFrac = 0.5f );
+
 
 #endif
