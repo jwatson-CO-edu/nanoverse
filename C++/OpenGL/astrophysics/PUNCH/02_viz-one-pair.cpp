@@ -131,8 +131,8 @@ void tick(){
 ////////// VARIABLES ///////////////////////////////////////////////////////////////////////////////
 lseg4f   pointPaint;
 lseg4f   camRays;
-vec4f    pointColor{ 255.0f/255.0f, 229.0f/255.0f, 115.0f/255.0f, 1.0f };
-vec4f    rayColor{   128.0f/255.0f, 128.0f/255.0f, 128.0f/255.0f, 0.5f };
+vec4f    pointColor{ 255.0f/255.0f, 229.0f/255.0f, 115.0f/255.0f, 1.00f };
+vec4f    rayColor{   128.0f/255.0f, 128.0f/255.0f, 128.0f/255.0f, 0.25f };
 Camera3D cam{ vec3f{ 0.0f, 0.0f, 100.0f }, vec3f{ 0.0f, 0.0f, 200.0f }, vec3f{ 0.0f, 1.0f, 0.0f } };
 int  xLast  = INT32_MAX, xDelta = 0;
 int  yLast  = INT32_MAX, yDelta = 0;
@@ -150,8 +150,14 @@ void display(){
 
     cam.look();
     ///// DRAW LOOP BEGIN /////////////////////////////////////////////////
+    glPushMatrix();
+    glTranslatef( 0.0f, 0.0f, 214.61f );
+    glClr4f( vec4f{0.0, 0.0, 0.0, 1.0} );
+    glutSolidSphere( 20.0f, 20, 20 );
+    glPopMatrix();
+    
     draw_segments( pointPaint, pointColor );
-    // draw_segments( camRays   , rayColor );
+    draw_segments( camRays   , rayColor );
     ///// DRAW LOOP END ///////////////////////////////////////////////////
     
 
@@ -163,16 +169,34 @@ void display(){
 
 void mouse_move( int x, int y ){
     // Mouse activity callback
+    // cout << "MOVE!" << endl;
     if( xLast < INT32_MAX ){
         xDelta = x - xLast;
         yDelta = y - yLast;    
     }
+    if( leftClicked ){
+        cam.trackball_rotate( 
+            _ROT_RAD_PER_PXL * xDelta, 
+            _ROT_RAD_PER_PXL * yDelta 
+        );
+    }
     xLast = x;
     yLast = y;
+    glutPostRedisplay();
 }
 
 void mouse_click( int button, int state, int x, int y ){
-    // FIXME, START HERE: 
+    // cout << "CLICK!" << endl;
+    switch (button){
+        case GLUT_LEFT_BUTTON:
+            if( state == GLUT_DOWN ){  leftClicked = true;   }
+            if( state == GLUT_UP   ){  leftClicked = false;  }
+            break;
+        
+        default:
+            break;
+    }
+    glutPostRedisplay();
 }
 
 
@@ -193,10 +217,10 @@ int main( int argc, char* argv[] ){
     // 3. Far Points
     temp = extract_point_crosses( solnOne.zetaMinus, 2.0f, 2.0f );
     pointPaint.splice( pointPaint.end(), temp, temp.begin(), temp.end() );
-    temp = extract_point_rays_from_origin( solnOne.zetaMinus, 2.0f );
+    temp = extract_point_rays_from_origin( solnOne.zetaPlus, 2.0f );
     camRays.splice( camRays.end(), temp, temp.begin(), temp.end() );
     
-    set_near_far_draw_distance( 50.0f, 500.0f );
+    set_near_far_draw_distance( 0.5f, 250.0f );
     cam.look_at( vec3f{ 0.0f, 0.0f, 214.61f } );
 
     ///// Initialize GLUT /////////////////////////////////////////////////
@@ -210,11 +234,13 @@ int main( int argc, char* argv[] ){
 
     // NOTE: Set modes AFTER the window / graphics context has been created!
     // Request double buffered, true color window 
-    glutInitDisplayMode( GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH );
+    glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH );
     
-    glEnable( GL_CULL_FACE );
+    // glEnable( GL_CULL_FACE );
     // OpenGL should normalize normal vectors
-	glEnable( GL_NORMALIZE );
+	// glEnable( GL_NORMALIZE );
+    	
+    // glDepthFunc( GL_GREATER );
     glDepthRange( 0.0f , 1.0f ); 
     glEnable( GL_BLEND );
     glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
@@ -238,6 +264,7 @@ int main( int argc, char* argv[] ){
     // Tell GLUT to call "mouse" when mouse input arrives
     glutMouseFunc( mouse_click ); // Clicks
     glutPassiveMotionFunc( mouse_move ); // Movement
+    glutMotionFunc( mouse_move ); // Movement
     
     // //  Tell GLUT to call "key" when a key is pressed or released
     // glutKeyboardFunc( key_dn );

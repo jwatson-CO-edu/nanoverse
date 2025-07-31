@@ -176,13 +176,15 @@ void Camera3D::trackball_rotate( float theta, float phi ){
     // Get vectors and matrices
     vec3f lkDiff = eyeLoc - lookPt;
     vec4f lkDif4 = extend( lkDiff );
-    vec3f yBasis = normalize( cross( upVctr, lkDiff ) );
-    vec3f zBasis = normalize( cross( lkDiff, yBasis ) );
+    vec3f zBasis = normalize( -lkDiff );
+    vec3f yBasis = normalize( upVctr );
+    vec3f xBasis = normalize( cross( yBasis, zBasis ) );
+    /*-*/ yBasis = normalize( cross( zBasis, xBasis ) );
     mat4f eye    = mat4f{ 1.0f };
-    mat4f zRot   = rotate( eye, theta, zBasis );
-    mat4f yRot   = rotate( eye, phi  , yBasis );
+    mat4f yRot   = rotate( eye, theta, yBasis );
+    mat4f xRot   = rotate( eye, phi  , xBasis  );
     // Perform transform and store
-    lkDif4 = yRot * zRot * lkDif4;
+    lkDif4 = xRot * yRot * lkDif4;
     eyeLoc = lookPt + vec3f{ lkDif4.x, lkDif4.y, lkDif4.z };
-    upVctr = zBasis;
+    upVctr = yBasis;
 }

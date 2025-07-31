@@ -22,7 +22,6 @@ vstr split_string_on_char( string input, char ch ){
     // Return a vector of strings found in `input` separated by whitespace
     vstr   rtnWords;
     string currWord;
-    char   currChar;
     input += ch; // Separator hack
 
     for( char& currChar : input ){
@@ -312,7 +311,6 @@ SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNo
     float dThom /*--*/ = 0.0f;
     float dPxlPlus     = 0.0f;
     float dPxlMinus    = 0.0f;
-    float dTilt /*--*/ = 0.0f;
     float tThresh /**/ = tB_data.dataFileFITS->valMin + (tB_data.dataFileFITS->valMax - tB_data.dataFileFITS->valMin) * cutoffFrac;
     // Locations
     vec4f ertLoc{ 0.0f, 0.0f, 0.0f /*--*/ , 1.0f }; // Place the Earth at the origin
@@ -324,7 +322,7 @@ SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNo
     mat4f yRot;
     mat4f zRot = R_z( angleFromSolarNorth_rad );
     // Return Struct
-    SolnPair rtnPair{ xDim, yDim, 3 };
+    SolnPair rtnPair{ (int) xDim, (int) yDim, 3 };
 
     // Perform 
     for( long i = 0; i < xDim; i++ ){
