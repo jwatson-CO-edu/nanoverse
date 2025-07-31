@@ -5,8 +5,8 @@
 #include <list>
 using std::list;
 /// Local ///
-#include "../include/PUNCH.hpp"
-#include "../include/toolbox.hpp"
+#include "../../include/PUNCH.hpp"
+#include "../../include/toolbox.hpp"
 
 ///// Aliases /////////////////////////////////////////////////////////////
 typedef array<vec4f,2> seg4f;
@@ -165,8 +165,8 @@ int main( int argc, char* argv[] ){
     ///// Make Calculations ///////////////////////////////////////////////
     lseg4f temp;
     // 0. Load
-    string tPath = "/home/james/nanoverse/C++/OpenGL/astrophysics/data/cme0_dcmer_0000_bang_0000_tB/stepnum_005.fits";
-    string pPath = "/home/james/nanoverse/C++/OpenGL/astrophysics/data/cme0_dcmer_0000_bang_0000_pB/stepnum_005.fits";
+    string tPath = "./astrophysics/data/cme0_dcmer_0000_bang_0000_tB/stepnum_005.fits";
+    string pPath = "./astrophysics/data/cme0_dcmer_0000_bang_0000_pB/stepnum_005.fits";
     // 1. Solve
     SolnPair solnOne = calc_coords( tPath, pPath, 0.0f, 0.50f );
     // cout << solnOne.zetaMinus.rows << " x " << solnOne.zetaMinus.cols << " || " << solnOne.zetaMinus.rows << " x " << solnOne.zetaMinus.cols << endl;

@@ -1,3 +1,6 @@
+#ifndef MATH_GLM_HPP // This pattern is to prevent symbols to be loaded multiple times
+#define MATH_GLM_HPP // from multiple imports
+
 /// Graphics Language Math ////
 #include <glm/glm.hpp>
 using glm::vec2, glm::vec3, glm::mat4, glm::normalize, glm::cross;
@@ -14,6 +17,7 @@ typedef vec3 /*----*/ vec3f;
 typedef vec4 /*----*/ vec4f;
 typedef mat4 /*----*/ mat4f;
 
+
 ////////// TRIGONOMETRY ////////////////////////////////////////////////////////////////////////////
 
 // Cosine and Sine in degrees
@@ -27,6 +31,9 @@ float  Tanf( float x );
 float  Atan2f( float y, float x );
 
 
+////////// HOMOGENEOUS COORDINATES /////////////////////////////////////////////////////////////////
 mat4f R_x( float theta );
 mat4f R_y( float theta );
 mat4f R_z( float theta );
+
+#endif

@@ -36,6 +36,13 @@ set( CFITSIO_INCLUDE_DIRS /opt/fits/include )
 set( CFITSIO_LIB_DIR      /opt/fits/lib/ )
 set( CFITSIO_LIBRARIES    /opt/fits/lib/libcfitsio.so )
 
+add_library( MATH_GLM
+             SHARED
+             math_glm.cpp )
+
+target_include_directories( MATH_GLM PUBLIC include ${OPENGL_INCLUDE_DIRS} )
+target_link_libraries( MATH_GLM PUBLIC ${OPENGL_LIBRARIES} )
+
 add_library( OGL_LIB
              SHARED
              OGL_utils.cpp
@@ -43,7 +50,7 @@ add_library( OGL_LIB
              load_assets.cpp )
 
 target_include_directories( OGL_LIB PUBLIC include ${OPENGL_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS} )
-target_link_libraries( OGL_LIB PUBLIC ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} )
+target_link_libraries( OGL_LIB PUBLIC MATH_GLM ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} )
 
 add_library( PUNCH_LIB
              SHARED
@@ -51,7 +58,7 @@ add_library( PUNCH_LIB
 
 target_link_options( PUNCH_LIB PRIVATE "-L${CFITSIO_LIB_DIR}" -lcfitsio -lm )
 target_include_directories( PUNCH_LIB PUBLIC include ${CFITSIO_INCLUDE_DIRS} ${OPENCV_INCLUDE_DIRS} )
-target_link_libraries( PUNCH_LIB PUBLIC ${CFITSIO_LIBRARIES} ${OpenCV_LIBS} )
+target_link_libraries( PUNCH_LIB PUBLIC MATH_GLM ${CFITSIO_LIBRARIES} ${OpenCV_LIBS} )
 
 
 
