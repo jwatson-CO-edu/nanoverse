@@ -1,7 +1,9 @@
 ////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 #include <cstdarg>
 
+#include "include/math_glm.hpp"
 #include "include/toolbox.hpp"
+
 
 std::ostream& operator<<( std::ostream& os , const vec4f& arr ){ 
 	os << "[" << arr.x << ", " << arr.y << ", " << arr.z << ", " << arr.w << "]";
@@ -28,17 +30,7 @@ int   _WINDOW_H /**/ =  900;
 float _ASPECT_RAT    =    0.0f; // Aspect ratio
 
 
-////////// TRIGONOMETRY ////////////////////////////////////////////////////////////////////////////
 
-// Cosine and Sine in degrees
-// Author: Willem A. (Vlakkies) Schreüder  
-double Cos( double x ){  return cos( (x) * 3.1415927 / 180 );  }
-double Sin( double x ){  return sin( (x) * 3.1415927 / 180 );  }
-double Tan( double x ){  return tan( (x) * 3.1415927 / 180 );  }
-float  Cosf( float x ){  return cosf( (x) * 3.1415927f / 180.0f );  }
-float  Sinf( float x ){  return sinf( (x) * 3.1415927f / 180.0f );  }
-float  Tanf( float x ){  return tanf( (x) * 3.1415927f / 180.0f );  }
-float  Atan2f( float y, float x ){  return (atan2f( y, x ) * 3.1415927f / 180.0f);  }
 
 
 
@@ -176,3 +168,15 @@ void Camera3D::look(){
 
 void Camera3D::move_to( const vec3f& eyePsn ){  eyeLoc = eyePsn;  }
 void Camera3D::look_at( const vec3f& lukPnt ){  lookPt = lukPnt;  }
+
+vec4f extend( const vec3f& vec ){  return vec4f{ vec.x, vec.y, vec.z, 1.0 };  }
+
+void Camera3D::trackball( float theta, float phi ){
+    vec3f lkDiff = eyeLoc - lookPt;
+    vec4f lkDif4 = extend( lkDiff );
+    vec3f xBasis = normalize( lkDiff );
+    vec3f yBasis = cross( upVctr, xBasis );
+    vec3f zBasis = normalize( cross( xBasis, yBasis ) );
+    // mat4f zRot   = R_z
+    upVctr = zBasis;
+}

@@ -76,25 +76,7 @@ vstr list_files_at_path_w_ext( string path, string ext, bool sortAlpha ){
 }
 
 
-mat4f R_x( float theta ){
-    mat4f rtnMtx = mat4f{ 1.0 };
-    rtnMtx = rotate( rtnMtx, theta, vec3f{ 1.0, 0.0, 0.0 } );
-    return rtnMtx;
-}
 
-
-mat4f R_y( float theta ){
-    mat4f rtnMtx = mat4f{ 1.0 };
-    rtnMtx = rotate( rtnMtx, theta, vec3f{ 0.0, 1.0, 0.0 } );
-    return rtnMtx;
-}
-
-
-mat4f R_z( float theta ){
-    mat4f rtnMtx = mat4f{ 1.0 };
-    rtnMtx = rotate( rtnMtx, theta, vec3f{ 0.0, 0.0, 1.0 } );
-    return rtnMtx;
-}
 
 
 ////////// FITS ////////////////////////////////////////////////////////////////////////////////////

@@ -24,30 +24,13 @@ using std::vector;
 #include <GL/glu.h>
 #include <GL/gl.h>
 
-/// Graphics Language Math ////
-#include <glm/glm.hpp>
-using glm::vec2;
-using glm::vec3;
-using glm::mat4;
-#include <glm/vec4.hpp> 
-using glm::vec4;
-#include <glm/gtc/matrix_transform.hpp>
-using glm::translate, glm::scale, glm::rotate;
-#include <glm/gtc/type_ptr.hpp>
-using glm::value_ptr;
+
 
 
 ////////// TYPE DEFINES ////////////////////////////////////////////////////////////////////////////
 typedef unsigned char ubyte;
 typedef unsigned int  uint;
 typedef unsigned long ulong;
-typedef vec2 /*----*/ vec2f;
-typedef vec3 /*----*/ vec3f;
-typedef vec4 /*----*/ vec4f;
-typedef mat4 /*----*/ mat4f;
-
-
-
 std::ostream& operator<<( std::ostream& os , const vec4f& arr );
 std::ostream& operator<<( std::ostream& os , const mat4f& arr );
 
@@ -67,17 +50,7 @@ typedef struct{
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-////////// TRIGONOMETRY ////////////////////////////////////////////////////////////////////////////
 
-// Cosine and Sine in degrees
-// Author: Willem A. (Vlakkies) Schreüder  
-double Cos( double x );
-double Sin( double x );
-double Tan( double x );
-float  Cosf( float x );
-float  Sinf( float x );
-float  Tanf( float x );
-float  Atan2f( float y, float x );
 
 
 
@@ -90,16 +63,16 @@ void Vertex( int th, int ph );
 
 
 ////////// OPENGL SYSTEM ///////////////////////////////////////////////////////////////////////////
-void ErrCheck( const char* where ); // ------------------------------------ Check for OpenGL errors and print to `stderr`
-void Fatal( const char* format , ... ); // -------------------------------- Print message to `stderr` and exit
-void Print( const char* format , ... ); // -------------------------------- Print raster letters to the viewport
-void project(); // -------------------------------------------------------- Set projection
-void reshape( int width , int height ); // -------------------------------- GLUT calls this routine when the window is resized
+void ErrCheck( const char* where ); // ----------------------------- Check for OpenGL errors and print to `stderr`
+void Fatal( const char* format , ... ); // ------------------------- Print message to `stderr` and exit
+void Print( const char* format , ... ); // ------------------------- Print raster letters to the viewport
+void project(); // ------------------------------------------------- Set projection
+void reshape( int width , int height ); // ------------------------- GLUT calls this routine when the window is resized
 void clear_screen(); // -------------------------------------------- Erase the window and the depth buffer
 void set_near_far_draw_distance( float nearDist, float farDist ); // Set distances for clipping planes
 
 
-////////// OPENGL POINTS //////////////////////////////////////////////////////////////////////////
+////////// OPENGL POINTS ///////////////////////////////////////////////////////////////////////////
 void glVtx4f( const vec4f v ); // Set vertex with a vector
 void glVtx3f( const vec4f v ); // Set vertex with a vector
 void glNrm4f( const vec4f n ); // Set normal with a vector
@@ -119,6 +92,7 @@ class Camera3D{ public:
     void look(); // Set camera position, target, and orientation
     void move_to( const vec3f& eyePsn );
     void look_at( const vec3f& lukPnt );
+    void trackball( float theta, float phi );
 };
 
 
