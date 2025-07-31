@@ -168,6 +168,7 @@ class SolnPair{ public:
 
     SolnPair( int width, int height, int depth );
 };
+typedef shared_ptr<SolnPair> PairPtr;
 
 // Calculate 3D coordinates from polarized data
 SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNorth_rad = 0.0f, float cutoffFrac = 0.5f );

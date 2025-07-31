@@ -11,14 +11,13 @@ using std::array;
 typedef array<vec4f,3> tri_v4f;
 typedef array<vec3f,3> tri_v3f;
 
+
+
+
 ////////// GEOMETRY STRUCTS ////////////////////////////////////////////////////////////////////////
 
-vec4f extend( const vec3f& vec ){  return vec4f{ vec[0], vec[1], vec[2], 1.0f };  } // Estend to 4 elems, Unity scale
-
-vec4f cross_vec4f( vec4f _v1, vec4f _v2 ){
-    // Cross two `vec4f` as though they were `vec3f`
-    return extend( cross( vec3f{ _v1[0], _v1[1], _v1[2] }, vec3f{ _v2[0], _v2[1], _v2[2] } ) );
-}
+vec4f extend( const vec3f& vec ); // Estend to 4 elems, Unity scale
+vec4f cross_vec4f( vec4f _v1, vec4f _v2 ); // Cross two `vec4f` as though they were `vec3f`
 
 
 
@@ -45,6 +44,8 @@ class TriNet{ public:
     mat4f ownPose; // Dynamic offset pose from `relPose`
     /// Structure ///
     list<vec4f>    verts; // Unshared vertices
+    list<vec4f>    colrs; // Unshared vertices
+    list<vec4f>    norms; // Unshared vertices
     list<vec3u>    faces; // Sequential faces
     vector<NetPtr> edges; // Links to successor nodes, Need contant-time ACCESS!, Assumed not to change at render time
 
@@ -53,7 +54,7 @@ class TriNet{ public:
 
     void add_tri( const tri_v4f& tri );
     void add_tri_clr( const tri_v4f& tri, const tri_v4f& clr );
-    void calc_flat_shading_normals();
+    void add_tri_clr( const tri_v4f& tri, const vec4f& clr   );
     void store_geo(); // Compress shared vertices and store in compact heap arrays
 
     void load_tetra( float radius = 1.0f ); // --- Replace geo with tetrahedron

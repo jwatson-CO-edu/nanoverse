@@ -1,6 +1,11 @@
 #ifndef MATH_GLM_HPP // This pattern is to prevent symbols to be loaded multiple times
 #define MATH_GLM_HPP // from multiple imports
 
+#include<vector>
+using std::vector;
+#include<list>
+using std::list;
+
 /// Graphics Language Math ////
 #include <glm/glm.hpp>
 using glm::vec2, glm::vec3, glm::mat4, glm::normalize, glm::cross;
@@ -16,6 +21,19 @@ typedef vec2 /*----*/ vec2f;
 typedef vec3 /*----*/ vec3f;
 typedef vec4 /*----*/ vec4f;
 typedef mat4 /*----*/ mat4f;
+
+
+////////// CONTAINERS //////////////////////////////////////////////////////////////////////////////
+template<typename T>
+vector<T> list_2_vector( const list<T>& lst ){
+    vector<T> rtnVec;
+    size_t    i = 0;
+    rtnVec.reserve( lst.size() );
+    for( const T& elem : lst ){
+        rtnVec[i] = elem;
+        ++i;
+    }
+}
 
 
 ////////// TRIGONOMETRY ////////////////////////////////////////////////////////////////////////////

@@ -8,3 +8,6 @@
 [submodule "C++/ROS2/ws_FoamSculptor/libs/kigumi"]
 	path = C++/ROS2/ws_FoamSculptor/libs/kigumi
 	url = https://github.com/unageek/kigumi.git
+[submodule "C++/OpenGL/nanoflann"]
+	path = C++/OpenGL/nanoflann
+	url = https://github.com/jlblancoc/nanoflann.git
