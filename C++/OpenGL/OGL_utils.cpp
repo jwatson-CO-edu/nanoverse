@@ -171,12 +171,18 @@ void Camera3D::look_at( const vec3f& lukPnt ){  lookPt = lukPnt;  }
 
 vec4f extend( const vec3f& vec ){  return vec4f{ vec.x, vec.y, vec.z, 1.0 };  }
 
-void Camera3D::trackball( float theta, float phi ){
+void Camera3D::trackball_rotate( float theta, float phi ){
+    // Rotate the camera CAD-style
+    // Get vectors and matrices
     vec3f lkDiff = eyeLoc - lookPt;
     vec4f lkDif4 = extend( lkDiff );
-    vec3f xBasis = normalize( lkDiff );
-    vec3f yBasis = cross( upVctr, xBasis );
-    vec3f zBasis = normalize( cross( xBasis, yBasis ) );
-    // mat4f zRot   = R_z
+    vec3f yBasis = normalize( cross( upVctr, lkDiff ) );
+    vec3f zBasis = normalize( cross( lkDiff, yBasis ) );
+    mat4f eye    = mat4f{ 1.0f };
+    mat4f zRot   = rotate( eye, theta, zBasis );
+    mat4f yRot   = rotate( eye, phi  , yBasis );
+    // Perform transform and store
+    lkDif4 = yRot * zRot * lkDif4;
+    eyeLoc = lookPt + vec3f{ lkDif4.x, lkDif4.y, lkDif4.z };
     upVctr = zBasis;
 }

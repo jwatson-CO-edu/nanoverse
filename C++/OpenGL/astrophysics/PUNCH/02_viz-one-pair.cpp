@@ -134,7 +134,10 @@ lseg4f   camRays;
 vec4f    pointColor{ 255.0f/255.0f, 229.0f/255.0f, 115.0f/255.0f, 1.0f };
 vec4f    rayColor{   128.0f/255.0f, 128.0f/255.0f, 128.0f/255.0f, 0.5f };
 Camera3D cam{ vec3f{ 0.0f, 0.0f, 100.0f }, vec3f{ 0.0f, 0.0f, 200.0f }, vec3f{ 0.0f, 1.0f, 0.0f } };
-
+int  xLast  = INT32_MAX, xDelta = 0;
+int  yLast  = INT32_MAX, yDelta = 0;
+bool leftClicked = false;
+float _ROT_RAD_PER_PXL = 0.5f * (M_PI / 180.0f); 
 
 
 ////////// RENDERING ///////////////////////////////////////////////////////////////////////////////
@@ -156,6 +159,20 @@ void display(){
 	ErrCheck( "display" );
 	glFlush();
 	glutSwapBuffers();
+}
+
+void mouse_move( int x, int y ){
+    // Mouse activity callback
+    if( xLast < INT32_MAX ){
+        xDelta = x - xLast;
+        yDelta = y - yLast;    
+    }
+    xLast = x;
+    yLast = y;
+}
+
+void mouse_click( int button, int state, int x, int y ){
+    // FIXME, START HERE: 
 }
 
 
@@ -180,6 +197,7 @@ int main( int argc, char* argv[] ){
     camRays.splice( camRays.end(), temp, temp.begin(), temp.end() );
     
     set_near_far_draw_distance( 50.0f, 500.0f );
+    cam.look_at( vec3f{ 0.0f, 0.0f, 214.61f } );
 
     ///// Initialize GLUT /////////////////////////////////////////////////
     glutInit( &argc , argv );
@@ -217,9 +235,9 @@ int main( int argc, char* argv[] ){
     // glutSpecialFunc( special_dn );
     // glutSpecialUpFunc( special_up );
 
-    //  Tell GLUT to call "mouse" when mouse input arrives
-    // glutMouseFunc( mouse ); // Clicks
-    // glutPassiveMotionFunc( mouse_move ); // Movement
+    // Tell GLUT to call "mouse" when mouse input arrives
+    glutMouseFunc( mouse_click ); // Clicks
+    glutPassiveMotionFunc( mouse_move ); // Movement
     
     // //  Tell GLUT to call "key" when a key is pressed or released
     // glutKeyboardFunc( key_dn );

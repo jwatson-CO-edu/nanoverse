@@ -93,7 +93,7 @@ class Camera3D{ public:
     void look(); // Set camera position, target, and orientation
     void move_to( const vec3f& eyePsn );
     void look_at( const vec3f& lukPnt );
-    void trackball( float theta, float phi );
+    void trackball_rotate( float theta, float phi ); // Rotate the camera CAD-style
 };
 
 
