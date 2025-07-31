@@ -33,6 +33,7 @@ vector<T> list_2_vector( const list<T>& lst ){
         rtnVec[i] = elem;
         ++i;
     }
+    return rtnVec;
 }
 
 
