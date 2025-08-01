@@ -149,6 +149,7 @@ class Corona_Data_FITS { public:
     float obsLat; // --------------- Observer Latitude
     float obsLng; // --------------- Observer Longitude
     float dSun; // ----------------- Distance to the sun [Solar Radii]
+    float zRot; // ----------------- Image rotation [rad]
     
     Mat   img; // ------------------ Unpacked Image Data
     Mat   shw; // ------------------ Debug Image Data (Greyscale, Offset & Scaled)
@@ -163,15 +164,17 @@ typedef shared_ptr<Corona_Data_FITS> CMEPtr;
 
 class SolnPair{ public:
     // Container for near and far solutions for each pixel
-    Mat zetaPlus;
-    Mat zetaMinus;
+    Mat /*---*/ zetaPlus;
+    Mat /*---*/ zetaMinus;
+    list<vec4f> pntsPlus;
+    list<vec4f> pntsMinus;
 
     SolnPair( int width, int height, int depth );
 };
 typedef shared_ptr<SolnPair> PairPtr;
 
 // Calculate 3D coordinates from polarized data
-SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNorth_rad = 0.0f, float cutoffFrac = 0.5f );
+SolnPair calc_coords( string totalPath, string polarPath, float cutoffFrac = 0.5f );
 
 
 #endif

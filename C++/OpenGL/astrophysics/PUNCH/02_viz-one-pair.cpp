@@ -20,8 +20,20 @@ extern int _WINDOW_H;
 ////////// CME CLASSES /////////////////////////////////////////////////////////////////////////////
 
 class SolnFrame{ public:
-    list<PairPtr> pairs;
-    list<vec3f>   totPts;
+    // Container for combined CME data from all 4 satellites
+    vector<PairPtr> pairs;
+    vector<string>  tBpaths;
+    vector<string>  pBpaths;
+    list<vec3f>     totPts;
+
+    SolnFrame(){  
+        // PUNCH has four satellites
+        pairs.reserve(4);  
+        tBpaths.reserve(4);
+        pBpaths.reserve(4);        
+    } 
+
+    void solve_one_frame(  )
 };
 
 
@@ -218,7 +230,7 @@ int main( int argc, char* argv[] ){
     string tPath = "./astrophysics/data/cme0_dcmer_0000_bang_0000_tB/stepnum_005.fits";
     string pPath = "./astrophysics/data/cme0_dcmer_0000_bang_0000_pB/stepnum_005.fits";
     // 1. Solve
-    SolnPair solnOne = calc_coords( tPath, pPath, 0.0f, 0.50f );
+    SolnPair solnOne = calc_coords( tPath, pPath, 0.50f );
     // cout << solnOne.zetaMinus.rows << " x " << solnOne.zetaMinus.cols << " || " << solnOne.zetaMinus.rows << " x " << solnOne.zetaMinus.cols << endl;
     // 2. Near Points
     temp = extract_point_crosses( solnOne.zetaPlus, 2.0f, 2.0f );

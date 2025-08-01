@@ -2,6 +2,8 @@
 #include "../../include/toolbox.hpp"
 #include "../../include/PUNCH.hpp"
 
+const int _POINT_DIM = 4;
+
 ////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
 
 void load_arr( addr coords, long* arr ){
@@ -244,6 +246,7 @@ Corona_Data_FITS::Corona_Data_FITS( string fitsPath ){
     xRadPerPxl   = dataFileFITS->float_HDU( "CDELT1" );    
     yRadPerPxl   = dataFileFITS->float_HDU( "CDELT2" );    
     dSun /*---*/ = dataFileFITS->float_HDU( "OBS_R0" );    
+    zRot /*---*/ = dataFileFITS->float_HDU( "CROTA2" );    
     img /*----*/ = Mat( cv::Size( (int) dataFileFITS->get_dim(0), (int) dataFileFITS->get_dim(1) ), CV_32F, cv::Scalar(0.0) );
     shw /*----*/ = Mat( cv::Size( (int) dataFileFITS->get_dim(0), (int) dataFileFITS->get_dim(1) ), CV_8U , cv::Scalar(0)   );
     xDim   = dataFileFITS->get_dim(0);
@@ -287,10 +290,9 @@ SolnPair::SolnPair( int width, int height, int depth ){
     int sizes[] = {width, height, depth}; // Example: 3 "planes", each 4 rows x 5 columns
     zetaPlus  = Mat( 3, sizes, CV_32F, cv::Scalar(0.0) );
     zetaMinus = Mat( 3, sizes, CV_32F, cv::Scalar(0.0) );
-    cout << zetaMinus.size[0] << " x " << zetaMinus.size[1] << " || " << zetaMinus.size[0] << " x " << zetaMinus.size[1] << endl;
 }
 
-SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNorth_rad, float cutoffFrac ){
+SolnPair calc_coords( string totalPath, string polarPath, float cutoffFrac ){
     // Calculate 3D coordinates from polarized data
     Corona_Data_FITS tB_data{ totalPath };
     Corona_Data_FITS pB_data{ polarPath };
@@ -300,6 +302,7 @@ SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNo
     long  hDim /*---*/ = yDim / 2;
     float pxFromCenter = 0.0f;
     float epsilon /**/ = 0.0f;
+    float pB /*-----*/ = 0.0;
     float pB_over_tB   = 0.0;
     float bRatio /*-*/ = 0.0f;
     float angOffset    = tB_data.xRefPxlVal;
@@ -320,9 +323,9 @@ SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNo
     // Rotation matrices
     mat4f xRot;
     mat4f yRot;
-    mat4f zRot = R_z( angleFromSolarNorth_rad );
+    mat4f zRot = R_z( tB_data.zRot );
     // Return Struct
-    SolnPair rtnPair{ (int) xDim, (int) yDim, 3 };
+    SolnPair rtnPair{ (int) xDim, (int) yDim, _POINT_DIM };
 
     // Perform 
     for( long i = 0; i < xDim; i++ ){
@@ -332,7 +335,8 @@ SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNo
             // Skip pixels w v small values
             if( tB_data.img.at<float>(i,j) < tThresh ){  continue;  } 
             // Get angle to object and distance to Thompson Surface
-            pB_over_tB   = pB_data.img.at<float>(i,j) / tB_data.img.at<float>(i,j);
+            pB /*-----*/ = pB_data.img.at<float>(i,j);
+            pB_over_tB   = pB / tB_data.img.at<float>(i,j);
             pxFromCenter = sqrt( pow( abs( i-hDim ), 2.0f ) + pow( abs( j-hDim ), 2.0f ) );
             epsilon /**/ = pxFromCenter * radPerPxl;
             dThom /*--*/ = tB_data.dSun * cos( epsilon );
@@ -352,16 +356,22 @@ SolnPair calc_coords( string totalPath, string polarPath, float angleFromSolarNo
             xRot = R_x( 1.0f * j * radPerPxl + angOffset );
             // Get relative position of Near Solution
             posnPlus = vec4f{ 0.0, 0.0, dPxlPlus, 1.0 };
-            posnPlus = zRot * xRot * yRot * posnPlus;
+            posnPlus = xRot * yRot * zRot * posnPlus;
             // Get relative position of Far Solution
             posnMinus = vec4f{ 0.0, 0.0, dPxlMinus, 1.0 };
-            posnMinus = zRot * xRot * yRot * posnMinus;
-            cout << i << " // " << j << ", " << 1.0f * i * radPerPxl + angOffset << " // " << 1.0f * j * radPerPxl + angOffset << ", " << posnPlus << " // " << posnMinus << endl;
+            posnMinus = xRot * yRot * zRot * posnMinus;
+            // cout << i << " // " << j << ", " << 1.0f * i * radPerPxl + angOffset << " // " << 1.0f * j * radPerPxl + angOffset << ", " << posnPlus << " // " << posnMinus << endl;
             // Load positions
-            for( long k = 0; k < 3; ++k ){
+            for( long k = 0; k < (_POINT_DIM-1); ++k ){
                 rtnPair.zetaPlus.at<float>(i,j,k)  = posnPlus[k];
                 rtnPair.zetaMinus.at<float>(i,j,k) = posnMinus[k];
             }
+            rtnPair.zetaPlus.at<float>(i,j,(_POINT_DIM-1))  = pB;
+            rtnPair.zetaMinus.at<float>(i,j,(_POINT_DIM-1)) = pB;
+            posnPlus[3] /*-------------------------------*/ = pB;
+            posnMinus[3] /*------------------------------*/ = pB;
+            rtnPair.pntsPlus.push_back( posnPlus );
+            rtnPair.pntsMinus.push_back( posnMinus );
         }
     }
     return rtnPair;
