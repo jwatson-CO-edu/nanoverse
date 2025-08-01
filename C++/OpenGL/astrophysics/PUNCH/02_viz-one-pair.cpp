@@ -28,12 +28,13 @@ class SolnFrame{ public:
 
     SolnFrame(){  
         // PUNCH has four satellites
-        pairs.reserve(4);  
-        tBpaths.reserve(4);
-        pBpaths.reserve(4);        
+        pairs.reserve(4);       
     } 
 
-    void solve_one_frame(  )
+    void solve_one_frame( const vstr& tBpaths_, const vstr& pBpaths_ ){
+        tBpaths = tBpaths_;
+        pBpaths = pBpaths_;
+    }
 };
 
 
