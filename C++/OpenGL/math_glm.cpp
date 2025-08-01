@@ -13,7 +13,10 @@ float  Tanf( float x ){  return tanf( (x) * 3.1415927f / 180.0f );  }
 float  Atan2f( float y, float x ){  return (atan2f( y, x ) * 3.1415927f / 180.0f);  }
 
 
+////////// HOMOGENEOUS COORDINATES /////////////////////////////////////////////////////////////////
+
 mat4f R_x( float theta ){
+    // Transform for rotation about the X-axis
     mat4f rtnMtx = mat4f{ 1.0 };
     rtnMtx = rotate( rtnMtx, theta, vec3f{ 1.0, 0.0, 0.0 } );
     return rtnMtx;
@@ -21,6 +24,7 @@ mat4f R_x( float theta ){
 
 
 mat4f R_y( float theta ){
+    // Transform for rotation about the Y-axis
     mat4f rtnMtx = mat4f{ 1.0 };
     rtnMtx = rotate( rtnMtx, theta, vec3f{ 0.0, 1.0, 0.0 } );
     return rtnMtx;
@@ -28,6 +32,7 @@ mat4f R_y( float theta ){
 
 
 mat4f R_z( float theta ){
+    // Transform for rotation about the Z-axis
     mat4f rtnMtx = mat4f{ 1.0 };
     rtnMtx = rotate( rtnMtx, theta, vec3f{ 0.0, 0.0, 1.0 } );
     return rtnMtx;

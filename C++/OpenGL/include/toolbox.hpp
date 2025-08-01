@@ -18,6 +18,8 @@ using std::shared_ptr;
 #include <limits>
 #include <vector>
 using std::vector;
+#include <array>
+using std::array;
 
 /// OpenGL + GLUT ////
 #include <GL/glut.h>
@@ -39,11 +41,7 @@ std::ostream& operator<<( std::ostream& os , const mat4f& arr );
 
 ////////// VECTOR STRUCTS //////////////////////////////////////////////////////////////////////////
 
-typedef struct{
-    union{ uint v0; uint f0; };
-    union{ uint v1; uint f1; };
-    union{ uint v2; uint f2; };
-} vec3u;
+typedef array<uint,3> vec3u;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

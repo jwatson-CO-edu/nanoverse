@@ -197,7 +197,7 @@ void mouse_move( int x, int y ){
     }
     if( leftClicked ){
         cam.trackball_rotate( 
-            _ROT_RAD_PER_PXL * xDelta, 
+           -_ROT_RAD_PER_PXL * xDelta, 
             _ROT_RAD_PER_PXL * yDelta 
         );
     }
