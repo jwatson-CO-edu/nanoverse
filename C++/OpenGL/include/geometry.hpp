@@ -21,7 +21,6 @@ vec4f cross_vec4f( vec4f _v1, vec4f _v2 ); // Cross two `vec4f` as though they w
 
 
 
-
 ///// Polyhedral Net //////////////////////////////////////////////////////
 class TriNet;
 typedef shared_ptr<TriNet> NetPtr;
@@ -55,7 +54,7 @@ class TriNet{ public:
     void add_tri( const tri_v4f& tri );
     void add_tri_clr( const tri_v4f& tri, const tri_v4f& clr );
     void add_tri_clr( const tri_v4f& tri, const vec4f& clr   );
-    void store_geo(); // Compress shared vertices and store in compact heap arrays
+    void store_geo( float eps = 0.005 ); // Compress shared vertices and store in compact heap arrays
 
     void load_tetra( float radius = 1.0f ); // --- Replace geo with tetrahedron
     void load_icos( float radius = 1.0f ); // ---- Replace geo with icosahedron

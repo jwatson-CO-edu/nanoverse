@@ -8,7 +8,7 @@ using std::list;
 
 /// Graphics Language Math ////
 #include <glm/glm.hpp>
-using glm::vec2, glm::vec3, glm::mat4, glm::normalize, glm::cross;
+using glm::vec2, glm::vec3, glm::mat4, glm::normalize, glm::cross, glm::length;
 #include <glm/vec4.hpp> 
 using glm::vec4;
 #include <glm/gtc/matrix_transform.hpp>
@@ -51,8 +51,8 @@ float  Atan2f( float y, float x );
 
 
 ////////// HOMOGENEOUS COORDINATES /////////////////////////////////////////////////////////////////
-mat4f R_x( float theta );
-mat4f R_y( float theta );
-mat4f R_z( float theta );
+mat4f R_x( float theta ); // Transform for rotation about the X-axis
+mat4f R_y( float theta ); // Transform for rotation about the Y-axis
+mat4f R_z( float theta ); // Transform for rotation about the Z-axis
 
 #endif
