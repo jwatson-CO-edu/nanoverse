@@ -162,6 +162,7 @@ bool leftClicked = false;
 float _ROT_RAD_PER_PXL = 0.5f * (M_PI / 180.0f); 
 
 
+
 ////////// RENDERING ///////////////////////////////////////////////////////////////////////////////
 
 void display(){
@@ -189,12 +190,13 @@ void display(){
 	glutSwapBuffers();
 }
 
+
 void mouse_move( int x, int y ){
     // Mouse activity callback
     // cout << "MOVE!" << endl;
     if( xLast < INT32_MAX ){
         xDelta = x - xLast;
-        yDelta = y - yLast;    
+        yDelta = y - yLast;     
     }
     if( leftClicked ){
         cam.trackball_rotate( 
@@ -206,6 +208,7 @@ void mouse_move( int x, int y ){
     yLast = y;
     glutPostRedisplay();
 }
+
 
 void mouse_click( int button, int state, int x, int y ){
     // cout << "CLICK!" << endl;
