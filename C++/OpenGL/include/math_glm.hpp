@@ -23,19 +23,6 @@ typedef vec4 /*----*/ vec4f;
 typedef mat4 /*----*/ mat4f;
 
 
-////////// CONTAINERS //////////////////////////////////////////////////////////////////////////////
-template<typename T>
-vector<T> list_2_vector( const list<T>& lst ){
-    vector<T> rtnVec;
-    size_t    i = 0;
-    rtnVec.reserve( lst.size() );
-    for( const T& elem : lst ){
-        rtnVec[i] = elem;
-        ++i;
-    }
-    return rtnVec;
-}
-
 
 ////////// TRIGONOMETRY ////////////////////////////////////////////////////////////////////////////
 
@@ -48,6 +35,7 @@ float  Cosf( float x );
 float  Sinf( float x );
 float  Tanf( float x );
 float  Atan2f( float y, float x );
+
 
 
 ////////// HOMOGENEOUS COORDINATES /////////////////////////////////////////////////////////////////

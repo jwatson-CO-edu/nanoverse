@@ -42,6 +42,7 @@ using glm::rotate;
 
 ///// Aliases /////////////////////////////////////////////////////////////
 typedef vector<string> vstr;
+typedef vector<vstr>   vvstr;
 typedef array<long,2>  addr;
 typedef vec2 /*-----*/ vec2f;
 typedef vec3 /*-----*/ vec3f;
