@@ -292,6 +292,7 @@ SolnPair::SolnPair( int width, int height, int depth ){
     zetaMinus = Mat( 3, sizes, CV_32F, cv::Scalar(0.0) );
 }
 
+
 SolnPair calc_coords( string totalPath, string polarPath, float cutoffFrac ){
     // Calculate 3D coordinates from polarized data
     Corona_Data_FITS tB_data{ totalPath };

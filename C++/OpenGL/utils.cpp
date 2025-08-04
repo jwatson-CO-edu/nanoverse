@@ -58,9 +58,15 @@ vstr list_files_at_path_w_ext( string path, string ext, bool sortAlpha ){
     // List all the files found at a path that have the given `ext`, Optionally sort
     vstr allPaths = list_files_at_path( path, sortAlpha );
     vstr rtnPaths;
-    for( string fPath : allPaths ){
-        if( file_has_ext( fPath, ext ) )
-            rtnPaths.push_back( string( fPath ) );
-    }
+    for( string fPath : allPaths ){  if( file_has_ext( fPath, ext ) ){  rtnPaths.push_back( string( fPath ) );  }  }
     return rtnPaths;
+}
+
+
+vvstr list_files_at_paths_w_ext( const vstr& paths, string ext, bool sortAlpha ){
+    // List all the files found at given paths that have the given `ext`, Optionally sort
+    vstr  paths_ = paths;
+    vvstr rtnNames;
+    for( const string& path : paths_ ){  rtnNames.push_back( list_files_at_path_w_ext( path, ext, sortAlpha ) );  }
+    return rtnNames;
 }

@@ -6,6 +6,8 @@
 using std::vector;
 #include <list>
 using std::list;
+#include <array>
+using std::array;
 #include <string>
 using std::string;
 #include <filesystem>
@@ -14,9 +16,11 @@ using std::filesystem::directory_iterator;
 using std::sort;
 
 
-
 ///// TYPE DEFINES ////////////////////////////////////////////////////////
 typedef vector<string> vstr;
+typedef vector<vstr>   vvstr;
+typedef array<uint,2>  vec2u;
+typedef vector<vec2u>  vvec2u;
 
 
 ////////// CONTAINERS //////////////////////////////////////////////////////////////////////////////
@@ -42,8 +46,10 @@ string to_upper( string input ); // ------------------ Return a version of the s
 
 
 ////////// FILE OPERATIONS /////////////////////////////////////////////////////////////////////////
-vstr list_files_at_path( string path, bool sortAlpha = true ); // ----------------- List all the files found at a path, Optionally sort
-bool file_has_ext( string path, string ext ); // ---------------------------------- Return true if a file has the given `ext`
-vstr list_files_at_path_w_ext( string path, string ext, bool sortAlpha = true ); // List all the files found at a path that have the given `ext`, Optionally sort
+vstr  list_files_at_path( string path, bool sortAlpha = true ); // ----------------- List all the files found at a path, Optionally sort
+bool  file_has_ext( string path, string ext ); // ---------------------------------- Return true if a file has the given `ext`
+vstr  list_files_at_path_w_ext( string path, string ext, bool sortAlpha = true ); // List all the files found at a path that have the given `ext`, Optionally sort
+// List all the files found at given paths that have the given `ext`, Optionally sort
+vvstr list_files_at_paths_w_ext( const vstr& paths, string ext, bool sortAlpha = true ); 
 
 #endif
