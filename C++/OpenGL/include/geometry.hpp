@@ -1,11 +1,15 @@
 #ifndef GEOMETRY_HPP // This pattern is to prevent symbols to be loaded multiple times
 #define GEOMETRY_HPP // from multiple imports
 
+
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 #include <list>
 using std::list;
 #include <array>
 using std::array;
 
+#include "utils.hpp"
+#include "math_glm.hpp"
 #include "toolbox.hpp"
 
 typedef array<vec4f,3> tri_v4f;
@@ -16,7 +20,6 @@ typedef array<vec3f,3> tri_v3f;
 
 ////////// GEOMETRY STRUCTS ////////////////////////////////////////////////////////////////////////
 
-vec4f extend( const vec3f& vec ); // Estend to 4 elems, Unity scale
 vec4f cross_vec4f( vec4f _v1, vec4f _v2 ); // Cross two `vec4f` as though they were `vec3f`
 
 

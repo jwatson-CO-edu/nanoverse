@@ -23,6 +23,11 @@ typedef vec4 /*----*/ vec4f;
 typedef mat4 /*----*/ mat4f;
 
 
+////////// VECTOR OPERATIONS ///////////////////////////////////////////////////////////////////////
+vec3f no_scale( const vec4f& vec );
+vec4f one_scale( const vec4f& vec );
+vec4f extend( const vec3f& vec ); // Estend to 4 elems, Unity scale
+
 
 ////////// TRIGONOMETRY ////////////////////////////////////////////////////////////////////////////
 

@@ -17,37 +17,6 @@ extern int _WINDOW_W;
 extern int _WINDOW_H;
 
 
-
-////////// CME CLASSES /////////////////////////////////////////////////////////////////////////////
-
-class SolnFrame{ public:
-    // Container for combined CME data from all 4 satellites
-    vector<PairPtr> pairs;
-    vvstr paths;
-    list<vec3f> totPts;
-
-    SolnFrame( vstr pathList ){
-        // PUNCH has four satellites
-        pairs.reserve(4);   
-        paths = list_files_at_paths_w_ext( pathList, "fits", true ); // Fetch all relevant filenames
-    } 
-
-    void solve_one_frame( const vvec2u& pathAddrs ){
-        // Fetch the files at the addresses, Assume [ ..., <tB_i>, <pB_i>, ... ]
-        string tBpath;
-        string pBpath;
-        for( ubyte i = 0; i < 8; i += 2 ){
-            tBpath = paths[pathAddrs[i  ][0]][pathAddrs[i  ][1]];
-            pBpath = paths[pathAddrs[i+1][0]][pathAddrs[i+1][1]];
-            pairs.push_back( PairPtr{
-                new SolnPair{}
-            } )
-        }
-    }
-};
-
-
-
 ////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
 
 vec4f add_vec4f( const vec4f& op1, const vec4f& op2 ){
@@ -56,6 +25,24 @@ vec4f add_vec4f( const vec4f& op1, const vec4f& op2 ){
 
 vec4f sub_vec4f( const vec4f& op1, const vec4f& op2 ){
     return vec4f{ op1.x-op2.x, op1.y-op2.y, op1.z-op2.z, min( op1.x, op2.x ) };
+}
+
+void init_rand(){  srand( time( NULL ) );  }
+
+float randf(){
+    // Return a pseudo-random number between 0.0 and 1.0
+    return  1.0f * rand() / RAND_MAX;
+}
+
+float randf_range( float lo, float hi ){
+    // Return a pseudo-random number between `lo` and `hi`
+    // NOTE: This function assumes `hi > lo`
+    return lo + (hi - lo) * randf();
+}
+
+vec3f rand_vec3f( float scale = 1.0 ){
+    vec3f rtnVec{ randf_range( -1.0f, 1.0f ), randf_range( -1.0f, 1.0f ), randf_range( -1.0f, 1.0f ) };
+    return normalize( rtnVec ) * scale;
 }
 
 
@@ -82,31 +69,115 @@ lseg4f point_cross( const vec4f& pnt, float width_m ){
 }
 
 
+lseg4f point_cross_rand( const vec4f& pnt, float width_m ){
+    // Return segments representing a point, with a random orientation
+    lseg4f crossPts;
+    float  wHlf   = width_m / 2.0;
+    vec3f  pntP   = no_scale( pnt );
+    vec3f  xBasis = rand_vec3f();
+    vec3f  zBasis = normalize( cross( xBasis, rand_vec3f() ) );
+    vec3f  yBasis = normalize( cross( zBasis, xBasis ) );
+    // X-cross
+    crossPts.push_back( seg4f{
+        extend( pntP + (xBasis*width_m) ),
+        extend( pntP - (xBasis*width_m) )
+    } );
+    // Y-cross
+    crossPts.push_back( seg4f{
+        extend( pntP + (yBasis*width_m) ),
+        extend( pntP - (yBasis*width_m) )
+    } );
+    // Z-cross
+    crossPts.push_back( seg4f{
+        extend( pntP + (zBasis*width_m) ),
+        extend( pntP - (zBasis*width_m) )
+    } ); 
+    return crossPts;
+}
+
+
 float normSqr( float x, float y, float z ){  return (x*x + y*y + z*z);  }
 float normSqr( const vec4f pnt ){  return (normSqr( pnt[0], pnt[1], pnt[2] ) * pnt[3]);  }
 
 
-lseg4f extract_point_crosses( const Mat& matx, float width_m, float sqrThresh = 2.0f ){
+lseg4f extract_point_crosses( const Mat& matx, float scale, float sqrThresh = 2.0f ){
     // Get segments that represent points
     lseg4f rtnSeg;
     lseg4f temp;
     int    Mrows = matx.size[0];
     int    Ncols = matx.size[1];
-    vec4f  point{ 0.0, 0.0, 0.0, 1.0 };
+    vec4f  point{ 0.0, 0.0, 0.0, 0.0 };
     cout << "Matx: " << Mrows << " x " << Ncols << endl;
     for( int i = 0; i < Mrows; ++i ){
         for( int j = 0; j < Ncols; ++j ){
-            for( int k = 0; k < 3; ++k ){  point[k] = matx.at<float>(i,j,k);  }   
+            for( int k = 0; k < 4; ++k ){  point[k] = matx.at<float>(i,j,k);  }   
             
             if( normSqr( point ) >= sqrThresh ){
-                // cout << point << endl;
-                temp = point_cross( point, width_m );
+                temp = point_cross_rand( one_scale( point ), point[3]*scale );
                 rtnSeg.splice( rtnSeg.end(), temp, temp.begin(), temp.end() );
             }
         }
     }
     return rtnSeg;
 }
+
+
+void extract_points_into_list( const Mat& matx, list<vec4f>& dstLst ){
+    int    Mrows = matx.size[0];
+    int    Ncols = matx.size[1];
+    vec4f  point{ 0.0, 0.0, 0.0, 0.0 };
+    for( int i = 0; i < Mrows; ++i ){
+        for( int j = 0; j < Ncols; ++j ){
+            for( int k = 0; k < 4; ++k ){  point[k] = matx.at<float>(i,j,k);  }  
+            dstLst.push_back( point );
+        }
+    }
+}
+
+
+////////// CME CLASSES /////////////////////////////////////////////////////////////////////////////
+
+class SolnFrame{ public:
+    // Container for combined CME data from all 4 satellites
+    vector<PairPtr> pairs;
+    vvstr /*-----*/ paths;
+    list<vec4f>     ptsPlus;
+    list<vec4f>     ptsMinus;
+    list<vec4f>     colors;
+    vector<vec4f>   vColors;
+
+    SolnFrame( vstr pathList ){
+        // PUNCH has four satellites
+        pairs.reserve(4);   
+        paths = list_files_at_paths_w_ext( pathList, "fits", true ); // Fetch all relevant filenames
+    } 
+
+    void solve_one_frame( const vvec2u& pathAddrs ){
+        // Fetch the files at the addresses, Assume [ ..., <tB_i>, <pB_i>, ... ]
+        string tBpath;
+        string pBpath;
+        for( ubyte i = 0; i < 8; i += 2 ){
+            tBpath = paths[pathAddrs[i  ][0]][pathAddrs[i  ][1]];
+            pBpath = paths[pathAddrs[i+1][0]][pathAddrs[i+1][1]];
+            pairs.push_back( calc_coords_ptr( tBpath, pBpath, 0.5f ) );
+        }
+    }
+
+    void collect_and_colorize( const vector<vec4f>& colorSeq ){
+        ubyte  Nclr = (ubyte) min( (size_t) 255, colorSeq.size() );
+        size_t Npnt = 0;
+        for( ubyte i = 0; i < 4; ++i ){
+            ptsPlus.splice(  ptsPlus.end() , pairs[i]->pntsPlus , pairs[i]->pntsPlus.begin() , pairs[i]->pntsPlus.end()  );
+            ptsMinus.splice( ptsMinus.end(), pairs[i]->pntsMinus, pairs[i]->pntsMinus.begin(), pairs[i]->pntsMinus.end() );
+            Npnt = pairs[i]->pntsPlus.size();
+            for( size_t j = 0; j < Npnt; ++j ){  colors.push_back( colorSeq[i%Nclr] );  }
+        }
+    }
+};
+
+
+
+
 
 
 lseg4f extract_point_rays_from_origin( const Mat& matx, float sqrThresh = 2.0f ){

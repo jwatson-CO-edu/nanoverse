@@ -176,6 +176,7 @@ typedef shared_ptr<SolnPair> PairPtr;
 
 // Calculate 3D coordinates from polarized data
 SolnPair calc_coords( string totalPath, string polarPath, float cutoffFrac = 0.5f );
+PairPtr  calc_coords_ptr( string totalPath, string polarPath, float cutoffFrac = 0.5f );
 
 
 #endif

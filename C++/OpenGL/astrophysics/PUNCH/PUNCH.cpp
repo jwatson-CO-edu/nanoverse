@@ -377,3 +377,89 @@ SolnPair calc_coords( string totalPath, string polarPath, float cutoffFrac ){
     }
     return rtnPair;
 }
+
+
+PairPtr calc_coords_ptr( string totalPath, string polarPath, float cutoffFrac = 0.5f ){
+    // Calculate 3D coordinates from polarized data
+    Corona_Data_FITS tB_data{ totalPath };
+    Corona_Data_FITS pB_data{ polarPath };
+    // Reconstruction params
+    long  xDim /*---*/ = tB_data.dataFileFITS->get_dim(0);
+    long  yDim /*---*/ = tB_data.dataFileFITS->get_dim(1);
+    long  hDim /*---*/ = yDim / 2;
+    float pxFromCenter = 0.0f;
+    float epsilon /**/ = 0.0f;
+    float pB /*-----*/ = 0.0;
+    float pB_over_tB   = 0.0;
+    float bRatio /*-*/ = 0.0f;
+    float angOffset    = tB_data.xRefPxlVal;
+    float radPerPxl    = tB_data.xRadPerPxl;
+    float zetaPlus     = 0.0f;
+    float zetaMinus    = 0.0f;
+    float Op_sky /*-*/ = 0.0f;
+    float Ad_oos /*-*/ = 0.0f;
+    float dThom /*--*/ = 0.0f;
+    float dPxlPlus     = 0.0f;
+    float dPxlMinus    = 0.0f;
+    float tThresh /**/ = tB_data.dataFileFITS->valMin + (tB_data.dataFileFITS->valMax - tB_data.dataFileFITS->valMin) * cutoffFrac;
+    // Locations
+    vec4f ertLoc{ 0.0f, 0.0f, 0.0f /*--*/ , 1.0f }; // Place the Earth at the origin
+    vec4f sunLoc{ 0.0f, 0.0f, tB_data.dSun, 1.0f }; // Place the Sun along the Z-axis
+    vec4f posnPlus;
+    vec4f posnMinus;
+    // Rotation matrices
+    mat4f xRot;
+    mat4f yRot;
+    mat4f zRot = R_z( tB_data.zRot );
+    // Return Struct
+    PairPtr rtnPair{ new SolnPair{ (int) xDim, (int) yDim, _POINT_DIM } };
+
+    // Perform 
+    for( long i = 0; i < xDim; i++ ){
+        // Get Y rotation of the column
+        yRot = R_y( 1.0f * i * radPerPxl + angOffset );
+        for( long j = 0; j < yDim; j++ ){  
+            // Skip pixels w v small values
+            if( tB_data.img.at<float>(i,j) < tThresh ){  continue;  } 
+            // Get angle to object and distance to Thompson Surface
+            pB /*-----*/ = pB_data.img.at<float>(i,j);
+            pB_over_tB   = pB / tB_data.img.at<float>(i,j);
+            pxFromCenter = sqrt( pow( abs( i-hDim ), 2.0f ) + pow( abs( j-hDim ), 2.0f ) );
+            epsilon /**/ = pxFromCenter * radPerPxl;
+            dThom /*--*/ = tB_data.dSun * cos( epsilon );
+            // Get possible Out-of-Sky angles: zeta
+            bRatio    = sqrt( (1.0f - pB_over_tB) / (1.0f + pB_over_tB) );
+            zetaPlus  = epsilon + asin(  bRatio );
+            zetaMinus = epsilon + asin( -bRatio );
+            // cout << zetaPlus << " // " << zetaMinus << endl;
+            // Get possible distances from sensor
+            Op_sky    = tB_data.dSun * tan( epsilon );
+            Ad_oos    = Op_sky * cos( epsilon );
+            // cout << epsilon << " // " << tB_data.dSun << " // " << dThom << " // " << Op_sky << " // " << Ad_oos << endl;
+            dPxlPlus  = dThom + Ad_oos * tan( zetaPlus  - epsilon );
+            dPxlMinus = dThom + Ad_oos * tan( zetaMinus - epsilon );
+            // cout << dPxlPlus << " // " << dPxlMinus << endl;
+            // Get X rotation of the row
+            xRot = R_x( 1.0f * j * radPerPxl + angOffset );
+            // Get relative position of Near Solution
+            posnPlus = vec4f{ 0.0, 0.0, dPxlPlus, 1.0 };
+            posnPlus = xRot * yRot * zRot * posnPlus;
+            // Get relative position of Far Solution
+            posnMinus = vec4f{ 0.0, 0.0, dPxlMinus, 1.0 };
+            posnMinus = xRot * yRot * zRot * posnMinus;
+            // cout << i << " // " << j << ", " << 1.0f * i * radPerPxl + angOffset << " // " << 1.0f * j * radPerPxl + angOffset << ", " << posnPlus << " // " << posnMinus << endl;
+            // Load positions
+            for( long k = 0; k < (_POINT_DIM-1); ++k ){
+                rtnPair->zetaPlus.at<float>(i,j,k)  = posnPlus[k];
+                rtnPair->zetaMinus.at<float>(i,j,k) = posnMinus[k];
+            }
+            rtnPair->zetaPlus.at<float>(i,j,(_POINT_DIM-1))  = pB;
+            rtnPair->zetaMinus.at<float>(i,j,(_POINT_DIM-1)) = pB;
+            posnPlus[3] /*-------------------------------*/ = pB;
+            posnMinus[3] /*------------------------------*/ = pB;
+            rtnPair->pntsPlus.push_back( posnPlus );
+            rtnPair->pntsMinus.push_back( posnMinus );
+        }
+    }
+    return rtnPair;
+}

@@ -13,6 +13,14 @@ float  Tanf( float x ){  return tanf( (x) * 3.1415927f / 180.0f );  }
 float  Atan2f( float y, float x ){  return (atan2f( y, x ) * 3.1415927f / 180.0f);  }
 
 
+
+////////// VECTOR OPERATIONS ///////////////////////////////////////////////////////////////////////
+vec3f no_scale( const vec4f& vec ){  return vec3f{ vec.x, vec.y, vec.z };  }
+vec4f one_scale( const vec4f& vec ){  return vec4f{ vec[0], vec[1], vec[2], 1.0f };  } // Enforce Unity scale
+vec4f extend( const vec3f& vec ){  return vec4f{ vec[0], vec[1], vec[2], 1.0f };  } // Estend to 4 elems, Unity scale
+
+
+
 ////////// HOMOGENEOUS COORDINATES /////////////////////////////////////////////////////////////////
 
 mat4f R_x( float theta ){

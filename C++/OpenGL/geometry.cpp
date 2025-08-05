@@ -1,4 +1,7 @@
+////////// INIT ////////////////////////////////////////////////////////////////////////////////////
 #include "include/geometry.hpp"
+
+
 
 ////////// GEOMETRY STRUCTS ////////////////////////////////////////////////////////////////////////
 
@@ -53,12 +56,6 @@ void TriNet::add_tri_clr( const tri_v4f& tri, const tri_v4f& clr ){
 
 
 void TriNet::add_tri_clr( const tri_v4f& tri, const vec4f& clr ){  add_tri_clr( tri, tri_v4f{ clr, clr, clr } );  }
-
-
-vec3f no_scale( const vec4f& vec ){  return vec3f{ vec.x, vec.y, vec.z };  }
-
-
-vec4f extend( const vec3f& vec ){  return vec4f{ vec[0], vec[1], vec[2], 1.0f };  } // Estend to 4 elems, Unity scale
 
 
 vec4f cross_vec4f( vec4f _v1, vec4f _v2 ){
