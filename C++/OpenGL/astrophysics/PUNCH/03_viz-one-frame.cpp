@@ -162,7 +162,6 @@ class SolnFrame{ public:
     list<vec4f>     ptsMinus;
     list<vec4f>     clrPlus;
     list<vec4f>     clrMinus;
-
     vector<vec4f>   vColors;
 
     SolnFrame( vstr pathList ){
@@ -177,7 +176,8 @@ class SolnFrame{ public:
         string tBpath;
         string pBpath;
         ubyte  Nclr = (ubyte) min( (size_t) 255, colorSeq.size() );
-        size_t Npnt = 0;
+        size_t Npls = 0;
+        size_t Nmns = 0;
         for( ubyte i = 0; i < 8; i += 2 ){
             tBpath = paths[pathAddrs[i  ][0]][pathAddrs[i  ][1]];
             pBpath = paths[pathAddrs[i+1][0]][pathAddrs[i+1][1]];
@@ -185,36 +185,17 @@ class SolnFrame{ public:
             // pairs[i/2] = calc_coords_ptr( tBpath, pBpath, 0.5f );
             pairs.push_back( calc_coords_ptr( tBpath, pBpath, 0.5f ) );
 
-            Npnt       = pairs[i/2]->pntsPlus.size();
-            ptsPlus.splice( ptsPlus.end(), pairs[i/2]->pntsPlus, pairs[i/2]->pntsPlus.begin(), pairs[i/2]->pntsPlus.end() );
+            Npls = pairs[i/2]->pntsPlus.size()*3;
+            Nmns = pairs[i/2]->pntsMinus.size()*3;
+            ptsPlus.splice(  ptsPlus.end() , pairs[i/2]->pntsPlus , pairs[i/2]->pntsPlus.begin() , pairs[i/2]->pntsPlus.end()  );
             ptsMinus.splice( ptsMinus.end(), pairs[i/2]->pntsMinus, pairs[i/2]->pntsMinus.begin(), pairs[i/2]->pntsMinus.end() );
             cout << (int) (i/2) << ", " << ptsPlus.size() << ", " << ptsMinus.size() << endl;
-            for( size_t j = 0; j < Npnt; ++j ){  
-                clrPlus.push_back( colorSeq[(i/2)%Nclr] );  
-                clrMinus.push_back( colorSeq[(i/2)%Nclr] );  
-            }
+            for( size_t j = 0; j < Npls; ++j ){  clrPlus.push_back(  colorSeq[(i/2)%Nclr] );  }
+            for( size_t j = 0; j < Nmns; ++j ){  clrMinus.push_back( colorSeq[(i/2)%Nclr] );  }
             // cout << "Collected " << colors.size() << " colors!, " << Npnt << ", " << pairs[i/2]->pntsPlus.size() << endl;
         }
     }
 };
-
-
-lseg4f extract_point_rays_from_origin( const Mat& matx, float sqrThresh = 2.0f ){
-    // Get segments that represent points
-    lseg4f rtnSeg;
-    lseg4f temp;
-    int    Mrows = matx.size[0];
-    int    Ncols = matx.size[1];
-    vec4f  point{ 0.0, 0.0, 0.0, 1.0 };
-    vec4f  pZero{ 0.0, 0.0, 0.0, 1.0 };
-    for( int i = 0; i < Mrows; ++i ){
-        for( int j = 0; j < Ncols; ++j ){
-            for( int k = 0; k < 3; ++k ){  point[k] = matx.at<float>(i,j,k);  }   
-            if( normSqr( point ) >= sqrThresh ){  rtnSeg.push_back( seg4f{ pZero, point } );  }
-        }
-    }
-    return rtnSeg;
-}
 
 
 
@@ -223,10 +204,14 @@ lseg4f extract_point_rays_from_origin( const Mat& matx, float sqrThresh = 2.0f )
 void draw_segments( const lseg4f& segments, const vector<vec4f>& color ){
     // Draw a collection of segments
     size_t i = 0;
+    vec4f prvClr{ 0.0, 0.0, 0.0, 0.0 };
     glBegin( GL_LINES );
     // cout << "There are " << segments.size() << " segments!" << endl;
     for( const seg4f& segment : segments ){
-        glClr4f( color[i] );
+        if( color[i] != prvClr ){
+            glClr4f( color[i] );
+            prvClr = color[i];
+        }  
         glVtx3f( segment[0] );
         glVtx3f( segment[1] );
         ++i;
@@ -358,15 +343,16 @@ int main( int argc, char* argv[] ){
         "./astrophysics/data/cme0_dcmer_090E_bang_0000_tB",
     };
     SolnFrame frame{ fitsPaths };
-    vvec2u files = {
-        vec2u{ 1, 0 },
-        vec2u{ 0, 0 },
-        vec2u{ 3, 0 },
-        vec2u{ 2, 0 },
-        vec2u{ 5, 0 },
-        vec2u{ 4, 0 },
-        vec2u{ 7, 0 },
-        vec2u{ 6, 0 },
+    uint /**/ seq = 40;
+    vvec2u    files = {
+        vec2u{ 1, seq },
+        vec2u{ 0, seq },
+        vec2u{ 3, seq },
+        vec2u{ 2, seq },
+        vec2u{ 5, seq },
+        vec2u{ 4, seq },
+        vec2u{ 7, seq },
+        vec2u{ 6, seq },
     };
     vvec4f colorSequence = { RED, GREEN, BLUE, WHITE };
     frame.solve_one_frame( files, colorSequence );
@@ -382,6 +368,7 @@ int main( int argc, char* argv[] ){
     pntClr = list_2_vector( totClr );
 
     cout << "There are " << pointPaint.size() << " segments!" << endl;
+    cout << "There are " << pntClr.size() << " colors!" << endl;
     
     cam.look_at( vec3f{ 0.0f, 0.0f, 214.61f } );
 
