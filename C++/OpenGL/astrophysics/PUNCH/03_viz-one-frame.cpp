@@ -92,11 +92,13 @@ lseg4f point_cross_rand( const vec4f& pnt, float width_m ){
         extend( pntP + (zBasis*wHlf) ),
         extend( pntP - (zBasis*wHlf) )
     } ); 
+    // cout << "About to return a cross of " << crossPts.size() << " segments!" << endl;
     return crossPts;
 }
 
 
 float normSqr( float x, float y, float z ){  return (x*x + y*y + z*z);  }
+float normSqr( const vec3f pnt ){  return normSqr( pnt[0], pnt[1], pnt[2] );  }
 float normSqr( const vec4f pnt ){  return (normSqr( pnt[0], pnt[1], pnt[2] ) * pnt[3]);  }
 
 
@@ -112,7 +114,7 @@ lseg4f extract_point_crosses( const Mat& matx, float scale, float sqrThresh = 2.
         for( int j = 0; j < Ncols; ++j ){
             for( int k = 0; k < 4; ++k ){  point[k] = matx.at<float>(i,j,k);  }   
             
-            if( normSqr( point ) >= sqrThresh ){
+            if( normSqr( no_scale(point) ) >= sqrThresh ){
                 temp = point_cross_rand( one_scale( point ), point[3]*scale );
                 rtnSeg.splice( rtnSeg.end(), temp, temp.begin(), temp.end() );
             }
@@ -127,11 +129,12 @@ lseg4f extract_point_crosses( const list<vec4f>& pntScl, float scale, float sqrT
     lseg4f rtnSeg;
     lseg4f temp;
     for( const vec4f& point : pntScl ){
-        if( normSqr( point ) >= sqrThresh ){
+        if( normSqr( no_scale(point) ) >= sqrThresh ){
             temp = point_cross_rand( one_scale( point ), point[3]*scale );
             rtnSeg.splice( rtnSeg.end(), temp, temp.begin(), temp.end() );
         }
     }
+    cout << "About to return " << rtnSeg.size() << " segments!" << endl;
     return rtnSeg;
 }
 
@@ -157,7 +160,9 @@ class SolnFrame{ public:
     vvstr /*-----*/ paths;
     list<vec4f>     ptsPlus;
     list<vec4f>     ptsMinus;
-    list<vec4f>     colors;
+    list<vec4f>     clrPlus;
+    list<vec4f>     clrMinus;
+
     vector<vec4f>   vColors;
 
     SolnFrame( vstr pathList ){
@@ -167,27 +172,28 @@ class SolnFrame{ public:
         cout << paths << endl;
     } 
 
-    void solve_one_frame( const vvec2u& pathAddrs ){
+    void solve_one_frame( const vvec2u& pathAddrs, const vector<vec4f>& colorSeq ){
         // Fetch the files at the addresses, Assume [ ..., <tB_i>, <pB_i>, ... ]
         string tBpath;
         string pBpath;
+        ubyte  Nclr = (ubyte) min( (size_t) 255, colorSeq.size() );
+        size_t Npnt = 0;
         for( ubyte i = 0; i < 8; i += 2 ){
             tBpath = paths[pathAddrs[i  ][0]][pathAddrs[i  ][1]];
             pBpath = paths[pathAddrs[i+1][0]][pathAddrs[i+1][1]];
-            pairs[i/2] = calc_coords_ptr( tBpath, pBpath, 0.5f );
+
+            // pairs[i/2] = calc_coords_ptr( tBpath, pBpath, 0.5f );
+            pairs.push_back( calc_coords_ptr( tBpath, pBpath, 0.5f ) );
+
+            Npnt       = pairs[i/2]->pntsPlus.size();
             ptsPlus.splice( ptsPlus.end(), pairs[i/2]->pntsPlus, pairs[i/2]->pntsPlus.begin(), pairs[i/2]->pntsPlus.end() );
             ptsMinus.splice( ptsMinus.end(), pairs[i/2]->pntsMinus, pairs[i/2]->pntsMinus.begin(), pairs[i/2]->pntsMinus.end() );
-        }
-    }
-
-    void collect_and_colorize( const vector<vec4f>& colorSeq ){
-        ubyte  Nclr = (ubyte) min( (size_t) 255, colorSeq.size() );
-        size_t Npnt = 0;
-        for( ubyte i = 0; i < 4; ++i ){
-            ptsPlus.splice(  ptsPlus.end() , pairs[i]->pntsPlus , pairs[i]->pntsPlus.begin() , pairs[i]->pntsPlus.end()  );
-            ptsMinus.splice( ptsMinus.end(), pairs[i]->pntsMinus, pairs[i]->pntsMinus.begin(), pairs[i]->pntsMinus.end() );
-            Npnt = pairs[i]->pntsPlus.size()*2;
-            for( size_t j = 0; j < Npnt; ++j ){  colors.push_back( colorSeq[i%Nclr] );  }
+            cout << (int) (i/2) << ", " << ptsPlus.size() << ", " << ptsMinus.size() << endl;
+            for( size_t j = 0; j < Npnt; ++j ){  
+                clrPlus.push_back( colorSeq[(i/2)%Nclr] );  
+                clrMinus.push_back( colorSeq[(i/2)%Nclr] );  
+            }
+            // cout << "Collected " << colors.size() << " colors!, " << Npnt << ", " << pairs[i/2]->pntsPlus.size() << endl;
         }
     }
 };
@@ -259,11 +265,13 @@ lseg4f /*--*/ camRays;
 vec4f /*---*/ pointColor{ 255.0f/255.0f, 229.0f/255.0f, 115.0f/255.0f, 1.00f };
 vec4f /*---*/ rayColor{   128.0f/255.0f, 128.0f/255.0f, 128.0f/255.0f, 0.25f };
 vector<vec4f> pntClr;
+list<vec4f> totClr;
 Camera3D /**/ cam{ vec3f{ 0.0f, 0.0f, 100.0f }, vec3f{ 0.0f, 0.0f, 200.0f }, vec3f{ 0.0f, 1.0f, 0.0f } };
 int /*-----*/ xLast /*------*/ = INT32_MAX, xDelta = 0;
 int /*-----*/ yLast /*------*/ = INT32_MAX, yDelta = 0;
 bool /*----*/ leftClicked /**/ = false;
 float /*---*/ _ROT_RAD_PER_PXL = 0.5f * (M_PI / 180.0f); 
+float /*---*/ _POINT_SCALE     = 50000.0f;
 
 
 
@@ -283,7 +291,7 @@ void display(){
     glutSolidSphere( 20.0f, 20, 20 );
     glPopMatrix();
     
-    cout << "There are " << pointPaint.size() << " points to paint!" << endl;
+    // cout << "There are " << pointPaint.size() << " points to paint!" << endl;
     draw_segments( pointPaint, pntClr );
     // draw_segments( camRays   , rayColor );
     ///// DRAW LOOP END ///////////////////////////////////////////////////
@@ -360,15 +368,20 @@ int main( int argc, char* argv[] ){
         vec2u{ 7, 0 },
         vec2u{ 6, 0 },
     };
-    frame.solve_one_frame( files );
     vvec4f colorSequence = { RED, GREEN, BLUE, WHITE };
-    frame.collect_and_colorize( colorSequence );
+    frame.solve_one_frame( files, colorSequence );
     
-    temp = extract_point_crosses( frame.ptsPlus, 100.0f );
+    temp = extract_point_crosses( frame.ptsPlus, _POINT_SCALE );
     pointPaint.splice( pointPaint.end(), temp, temp.begin(), temp.end() );
-    temp = extract_point_crosses( frame.ptsMinus, 100.0f );
+    totClr.splice( totClr.end(), frame.clrPlus, frame.clrPlus.begin(), frame.clrPlus.end() );
+
+    temp = extract_point_crosses( frame.ptsMinus, _POINT_SCALE );
     pointPaint.splice( pointPaint.end(), temp, temp.begin(), temp.end() );
-    pntClr = list_2_vector( frame.colors );
+    totClr.splice( totClr.end(), frame.clrMinus, frame.clrMinus.begin(), frame.clrMinus.end() );
+
+    pntClr = list_2_vector( totClr );
+
+    cout << "There are " << pointPaint.size() << " segments!" << endl;
     
     cam.look_at( vec3f{ 0.0f, 0.0f, 214.61f } );
 

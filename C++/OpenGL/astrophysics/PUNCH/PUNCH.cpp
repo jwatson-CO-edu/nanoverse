@@ -184,7 +184,8 @@ Corona_Data_FITS::Corona_Data_FITS( string fitsPath ){
     xRadPerPxl   = dataFileFITS->float_HDU( "CDELT1" );    
     yRadPerPxl   = dataFileFITS->float_HDU( "CDELT2" );    
     dSun /*---*/ = dataFileFITS->float_HDU( "OBS_R0" );    
-    zRot /*---*/ = dataFileFITS->float_HDU( "CROTA2" );    
+    // zRot /*---*/ = dataFileFITS->float_HDU( "CROTA2" );    
+    zRot /*---*/ = dataFileFITS->float_HDU( "OBS_LON" );    
     img /*----*/ = Mat( cv::Size( (int) dataFileFITS->get_dim(0), (int) dataFileFITS->get_dim(1) ), CV_32F, cv::Scalar(0.0) );
     shw /*----*/ = Mat( cv::Size( (int) dataFileFITS->get_dim(0), (int) dataFileFITS->get_dim(1) ), CV_8U , cv::Scalar(0)   );
     xDim   = dataFileFITS->get_dim(0);

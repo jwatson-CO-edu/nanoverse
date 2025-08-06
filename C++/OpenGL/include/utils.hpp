@@ -31,7 +31,8 @@ vector<T> list_2_vector( const list<T>& lst ){
     size_t    i = 0;
     rtnVec.reserve( lst.size() );
     for( const T& elem : lst ){
-        rtnVec[i] = elem;
+        // rtnVec[i] = elem;
+        rtnVec.push_back( elem );
         ++i;
     }
     return rtnVec;
