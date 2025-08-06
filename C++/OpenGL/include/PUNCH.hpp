@@ -36,6 +36,11 @@ using glm::vec2, glm::vec3, glm::vec4, glm::mat4;
 #include <glm/gtc/matrix_transform.hpp>
 using glm::rotate;
 
+/// Local ////
+#include "utils.hpp"
+#include "math_glm.hpp"
+#include "toolbox.hpp"
+
 ///// Defines /////////////////////////////////////////////////////////////
 #define PUNCH_X_DIM 1024
 #define PUNCH_Y_DIM 1024
@@ -69,14 +74,7 @@ std::ostream& operator<<( std::ostream& os , array<T,S> arr ){
 ////////// HELPER FUNCTIONS ////////////////////////////////////////////////////////////////////////
 void    load_arr( addr coords, long* arr );
 double* alloc_dbbl_arr( size_t N );
-vstr    split_string_on_char( string input, char ch );
-vstr    list_files_at_path( string path, bool sortAlpha = true );
-string  to_upper( string input );
-bool    file_has_ext( string path, string ext );
-vstr    list_files_at_path_w_ext( string path, string ext, bool sortAlpha = true );
-mat4f   R_x( float theta );
-mat4f   R_y( float theta );
-mat4f   R_z( float theta );
+
 
 ////////// FITS ////////////////////////////////////////////////////////////////////////////////////
 

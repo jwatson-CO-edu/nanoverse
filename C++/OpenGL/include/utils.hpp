@@ -42,7 +42,7 @@ vector<T> list_2_vector( const list<T>& lst ){
 ////////// STRING OPERATIONS ///////////////////////////////////////////////////////////////////////
 vstr split_string_on_char( string input, char ch ); // Return a vector of strings found in `input` separated by whitespace
 string to_upper( string input ); // ------------------ Return a version of the string that is upper case
-
+std::ostream& operator<<( std::ostream& os , vvstr arr );
 
 
 ////////// FILE OPERATIONS /////////////////////////////////////////////////////////////////////////

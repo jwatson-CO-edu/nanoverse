@@ -80,7 +80,11 @@ set( EXECUTABLE_NAME 02_viz-one-pair.out )
 add_executable( ${EXECUTABLE_NAME} astrophysics/PUNCH/02_viz-one-pair.cpp )
 target_include_directories( ${EXECUTABLE_NAME} PRIVATE include ${CFITSIO_INCLUDE_DIRS} )
 target_link_libraries( ${EXECUTABLE_NAME} PRIVATE OGL_LIB PUNCH_LIB )
-# target_compile_options( ${EXECUTABLE_NAME} PRIVATE "-L${CFITSIO_LIBRARIES}" -lcfitsio -lm )
 
+#### 02: Multi-Satellite Test #####
+set( EXECUTABLE_NAME 03_viz-one-frame.out )
+add_executable( ${EXECUTABLE_NAME} astrophysics/PUNCH/03_viz-one-frame.cpp )
+target_include_directories( ${EXECUTABLE_NAME} PRIVATE include ${CFITSIO_INCLUDE_DIRS} )
+target_link_libraries( ${EXECUTABLE_NAME} PRIVATE OGL_LIB PUNCH_LIB )
 
 

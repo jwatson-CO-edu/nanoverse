@@ -30,6 +30,19 @@ string to_upper( string input ){
 }
 
 
+std::ostream& operator<<( std::ostream& os , vvstr arr ){ 
+	os << "[\n";
+    for( const vstr& row : arr ){
+        os << "\t[\n";
+        for( const string& str : row ){
+            os << "\t\t" << str << ",\n";
+        }
+        os << "\t]\n";
+    }
+    os << "]";
+	return os;
+}
+
 
 ////////// FILE OPERATIONS /////////////////////////////////////////////////////////////////////////
 

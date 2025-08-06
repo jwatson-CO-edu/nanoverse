@@ -17,10 +17,11 @@ using glm::translate, glm::scale, glm::rotate;
 using glm::value_ptr;
 
 ////////// TYPE DEFINES ////////////////////////////////////////////////////////////////////////////
-typedef vec2 /*----*/ vec2f;
-typedef vec3 /*----*/ vec3f;
-typedef vec4 /*----*/ vec4f;
-typedef mat4 /*----*/ mat4f;
+typedef vec2 /*---*/ vec2f;
+typedef vec3 /*---*/ vec3f;
+typedef vec4 /*---*/ vec4f;
+typedef vector<vec4> vvec4f;
+typedef mat4 /*---*/ mat4f;
 
 
 ////////// VECTOR OPERATIONS ///////////////////////////////////////////////////////////////////////
