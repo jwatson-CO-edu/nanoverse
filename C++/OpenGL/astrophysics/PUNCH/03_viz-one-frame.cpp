@@ -168,7 +168,7 @@ class SolnFrame{ public:
         // PUNCH has four satellites
         pairs.reserve(4);   
         paths = list_files_at_paths_w_ext( pathList, "fits", true ); // Fetch all relevant filenames
-        cout << paths << endl;
+        // cout << paths << endl;
     } 
 
     void solve_one_frame( const vvec2u& pathAddrs, const vector<vec4f>& colorSeq ){
@@ -343,7 +343,7 @@ int main( int argc, char* argv[] ){
         "./astrophysics/data/cme0_dcmer_090E_bang_0000_tB",
     };
     SolnFrame frame{ fitsPaths };
-    uint /**/ seq = 40;
+    uint /**/ seq = 70; //0 // 40 // 60
     vvec2u    files = {
         vec2u{ 1, seq },
         vec2u{ 0, seq },

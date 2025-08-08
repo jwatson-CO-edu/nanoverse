@@ -82,12 +82,14 @@ float FITS_File::float_HDU( string key ){
     // Fetch a Header Data Unit float and return as double
     float fltVal;
     get_HDU_value( key, TFLOAT, &fltVal );
-    if( verbose ){  cout << "For \"" << key << "\", got " << fltVal << " --> " << (double) fltVal << endl;  }
+    // if( verbose ){  cout << "For \"" << key << "\", got " << fltVal << " --> " << (double) fltVal << endl;  }
+    cout << "For \"" << key << "\", got " << fltVal << " --> " << (double) fltVal << endl;
     return fltVal;
 }
 
-FITS_File::FITS_File( string path_ ){
+FITS_File::FITS_File( string path_, bool v ){
     // Open FITS at path and init params
+    verbose = v;
     status  = 0; /* MUST initialize status */
     path    = path_;
     pxlAdr  = (long*) malloc( sizeof( long ) * 2 );
@@ -103,7 +105,7 @@ FITS_File::FITS_File( string path_ ){
             // datatype = TBYTE;
             break;
     }
-    cout << "Data Type: " << datatype << endl;
+    if( verbose )  cout << "Data Type: " << datatype << endl;
     report_status( "Image Type" );
     fits_get_img_dim( fptr, &Naxes, &status );
     if( verbose ){  
@@ -186,6 +188,8 @@ Corona_Data_FITS::Corona_Data_FITS( string fitsPath ){
     dSun /*---*/ = dataFileFITS->float_HDU( "OBS_R0" );    
     // zRot /*---*/ = dataFileFITS->float_HDU( "CROTA2" );    
     zRot /*---*/ = dataFileFITS->float_HDU( "OBS_LON" );    
+    dataFileFITS->float_HDU( "OBS_LAT" );
+    dataFileFITS->float_HDU( "CROTA2" );
     img /*----*/ = Mat( cv::Size( (int) dataFileFITS->get_dim(0), (int) dataFileFITS->get_dim(1) ), CV_32F, cv::Scalar(0.0) );
     shw /*----*/ = Mat( cv::Size( (int) dataFileFITS->get_dim(0), (int) dataFileFITS->get_dim(1) ), CV_8U , cv::Scalar(0)   );
     xDim   = dataFileFITS->get_dim(0);

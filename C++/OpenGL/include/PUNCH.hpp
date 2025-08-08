@@ -82,6 +82,7 @@ class FITS_File { public:
     // Fetch and manage FITS data in a sane manner
 
     /// Data ///
+    bool /*----*/ verbose = false;
     fitsfile*     fptr    = nullptr;
     void* /*---*/ dataArr = nullptr;
     int* /*----*/ axisDim = nullptr;
@@ -92,7 +93,6 @@ class FITS_File { public:
     string /*--*/ path;
     int /*-----*/ datatype;
     int /*-----*/ Naxes;
-    bool /*----*/ verbose = true;
     float /*---*/ valMin  =  1e9f;
     float /*---*/ valMax  = -1e9f;
     
@@ -117,7 +117,7 @@ class FITS_File { public:
     float  float_HDU( string key ); // ------------------------------- Fetch a Header Data Unit float and return as float
     double float_HDU_as_double( string key ); // --------------------- Fetch an HDU and cast to double value 
 
-    FITS_File( string path_ ); // Open FITS at path and init params
+    FITS_File( string path_, bool v = false ); // Open FITS at path and init params
     ~FITS_File(); // ------------ Free all dyn mem
 
     void display_keys(); // ------------ Load the string cards
