@@ -343,7 +343,7 @@ int main( int argc, char* argv[] ){
         "./astrophysics/data/cme0_dcmer_090E_bang_0000_tB",
     };
     SolnFrame frame{ fitsPaths };
-    uint /**/ seq = 70; //0 // 40 // 60
+    uint /**/ seq = 0; // 0 // 40 // 60 // 70
     vvec2u    files = {
         vec2u{ 1, seq },
         vec2u{ 0, seq },
