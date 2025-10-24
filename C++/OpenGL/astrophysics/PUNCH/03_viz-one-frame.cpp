@@ -250,7 +250,7 @@ lseg4f /*--*/ camRays;
 vec4f /*---*/ pointColor{ 255.0f/255.0f, 229.0f/255.0f, 115.0f/255.0f, 1.00f };
 vec4f /*---*/ rayColor{   128.0f/255.0f, 128.0f/255.0f, 128.0f/255.0f, 0.25f };
 vector<vec4f> pntClr;
-list<vec4f> totClr;
+list<vec4f>   totClr;
 Camera3D /**/ cam{ vec3f{ 0.0f, 0.0f, 100.0f }, vec3f{ 0.0f, 0.0f, 200.0f }, vec3f{ 0.0f, 1.0f, 0.0f } };
 int /*-----*/ xLast /*------*/ = INT32_MAX, xDelta = 0;
 int /*-----*/ yLast /*------*/ = INT32_MAX, yDelta = 0;
