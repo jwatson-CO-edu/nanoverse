@@ -65,7 +65,7 @@ public class Bezier {
         /// <summary>
         /// Point on the curve for parameter `t`
         /// </summary>
-        public override Vector3 Val( float t ){  return Value( p0, p1, p2, t );    }
+        public override Vector3 Val( float t ){  return Value( p0, p1, p2, t );  }
         
         
         /// <summary>
@@ -127,13 +127,13 @@ public class Bezier {
         /// <summary>
         /// Point on the curve for parameter `t`
         /// </summary>
-        public override Vector3 Val( float t ){  return Value( p0, p1, p2, p3, t );      }
+        public override Vector3 Val( float t ){  return Value( p0, p1, p2, p3, t );  }
         
         
         /// <summary>
         /// Tangent on the curve for parameter `t`
         /// </summary>
-        public override Vector3 Tan( float t ){  return Tangent( p0, p1, p2, p3, t );    }
+        public override Vector3 Tan( float t ){  return Tangent( p0, p1, p2, p3, t );  }
         
         
         /// <summary>
