@@ -37,7 +37,7 @@ public class Line {
 
 
         /// <summary>
-        /// Curvature at parameter `t`
+        /// Curvature is Zero, Return perpendicular direction
         /// </summary>
         public static Vector3 Curvature( Vector3 P0, Vector3 P1 ){
             // norm = norm.Normalized();
@@ -60,11 +60,11 @@ public class Line {
         /// <summary>
         /// Tangent on the curve for parameter `t`
         /// </summary>
-        public override Vector3 Tan( float t ){  return Tangent( p0, p1 ); }
+        public override Vector3 Tan( float t ){  return Tangent( p0, p1 );  }
         
         
         /// <summary>
-        /// Curvature at parameter `t`
+        /// Curvature is Zero, Return perpendicular direction
         /// </summary>
         public override Vector3 Crv( float t ){  return Curvature( p0, p1 ); }
     } 
