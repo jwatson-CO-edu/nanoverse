@@ -1,5 +1,5 @@
 using OpenTK.Mathematics;
-using spline;
+using curve;
 
 namespace sigil {
 
@@ -32,6 +32,7 @@ public class Stroke {
     public int /*--*/ div;
     public List<Tri>  geo;
 
+    
     public Stroke(){
         thick = 0.0f;
         curve = new DummyCurve();
@@ -39,12 +40,18 @@ public class Stroke {
         geo   = [];
     }
 
+    
     public Stroke( Parametric param, float thickness, int div_ = _DEFAULT_DIV ){
         thick = thickness;
         curve = param;
         div   = div_;
         geo   = [];
         geo.Capacity = 2*div;
+    }
+
+
+    public void BuildGeo(){
+
     }
 }
 
