@@ -51,7 +51,7 @@ public readonly struct Tri{
 
 
 /// <summary>
-/// A curve with thickness in 3D space
+/// A curve with thickness in 3D space, NOTE: At this time strokes have uniform thickness
 /// </summary>
 public class Stroke {
     public const int  _DEFAULT_DIV = 32;
@@ -85,10 +85,26 @@ public class Stroke {
 
 
     /// <summary>
-    /// Create mesh for drawing
+    /// Create mesh for drawing. WARNING: This function req's that backface culling is >>OFF<<
     /// </summary>
     public void BuildGeo(){
+        float t   = 0.0f;
+        float dt  = 1.0f/div;
+        float hlf = thick / 2.0f;
+        Vector3 pt0, pt1, pt2, pt3, mid;
+        while( t < 1.0f ){ 
+            mid = curve.Val(t);
+            
+            pt0 = mid + curve.Crv( t    ).Normalized() * hlf;
+            pt1 = mid - curve.Crv( t    ).Normalized() * hlf;
+            pt2 = mid + curve.Crv( t+dt ).Normalized() * hlf;
+            pt3 = mid - curve.Crv( t+dt ).Normalized() * hlf;
 
+            geo.Add( new Tri( pt0, pt1, pt3 ) );
+            geo.Add( new Tri( pt0, pt3, pt2 ) );
+
+            t += dt;
+        }
     }
 }
 

@@ -1,8 +1,15 @@
 using OpenTK.Mathematics;
 
 
+/// <summary>
+/// Helper functions for this project
+/// </summary>
 namespace helpers {
 
+
+/// <summary>
+/// Working with `OpenTK.Mathematics.Vector3`
+/// </summary>
 public class MathVec3 {
 
     const float _EPSILON = 0.00001f;
@@ -26,6 +33,9 @@ public class MathVec3 {
     }
 
 
+    /// <summary>
+    /// `Quaternion.FromAxisAngle`, enforce normalized axis
+    /// </summary>
     public static Quaternion AxisAngleQuat( Vector3 axis, float theta ){
         return Quaternion.FromAxisAngle( axis.Normalized(), theta );
     }
