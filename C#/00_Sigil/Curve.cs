@@ -69,6 +69,8 @@ public class Line {
         public override Vector3 Crv( float t ){  return Curvature( p0, p1 ); }
     } 
 
+}
+
 
 
 public class Ellipse {
@@ -264,7 +266,5 @@ public class Bezier {
 }
 
 
-
-}
 
 }

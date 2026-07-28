@@ -1,30 +1,107 @@
-
+using curve;
+using OpenTK.Mathematics;
 
 namespace sigil {
 
-public class Pictogram ( float thickness ) {
+public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
 
     public const int    _MAX_STROKES = 64; 
+    public const float  _GAP_FACTOR  = 0.1f; 
+    public const float  _LIN_FACTOR  = 0.5f; 
+
     public List<Stroke> strokes /**/ = [];
     public float /*--*/ thick /*--*/ = thickness;
-    public float /*--*/ maxDim /*-*/ = 1024;
+    public float /*--*/ scale /*--*/ = scale;
+    public float /*--*/ gapScale     = scale * _GAP_FACTOR;
+    public float /*--*/ linScale     = scale * _LIN_FACTOR;
+    public Vector3 /**/ _Z_DIR       = new(0,0,1);
 
     public void Generate( int maxStrokes = _MAX_STROKES, float breakProb = 1.0f / (_MAX_STROKES/2) ){
-        int maxStrk = maxStrokes;
-        int count   = 0;
+        int /*--*/ maxStrk  = maxStrokes;
+        int /*--*/ count    = 0;
+        Random     random   = new();
+        Parametric lastCurv = new DummyCurve();
+        Parametric currCurv = new DummyCurve();
+        int /*--*/ loc, type; 
+        float /**/ tBgn, offset;
+        Vector3    vBgn, bTan, bCrv, bPnt, bDir;
 
         strokes.Capacity = maxStrk;
         
-        // FIXME: START HERE:
         while( count < maxStrk ){
-            // ROLL FOR START LOCATION, SELECT {0, 1, t}
-            // ROLL FOR STROKE TYPE
-            // ROLL FOR ENDPOINT / PARAMS
+            ///// Roll for start location, Select {0, 1, t} /////
+            loc = random.Next(3);
+            tBgn = loc switch{
+                0 => 0.0f,
+                1 => 1.0f,
+                2 => random.NextSingle(),
+                _ => throw new InvalidDataException( $"{loc} was NOT a valid choide" ),
+            };
+            // ROLL FOR START ORIENTATION
+            ///// Roll for start orientation, Select {Tangent, Curvature, Oblique,} /////
+            loc    = random.Next(3);
+            offset = random.Next(2) * random.NextSingle() * gapScale; // Zero -or- Gap
+            bDir   = new Vector3(random.NextSingle(), random.NextSingle(), 0.0f).Normalized(); 
+            if( lastCurv is DummyCurve dCurve ){
+                vBgn = new Vector3( scale/2.0f, scale/2.0f, 0.0f );
+                bTan = new Vector3( random.NextSingle(), random.NextSingle(), 0.0f ).Normalized();
+                bCrv = new Vector3( random.NextSingle(), random.NextSingle(), 0.0f ).Normalized();
+            }else{
+                vBgn = lastCurv.Val( tBgn );
+                bTan = lastCurv.Tan( tBgn );
+                bCrv = lastCurv.Crv( tBgn );
+            }
+            bPnt = loc switch{
+                0 => vBgn + bTan * offset,
+                1 => vBgn + bCrv * offset,
+                2 => vBgn + bDir * offset,
+                _ => throw new InvalidDataException($"{loc} was NOT a valid choide"),
+            };
+            bDir = loc switch{
+                0 => bTan.Normalized(),
+                1 => bCrv.Normalized(),
+                2 => bDir,
+                _ => throw new InvalidDataException($"{loc} was NOT a valid choide"),
+            };
+
+            ///// Roll for Stroke Type /////
+            type   = random.Next(4);
+            offset = linScale * random.NextSingle();
+            switch( type ){
+                
+                /// Line Segment ///
+                case 0:
+                    currCurv = new Line.Segment( bPnt, bPnt + bDir * offset );
+                    break;
+                
+                /// Circle ///
+                case 1:
+                    currCurv = new Ellipse.Circle( bPnt + bDir * offset, _Z_DIR, offset );
+                    break;
+                
+                /// Quad Bezier ///
+                case 2:
+                    // FIXME: START HERE - QUADRATIC BESIER, SANE CONTROL POINT
+                    break;
+                
+                /// Cube Bezier ///
+                case 3:
+                    // FIXME: CUBIC BESIER, SANE CONTROL POINTS
+                    break;
+                
+                default:
+                    throw new InvalidDataException( $"{type} was NOT a valid choide" );
+            }
+            
+            // ROLL FOR ENDPOINT
+                // LOCATION
+                // ORIENTATION
             // CREATE STROKE
                 // SCAN FOR INTERSECTIONS
                 // FOR EACH INTERSECTION: SELECT ONE {CROSS, ABOVE, BELOW}
             // CREATE UNDERSTROKE
-            // ROLL FOR BREAK
+            
+            if( random.NextSingle() < breakProb ){  break;  } // Roll for break
         }
 
         // FIXME: FOR EACH STROKE
