@@ -10,6 +10,42 @@ public abstract class Parametric {
     public abstract Vector3 Val( float t ); // Value
     public abstract Vector3 Tan( float t ); // Tangent
     public abstract Vector3 Crv( float t ); // Curvature
+
+    public List<List<float>> GetIntersections( Parametric other, float dt, float margin ){
+        List<List<float>> rtnLst = [[],[]];
+        float /*-------*/ tThis  = 0.0f;
+        float /*-------*/ tOthr  = 0.0f;
+        float /*-------*/ d_ij   = 6e10f;
+        Vector3 /*-----*/ vThis;
+        Vector3 /*-----*/ vOthr;
+        bool /*--------*/ pairOpen = false;
+        if( margin < dt ){  margin = dt;  }
+
+        while( tThis < 1.0 ){
+            vThis = Val( tThis );
+            while( tOthr < 1.0 ){
+                vOthr = Val( tOthr );
+                d_ij  = Vector3.Distance( vThis, vOthr );
+                if( !pairOpen ){
+                    if( d_ij <= margin ){
+                        pairOpen = true;
+                        rtnLst[0].Add( tThis );
+                        rtnLst[1].Add( tOthr );
+                    }
+                }else{
+
+                    if( d_ij > margin ){
+                        pairOpen = false;
+                        rtnLst[0].Add( tThis );
+                        rtnLst[1].Add( tOthr );
+                    }
+                }
+                tOthr += dt;
+            }
+            tThis += dt;
+        }
+        return rtnLst;
+    }
 }
 
 

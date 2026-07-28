@@ -25,7 +25,7 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
         Parametric currCurv = new DummyCurve();
         int /*--*/ loc, type; 
         float /**/ tBgn, offset;
-        Vector3    vBgn, bTan, bCrv, bPnt, bDir;
+        Vector3    vBgn, bTan, bCrv, bPnt, bDir, endPnt, midPnt, P1, P2;
 
         strokes.Capacity = maxStrk;
         
@@ -82,24 +82,24 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
                 
                 /// Quad Bezier ///
                 case 2:
-                    // FIXME: START HERE - QUADRATIC BEZIER, SANE CONTROL POINT
-                    Vector3 endPnt = bPnt + bDir * offset + MathVec3.NoiseXY( random, linScale * 0.25f );
-                    Vector3 midPnt = (bPnt + endPnt)/2.0f + MathVec3.NoiseXY( random, linScale * 0.125f );
+                    endPnt   = bPnt + bDir * offset + MathVec3.NoiseXY( random, linScale * 0.25f );
+                    midPnt   = (bPnt + endPnt)/2.0f + MathVec3.NoiseXY( random, linScale * 0.125f );
                     currCurv = new Bezier.Quad( bPnt, midPnt, endPnt );
                     break;
                 
                 /// Cube Bezier ///
                 case 3:
-                    // FIXME: START HERE - CUBIC BEZIER, SANE CONTROL POINTS
+                    endPnt   = bPnt + bDir * offset   + MathVec3.NoiseXY( random, linScale * 0.250f );
+                    midPnt   = (bPnt + endPnt)/2.0f   + MathVec3.NoiseXY( random, linScale * 0.125f );
+                    P1 /*-*/ = (bPnt + midPnt)/2.0f   + MathVec3.NoiseXY( random, linScale * 0.125f );
+                    P2 /*-*/ = (midPnt + endPnt)/2.0f + MathVec3.NoiseXY( random, linScale * 0.125f );
+                    currCurv = new Bezier.Cubic( bPnt, P1, P2, endPnt );
                     break;
                 
                 default:
                     throw new InvalidDataException( $"{type} was NOT a valid choide" );
             }
-            
-            // ROLL FOR ENDPOINT
-                // LOCATION
-                // ORIENTATION
+
             // CREATE STROKE
                 // SCAN FOR INTERSECTIONS
                 // FOR EACH INTERSECTION: SELECT ONE {CROSS, ABOVE, BELOW}
