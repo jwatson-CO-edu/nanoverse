@@ -1,4 +1,5 @@
 using curve;
+using helpers;
 using OpenTK.Mathematics;
 
 namespace sigil {
@@ -41,11 +42,11 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
             ///// Roll for start orientation, Select {Tangent, Curvature, Oblique,} /////
             loc    = random.Next(3);
             offset = random.Next(2) * random.NextSingle() * gapScale; // Zero -or- Gap
-            bDir   = new Vector3(random.NextSingle(), random.NextSingle(), 0.0f).Normalized(); 
-            if( lastCurv is DummyCurve dCurve ){
+            bDir   = MathVec3.NoiseXY( random ); 
+            if( lastCurv is DummyCurve ){
                 vBgn = new Vector3( scale/2.0f, scale/2.0f, 0.0f );
-                bTan = new Vector3( random.NextSingle(), random.NextSingle(), 0.0f ).Normalized();
-                bCrv = new Vector3( random.NextSingle(), random.NextSingle(), 0.0f ).Normalized();
+                bTan = MathVec3.NoiseXY( random );
+                bCrv = MathVec3.NoiseXY( random );
             }else{
                 vBgn = lastCurv.Val( tBgn );
                 bTan = lastCurv.Tan( tBgn );
@@ -81,12 +82,15 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
                 
                 /// Quad Bezier ///
                 case 2:
-                    // FIXME: START HERE - QUADRATIC BESIER, SANE CONTROL POINT
+                    // FIXME: START HERE - QUADRATIC BEZIER, SANE CONTROL POINT
+                    Vector3 endPnt = bPnt + bDir * offset + MathVec3.NoiseXY( random, linScale * 0.25f );
+                    Vector3 midPnt = (bPnt + endPnt)/2.0f + MathVec3.NoiseXY( random, linScale * 0.125f );
+                    currCurv = new Bezier.Quad( bPnt, midPnt, endPnt );
                     break;
                 
                 /// Cube Bezier ///
                 case 3:
-                    // FIXME: CUBIC BESIER, SANE CONTROL POINTS
+                    // FIXME: START HERE - CUBIC BEZIER, SANE CONTROL POINTS
                     break;
                 
                 default:

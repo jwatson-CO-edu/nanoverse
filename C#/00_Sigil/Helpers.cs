@@ -41,6 +41,11 @@ public class MathVec3 {
     }
 
 
+    public static Vector3 NoiseXY( Random rand, float scale = 1.0f ){
+        return new Vector3( rand.NextSingle(), rand.NextSingle(), 0.0f ).Normalized() * scale;
+    }
+
+
 }
 
 
