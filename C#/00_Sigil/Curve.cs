@@ -11,11 +11,15 @@ public abstract class Parametric {
     public abstract Vector3 Tan( float t ); // Tangent
     public abstract Vector3 Crv( float t ); // Curvature
 
+
+    /// <summary>
+    /// Return all the segments of each curve within `margin` of the other 
+    /// </summary>
     public List<List<float>> GetIntersections( Parametric other, float dt, float margin ){
         List<List<float>> rtnLst = [[],[]];
-        float /*-------*/ tThis  = 0.0f;
-        float /*-------*/ tOthr  = 0.0f;
-        float /*-------*/ d_ij   = 6e10f;
+        float /*-------*/ tThis = 0.0f;
+        float /*-------*/ tOthr = 0.0f;
+        float /*-------*/ d_ij;
         Vector3 /*-----*/ vThis;
         Vector3 /*-----*/ vOthr;
         bool /*--------*/ pairOpen = false;
@@ -33,7 +37,6 @@ public abstract class Parametric {
                         rtnLst[1].Add( tOthr );
                     }
                 }else{
-
                     if( d_ij > margin ){
                         pairOpen = false;
                         rtnLst[0].Add( tThis );
@@ -49,6 +52,10 @@ public abstract class Parametric {
 }
 
 
+
+/// <summary>
+/// Empty "Curve"
+/// </summary>
 public class DummyCurve : Parametric {
     public override Vector3 Val( float t ){  return new Vector3();  }
     public override Vector3 Tan( float t ){  return new Vector3();  }
@@ -56,8 +63,15 @@ public class DummyCurve : Parametric {
 }
 
 
+
+/// <summary>
+/// Straight Curves 
+/// </summary>
 public class Line {
 
+    /// <summary>
+    /// Line Segment
+    /// </summary>
     public class Segment ( Vector3 p0, Vector3 p1 ) : Parametric {
 
         /// <summary>
@@ -109,8 +123,14 @@ public class Line {
 
 
 
+/// <summary>
+/// Elliptical Curves 
+/// </summary>
 public class Ellipse {
 
+    /// <summary>
+    /// Perfect Circle 
+    /// </summary>
     public class Circle ( Vector3 cntr, Vector3 norm, float radius ) : Parametric {
 
         /// <summary>

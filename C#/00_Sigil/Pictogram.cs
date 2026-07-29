@@ -9,6 +9,8 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
     public const int    _MAX_STROKES = 64; 
     public const float  _GAP_FACTOR  = 0.1f; 
     public const float  _LIN_FACTOR  = 0.5f; 
+    public const float  _LAYER_STEP  = 1f/64f; 
+    public const float  _UNDER_STEP  = 1f/128f; 
 
     public List<Stroke> strokes /**/ = [];
     public float /*--*/ thick /*--*/ = thickness;
@@ -16,6 +18,7 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
     public float /*--*/ gapScale     = scale * _GAP_FACTOR;
     public float /*--*/ linScale     = scale * _LIN_FACTOR;
     public Vector3 /**/ _Z_DIR       = new(0,0,1);
+
 
     public void Generate( int maxStrokes = _MAX_STROKES, float breakProb = 1.0f / (_MAX_STROKES/2) ){
         int /*--*/ maxStrk  = maxStrokes;
@@ -30,6 +33,7 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
         strokes.Capacity = maxStrk;
         
         while( count < maxStrk ){
+
             ///// Roll for start location, Select {0, 1, t} /////
             loc = random.Next(3);
             tBgn = loc switch{
@@ -38,7 +42,7 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
                 2 => random.NextSingle(),
                 _ => throw new InvalidDataException( $"{loc} was NOT a valid choide" ),
             };
-            // ROLL FOR START ORIENTATION
+
             ///// Roll for start orientation, Select {Tangent, Curvature, Oblique,} /////
             loc    = random.Next(3);
             offset = random.Next(2) * random.NextSingle() * gapScale; // Zero -or- Gap
@@ -96,8 +100,30 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
                     currCurv = new Bezier.Cubic( bPnt, P1, P2, endPnt );
                     break;
                 
+                /// Should Not Happen ///
                 default:
                     throw new InvalidDataException( $"{type} was NOT a valid choide" );
+            }
+
+            Stroke /*------*/ nuStroke = new( currCurv, thick );
+            int /*---------*/ Nintersect;
+            int /*---------*/ interChoice;
+            List<List<float>> intersections;
+
+            
+            // For each existing stroke
+            for( int i = 0; i < count; ++i ){
+                // Scan for intersections
+                intersections = nuStroke.curve.GetIntersections( strokes[i].curve, 1f/128f, thick );
+                Nintersect    = intersections[0].Count / 2;
+                // For each intersection  
+                for( int j = 0; j < Nintersect; ++j ){
+                    interChoice = random.Next(3);
+                    switch (interChoice){
+                        // FIXME: START HERE - HANDLE EACH INTERSECTION TYPE
+                        default:
+                    }
+                }
             }
 
             // CREATE STROKE
@@ -106,6 +132,7 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
             // CREATE UNDERSTROKE
             
             if( random.NextSingle() < breakProb ){  break;  } // Roll for break
+            count++;
         }
 
         // FIXME: FOR EACH STROKE
