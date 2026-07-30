@@ -25,7 +25,7 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
         int /*--*/ count    = 0;
         Random     random   = new();
         Parametric lastCurv = new DummyCurve();
-        Parametric currCurv = new DummyCurve();
+        Parametric currCurv;
         int /*--*/ loc, type; 
         float /**/ tBgn, offset;
         Vector3    vBgn, bTan, bCrv, bPnt, bDir, endPnt, midPnt, P1, P2;
@@ -103,6 +103,7 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
                 /// Should Not Happen ///
                 default:
                     throw new InvalidDataException( $"{type} was NOT a valid choide" );
+
             }
 
             Stroke /*------*/ nuStroke = new( currCurv, thick );
@@ -119,9 +120,11 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
                 // For each intersection  
                 for( int j = 0; j < Nintersect; ++j ){
                     interChoice = random.Next(3);
-                    switch (interChoice){
-                        // FIXME: START HERE - HANDLE EACH INTERSECTION TYPE
+                    switch( interChoice ){
+                        case 0:
+                            break;
                         default:
+                            throw new InvalidDataException( $"{interChoice} was NOT a valid choide" );
                     }
                 }
             }
@@ -133,6 +136,7 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
             
             if( random.NextSingle() < breakProb ){  break;  } // Roll for break
             count++;
+            lastCurv = currCurv;
         }
 
         // FIXME: FOR EACH STROKE
