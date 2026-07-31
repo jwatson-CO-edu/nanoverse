@@ -60,8 +60,10 @@ public class Stroke {
     public float /*--------*/ thick;
     public Parametric /*---*/ curve;
     public int /*----------*/ div;
+    public float /*--------*/ dt;
     public List<Tri> /*----*/ geo;
     public List<float> /*--*/ tGeo;
+    public List<float> /*--*/ zOffset;
     public LinkedList<Stroke> edges;
 
 
@@ -76,13 +78,14 @@ public class Stroke {
     /// Default constructor
     /// </summary>
     public Stroke(){
-        id    = NextID();
-        thick = 0.0f;
-        curve = new DummyCurve();
-        div   = _DEFAULT_DIV;
-        geo   = [];
-        tGeo  = [];
-        edges = [];
+        id /**/ = NextID();
+        thick   = 0.0f;
+        curve   = new DummyCurve();
+        div     = _DEFAULT_DIV;
+        geo     = [];
+        tGeo    = [];
+        zOffset = [];
+        edges   = [];
     }
 
     
@@ -90,15 +93,14 @@ public class Stroke {
     /// Set curve and thickness
     /// </summary>
     public Stroke( Parametric param, float thickness, int div_ = _DEFAULT_DIV ){
-        id    = NextID();
-        thick = thickness;
-        curve = param;
-        div   = div_;
-        geo   = [];
-        tGeo  = [];
-        edges = [];
-        geo.Capacity  = 2*div;
-        tGeo.Capacity = div+1;
+        id /**/ = NextID();
+        thick   = thickness;
+        curve   = param;
+        div     = div_;
+        geo     = [];
+        tGeo    = [];
+        zOffset = [];
+        edges   = [];
     }
 
 
@@ -123,9 +125,24 @@ public class Stroke {
     /// <summary>
     /// Create mesh for drawing. WARNING: This function req's that backface culling is >>OFF<<
     /// </summary>
+    public void ReserveGeo(){
+        int NendPt /*-*/ = div+1;
+        geo.Capacity     = 2*div;
+        tGeo.Capacity    = NendPt;
+        zOffset.Capacity = NendPt;
+        dt /*---------*/ = 1.0f/div;
+        for( int i = 0; i < NendPt; ++i ){
+            tGeo.Add( i * dt );
+            zOffset.Add(0f);
+        }
+    }
+
+
+    /// <summary>
+    /// Create mesh for drawing. WARNING: This function req's that backface culling is >>OFF<<
+    /// </summary>
     public void BuildGeo(){
         float t   = 0.0f;
-        float dt  = 1.0f/div;
         float hlf = thick / 2.0f;
         Vector3 pt0, pt1, pt2, pt3, mid;
         tGeo.Add(0f);
