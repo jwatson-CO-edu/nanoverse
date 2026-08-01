@@ -4,14 +4,19 @@ using OpenTK.Mathematics;
 
 namespace sigil {
 
+/// <summary>
+/// The actual Sigil
+/// </summary>
 public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
 
+    /// Constants ///
     public const int    _MAX_STROKES = 64; 
     public const float  _GAP_FACTOR  = 0.1f; 
     public const float  _LIN_FACTOR  = 0.5f; 
     public const float  _LAYER_STEP  = 1f/64f; 
     public const float  _UNDER_STEP  = 1f/128f; 
 
+    /// Members ///
     public List<Stroke> strokes /**/ = [];
     public float /*--*/ thick /*--*/ = thickness;
     public float /*--*/ scale /*--*/ = scale;
@@ -20,7 +25,7 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
     public Vector3 /**/ _Z_DIR       = new(0,0,1);
 
 
-    public void Generate( int maxStrokes = _MAX_STROKES, float breakProb = 1.0f / (_MAX_STROKES/2) ){
+    public void Generate( int maxStrokes = _MAX_STROKES, float breakProb = 1.0f / _MAX_STROKES ){
         int /*--*/ maxStrk  = maxStrokes;
         int /*--*/ count    = 0;
         Random     random   = new();
@@ -40,7 +45,7 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
                 0 => 0.0f,
                 1 => 1.0f,
                 2 => random.NextSingle(),
-                _ => throw new InvalidDataException( $"{loc} was NOT a valid choide" ),
+                _ => throw new InvalidDataException( $"{loc} was NOT a valid choice" ),
             };
 
             ///// Roll for start orientation, Select {Tangent, Curvature, Oblique,} /////
@@ -60,13 +65,13 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
                 0 => vBgn + bTan * offset,
                 1 => vBgn + bCrv * offset,
                 2 => vBgn + bDir * offset,
-                _ => throw new InvalidDataException($"{loc} was NOT a valid choide"),
+                _ => throw new InvalidDataException($"{loc} was NOT a valid choice"),
             };
             bDir = loc switch{
                 0 => bTan.Normalized(),
                 1 => bCrv.Normalized(),
                 2 => bDir,
-                _ => throw new InvalidDataException($"{loc} was NOT a valid choide"),
+                _ => throw new InvalidDataException($"{loc} was NOT a valid choice"),
             };
 
             ///// Roll for Stroke Type /////
@@ -102,7 +107,7 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
                 
                 /// Should Not Happen ///
                 default:
-                    throw new InvalidDataException( $"{type} was NOT a valid choide" );
+                    throw new InvalidDataException( $"{type} was NOT a valid choice" );
 
             }
 
@@ -115,16 +120,27 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
             // For each existing stroke
             for( int i = 0; i < count; ++i ){
                 // Scan for intersections
-                intersections = nuStroke.curve.GetIntersections( strokes[i].curve, 1f/128f, thick );
+                intersections = nuStroke.GetIntersections( strokes[i], 1f/128f, thick );
                 Nintersect    = intersections[0].Count / 2;
                 // For each intersection  
                 for( int j = 0; j < Nintersect; ++j ){
                     interChoice = random.Next(3);
                     switch( interChoice ){
+                        /// Cross ///
                         case 0:
+                            // FIXME: REMOVE UNDERPAINT FROM THIS SPAN
                             break;
+                        /// Above ///
+                        case 1:
+                            // FIXME: BUMP OFFSET UP
+                            break;
+                        /// Below ///
+                        case 2:
+                            // FIXME: BUMP OFFSET DOWN
+                            break;
+                        /// This should NOT happen! ///
                         default:
-                            throw new InvalidDataException( $"{interChoice} was NOT a valid choide" );
+                            throw new InvalidDataException( $"{interChoice} was NOT a valid choice" );
                     }
                 }
             }
