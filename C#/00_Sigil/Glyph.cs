@@ -57,11 +57,14 @@ public class Stroke {
     private static int /*--*/ nextID /*-*/ = 0;
     public int /*----------*/ id /*-----*/ = 0;
     public const int /*----*/ _DEFAULT_DIV = 32;
+    public const float /*--*/ _UNDER_STEP  = 1f/128f; 
+    public float /*--------*/ borderMult   = 1.125f;
     public float /*--------*/ thick;
     public Parametric /*---*/ curve;
     public int /*----------*/ div;
     public float /*--------*/ dt;
     public List<Tri> /*----*/ geo;
+    public List<Tri> /*----*/ brdr;
     public List<float> /*--*/ tGeo;
     public List<float> /*--*/ zOffset;
     public List<float> /*--*/ zBorder;
@@ -87,8 +90,10 @@ public class Stroke {
         curve   = new DummyCurve();
         div     = _DEFAULT_DIV;
         geo     = [];
+        brdr    = [];
         tGeo    = [];
         zOffset = [];
+        zBorder = [];
         edges   = [];
     }
 
@@ -102,8 +107,10 @@ public class Stroke {
         curve   = param;
         div     = div_;
         geo     = [];
+        brdr    = [];
         tGeo    = [];
         zOffset = [];
+        zBorder = [];
         edges   = [];
     }
 
@@ -138,6 +145,7 @@ public class Stroke {
         for( int i = 0; i < NendPt; ++i ){
             tGeo.Add( i * dt );
             zOffset.Add(0f);
+            zBorder.Add( -_UNDER_STEP );
         }
     }
 

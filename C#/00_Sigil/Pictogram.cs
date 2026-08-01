@@ -14,7 +14,6 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
     public const float  _GAP_FACTOR  = 0.1f; 
     public const float  _LIN_FACTOR  = 0.5f; 
     public const float  _LAYER_STEP  = 1f/64f; 
-    public const float  _UNDER_STEP  = 1f/128f; 
 
     /// Members ///
     public List<Stroke> strokes /**/ = [];
