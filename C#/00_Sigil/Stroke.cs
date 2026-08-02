@@ -54,38 +54,29 @@ public readonly struct Tri{
 /// A curve with thickness in 3D space, NOTE: At this time strokes have uniform thickness
 /// </summary>
 public class Stroke {
-    private static int /*--*/ nextID /*-*/ = 0;
-    public int /*----------*/ id /*-----*/ = 0;
-    public const int /*----*/ _DEFAULT_DIV = 32;
-    public const float /*--*/ _UNDER_STEP  = 1f/128f; 
-    public float /*--------*/ borderMult   = 1.125f;
-    public float /*--------*/ thick;
-    public Parametric /*---*/ curve;
-    public int /*----------*/ div;
-    public float /*--------*/ dt;
-    public List<Tri> /*----*/ geo;
-    public List<Tri> /*----*/ brdr;
-    public List<float> /*--*/ tGeo;
-    public List<float> /*--*/ zOffset;
-    public List<float> /*--*/ zBorder;
-    public LinkedList<Stroke> edges;
+    
+    public const int   _DEFAULT_DIV = 32;
+    public const float _UNDER_STEP  = 1f/128f; 
+    public float /*-*/ borderMult   = 1.125f;
+    public float /*-*/ thick;
+    public Parametric  curve;
+    public int /*---*/ div;
+    public float /*-*/ dt;
+    public List<Tri>   geo;
+    public List<Tri>   brdr;
+    public List<float> tGeo;
+    public List<float> zOffset;
+    public List<float> zBorder;
+    
 
-
-    /// <summary>
-    /// Get the ID of the next stroke
-    /// </summary>
-    public static int NextID(){
-        int rtn = nextID;
-        nextID++;
-        return rtn;
-    }
+    public bool HasNeighbor( Stroke other ){  return curve.HasNeighbor( other.curve );  }
+    public void ConnectBidir( Stroke other ){  curve.ConnectBidir( other.curve );  }
 
     
     /// <summary>
     /// Default constructor
     /// </summary>
     public Stroke(){
-        id /**/ = NextID();
         thick   = 0.0f;
         curve   = new DummyCurve();
         div     = _DEFAULT_DIV;
@@ -94,7 +85,6 @@ public class Stroke {
         tGeo    = [];
         zOffset = [];
         zBorder = [];
-        edges   = [];
     }
 
     
@@ -102,7 +92,6 @@ public class Stroke {
     /// Set curve and thickness
     /// </summary>
     public Stroke( Parametric param, float thickness, int div_ = _DEFAULT_DIV ){
-        id /**/ = NextID();
         thick   = thickness;
         curve   = param;
         div     = div_;
@@ -111,25 +100,6 @@ public class Stroke {
         tGeo    = [];
         zOffset = [];
         zBorder = [];
-        edges   = [];
-    }
-
-
-    /// <summary>
-    /// Does `nghbrID` represent an edge for this `Stroke`
-    /// </summary>
-    public bool IsNeighbor( int nghbrID ){
-        foreach( Stroke neighbor in edges ){  if( neighbor.id == nghbrID ){  return true;  }  }
-        return false;
-    }
-
-
-    /// <summary>
-    /// Create a bi-directional edge between `this` and `other`
-    /// </summary>
-    public void ConnectBidir( Stroke other ){
-        edges.AddLast( other );
-        other.edges.AddLast( this );
     }
 
 

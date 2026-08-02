@@ -11,7 +11,39 @@ public abstract class Parametric {
     public abstract Vector3 Tan( float t ); // Tangent
     public abstract Vector3 Crv( float t ); // Curvature
 
+    private static int /*------*/ nextID = 0;
+    public int /*--------------*/ id     = NextID();
+    public LinkedList<Parametric> edges  = [];
 
+
+    /// <summary>
+    /// Get the ID of the next stroke
+    /// </summary>
+    public static int NextID(){
+        int rtn = nextID;
+        nextID++;
+        return rtn;
+    }
+
+
+    // <summary>
+    /// Create a bi-directional edge between `this` and `other`
+    /// </summary>
+    public void ConnectBidir( Parametric other ){
+        edges.AddLast( other );
+        other.edges.AddLast( this );
+    }
+
+
+    /// <summary>
+    /// Does `nghbrID` represent an edge for this `Stroke`
+    /// </summary>
+    public bool HasNeighbor( Parametric other ){
+        foreach( Parametric neighbor in edges ){  if( neighbor.id == other.id ){  return true;  }  }
+        return false;
+    }
+
+    
     
 }
 

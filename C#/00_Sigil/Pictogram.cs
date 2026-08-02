@@ -24,6 +24,7 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
     public Vector3 /**/ _Z_DIR       = new(0,0,1);
 
 
+
     public void Generate( int maxStrokes = _MAX_STROKES, float breakProb = 1.0f / _MAX_STROKES ){
         int /*--*/ maxStrk  = maxStrokes;
         int /*--*/ count    = 0;
@@ -46,6 +47,8 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
                 2 => random.NextSingle(),
                 _ => throw new InvalidDataException( $"{loc} was NOT a valid choice" ),
             };
+
+            // FIXME: THIS FUNCTION ONLY CONNECTS CURVES SEQUENTIALLY, RANDOMLY WOULD BE MORE FUN
 
             ///// Roll for start orientation, Select {Tangent, Curvature, Oblique,} /////
             loc    = random.Next(3);
@@ -118,6 +121,10 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
             
             // For each existing stroke
             for( int i = 0; i < count; ++i ){
+
+                // Disre
+                if( nuStroke.HasNeighbor( strokes[i] ) ){  continue;  }
+
                 // Scan for intersections
                 intersections = nuStroke.GetIntersections( strokes[i], 1f/128f, thick );
                 Nintersect    = intersections[0].Count / 2;
@@ -151,7 +158,7 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
             
             if( random.NextSingle() < breakProb ){  break;  } // Roll for break
             count++;
-            lastCurv = currCurv;
+            lastCurv = strokes[ random.Next( count ) ].curve;
         }
 
         // FIXME: FOR EACH STROKE
