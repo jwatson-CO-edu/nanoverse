@@ -69,7 +69,15 @@ public class Stroke {
     public List<float> zBorder;
     
 
+    // <summary>
+    /// Create a bi-directional edge between `this` and `other`
+    /// </summary>
     public bool HasNeighbor( Stroke other ){  return curve.HasNeighbor( other.curve );  }
+    
+    
+    /// <summary>
+    /// Is `this` connected to `other`?
+    /// </summary>
     public void ConnectBidir( Stroke other ){  curve.ConnectBidir( other.curve );  }
 
     

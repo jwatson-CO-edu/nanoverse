@@ -21,7 +21,7 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
     public float /*--*/ scale /*--*/ = scale;
     public float /*--*/ gapScale     = scale * _GAP_FACTOR;
     public float /*--*/ linScale     = scale * _LIN_FACTOR;
-    public Vector3 /**/ _Z_DIR       = new(0,0,1);
+    public Vector3 /**/ _Z_DIR /*-*/ = new(0,0,1);
 
 
 

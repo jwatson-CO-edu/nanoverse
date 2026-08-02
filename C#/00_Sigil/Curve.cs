@@ -36,15 +36,12 @@ public abstract class Parametric {
 
 
     /// <summary>
-    /// Does `nghbrID` represent an edge for this `Stroke`
+    /// Is `this` connected to `other`?
     /// </summary>
     public bool HasNeighbor( Parametric other ){
         foreach( Parametric neighbor in edges ){  if( neighbor.id == other.id ){  return true;  }  }
         return false;
     }
-
-    
-    
 }
 
 
@@ -114,7 +111,6 @@ public class Line {
         /// </summary>
         public override Vector3 Crv( float t ){  return Curvature( p0, p1 ); }
     } 
-
 }
 
 
@@ -187,9 +183,7 @@ public class Ellipse {
         /// Curvature at parameter `t`
         /// </summary>
         public override Vector3 Crv( float t ){  return Curvature( norm, radius, t );    }
-
     }
-
 }
 
 
