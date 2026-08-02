@@ -87,6 +87,15 @@ public class Stroke {
         zBorder = [];
     }
 
+
+    /// <summary>
+    /// Return true only if an underlying parametric curve was set
+    /// </summary>
+    public bool HasCurve(){
+        if( curve is DummyCurve ){  return false;  }
+        return true;
+    }
+
     
     /// <summary>
     /// Set curve and thickness
