@@ -250,10 +250,10 @@ public class Renderer{
     /// </summary>
     public void GetSquareBuffers( int NsqrPxls ){
         // --- Framebuffer: color texture + depth renderbuffer, rendered at supersample size ---
-        int fbo = GL.GenFramebuffer();
+        fbo = GL.GenFramebuffer();
         GL.BindFramebuffer( FramebufferTarget.Framebuffer, fbo );
 
-        int colorTex = GL.GenTexture();
+        colorTex = GL.GenTexture();
         GL.BindTexture( TextureTarget.Texture2D, colorTex );
         GL.TexImage2D( TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, NsqrPxls, NsqrPxls, 0,
                        PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero );
@@ -263,7 +263,7 @@ public class Renderer{
                                  FramebufferAttachment.ColorAttachment0,
                                  TextureTarget.Texture2D, colorTex, 0 );
 
-        int depthRbo = GL.GenRenderbuffer();
+        depthRbo = GL.GenRenderbuffer();
         GL.BindRenderbuffer( RenderbufferTarget.Renderbuffer, depthRbo );
         GL.RenderbufferStorage( RenderbufferTarget.Renderbuffer, RenderbufferStorage.DepthComponent24, NsqrPxls, NsqrPxls );
         GL.FramebufferRenderbuffer( FramebufferTarget.Framebuffer, 
