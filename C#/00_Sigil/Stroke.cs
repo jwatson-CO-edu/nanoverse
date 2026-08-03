@@ -160,9 +160,15 @@ public class Stroke {
         float t;
         float hlf = thick / 2.0f;
         Vector3 pt0, pt1, pt2, pt3, mid;
-        tGeo.Add(0f);
-        for( int i = 0; i < tGeo.Count; ++i ){ 
+        // tGeo.Add(0f);
+
+        Console.WriteLine( $"There are {tGeo.Count} points to evaluate ..." );
+
+        for( int i = 0; i < tGeo.Count; i++ ){ 
+
             t   = tGeo[i];
+            Console.WriteLine( $"\tt = {t}" );
+
             mid = curve.Val(t);
             
             pt0 = mid + curve.Crv( t    ).Normalized() * hlf;
@@ -172,10 +178,9 @@ public class Stroke {
 
             geo.Add( new Tri( pt0, pt1, pt3 ) );
             geo.Add( new Tri( pt0, pt3, pt2 ) );
-
-            t += dt;
-            tGeo.Add(t);
         }
+
+        Console.WriteLine( $"Evaluated {tGeo.Count} ..." );
     }
 
 

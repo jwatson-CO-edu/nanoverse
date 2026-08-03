@@ -41,6 +41,9 @@ public class MathVec3 {
     }
 
 
+    /// <summary>
+    /// Generate a 3D vector with random {X,Y,} components of a specified `scale`
+    /// </summary>
     public static Vector3 NoiseXY( Random rand, float scale = 1.0f ){
         return new Vector3( rand.NextSingle(), rand.NextSingle(), 0.0f ).Normalized() * scale;
     }

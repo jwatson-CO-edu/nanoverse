@@ -1,7 +1,11 @@
 using curve;
 using helpers;
+
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.Desktop;
+
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.PixelFormats;
@@ -12,7 +16,7 @@ namespace sigil {
 /// <summary>
 /// The actual Sigil
 /// </summary>
-public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
+public class Pictogram ( float scale = 5.0f, float thickness = 25.0f ) {
 
     /// Constants ///
     public const int    _MAX_STROKES = 64; 
@@ -44,6 +48,8 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
         
         while( count < maxStrk ){
 
+            Console.WriteLine( $"Iteration {count+1}" );
+
             ///// Roll for start location, Select {0, 1, t} /////
             loc = random.Next(3);
             tBgn = loc switch{
@@ -54,6 +60,8 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
             };
 
             // FIXME: THIS FUNCTION ONLY CONNECTS CURVES SEQUENTIALLY, RANDOMLY WOULD BE MORE FUN
+
+            Console.WriteLine( $"\tRoll orientation ..." );
 
             ///// Roll for start orientation, Select {Tangent, Curvature, Oblique,} /////
             loc    = random.Next(3);
@@ -80,6 +88,8 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
                 2 => bDir,
                 _ => throw new InvalidDataException($"{loc} was NOT a valid choice"),
             };
+
+            Console.WriteLine( $"\tRoll stroke type ..." );
 
             ///// Roll for Stroke Type /////
             type   = random.Next(4);
@@ -159,6 +169,7 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
             
             
             if( random.NextSingle() < breakProb ){  break;  } // Roll for break
+            strokes.Add( nuStroke );
             count++;
             lastCurv = strokes[ random.Next( count ) ].curve;
         }
@@ -167,11 +178,17 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
             // CREATE GEO
                 // STROKE
                 // UNDERSTROKE
+        
+        
+        
         foreach( Stroke strk in strokes ){
+            Console.WriteLine( $"Reserve geo ..." );
             strk.ReserveGeo();
+            Console.WriteLine( $"Build geo ..." );
             strk.BuildGeo();
         }
     }
+    
 
 }
 
@@ -243,6 +260,18 @@ public class Renderer{
     public int colorTex; // Generated Texture Location
     public int depthRbo; // Depth Render Buffer Object
     public int program; //- Shader Program: Vertex + Fragment
+    GameWindow window = new(
+        GameWindowSettings.Default,
+            new NativeWindowSettings
+            {
+                ClientSize = new Vector2i(64, 64),
+                StartVisible = false,
+                WindowBorder = WindowBorder.Hidden,
+                Title = "sigil-offscreen",
+                APIVersion = new Version(3, 3),
+                Profile = ContextProfile.Core,
+            }
+    );
 
 
     /// <summary>
@@ -324,7 +353,7 @@ public class Renderer{
         image.Mutate(ctx => ctx.Resize( new ResizeOptions{
             Size = new Size( NsqrPxls, NsqrPxls ),
             Sampler = KnownResamplers.Lanczos3, // supersample downscale acts as anti-aliasing
-        }));
+        } ) );
         image.Save( _outputPath, new JpegEncoder { Quality = 92 } );
 
         GL.DeleteVertexArray( vao );
