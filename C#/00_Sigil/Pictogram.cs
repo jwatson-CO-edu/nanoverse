@@ -114,47 +114,44 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
             }
 
             Stroke /*------*/ nuStroke = new( currCurv, thick );
-            int /*---------*/ Nintersect;
-            int /*---------*/ interChoice;
-            List<List<float>> intersections;
+            // int /*---------*/ Nintersect;
+            // int /*---------*/ interChoice;
+            // List<List<float>> intersections;
 
             
-            // For each existing stroke
-            for( int i = 0; i < count; ++i ){
+            // // For each existing stroke
+            // for( int i = 0; i < count; ++i ){
 
-                // Disre
-                if( nuStroke.HasNeighbor( strokes[i] ) ){  continue;  }
+            //     // Disre
+            //     if( nuStroke.HasNeighbor( strokes[i] ) ){  continue;  }
 
-                // Scan for intersections
-                intersections = nuStroke.GetIntersections( strokes[i], 1f/128f, thick );
-                Nintersect    = intersections[0].Count / 2;
-                // For each intersection  
-                for( int j = 0; j < Nintersect; ++j ){
-                    interChoice = random.Next(3);
-                    switch( interChoice ){
-                        /// Cross ///
-                        case 0:
-                            // FIXME: REMOVE UNDERPAINT FROM THIS SPAN
-                            break;
-                        /// Above ///
-                        case 1:
-                            // FIXME: BUMP OFFSET UP
-                            break;
-                        /// Below ///
-                        case 2:
-                            // FIXME: BUMP OFFSET DOWN
-                            break;
-                        /// This should NOT happen! ///
-                        default:
-                            throw new InvalidDataException( $"{interChoice} was NOT a valid choice" );
-                    }
-                }
-            }
+            //     // Scan for intersections
+            //     intersections = nuStroke.GetIntersections( strokes[i], 1f/128f, thick );
+            //     Nintersect    = intersections[0].Count / 2;
+            //     // For each intersection  
+            //     for( int j = 0; j < Nintersect; ++j ){
+            //         interChoice = random.Next(3);
+            //         switch( interChoice ){
+            //             /// Cross ///
+            //             case 0:
+            //                 // FIXME: REMOVE UNDERPAINT FROM THIS SPAN
+            //                 break;
+            //             /// Above ///
+            //             case 1:
+            //                 // FIXME: BUMP OFFSET UP
+            //                 break;
+            //             /// Below ///
+            //             case 2:
+            //                 // FIXME: BUMP OFFSET DOWN
+            //                 break;
+            //             /// This should NOT happen! ///
+            //             default:
+            //                 throw new InvalidDataException( $"{interChoice} was NOT a valid choice" );
+            //         }
+            //     }
+            // }
 
-            // CREATE STROKE
-                // SCAN FOR INTERSECTIONS
-                // FOR EACH INTERSECTION: SELECT ONE {CROSS, ABOVE, BELOW}
-            // CREATE UNDERSTROKE
+            
             
             if( random.NextSingle() < breakProb ){  break;  } // Roll for break
             count++;
@@ -165,6 +162,10 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
             // CREATE GEO
                 // STROKE
                 // UNDERSTROKE
+        foreach( Stroke strk in strokes ){
+            strk.ReserveGeo();
+            strk.BuildGeo();
+        }
     }
 
 }
