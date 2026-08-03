@@ -46,6 +46,22 @@ public readonly struct Tri{
     /// Third point (CCW)
     /// </summary>
     public readonly Vector3 V2() => verts[2];
+
+
+    /// <summary>
+    /// Convert a list of `Tri` as a plain array (for OGL)
+    /// </summary>
+    public static float[] Triangles2Arr( List<Tri> triangles ){
+        float[] data = new float[ triangles.Count * 9 ];
+        for (int i = 0; i < triangles.Count; i++){
+            for( int j = 0; j < 3; ++j ){
+                data[i * 9 + j * 3 + 0] = triangles[i][j][0];
+                data[i * 9 + j * 3 + 1] = triangles[i][j][1];
+                data[i * 9 + j * 3 + 2] = triangles[i][j][2];
+            }
+        }
+        return data;
+    }
 }
 
 
