@@ -176,15 +176,24 @@ public class Pictogram ( int scale = 1024, float thickness = 25.0f ) {
 }
 
 
+/// <summary>
+/// Renders triangles to a JPG
+/// </summary>
 public class Renderer{
 
 
+    /// <summary>
+    /// Renders triangles to a JPG
+    /// </summary>
     public static void CheckShader( int shader ){
         GL.GetShader( shader, ShaderParameter.CompileStatus, out int status );
         if (status == 0){  throw new InvalidOperationException("Shader compile error: " + GL.GetShaderInfoLog(shader));  }
     }
 
 
+    /// <summary>
+    /// Simplest shader program with no lighting
+    /// </summary>
     public static int GetSimpleShaderProgram(){
         const string vertSrc = """
             #version 330 core
@@ -228,15 +237,18 @@ public class Renderer{
     }
 
 
-    public int vao;
-    public int vbo;
-    public int fbo;
-    public int colorTex;
-    public int depthRbo;
-    public int program;
+    public int vao; // ---- Vertex Attribute Object
+    public int vbo; // ---- Vertex Buffer Object
+    public int fbo; // ---- Frame Buffer Object
+    public int colorTex; // Generated Texture Location
+    public int depthRbo; // Depth Render Buffer Object
+    public int program; //- Shader Program: Vertex + Fragment
 
 
-    public void GetSquareVAOandVBO( int NsqrPxls ){
+    /// <summary>
+    /// Allocate buffers needed for rendering
+    /// </summary>
+    public void GetSquareBuffers( int NsqrPxls ){
         // --- Framebuffer: color texture + depth renderbuffer, rendered at supersample size ---
         int fbo = GL.GenFramebuffer();
         GL.BindFramebuffer( FramebufferTarget.Framebuffer, fbo );
@@ -279,6 +291,9 @@ public class Renderer{
     }
 
 
+    /// <summary>
+    /// Render triangles to JPG at specified `_outputPath`
+    /// </summary>
     public void TriangleList2JPG( List<Tri> _triangles, int NsqrPxls, string _outputPath ){
 
         float[] data = Tri.Triangles2Arr( _triangles );
