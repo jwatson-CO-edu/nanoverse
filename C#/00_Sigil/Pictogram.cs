@@ -270,8 +270,8 @@ public class Renderer{
                                     FramebufferAttachment.DepthAttachment,
                                     RenderbufferTarget.Renderbuffer, depthRbo );
 
-        if( GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != FramebufferErrorCode.FramebufferComplete ){
-            throw new InvalidOperationException("Offscreen framebuffer is incomplete.");
+        if( GL.CheckFramebufferStatus( FramebufferTarget.Framebuffer ) != FramebufferErrorCode.FramebufferComplete ){
+            throw new InvalidOperationException( "Offscreen framebuffer is incomplete." );
         }
 
         GL.Viewport( 0, 0, NsqrPxls, NsqrPxls );
