@@ -6,7 +6,7 @@ Console.WriteLine( "Hello, World!" );
 Pictogram sgl = new();
 sgl.Generate();
 
-Renderer rndr = new();
-rndr.GetSquareBuffers( 1024 );
+SigilWindow rndr = new( sgl.GetAllTriangles(), "test.jpg" );
+rndr.Run();
 
 Console.WriteLine( "TASK COMPLETE!\n" );

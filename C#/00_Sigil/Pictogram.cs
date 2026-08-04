@@ -16,10 +16,10 @@ namespace sigil {
 /// <summary>
 /// The actual Sigil
 /// </summary>
-public class Pictogram ( float scale = 5.0f, float thickness = 25.0f ) {
+public class Pictogram ( float scale = 1.0f, float thickness = 0.1f ) {
 
     /// Constants ///
-    public const int    _MAX_STROKES = 64; 
+    public const int    _MAX_STROKES = 16; // 32; //64; 
     public const float  _GAP_FACTOR  = 0.1f; 
     public const float  _LIN_FACTOR  = 0.5f; 
     public const float  _LAYER_STEP  = 1f/64f; 
@@ -33,8 +33,10 @@ public class Pictogram ( float scale = 5.0f, float thickness = 25.0f ) {
     public Vector3 /**/ _Z_DIR /*-*/ = new(0,0,1);
 
 
-
-    public void Generate( int maxStrokes = _MAX_STROKES, float breakProb = 1.0f / _MAX_STROKES ){
+    /// <summary>
+    /// Generate the actual Sigil
+    /// </summary>
+    public void Generate( int maxStrokes = _MAX_STROKES, float breakProb = 1.0f / (2.0f*_MAX_STROKES) ){
         int /*--*/ maxStrk  = maxStrokes;
         int /*--*/ count    = 0;
         Random     random   = new();
@@ -68,13 +70,14 @@ public class Pictogram ( float scale = 5.0f, float thickness = 25.0f ) {
             offset = random.Next(2) * random.NextSingle() * gapScale; // Zero -or- Gap
             bDir   = MathVec3.NoiseXY( random ); 
             if( lastCurv is DummyCurve ){
-                vBgn = new Vector3( scale/2.0f, scale/2.0f, 0.0f );
+                // vBgn = new Vector3( scale/2.0f, scale/2.0f, 0.0f );
+                vBgn = new Vector3( 0.0f, 0.0f, 0.0f );
                 bTan = MathVec3.NoiseXY( random );
                 bCrv = MathVec3.NoiseXY( random );
             }else{
                 vBgn = lastCurv.Val( tBgn );
-                bTan = lastCurv.Tan( tBgn );
-                bCrv = lastCurv.Crv( tBgn );
+                bTan = lastCurv.Tan( tBgn ).Normalized();
+                bCrv = lastCurv.Crv( tBgn ).Normalized();
             }
             bPnt = loc switch{
                 0 => vBgn + bTan * offset,
@@ -82,12 +85,15 @@ public class Pictogram ( float scale = 5.0f, float thickness = 25.0f ) {
                 2 => vBgn + bDir * offset,
                 _ => throw new InvalidDataException($"{loc} was NOT a valid choice"),
             };
-            bDir = loc switch{
-                0 => bTan.Normalized(),
-                1 => bCrv.Normalized(),
-                2 => bDir,
-                _ => throw new InvalidDataException($"{loc} was NOT a valid choice"),
-            };
+
+            if( (lastCurv is Bezier.Cubic) || (lastCurv is Bezier.Quad) ){ bDir = bTan; }else{
+                bDir = loc switch{
+                    0 => bTan,
+                    1 => bCrv,
+                    2 => bDir,
+                    _ => throw new InvalidDataException($"{loc} was NOT a valid choice"),
+                };
+            }
 
             Console.WriteLine( $"\tRoll stroke type ..." );
 
@@ -108,17 +114,18 @@ public class Pictogram ( float scale = 5.0f, float thickness = 25.0f ) {
                 
                 /// Quad Bezier ///
                 case 2:
-                    endPnt   = bPnt + bDir * offset + MathVec3.NoiseXY( random, linScale * 0.25f );
-                    midPnt   = (bPnt + endPnt)/2.0f + MathVec3.NoiseXY( random, linScale * 0.125f );
+                    endPnt   = bPnt + bDir * offset + MathVec3.NoiseXY( random, linScale );
+                    midPnt   = (bPnt + endPnt)/2.0f + MathVec3.NoiseXY( random, linScale * 0.5f );
                     currCurv = new Bezier.Quad( bPnt, midPnt, endPnt );
                     break;
                 
                 /// Cube Bezier ///
                 case 3:
-                    endPnt   = bPnt + bDir * offset   + MathVec3.NoiseXY( random, linScale * 0.250f );
-                    midPnt   = (bPnt + endPnt)/2.0f   + MathVec3.NoiseXY( random, linScale * 0.125f );
-                    P1 /*-*/ = (bPnt + midPnt)/2.0f   + MathVec3.NoiseXY( random, linScale * 0.125f );
-                    P2 /*-*/ = (midPnt + endPnt)/2.0f + MathVec3.NoiseXY( random, linScale * 0.125f );
+                    // endPnt   = bPnt + bDir * offset   + MathVec3.NoiseXY( random, linScale * 0.5f );
+                    endPnt   = bPnt + bDir * offset;
+                    midPnt   = (bPnt + endPnt)/2.0f   + MathVec3.NoiseXY( random, linScale * 0.25f );
+                    P1 /*-*/ = (bPnt + midPnt)/2.0f   + MathVec3.NoiseXY( random, linScale * 0.0625f );
+                    P2 /*-*/ = (midPnt + endPnt)/2.0f + MathVec3.NoiseXY( random, linScale * 0.0625f );
                     currCurv = new Bezier.Cubic( bPnt, P1, P2, endPnt );
                     break;
                 
@@ -174,13 +181,6 @@ public class Pictogram ( float scale = 5.0f, float thickness = 25.0f ) {
             lastCurv = strokes[ random.Next( count ) ].curve;
         }
 
-        // FIXME: FOR EACH STROKE
-            // CREATE GEO
-                // STROKE
-                // UNDERSTROKE
-        
-        
-        
         foreach( Stroke strk in strokes ){
             Console.WriteLine( $"Reserve geo ..." );
             strk.ReserveGeo();
@@ -188,30 +188,155 @@ public class Pictogram ( float scale = 5.0f, float thickness = 25.0f ) {
             strk.BuildGeo();
         }
     }
+
+
+    /// <summary>
+    /// Count all triangles the actual Sigil
+    /// </summary>
+    public int CountAllTriangles(){
+        int rtnTri = 0;
+        foreach( Stroke strk in strokes ){
+            rtnTri += strk.geo.Count;
+        }
+        return rtnTri;
+    }
+
+
+    /// <summary>
+    /// Get all triangles the actual Sigil
+    /// </summary>
+    public List<Tri> GetAllTriangles(){
+        List<Tri> rtnTri = [];
+        rtnTri.Capacity = CountAllTriangles();
+        foreach( Stroke strk in strokes ){
+            rtnTri.AddRange( strk.geo );
+        }
+        return rtnTri;
+    }
     
 
 }
 
 
 /// <summary>
-/// Renders triangles to a JPG
+/// A hidden GameWindow whose only job is to own a valid GL context long enough to render
+/// one sigil into an offscreen framebuffer and save it. Using GameWindow (rather than a
+/// bare context) means OpenTK handles context creation/binding-loading for us in the
+/// normal, well-tested way; OnLoad fires once bindings are ready, and we close the window
+/// as soon as the frame is captured.
 /// </summary>
-public class Renderer{
+public sealed class SigilWindow : GameWindow
+{
+    const int RenderSize = 2048; // supersampled; downsampled to OutputSize on save for anti-aliasing
+    const int OutputSize = 1024;
 
+    readonly List<Tri> _triangles;
+    readonly string _outputPath;
 
-    /// <summary>
-    /// Renders triangles to a JPG
-    /// </summary>
-    public static void CheckShader( int shader ){
-        GL.GetShader( shader, ShaderParameter.CompileStatus, out int status );
-        if (status == 0){  throw new InvalidOperationException("Shader compile error: " + GL.GetShaderInfoLog(shader));  }
+    public SigilWindow(List<Tri> triangles, string outputPath)
+        : base(
+            GameWindowSettings.Default,
+            new NativeWindowSettings
+            {
+                ClientSize = new Vector2i(64, 64),
+                StartVisible = false,
+                WindowBorder = WindowBorder.Hidden,
+                Title = "sigil-offscreen",
+                APIVersion = new Version(3, 3),
+                Profile = ContextProfile.Core,
+            })
+    {
+        _triangles = triangles;
+        _outputPath = outputPath;
     }
 
+    protected override void OnLoad()
+    {
+        base.OnLoad();
+        RenderAndSave();
+        Close();
+    }
 
-    /// <summary>
-    /// Simplest shader program with no lighting
-    /// </summary>
-    public static int GetSimpleShaderProgram(){
+    void RenderAndSave()
+    {
+        int program = BuildShaderProgram();
+
+        // GL.Disable(EnableCap.CullFace); 
+
+        // --- Framebuffer: color texture + depth renderbuffer, rendered at supersample size ---
+        int fbo = GL.GenFramebuffer();
+        GL.BindFramebuffer(FramebufferTarget.Framebuffer, fbo);
+
+        int colorTex = GL.GenTexture();
+        GL.BindTexture(TextureTarget.Texture2D, colorTex);
+        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, RenderSize, RenderSize, 0,
+            PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+        GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
+            TextureTarget.Texture2D, colorTex, 0);
+
+        int depthRbo = GL.GenRenderbuffer();
+        GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, depthRbo);
+        GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferStorage.DepthComponent24, RenderSize, RenderSize);
+        GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, FramebufferAttachment.DepthAttachment,
+            RenderbufferTarget.Renderbuffer, depthRbo);
+
+        if (GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer) != FramebufferErrorCode.FramebufferComplete)
+            throw new InvalidOperationException("Offscreen framebuffer is incomplete.");
+
+        GL.Viewport(0, 0, RenderSize, RenderSize);
+        GL.Enable(EnableCap.DepthTest);
+        GL.Enable(EnableCap.Blend);
+        GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
+        // Parchment-ish background.
+        GL.ClearColor(0.965f, 0.945f, 0.89f, 1f);
+        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
+        // --- Upload sigil geometry (position-only triangles, normalized [0,1] xy + small z) ---
+        int vao = GL.GenVertexArray();
+        int vbo = GL.GenBuffer();
+        GL.BindVertexArray(vao);
+        GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
+
+        float[] data = Tri.Triangles2Arr( _triangles );
+
+        GL.BufferData(BufferTarget.ArrayBuffer, data.Length * sizeof(float), data, BufferUsageHint.StaticDraw);
+        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+        GL.EnableVertexAttribArray(0);
+
+        GL.UseProgram(program);
+        var proj = Matrix4.CreateOrthographicOffCenter(-1f, 1f, -1f, 1f, -0.1f, 0.1f);
+        GL.UniformMatrix4(GL.GetUniformLocation(program, "uProjection"), false, ref proj);
+        GL.Uniform4(GL.GetUniformLocation(program, "uColor"), new Vector4(0.09f, 0.08f, 0.10f, 1f));
+
+        GL.DrawArrays(PrimitiveType.Triangles, 0, _triangles.Count);
+        GL.Flush();
+
+        // --- Read back and save ---
+        byte[] pixels = new byte[RenderSize * RenderSize * 4];
+        GL.ReadPixels(0, 0, RenderSize, RenderSize, PixelFormat.Rgba, PixelType.UnsignedByte, pixels);
+
+        using var image = Image.LoadPixelData<Rgba32>(pixels, RenderSize, RenderSize);
+        image.Mutate(ctx => ctx.Flip(FlipMode.Vertical)); // GL origin is bottom-left
+        image.Mutate(ctx => ctx.Resize(new ResizeOptions
+        {
+            Size = new Size(OutputSize, OutputSize),
+            Sampler = KnownResamplers.Lanczos3, // supersample downscale acts as anti-aliasing
+        }));
+        image.Save(_outputPath, new JpegEncoder { Quality = 92 });
+
+        GL.DeleteVertexArray(vao);
+        GL.DeleteBuffer(vbo);
+        GL.DeleteFramebuffer(fbo);
+        GL.DeleteTexture(colorTex);
+        GL.DeleteRenderbuffer(depthRbo);
+        GL.DeleteProgram(program);
+    }
+
+    static int BuildShaderProgram()
+    {
         const string vertSrc = """
             #version 330 core
             layout(location = 0) in vec3 aPos;
@@ -230,138 +355,34 @@ public class Renderer{
             }
             """;
 
-        int vs = GL.CreateShader( ShaderType.VertexShader );
-        GL.ShaderSource( vs, vertSrc );
-        GL.CompileShader( vs );
-        CheckShader( vs );
+        int vs = GL.CreateShader(ShaderType.VertexShader);
+        GL.ShaderSource(vs, vertSrc);
+        GL.CompileShader(vs);
+        CheckShader(vs);
 
-        int fs = GL.CreateShader( ShaderType.FragmentShader );
-        GL.ShaderSource( fs, fragSrc );
-        GL.CompileShader( fs );
-        CheckShader( fs );
+        int fs = GL.CreateShader(ShaderType.FragmentShader);
+        GL.ShaderSource(fs, fragSrc);
+        GL.CompileShader(fs);
+        CheckShader(fs);
 
         int prog = GL.CreateProgram();
-        GL.AttachShader( prog, vs );
-        GL.AttachShader( prog, fs );
-        GL.LinkProgram( prog );
-        GL.GetProgram( prog, GetProgramParameterName.LinkStatus, out int linkStatus );
-        if (linkStatus == 0){
+        GL.AttachShader(prog, vs);
+        GL.AttachShader(prog, fs);
+        GL.LinkProgram(prog);
+        GL.GetProgram(prog, GetProgramParameterName.LinkStatus, out int linkStatus);
+        if (linkStatus == 0)
             throw new InvalidOperationException("Shader link error: " + GL.GetProgramInfoLog(prog));
-        }
-        GL.DeleteShader( vs );
-        GL.DeleteShader( fs );
+
+        GL.DeleteShader(vs);
+        GL.DeleteShader(fs);
         return prog;
     }
 
-
-    public int vao; // ---- Vertex Attribute Object
-    public int vbo; // ---- Vertex Buffer Object
-    public int fbo; // ---- Frame Buffer Object
-    public int colorTex; // Generated Texture Location
-    public int depthRbo; // Depth Render Buffer Object
-    public int program; //- Shader Program: Vertex + Fragment
-    GameWindow window = new(
-        GameWindowSettings.Default,
-            new NativeWindowSettings
-            {
-                ClientSize = new Vector2i(64, 64),
-                StartVisible = false,
-                WindowBorder = WindowBorder.Hidden,
-                Title = "sigil-offscreen",
-                APIVersion = new Version(3, 3),
-                Profile = ContextProfile.Core,
-            }
-    );
-
-
-    /// <summary>
-    /// Allocate buffers needed for rendering
-    /// </summary>
-    public void GetSquareBuffers( int NsqrPxls ){
-        // --- Framebuffer: color texture + depth renderbuffer, rendered at supersample size ---
-        fbo = GL.GenFramebuffer();
-        GL.BindFramebuffer( FramebufferTarget.Framebuffer, fbo );
-
-        colorTex = GL.GenTexture();
-        GL.BindTexture( TextureTarget.Texture2D, colorTex );
-        GL.TexImage2D( TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, NsqrPxls, NsqrPxls, 0,
-                       PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero );
-        GL.TexParameter( TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int) TextureMinFilter.Linear );
-        GL.TexParameter( TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int) TextureMagFilter.Linear );
-        GL.FramebufferTexture2D( FramebufferTarget.Framebuffer, 
-                                 FramebufferAttachment.ColorAttachment0,
-                                 TextureTarget.Texture2D, colorTex, 0 );
-
-        depthRbo = GL.GenRenderbuffer();
-        GL.BindRenderbuffer( RenderbufferTarget.Renderbuffer, depthRbo );
-        GL.RenderbufferStorage( RenderbufferTarget.Renderbuffer, RenderbufferStorage.DepthComponent24, NsqrPxls, NsqrPxls );
-        GL.FramebufferRenderbuffer( FramebufferTarget.Framebuffer, 
-                                    FramebufferAttachment.DepthAttachment,
-                                    RenderbufferTarget.Renderbuffer, depthRbo );
-
-        if( GL.CheckFramebufferStatus( FramebufferTarget.Framebuffer ) != FramebufferErrorCode.FramebufferComplete ){
-            throw new InvalidOperationException( "Offscreen framebuffer is incomplete." );
-        }
-
-        GL.Viewport( 0, 0, NsqrPxls, NsqrPxls );
-        GL.Enable( EnableCap.DepthTest );
-        GL.Enable( EnableCap.Blend );
-        GL.BlendFunc( BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha );
-
-        // Parchment-ish background.
-        GL.ClearColor( 0.965f, 0.945f, 0.89f, 1f );
-        GL.Clear( ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit );
-
-        // --- Upload sigil geometry (position-only triangles, normalized [0,1] xy + small z) ---
-        vao = GL.GenVertexArray();
-        vbo = GL.GenBuffer();
-        GL.BindVertexArray( vao );
-        GL.BindBuffer( BufferTarget.ArrayBuffer, vbo );
-    }
-
-
-    /// <summary>
-    /// Render triangles to JPG at specified `_outputPath`
-    /// </summary>
-    public void TriangleList2JPG( List<Tri> _triangles, int NsqrPxls, string _outputPath ){
-
-        float[] data = Tri.Triangles2Arr( _triangles );
-
-        GL.BufferData( BufferTarget.ArrayBuffer, 
-                       data.Length * sizeof(float), 
-                       data, BufferUsageHint.StaticDraw );
-        GL.VertexAttribPointer( 0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0 );
-        GL.EnableVertexAttribArray(0);
-
-        GL.UseProgram( program );
-        var proj = Matrix4.CreateOrthographicOffCenter( 0f, 1f, 0f, 1f, -1f, 1f );
-        GL.UniformMatrix4( GL.GetUniformLocation( program, "uProjection" ), false, ref proj );
-        GL.Uniform4(
-            GL.GetUniformLocation( program, "uColor" ), 
-            new Vector4( 0.09f, 0.08f, 0.10f, 1f )
-        );
-
-        GL.DrawArrays( PrimitiveType.Triangles, 0, _triangles.Count * 3 );
-        GL.Flush();
-
-        // --- Read back and save ---
-        byte[] pixels = new byte[ NsqrPxls * NsqrPxls * 4 ];
-        GL.ReadPixels( 0, 0, NsqrPxls, NsqrPxls, PixelFormat.Rgba, PixelType.UnsignedByte, pixels );
-
-        using var image = Image.LoadPixelData<Rgba32>( pixels, NsqrPxls, NsqrPxls );
-        image.Mutate(ctx => ctx.Flip( FlipMode.Vertical ) ); // GL origin is bottom-left
-        image.Mutate(ctx => ctx.Resize( new ResizeOptions{
-            Size = new Size( NsqrPxls, NsqrPxls ),
-            Sampler = KnownResamplers.Lanczos3, // supersample downscale acts as anti-aliasing
-        } ) );
-        image.Save( _outputPath, new JpegEncoder { Quality = 92 } );
-
-        GL.DeleteVertexArray( vao );
-        GL.DeleteBuffer( vbo );
-        GL.DeleteFramebuffer( fbo );
-        GL.DeleteTexture( colorTex );
-        GL.DeleteRenderbuffer( depthRbo );
-        GL.DeleteProgram( program );
+    static void CheckShader(int shader)
+    {
+        GL.GetShader(shader, ShaderParameter.CompileStatus, out int status);
+        if (status == 0)
+            throw new InvalidOperationException("Shader compile error: " + GL.GetShaderInfoLog(shader));
     }
 }
 

@@ -71,7 +71,7 @@ public readonly struct Tri{
 /// </summary>
 public class Stroke {
     
-    public const int   _DEFAULT_DIV = 32;
+    public const int   _DEFAULT_DIV = 64;
     public const float _UNDER_STEP  = 1f/128f; 
     public float /*-*/ borderMult   = 1.125f;
     public float /*-*/ thick;
@@ -159,7 +159,7 @@ public class Stroke {
     public void BuildGeo(){
         float t;
         float hlf = thick / 2.0f;
-        Vector3 pt0, pt1, pt2, pt3, mid;
+        Vector3 pt0, pt1, pt2, pt3, mid1, mid2;
         // tGeo.Add(0f);
 
         Console.WriteLine( $"There are {tGeo.Count} points to evaluate ..." );
@@ -169,15 +169,16 @@ public class Stroke {
             t   = tGeo[i];
             Console.WriteLine( $"\tt = {t}" );
 
-            mid = curve.Val(t);
+            mid1 = curve.Val( t    );
+            mid2 = curve.Val( t+dt );
             
-            pt0 = mid + curve.Crv( t    ).Normalized() * hlf;
-            pt1 = mid - curve.Crv( t    ).Normalized() * hlf;
-            pt2 = mid + curve.Crv( t+dt ).Normalized() * hlf;
-            pt3 = mid - curve.Crv( t+dt ).Normalized() * hlf;
+            pt0 = mid1 + curve.Crv( t    ).Normalized() * hlf;
+            pt1 = mid1 - curve.Crv( t    ).Normalized() * hlf;
+            pt2 = mid2 + curve.Crv( t+dt ).Normalized() * hlf;
+            pt3 = mid2 - curve.Crv( t+dt ).Normalized() * hlf;
 
             geo.Add( new Tri( pt0, pt1, pt3 ) );
-            geo.Add( new Tri( pt0, pt3, pt2 ) );
+            geo.Add( new Tri( pt2, pt3, pt0 ) );
         }
 
         Console.WriteLine( $"Evaluated {tGeo.Count} ..." );
