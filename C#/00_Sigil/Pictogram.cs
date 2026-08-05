@@ -74,7 +74,7 @@ public class Pictogram ( float scale = 0.75f, float thickness = 0.2f ) {
             Console.WriteLine( $"\tRoll orientation ..." );
 
             ///// Roll for start orientation, Select {Tangent, Curvature, Oblique,} /////
-            loc    = random.Next(3);
+            loc    = random.Next(4);
             offset = random.Next(2) * random.NextSingle() * gapScale; // Zero -or- Gap
             bDir   = MathVec3.NoiseXY( random ); 
             if( lastCurv is DummyCurve ){
@@ -91,6 +91,7 @@ public class Pictogram ( float scale = 0.75f, float thickness = 0.2f ) {
                 0 => vBgn + bTan * offset,
                 1 => vBgn + bCrv * offset,
                 2 => vBgn + bDir * offset,
+                3 => RandomGridCell(),
                 _ => throw new InvalidDataException($"{loc} was NOT a valid choice"),
             };
 
@@ -99,6 +100,7 @@ public class Pictogram ( float scale = 0.75f, float thickness = 0.2f ) {
                     0 => bTan,
                     1 => bCrv,
                     2 => bDir,
+                    3 => (RandomGridCell() - bPnt).Normalized(),
                     _ => throw new InvalidDataException($"{loc} was NOT a valid choice"),
                 };
             }
@@ -138,12 +140,13 @@ public class Pictogram ( float scale = 0.75f, float thickness = 0.2f ) {
                 
                 /// Quad Bezier ///
                 case 2:
-                    choice   = random.Next(2);
+                    choice   = random.Next(3);
                     midPnt   = bPnt + bDir * 0.5f*offset; 
                     endPnt   = midPnt + MathVec3.NoiseXY( random, 0.5f*offset );
                     currCurv = choice switch{
                         0 => new Bezier.Quad( bPnt, midPnt, endPnt ),
                         1 => new Bezier.Quad( bPnt, midPnt, RandomGridCell() ),
+                        2 => new Bezier.Quad( RandomGridCell(), midPnt, endPnt ),
                         _ => throw new InvalidDataException($"{choice} was NOT a valid choice"),
                     };
                     break;
