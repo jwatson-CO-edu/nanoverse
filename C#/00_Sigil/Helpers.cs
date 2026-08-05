@@ -49,10 +49,42 @@ public class MathVec3 {
     }
 
 
+    /// <summary>
+    /// Get the (uniformly weighted) centroid of the collection of points
+    /// </summary>
+    public static Vector3 UniformPointCentroid( List<Vector3> points ){
+        Vector3 rtnPnt = new(0,0,0);
+        foreach( Vector3 pnt in points ){  rtnPnt += pnt;  }
+        return rtnPnt / points.Count;
+    }
+
+
+    /// <summary>
+    /// Return a shifted copy of the collection of points
+    /// </summary>
+    public static List<Vector3> ShiftPoints( List<Vector3> points, Vector3 shift ){
+        List<Vector3> rtnLst = [];
+        rtnLst.Capacity = points.Count;
+        foreach( Vector3 pnt in points ){  rtnLst.Add( pnt + shift);  }
+        return rtnLst;
+    }
+
+
+    /// <summary>
+    /// Return centers of the specified XY grid cells
+    /// </summary>
+    public static List<Vector3> GridCentersXY( float unit, int Nx, int Ny, bool center = true ){
+        List<Vector3> rtnLst = [];
+        rtnLst.Capacity = Nx * Ny;
+        float half = unit / 2.0f;
+        for( int i = 0; i < Nx; ++i ){  
+            for( int j = 0; j < Ny; ++j ){
+                rtnLst.Add( new Vector3( half + i*unit, half + j*unit, 0.0f ) );
+            }               
+        }
+        if( center ){  return ShiftPoints( rtnLst, -UniformPointCentroid( rtnLst ) );  }
+        return rtnLst;
+    }
 }
-
-
-
-
 
 }

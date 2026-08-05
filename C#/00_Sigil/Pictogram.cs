@@ -36,7 +36,7 @@ public class Pictogram ( float scale = 0.75f, float thickness = 0.2f ) {
     /// <summary>
     /// Generate the actual Sigil
     /// </summary>
-    public void Generate( int maxStrokes = _MAX_STROKES, float breakProb = 1.0f / (4.0f*_MAX_STROKES) ){
+    public void Generate( int maxStrokes = _MAX_STROKES, float breakProb = 1.0f / (4.0f*_MAX_STROKES), float gridProb = 0.75f ){
         int /*--*/ maxStrk  = maxStrokes;
         int /*--*/ count    = 0;
         Random     random   = new();
