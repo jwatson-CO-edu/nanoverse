@@ -16,7 +16,7 @@ namespace sigil {
 /// <summary>
 /// The actual Sigil
 /// </summary>
-public class Pictogram ( float scale = 1.0f, float thickness = 0.1f ) {
+public class Pictogram ( float scale = 0.75f, float thickness = 0.2f ) {
 
     /// Constants ///
     public const int    _MAX_STROKES = 16; // 32; //64; 
@@ -36,14 +36,14 @@ public class Pictogram ( float scale = 1.0f, float thickness = 0.1f ) {
     /// <summary>
     /// Generate the actual Sigil
     /// </summary>
-    public void Generate( int maxStrokes = _MAX_STROKES, float breakProb = 1.0f / (2.0f*_MAX_STROKES) ){
+    public void Generate( int maxStrokes = _MAX_STROKES, float breakProb = 1.0f / (4.0f*_MAX_STROKES) ){
         int /*--*/ maxStrk  = maxStrokes;
         int /*--*/ count    = 0;
         Random     random   = new();
         Parametric lastCurv = new DummyCurve();
         Parametric currCurv;
         int /*--*/ loc, type; 
-        float /**/ tBgn, offset;
+        float /**/ tBgn, offset, factor;
         Vector3    vBgn, bTan, bCrv, bPnt, bDir, endPnt, midPnt, P1, P2;
 
         strokes.Capacity = maxStrk;
@@ -98,8 +98,10 @@ public class Pictogram ( float scale = 1.0f, float thickness = 0.1f ) {
             Console.WriteLine( $"\tRoll stroke type ..." );
 
             ///// Roll for Stroke Type /////
+             
             type   = random.Next(4);
-            offset = linScale * random.NextSingle();
+            offset = 4*thick + linScale * random.NextSingle();
+            
             switch( type ){
                 
                 /// Line Segment ///
@@ -109,22 +111,23 @@ public class Pictogram ( float scale = 1.0f, float thickness = 0.1f ) {
                 
                 /// Circle ///
                 case 1:
-                    currCurv = new Ellipse.Circle( bPnt + bDir * offset, _Z_DIR, offset );
+                    factor   = 0.25f;
+                    factor   = offset * (factor + factor*random.NextSingle());
+                    currCurv = new Ellipse.Circle( bPnt + bDir * factor, _Z_DIR, factor );
                     break;
                 
                 /// Quad Bezier ///
                 case 2:
-                    endPnt   = bPnt + bDir * offset + MathVec3.NoiseXY( random, linScale );
-                    midPnt   = (bPnt + endPnt)/2.0f + MathVec3.NoiseXY( random, linScale * 0.5f );
+                    midPnt   = bPnt + bDir * 0.5f*offset; 
+                    endPnt   = midPnt + MathVec3.NoiseXY( random, 0.5f*offset );
                     currCurv = new Bezier.Quad( bPnt, midPnt, endPnt );
                     break;
                 
                 /// Cube Bezier ///
                 case 3:
-                    // endPnt   = bPnt + bDir * offset   + MathVec3.NoiseXY( random, linScale * 0.5f );
-                    endPnt   = bPnt + bDir * offset;
-                    midPnt   = (bPnt + endPnt)/2.0f   + MathVec3.NoiseXY( random, linScale * 0.25f );
-                    P1 /*-*/ = (bPnt + midPnt)/2.0f   + MathVec3.NoiseXY( random, linScale * 0.0625f );
+                    midPnt   = bPnt + bDir * 0.5f*offset;
+                    P1 /*-*/ = bPnt + bDir * (0.5f*offset-0.25f*offset*random.NextSingle());
+                    endPnt   = midPnt + MathVec3.NoiseXY( random, offset );
                     P2 /*-*/ = (midPnt + endPnt)/2.0f + MathVec3.NoiseXY( random, linScale * 0.0625f );
                     currCurv = new Bezier.Cubic( bPnt, P1, P2, endPnt );
                     break;
@@ -213,7 +216,31 @@ public class Pictogram ( float scale = 1.0f, float thickness = 0.1f ) {
         }
         return rtnTri;
     }
+
+
+    /// <summary>
+    /// Area Centroid of Sigil
+    /// </summary>
+    public Vector3 Centroid(){
+        float   area_i;
+        float   totArea  = 0.0f;
+        Vector3 centroid = new(0,0,0);
+        foreach( Stroke strk in strokes ){
+            area_i    = strk.Area();
+            totArea  += area_i;
+            centroid += strk.Centroid() * area_i;
+        }
+        return centroid / totArea;
+    }
     
+
+    /// <summary>
+    /// Shift entire Sigil
+    /// </summary>
+    public void Shift( Vector3 offset ){  foreach( Stroke strk in strokes ){  strk.Shift( offset );  }  }
+
+
+    public void ShiftToCenter(){  Shift( -Centroid() );  }
 
 }
 

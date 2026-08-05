@@ -5,6 +5,7 @@ Console.WriteLine( "Hello, World!" );
 
 Pictogram sgl = new();
 sgl.Generate();
+sgl.ShiftToCenter();
 
 SigilWindow rndr = new( sgl.GetAllTriangles(), "test.jpg" );
 rndr.Run();

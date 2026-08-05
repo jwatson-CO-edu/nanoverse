@@ -22,6 +22,70 @@ public readonly struct Tri{
 
 
     /// <summary>
+    /// Centroid of the Triangle
+    /// </summary>
+    public Vector3 Center(){
+        Vector3 rtnVec = new(0,0,0);
+        foreach( Vector3 vec in verts ){  rtnVec += vec;  }
+        return rtnVec / 3.0f;
+    }
+
+
+    /// <summary>
+    /// Area of the Triangle
+    /// </summary>
+    public float Area(){
+        Vector3 AB  = verts[1] - verts[0];
+        Vector3 AC  = verts[2] - verts[0];
+        float   mag = Vector3.Cross( AB, AC ).Length;
+        return mag / 2.0f;
+    }
+
+
+    /// <summary>
+    /// Return the area centroid of a collection of triangles
+    /// </summary>
+    public static float MeshArea( List<Tri> mesh ){
+        float   totArea  = 0.0f;
+        foreach( Tri tri in mesh ){  totArea += tri.Area();  }
+        return totArea;
+    }
+
+
+    /// <summary>
+    /// Return the area centroid of a collection of triangles
+    /// </summary>
+    public static Vector3 MeshAreaCentroid( List<Tri> mesh ){
+        float   area_i;
+        float   totArea  = 0.0f;
+        Vector3 centroid = new(0,0,0);
+        foreach( Tri tri in mesh ){
+            area_i    = tri.Area();
+            totArea  += area_i;
+            centroid += tri.Center() * area_i;
+        }
+        return centroid / totArea;
+    }
+
+
+    /// <summary>
+    /// Shift a collection of triangles
+    /// </summary>
+    public static List<Tri> ShiftMesh( List<Tri> mesh, Vector3 shift ){
+        Tri tri_i;
+        List<Tri> rtnMsh = [];
+        rtnMsh.Capacity = mesh.Count;
+        foreach( Tri tri in mesh ){
+            tri_i = new( tri.V0() + shift, 
+                         tri.V1() + shift, 
+                         tri.V2() + shift );
+            rtnMsh.Add( tri_i );
+        }
+        return rtnMsh;
+    }
+
+
+    /// <summary>
     /// Indexer: {get, set,}
     /// </summary>
     public readonly Vector3 this[int index]{
@@ -119,6 +183,27 @@ public class Stroke {
         if( curve is DummyCurve ){  return false;  }
         return true;
     }
+
+
+    /// <summary>
+    /// Stroke Area
+    /// </summary>
+    public float Area(){
+        if( HasCurve() ){  return Tri.MeshArea( geo );  }
+        return 0.0f;
+    }
+
+
+    /// <summary>
+    /// Stroke Area Centroid
+    /// </summary>
+    public Vector3 Centroid(){
+        if( HasCurve() ){  return Tri.MeshAreaCentroid( geo );  }
+        return new Vector3( float.NaN, float.NaN, float.NaN );
+    }
+
+
+    public void Shift( Vector3 offset ){  if( HasCurve() ){  geo = Tri.ShiftMesh( geo, offset );  }  }
 
     
     /// <summary>
