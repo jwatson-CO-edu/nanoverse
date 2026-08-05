@@ -23,6 +23,7 @@ public class Pictogram ( float scale = 0.75f, float thickness = 0.2f ) {
     public const float  _GAP_FACTOR  = 0.1f; 
     public const float  _LIN_FACTOR  = 0.5f; 
     public const float  _LAYER_STEP  = 1f/64f; 
+    public const int    _GRID_DIVSN  = 4;
 
     /// Members ///
     public List<Stroke> strokes /**/ = [];
@@ -41,10 +42,17 @@ public class Pictogram ( float scale = 0.75f, float thickness = 0.2f ) {
         int /*--*/ count    = 0;
         Random     random   = new();
         Parametric lastCurv = new DummyCurve();
+        List<Vector3> grid  = MathVec3.GridCentersXY( scale/_GRID_DIVSN, _GRID_DIVSN, _GRID_DIVSN );
         Parametric currCurv;
-        int /*--*/ loc, type; 
+        int /*--*/ loc, type, choice; 
         float /**/ tBgn, offset, factor;
         Vector3    vBgn, bTan, bCrv, bPnt, bDir, endPnt, midPnt, P1, P2;
+
+
+        Vector3 RandomGridCell(){
+            return grid[ random.Next( grid.Count ) ];
+        }
+
 
         strokes.Capacity = maxStrk;
         
@@ -106,28 +114,50 @@ public class Pictogram ( float scale = 0.75f, float thickness = 0.2f ) {
                 
                 /// Line Segment ///
                 case 0:
-                    currCurv = new Line.Segment( bPnt, bPnt + bDir * offset );
+                    choice = random.Next(4);
+                    currCurv = choice switch{
+                        0 => new Line.Segment(RandomGridCell(), RandomGridCell()),
+                        1 => new Line.Segment(RandomGridCell(), bPnt + bDir * offset),
+                        2 => new Line.Segment(bPnt, RandomGridCell()),
+                        3 => new Line.Segment(bPnt, bPnt + bDir * offset),
+                        _ => throw new InvalidDataException($"{choice} was NOT a valid choice"),
+                    };
                     break;
                 
                 /// Circle ///
                 case 1:
+                    choice   = random.Next(2);
                     factor   = 0.25f;
                     factor   = offset * (factor + factor*random.NextSingle());
-                    currCurv = new Ellipse.Circle( bPnt + bDir * factor, _Z_DIR, factor );
+                    currCurv = choice switch{
+                        0 => new Ellipse.Circle( bPnt + bDir * factor, _Z_DIR, factor ),
+                        1 => new Ellipse.Circle( RandomGridCell(), _Z_DIR, factor ),
+                        _ => throw new InvalidDataException($"{choice} was NOT a valid choice"),
+                    };
                     break;
                 
                 /// Quad Bezier ///
                 case 2:
+                    choice   = random.Next(2);
                     midPnt   = bPnt + bDir * 0.5f*offset; 
                     endPnt   = midPnt + MathVec3.NoiseXY( random, 0.5f*offset );
-                    currCurv = new Bezier.Quad( bPnt, midPnt, endPnt );
+                    currCurv = choice switch{
+                        0 => new Bezier.Quad( bPnt, midPnt, endPnt ),
+                        1 => new Bezier.Quad( bPnt, midPnt, RandomGridCell() ),
+                        _ => throw new InvalidDataException($"{choice} was NOT a valid choice"),
+                    };
                     break;
                 
                 /// Cube Bezier ///
                 case 3:
+                    choice   = random.Next(2);
                     midPnt   = bPnt + bDir * 0.5f*offset;
                     P1 /*-*/ = bPnt + bDir * (0.5f*offset-0.25f*offset*random.NextSingle());
-                    endPnt   = midPnt + MathVec3.NoiseXY( random, offset );
+                    endPnt = choice switch{
+                        0 => midPnt + MathVec3.NoiseXY( random, offset ),
+                        1 => RandomGridCell(),
+                        _ => throw new InvalidDataException($"{choice} was NOT a valid choice"),
+                    };
                     P2 /*-*/ = (midPnt + endPnt)/2.0f + MathVec3.NoiseXY( random, linScale * 0.0625f );
                     currCurv = new Bezier.Cubic( bPnt, P1, P2, endPnt );
                     break;
