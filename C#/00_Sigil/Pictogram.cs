@@ -275,6 +275,24 @@ public class Pictogram ( float scale = 0.75f, float thickness = 0.2f ) {
 
     public void ShiftToCenter(){  Shift( -Centroid() );  }
 
+
+    public float AverageStrokeArea(){
+        float totArea  = 0.0f;
+        foreach( Stroke strk in strokes ){  totArea += strk.Area();  }
+        return totArea / strokes.Count;
+    }
+
+
+    public void FilterSmall( float factor = 1.0f / 5.0f ){
+        float avgArea = AverageStrokeArea();
+        List<Stroke> nuList = [];
+        nuList.Capacity = strokes.Count;
+        foreach( Stroke strk in strokes ){  
+            if( strk.Area() >= avgArea * factor ){  nuList.Add( strk );  }  
+        }
+        strokes = nuList;
+    }
+
 }
 
 
