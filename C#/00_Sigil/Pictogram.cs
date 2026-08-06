@@ -265,6 +265,30 @@ public class Pictogram ( float scale = 0.75f, float thickness = 0.2f ) {
         }
         return centroid / totArea;
     }
+
+
+    public Vector3[] BBox(){
+        Vector3 lo = new(  6e10f,  6e10f,  6e10f );
+        Vector3 hi = new( -6e10f, -6e10f, -6e10f );
+        Vector3[] bbox_i;
+        foreach( Stroke strk in strokes ){  
+            bbox_i = strk.BBox();
+            for( int k = 0; k < 3; ++k ){
+                lo[k] = Math.Min( lo[k], bbox_i[0][k] );
+                hi[k] = Math.Max( hi[k], bbox_i[1][k] );
+            }
+        }
+        return [lo, hi,];
+    }
+
+
+    /// <summary>
+    /// Area Centroid of Sigil
+    /// </summary>
+    public Vector3 Center(){
+        Vector3[] bbox = BBox();
+        return (bbox[0] + bbox[1])/2.0f;
+    }
     
 
     /// <summary>
@@ -273,13 +297,30 @@ public class Pictogram ( float scale = 0.75f, float thickness = 0.2f ) {
     public void Shift( Vector3 offset ){  foreach( Stroke strk in strokes ){  strk.Shift( offset );  }  }
 
 
-    public void ShiftToCenter(){  Shift( -Centroid() );  }
+    public void ShiftToCentroid(){  Shift( -Centroid() );  }
+    
+    
+    public void ShiftToCenter(){  Shift( -Center() );  }
+
+
+    
 
 
     public float AverageStrokeArea(){
         float totArea  = 0.0f;
         foreach( Stroke strk in strokes ){  totArea += strk.Area();  }
         return totArea / strokes.Count;
+    }
+
+    
+    public float AverageStrokeScale(){
+        float totScale  = 0.0f;
+        Vector3[] bbox_i;
+        foreach( Stroke strk in strokes ){  
+            bbox_i = strk.BBox();
+            totScale += (bbox_i[1] - bbox_i[0]).Length;  
+        }
+        return totScale / strokes.Count;
     }
 
 
@@ -289,6 +330,18 @@ public class Pictogram ( float scale = 0.75f, float thickness = 0.2f ) {
         nuList.Capacity = strokes.Count;
         foreach( Stroke strk in strokes ){  
             if( strk.Area() >= avgArea * factor ){  nuList.Add( strk );  }  
+        }
+        strokes = nuList;
+    }
+
+
+    public void FilterFar( float factor = 1.5f ){
+        float avgScal = AverageStrokeScale();
+        Vector3 totCentr = Centroid();
+        List<Stroke> nuList = [];
+        nuList.Capacity = strokes.Count;
+        foreach( Stroke strk in strokes ){  
+            if( (strk.Centroid() - totCentr).Length < avgScal * factor ){  nuList.Add( strk );  }  
         }
         strokes = nuList;
     }

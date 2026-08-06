@@ -68,6 +68,21 @@ public readonly struct Tri{
     }
 
 
+    public static Vector3[] MeshBBox( List<Tri> mesh ){
+        Vector3 lo = new(  6e10f,  6e10f,  6e10f );
+        Vector3 hi = new( -6e10f, -6e10f, -6e10f );
+        foreach( Tri tri in mesh ){
+            foreach( Vector3 pt in tri.verts ){
+                for( int k = 0; k < 3; ++k ){
+                    lo[k] = Math.Min( lo[k], pt[k] );
+                    hi[k] = Math.Max( hi[k], pt[k] );
+                }
+            }
+        }
+        return [lo, hi,];
+    }
+
+
     /// <summary>
     /// Shift a collection of triangles
     /// </summary>
@@ -191,6 +206,15 @@ public class Stroke {
     public float Area(){
         if( HasCurve() ){  return Tri.MeshArea( geo );  }
         return 0.0f;
+    }
+
+
+    /// <summary>
+    /// Stroke Bounding Box
+    /// </summary>
+    public Vector3[] BBox(){
+        if( HasCurve() ){  return Tri.MeshBBox( geo );  }
+        return [new Vector3(float.NaN, float.NaN, float.NaN), new Vector3(float.NaN, float.NaN, float.NaN)];
     }
 
 

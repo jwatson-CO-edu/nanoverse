@@ -4,8 +4,18 @@
 Console.WriteLine( "Hello, World!" );
 
 Pictogram sgl = new();
-sgl.Generate();
-sgl.FilterSmall();
+
+while( sgl.strokes.Count == 0 ){
+    sgl.Generate();
+    sgl.FilterSmall( 0.25f );
+    // sgl.FilterFar( 1.0f );
+    sgl.FilterFar( 0.75f );
+}
+
+
+
+
+// sgl.ShiftToCentroid();
 sgl.ShiftToCenter();
 
 SigilWindow rndr = new( sgl.GetAllTriangles(), "test.jpg" );
