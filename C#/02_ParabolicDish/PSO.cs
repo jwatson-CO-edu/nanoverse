@@ -5,13 +5,20 @@ namespace pso {
 /// </summary>
 public class PSOptimizer {
 
+    public class Particle {
+        public Dictionary<string,float> position = [];
+        public Dictionary<string,float> velocity = [];
+        public Dictionary<string,float> bestPosn = [];
+    }
+
     public List<string> /*--------------------*/ fields    = [];
     public Dictionary<string,float[]> /*------*/ ranges    = [];
-    public LinkedList<Dictionary<string,float>>  particles = [];
-    public Dictionary<string,float> /*--------*/ bestPrtcl = [];
-    public Dictionary<string,float> /*--------*/ particle  = [];
+    public LinkedList<Particle> /*------------*/ particles = [];
+    public Particle /*------------------------*/ bestPrtcl = new();
+    public Particle /*------------------------*/ particle  = new();
     public Func<Dictionary<string,float>,float>? Score     = null;
     public Random /*--------------------------*/ rand /**/ = new();
+
 
     
     /// <summary>
@@ -32,12 +39,17 @@ public class PSOptimizer {
     /// <summary>
     /// Generate a random particle at a grid point
     /// </summary>
-    public Dictionary<string,float> RandParticle(){
-        Dictionary<string,float> rtnPrt = [];
+    public Particle RandParticle(){
+        Particle rtnPrt = new();
+        float    value;
         foreach( string field in fields ){
-            rtnPrt[ field ] = ranges[ field ][0] + rand.Next( (int) ranges[ field ][2] + 1 ) * ranges[ field ][3];
+            value = ranges[ field ][0] + rand.Next( (int) ranges[ field ][2] + 1 ) * ranges[ field ][3];
+            rtnPrt.position[ field ] = value;
+            rtnPrt.bestPosn[ field ] = value;
+            rtnPrt.velocity[ field ] = 0f;
         }
-        rtnPrt[ "score" ] = float.NaN;
+        rtnPrt.position[ "score" ] = float.NaN;
+        rtnPrt.bestPosn[ "score" ] = float.NaN;
         return rtnPrt;
     }
 
@@ -60,7 +72,7 @@ public class PSOptimizer {
         
         // FIXME: START HERE, https://en.wikipedia.org/wiki/Particle_swarm_optimization#Algorithm
         
-        return bestPrtcl;
+        return bestPrtcl.position;
     }
 
 

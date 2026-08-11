@@ -123,8 +123,8 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     public void DesignParabolicReflector(){
         
         PSOptimizer problem = new();
-        problem.AddField( "D", 0.25f, 2.0f );
-        problem.AddField( "z", 0.10f, 0.5f );
+        problem.AddField( "D", 0.25f, 2.0f ); // Max diameter [m]
+        problem.AddField( "z", 0.10f, 0.5f ); // Max depth [m]
         problem.PopulateInit();
         problem.SetScoringFunc( Score );
         Dictionary<string,float> soln = problem.Solve();
