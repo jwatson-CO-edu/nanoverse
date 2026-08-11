@@ -1,36 +1,9 @@
 namespace pso {
 
-/*
-using System;
-using System.Reflection;
-using System.Collections.Generic;
-
-var data = new Dictionary<string, object>
-{
-    { "Name", "Bob" },
-    { "Age", 25 }
-};
-
-// 1. Dynamically create an instance of the target type
-Person person = Activator.CreateInstance<Person>();
-
-// 2. Iterate through the dictionary and map values to matching properties
-foreach (var kvp in data)
-{
-    PropertyInfo prop = typeof(Person).GetProperty(kvp.Key);
-    if (prop != null && prop.CanWrite)
-    {
-        // Convert the type safely if needed before assigning
-        object value = Convert.ChangeType(kvp.Value, prop.PropertyType);
-        prop.SetValue(person, value);
-    }
-}
-*/
-
 /// <summary>
 /// Particle Swarm Optimization
 /// </summary>
-public class PSOptimizer<T> {
+public class PSOptimizer {
 
     public List<string> /*--------------------*/ fields    = [];
     public Dictionary<string,float[]> /*------*/ ranges    = [];
@@ -42,20 +15,11 @@ public class PSOptimizer<T> {
 
     
     /// <summary>
-    /// Add a list of fields
+    /// Set domain [lo,hi,div,step,] for one field
     /// </summary>
-    public void AddFields( params string[] fieldsArr ){  fields.AddRange( fieldsArr );  }
-
-
-    /// <summary>
-    /// Set range [lo,hi,step,] for one field
-    /// </summary>
-    public void AddDomainDiv( string field, float lo, float hi, int div = 10 ){
-        if( fields.Contains( field ) ){
-            if( lo > hi ){  throw new Exception( $"Domain [{lo}, {hi}] is MALFORMED!" );  }
-            ranges[ field ] = [lo, hi, div, (hi-lo)/div,];
-        }
-        throw new Exception( $"Key {field} DNE for this problem!" );
+    public void AddField( string field, float lo, float hi, int div = 10 ){
+        if( lo > hi ){  throw new Exception( $"Domain [{lo}, {hi}] is MALFORMED!" );  }
+        ranges[ field ] = [lo, hi, div, (hi-lo)/div,];
     }
 
 
@@ -65,6 +29,9 @@ public class PSOptimizer<T> {
     public void SetScoringFunc( Func<Dictionary<string,float>,float>? func ){  Score = func;  }
 
 
+    /// <summary>
+    /// Generate a random particle at a grid point
+    /// </summary>
     public Dictionary<string,float> RandParticle(){
         Dictionary<string,float> rtnPrt = [];
         foreach( string field in fields ){
@@ -75,12 +42,26 @@ public class PSOptimizer<T> {
     }
 
 
-    public void PopulateInit( int N = 1000 ){
+    /// <summary>
+    /// Generate N random particles at grid points
+    /// </summary>
+    public void PopulateInit( int N = 0 ){
+        if( N < 1 ){  
+            N = 1;   
+            foreach( string field in fields ){ N *= (int) ranges[ field ][2];  }
+            N /= 2;
+        }
+        particles.Clear();
         for( int i = 0; i < N; ++i ){  particles.AddLast( RandParticle() );  }
     }
 
 
-
+    public Dictionary<string,float> Solve( /* FIXME: Conditions - N or Low Velocity Factor */ ){
+        
+        // FIXME: START HERE, https://en.wikipedia.org/wiki/Particle_swarm_optimization#Algorithm
+        
+        return bestPrtcl;
+    }
 
 
 }
