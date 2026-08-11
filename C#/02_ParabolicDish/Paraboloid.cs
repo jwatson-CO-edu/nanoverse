@@ -97,10 +97,26 @@ public class DishCalculator {
                                           float deltaHalt = 1f ){
         float lambda_m   = SoundFreq2Lambda_m( lowestFreq_Hz );
         float lastScore  = 0f;
-        float scoreDelta = 6e10f;
+        
 
-        while( scoreDelta > deltaHalt ){
-            
+        float Score( float D_, float z_, float f_ ){
+            return Gain( D_, lambda_m )  * _GAIN_REWARD +
+                   Beamwidth_rad( D_, lambda_m ) * _BEAMWIDTH_REWARD +
+                   (diaMax_m - D_) * _DIAMETER_PENALTY +
+                   (depthRatioMax - z_ / D_) * _DEPTH_PENALTY +
+                   (focalLengthMax_m - f_) * _FOCL_LEN_PENALTY;
+        }
+
+        float D_gn  = GetDiaFromFreqGain( lowestFreq_Hz, Gdesired );
+        float D_bw  = GetDiaFromFreqBW( lowestFreq_Hz, BWdesired_rad );
+        float D     = (D_gn + D_bw) / 2f;
+        float zDpth = D * depthRatioMax;
+        float f     = FocalLength_m( D, zDpth );
+        float score = Score( D, zDpth, f );
+        float delta = score - lastScore;
+
+        while( delta > deltaHalt ){
+
         }
 
     }
