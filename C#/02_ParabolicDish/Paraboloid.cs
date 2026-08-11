@@ -80,13 +80,38 @@ public class DishCalculator {
     }
 
 
-    public const float _GAIN_REWARD /**/ = 10f;
-    public const float _BEAMWIDTH_REWARD = 10f;
+    /// <summary>
+    /// Represents a single point in the design space of Parabolic Reflectors
+    /// Source: https://diymics.com/parabolic-microphones/
+    /// </summary>
+    class DishDesign ( float lowestFreq_Hz, float D, float z ) {
 
-    public const float _DIAMETER_PENALTY = 10f;
-    public const float _DEPTH_PENALTY    =  5f;
-    public const float _FOCL_LEN_PENALTY = 10f;
-    
+        /// Rewards ///
+        public const float _GAIN_REWARD /**/ = 10f;
+        public const float _BEAMWIDTH_REWARD = 10f;
+
+        /// Penalties ///
+        public const float _DIAMETER_PENALTY = 10f;
+        public const float _DEPTH_PENALTY    =  5f;
+        public const float _FOCL_LEN_PENALTY = 10f;
+
+        /// Parameters ///
+        public float freqHz = lowestFreq_Hz;
+        public float lambda = SoundFreq2Lambda_m( lowestFreq_Hz );
+        public float D = D;
+        public float z = z;
+        public float f = FocalLength_m( D, z );
+
+        public float Score( float diaMax_m, float depthRatioMax, float focalLengthMax_m ){
+            return Gain( D, lambda )  * _GAIN_REWARD +
+                   Beamwidth_rad( D, lambda ) * _BEAMWIDTH_REWARD +
+                   (diaMax_m - D) * _DIAMETER_PENALTY +
+                   (depthRatioMax - z/D) * _DEPTH_PENALTY +
+                   (focalLengthMax_m - f) * _FOCL_LEN_PENALTY;
+        }
+
+    }
+
 
     /// <summary>
     /// Iteratively design the reflector by balancing practical considerations (Too lazy for closed form!)
@@ -95,25 +120,20 @@ public class DishCalculator {
     public void DesignParabolicReflector( float lowestFreq_Hz, float Gdesired, float BWdesired_rad, 
                                           float diaMax_m, float depthRatioMax, float focalLengthMax_m,  
                                           float deltaHalt = 1f ){
-        float lambda_m   = SoundFreq2Lambda_m( lowestFreq_Hz );
         float lastScore  = 0f;
         
+        Queue<DishDesign> designs = [];
+        List<DishDesign>  dsgnLst = [];
 
-        float Score( float D_, float z_, float f_ ){
-            return Gain( D_, lambda_m )  * _GAIN_REWARD +
-                   Beamwidth_rad( D_, lambda_m ) * _BEAMWIDTH_REWARD +
-                   (diaMax_m - D_) * _DIAMETER_PENALTY +
-                   (depthRatioMax - z_ / D_) * _DEPTH_PENALTY +
-                   (focalLengthMax_m - f_) * _FOCL_LEN_PENALTY;
-        }
+        float /**/ D_gn  = GetDiaFromFreqGain( lowestFreq_Hz, Gdesired );
+        float /**/ D_bw  = GetDiaFromFreqBW( lowestFreq_Hz, BWdesired_rad );
+        float /**/ D     = (D_gn + D_bw) / 2f;
+        float /**/ zDpth = D * depthRatioMax;
+        DishDesign dsgn  = new( lowestFreq, D, zDpth );
+        float /**/ score = dsgn.Score( diaMax_m, depthRatioMax, focalLengthMax_m );
+        float /**/ delta = score - lastScore;
 
-        float D_gn  = GetDiaFromFreqGain( lowestFreq_Hz, Gdesired );
-        float D_bw  = GetDiaFromFreqBW( lowestFreq_Hz, BWdesired_rad );
-        float D     = (D_gn + D_bw) / 2f;
-        float zDpth = D * depthRatioMax;
-        float f     = FocalLength_m( D, zDpth );
-        float score = Score( D, zDpth, f );
-        float delta = score - lastScore;
+        designs.Enqueue( dsgn );
 
         while( delta > deltaHalt ){
 
