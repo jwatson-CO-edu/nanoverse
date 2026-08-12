@@ -10,7 +10,7 @@ public class Constants {
 
 
 /// <summary>
-/// Cheap paraboloid dish designer for audible frequencies
+/// Cheap paraboloid dish designer for audible frequencies,
 /// Source: https://diymics.com/parabolic-microphones/
 /// </summary>
 public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesired_rad, 
@@ -49,7 +49,7 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
 
 
     /// <summary>
-    /// Get wavelength [m] from frequency, ASSUMPTION: STP conditions ?
+    /// Get wavelength [m] from frequency, ASSUMPTION: STP conditions ?,
     /// Source: https://en.wikipedia.org/wiki/Speed_of_sound
     /// </summary>
     public static float SoundFreq2Lambda_m( float freqHz ){
@@ -58,7 +58,7 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
 
 
     /// <summary>
-    /// Directivity Gain 
+    /// Directivity Gain,
     /// Source: https://diymics.com/parabolic-microphones/
     /// </summary>
     public static float Gain( float dia_m, float lambda_m, float appEff = _BAD_PARABOLOID_EFF, bool asDecibel = false ){
@@ -69,7 +69,7 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
 
 
     /// <summary>
-    /// Angular separation between the points on the antenna radiation pattern at which the power drops to one-half 
+    /// Angular separation between the points on the antenna radiation pattern at which the power drops to one-half,
     /// Source: https://diymics.com/parabolic-microphones/
     /// </summary>
     public static float Beamwidth_rad( float dia_m, float lambda_m, float k = _K_FACTOR_70DEG_RAD ){
@@ -78,7 +78,7 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
 
 
     /// <summary>
-    /// Get the distance from the "bottom" of the dish where the microphone should be placed 
+    /// Get the distance from the "bottom" of the dish where the microphone should be placed ,
     /// Source: https://diymics.com/parabolic-microphones/
     /// </summary>
     public static float FocalLength_m( float dia_m, float dishDepth_m ){
@@ -87,7 +87,7 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
 
 
     /// <summary>
-    /// Get the minimum diameter from the lowest expected frequency to be recorded + Desired Gain
+    /// Get the minimum diameter from the lowest expected frequency to be recorded + Desired Gain,
     /// Source: https://diymics.com/parabolic-microphones/
     /// </summary>
     public static float GetDiaFromFreqGain( float lowestFreq_Hz, float Gdesired, float appEff = _BAD_PARABOLOID_EFF ){
@@ -97,7 +97,7 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
 
 
     /// <summary>
-    /// Get the minimum diameter from the lowest expected frequency to be recorded + Desired Beamwidth
+    /// Get the minimum diameter from the lowest expected frequency to be recorded + Desired Beamwidth,
     /// Source: https://diymics.com/parabolic-microphones/
     /// </summary>
     public static float GetDiaFromFreqBW( float lowestFreq_Hz, float BWdesired_rad, float k = _K_FACTOR_70DEG_RAD ){
@@ -117,7 +117,7 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
 
 
     /// <summary>
-    /// Iteratively design the reflector by balancing practical considerations (Too lazy for closed form!)
+    /// Iteratively design the reflector by balancing practical considerations (Too lazy for closed form!),
     /// Sources: https://en.wikipedia.org/wiki/Particle_swarm_optimization#Algorithm
     /// </summary>
     public void DesignParabolicReflector(){
@@ -135,7 +135,7 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
 
 
     /// <summary>
-    /// Produce a cutting pattern for a discretized paraboloid dish
+    /// Produce a cutting pattern for a discretized paraboloid dish,
     /// Sources: 
     /// </summary>
     public void SegmentDesignedReflector(){
