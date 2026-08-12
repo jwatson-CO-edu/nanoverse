@@ -391,6 +391,7 @@ public sealed class SigilWindow : GameWindow
     void RenderAndSave()
     {
         int program = BuildShaderProgram();
+        Random rand = new();
 
         // GL.Disable(EnableCap.CullFace); 
 
@@ -422,7 +423,7 @@ public sealed class SigilWindow : GameWindow
         GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
         // Parchment-ish background.
-        GL.ClearColor(0.965f, 0.945f, 0.89f, 1f);
+        GL.ClearColor(24/255f, 24/255f, 24/255f, 1f);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
         // --- Upload sigil geometry (position-only triangles, normalized [0,1] xy + small z) ---
@@ -440,7 +441,10 @@ public sealed class SigilWindow : GameWindow
         GL.UseProgram(program);
         var proj = Matrix4.CreateOrthographicOffCenter(-1f, 1f, -1f, 1f, -0.1f, 0.1f);
         GL.UniformMatrix4(GL.GetUniformLocation(program, "uProjection"), false, ref proj);
-        GL.Uniform4(GL.GetUniformLocation(program, "uColor"), new Vector4(0.09f, 0.08f, 0.10f, 1f));
+        GL.Uniform4(
+            GL.GetUniformLocation(program, "uColor"), 
+            new Vector4(0.5f + rand.NextSingle()*0.5f, 0.5f + rand.NextSingle()*0.5f, 0.5f + rand.NextSingle()*0.5f, 1f)
+        );
 
         GL.DrawArrays(PrimitiveType.Triangles, 0, _triangles.Count);
         GL.Flush();
