@@ -81,6 +81,17 @@ public class DctVecF : Dictionary<string,float> {
         return this * 1f;
     }
 
+
+    /// <summary>
+    /// Return a copy of this vector
+    /// </summary>
+    public DctVecF Copy(){
+        DctVecF rtnVec = [];
+        foreach( (string key, float val) in this ){  rtnVec[key] = val;  }
+        return rtnVec;
+    }
+
+
 }
 
 
@@ -94,6 +105,12 @@ public class Particle {
     public DctVecF position = [];
     public DctVecF velocity = [];
     public DctVecF bestPosn = [];
+
+    
+    /// <summary>
+    /// Change particle `position` according to the `velocity`
+    /// </summary>
+    public void Advance(){  position += velocity;  }
 }
 
 
@@ -153,12 +170,31 @@ public class PSOptimizer {
 
 
     /// <summary>
+    /// Caclulate fitness of particle position
+    /// </summary>
+    public void EvalParticlePosn( Particle prtcl ){
+        if( Score is null ){  throw new Exception( "`Score` function is UNDEFINED!" );  }
+        prtcl.position["score"] = Score( prtcl.position );
+    }
+
+
+    /// <summary>
+    /// Caclulate fitness of particle position and update best position if better
+    /// </summary>
+    public void UpdateParticleBest( Particle prtcl ){
+        if( Score is null ){  throw new Exception( "`Score` function is UNDEFINED!" );  }
+        EvalParticlePosn( prtcl );
+        if( prtcl.position["score"] > prtcl.bestPosn["score"] ){  prtcl.bestPosn = prtcl.position.Copy();  }
+    }
+
+
+    /// <summary>
     /// Generate N random particles at grid points
     /// </summary>
     public void PopulateInit( int N = 0 ){
         if( N < 1 ){  
             N = 1;   
-            foreach( string field in fields ){ N *= (int) ranges[ field ][2];  }
+            foreach( string field in fields ){  N *= (int) ranges[ field ][2];  }
             N /= 2;
         }
         particles.Clear();
