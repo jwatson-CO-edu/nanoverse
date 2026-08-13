@@ -194,6 +194,9 @@ public class PSOptimizer {
     }
 
 
+    /// <summary>
+    /// Random `DctVecF` within problem bounds
+    /// </summary>
     public DctVecF RandVector(){
         DctVecF vec = [];
         float   val;
@@ -203,6 +206,16 @@ public class PSOptimizer {
         }
         vec[ "score" ] = float.NaN;
         return vec;
+    }
+
+
+    /// <summary>
+    /// Prevent particle from being kicked outside of the problem domain!
+    /// </summary>
+    public void EnforceBounds( Particle prtcl ){
+        foreach( string field in fields ){
+            prtcl.position[ field ] = Math.Clamp( prtcl.position[ field ], ranges[ field ][0], ranges[ field ][1] );
+        }
     }
 
 
@@ -226,7 +239,7 @@ public class PSOptimizer {
 
 
     /// <summary>
-    /// Generate N random particles at grid points
+    /// Generate N random particles at grid points, Called by client BEFORE `Solve`
     /// </summary>
     public void PopulateInit( int N = 0 ){
         if( N < 1 ){  
@@ -239,13 +252,19 @@ public class PSOptimizer {
     }
 
 
-    public float AverageSpeed(){
+    /// <summary>
+    /// Average speed of the swarm, Used to detect convergence
+    /// </summary>
+    public float AverageSwarmSpeed(){
         float velAvg = 0;
         foreach( Particle prtcl in particles ){  velAvg += prtcl.velocity.Length();  }
         return velAvg / particles.Count;
     }
 
 
+    /// <summary>
+    /// Search across swarm for the current best solution 
+    /// </summary>
     public void UpdateSwarmBest(){
         foreach( Particle prtcl in particles ){    
             if( prtcl.position["score"] > bestPrtcl.position["score"] ){  bestPrtcl = prtcl;  }
@@ -254,7 +273,7 @@ public class PSOptimizer {
 
 
     /// <summary>
-    /// Run PSO until max iterations or min speed is reached,
+    /// Run PSO until max iterations or min speed (convergence) is reached,
     /// Source: https://en.wikipedia.org/wiki/Particle_swarm_optimization#Algorithm
     /// </summary>
     public DctVecF Solve( int N = 2000, float haltFrac = 0.01f ){
@@ -286,12 +305,18 @@ public class PSOptimizer {
             prtScl   = MathF.Min( (prtcl.position - particle.position).Length(), scale );
             if( Score( prtcl.position ) > Score( particle.position ) ){
                 prtcl.velocity = (prtcl.position - particle.position).Normalized() * prtScl;
+                prtcl.bestPosn = prtcl.position.Copy();
+                prtcl.bestPosn["score"] = Score( prtcl.bestPosn );
                 prtcl.position = particle.position;
+                prtcl.position["score"] = Score( prtcl.position );
             }else{
                 prtcl.velocity = (particle.position - prtcl.position).Normalized() * prtScl;
+                prtcl.position["score"] = Score( prtcl.position );
+                prtcl.bestPosn = particle.position.Copy();
+                prtcl.bestPosn["score"] = Score( prtcl.bestPosn );
             }
         }
-        initSpd = AverageSpeed();
+        initSpd = AverageSwarmSpeed();
         lastSpd = initSpd;
         
         /// Stage 2: Search ///
@@ -300,21 +325,29 @@ public class PSOptimizer {
 
             foreach( Particle prtcl in particles ){
                 frac   = rand.NextSingle(); // Random blend of global / personal best
-                vel_ij = (momentum * prtcl.velocity) +
-                         (1f-momentum) * (
-                             factor * (1f - frac) * (bestPrtcl.bestPosn - prtcl.position) + // Seeking global best
-                             factor * frac * (prtcl.bestPosn - prtcl.position) + // ---------- Seeking personal best
-                             randTemp * scale * RandVector() // ------------------------------ Seeking cooling random vector
-                         );
+                vel_ij = [];
+
+                // Fields can be DIFFERENT scales, So treat each individually!
+                foreach( string field in fields ){
+                    factor = 1f / ranges[ field ][2];
+                    vel_ij[ field ] = 
+                        (momentum * prtcl.velocity[ field ]) + // Momentum is important for convergence!
+                        (1f-momentum) * (
+                            factor * (1f - frac) * (bestPrtcl.bestPosn[ field ] - prtcl.position[ field ]) + // Seeking global best
+                            factor * frac * (prtcl.bestPosn[ field ] - prtcl.position[ field ]) + // ---------- Seeking personal best
+                            randTemp * ranges[ field ][3] * rand.NextSingle() // ------------------------------ Seeking cooled random vector
+                        );
+                }
                          
                 prtcl.velocity = vel_ij;
                 prtcl.Advance();
+                EnforceBounds( prtcl ); // Keep particles from being kicked outside of the problem domain!
                 UpdateParticleBest( prtcl );
             }
             UpdateSwarmBest();
 
-            randTemp = MathF.Min( 0F, randTemp-coolRate );
-            lastSpd  = AverageSpeed();
+            randTemp = MathF.Max( 0F, randTemp-coolRate );
+            lastSpd  = AverageSwarmSpeed();
             ++count;
         }
         
