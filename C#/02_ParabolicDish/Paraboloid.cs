@@ -109,11 +109,11 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     public float Score( DctVecF dsgn ){
         Console.WriteLine( $"Eval: {dsgn}" );
         float f = FocalLength_m( dsgn["D"], dsgn["z"] );
-        return Math.Min(Gain( dsgn["D"], lambda_m ), Gdesired) / Gdesired  * _GAIN_REWARD + // ------------------ Reward gain beyond desired / Penalize low
+        return Math.Min(Gain( dsgn["D"], lambda_m ), Gdesired) / Gdesired  * _GAIN_REWARD + // ---------------- Reward gain beyond desired / Penalize low
                (Beamwidth_rad( dsgn["D"], lambda_m ) - BWdesired_rad) / BWdesired_rad * _BEAMWIDTH_REWARD +  // Reward beamwidth beyond desired / Penalize low
-               (diaMax_m - dsgn["D"]) / diaMax_m * _DIAMETER_PENALTY + // -------------------------------- Penalize diameter beyond max / Reward small
+               (diaMax_m - dsgn["D"]) / diaMax_m * _DIAMETER_PENALTY + // ------------------------------------- Penalize diameter beyond max / Reward small
                (depthRatioMax - dsgn["z"]/dsgn["D"]) / depthRatioMax * _DEPTH_PENALTY + // -------------------- Penalize relative depth beyond max / Reward shallow
-               (focalLengthMax_m - f) / focalLengthMax_m * _FOCL_LEN_PENALTY; // --------------------------------- Penalize focal length beyond max / Reward short
+               (focalLengthMax_m - f) / focalLengthMax_m * _FOCL_LEN_PENALTY; // ------------------------------ Penalize focal length beyond max / Reward short
     }
 
 
