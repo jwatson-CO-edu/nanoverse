@@ -9,6 +9,9 @@
 [ ] Lay out discretized units onto standard size rectangles in SVG
 [ ] Design ribs
 [ ] Lay out ribs onto standard size rectangles in SVG
+[ ] Construct Dish, Install mic at focus
+[ ] Test Dish + Mic
+    [ ] Measure Gain ???
 
 */
 
