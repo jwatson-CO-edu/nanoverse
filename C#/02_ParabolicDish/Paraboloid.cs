@@ -1,4 +1,6 @@
 using pso;
+using OpenTK.Mathematics;
+using geo3d;
 
 namespace paraboloid {
 
@@ -121,14 +123,14 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     /// Iteratively design the reflector by balancing practical considerations (Too lazy for closed form!),
     /// Sources: https://en.wikipedia.org/wiki/Particle_swarm_optimization#Algorithm
     /// </summary>
-    public void DesignParabolicReflector(){
+    public DctVecF DesignParabolicReflector(){
         
         PSOptimizer problem = new();
         problem.AddField( "D", 0.25f, 2.0f  ); // Max diameter [m]
         problem.AddField( "z", 0.10f, 0.75f ); // Max depth [m]
         problem.PopulateInit();
         problem.SetScoringFunc( Score );
-        DctVecF soln = problem.Solve( N : 100000 );
+        DctVecF soln = problem.Solve( N : 50000 );
     
         Console.WriteLine( $"\n\nFrequency: {lowestFreq_Hz} [Hz]" );
         Console.WriteLine( $"Wavelength: {lambda_m:F4} [m]" );
@@ -138,15 +140,53 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
         Console.WriteLine( $"Gain: ____ {Gain( 1f, lambda_m )}, (1m)" );
         Console.WriteLine( $"Beamwidth: {Beamwidth_rad( 1f, lambda_m )/MathF.PI*180f} [deg], (1m)\n" );
 
+        return soln;
+
+    }
+
+
+    public static float RoundUpToNext5cm( float meters ){
+        int units = (int) (meters / 0.050f);
+        if( (meters - units * 0.050f) > 0.0001f ){ return (units + 1) * 0.050f;  }
+        return units * 0.050f;
+    }
+
+
+    public static float QuadraticPositiveX( float dia_m, float depth_m, float x_m ){
+        float rad_m = dia_m / 2f;
+        return depth_m * MathF.Pow( x_m, 2f ) / MathF.Pow( rad_m, 2f ) - depth_m;
     }
 
 
     /// <summary>
-    /// Produce a cutting pattern for a discretized paraboloid dish,
+    /// Output `Quad`s representing one radial "slice" of the discretized dish, Not including the central poly
     /// Sources: 
     /// </summary>
-    public void SegmentDesignedReflector(){
+    public List<Quad> SegmentDesignedReflector( DctVecF soln, int Nradial = 5, int Ncircum = 20 ){
+        List<Quad> rtnLst = [];
+        rtnLst.Capacity = Nradial;
+        diameter_m = RoundUpToNext5cm( soln["D"] );
+        zDepth_m   = RoundUpToNext5cm( soln["z"] );
+        lFocus_m   = FocalLength_m( diameter_m, zDepth_m );
+        Console.WriteLine( $"Design discretized paraboloid reflector with diameter {diameter_m:F2} [m], depth {zDepth_m:F2} [m], focal length {lFocus_m:F4} [m]," );
+        Console.WriteLine( $"{Nradial} radial segments, and {Ncircum} circumferential segments" );
 
+        // Console.WriteLine( $"f({0f}) = {QuadraticPositiveX( diameter_m, zDepth_m, 0f )}" );
+        // Console.WriteLine( $"f({diameter_m/2}) = {QuadraticPositiveX( diameter_m, zDepth_m, diameter_m/2 )}" );
+        float arcStep = 2f * MathF.PI / Ncircum;
+        float radStep = diameter_m / 2f / (Nradial+1); // Central step is a flat polygon?
+        float rad1, rad2;
+        Vector3 v0, v1, v2, v3;
+        for( int i = 1; i <= Nradial; ++i ){
+            rad1 = i*radStep;
+            rad2 = (i+1)*radStep;
+            v0   = new Vector3( rad1, 0f, QuadraticPositiveX( diameter_m, zDepth_m, rad1 ) );
+            v1   = new Vector3( rad2, 0f, QuadraticPositiveX( diameter_m, zDepth_m, rad2 ) );
+            v2   = new Vector3( rad2*MathF.Cos( arcStep ), rad2*MathF.Sin( arcStep ), QuadraticPositiveX( diameter_m, zDepth_m, rad2 ) );
+            v3   = new Vector3( rad1*MathF.Cos( arcStep ), rad1*MathF.Sin( arcStep ), QuadraticPositiveX( diameter_m, zDepth_m, rad1 ) );
+            rtnLst.Add( new Quad( v0, v1, v2, v3 ) );
+        }
+        return rtnLst;
     }
 
 

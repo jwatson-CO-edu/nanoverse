@@ -1,4 +1,5 @@
 ﻿using paraboloid;
+using pso;
 /* ////////// DEV_PLAN /////////////////////////////////////////////////////////////////////////////
 
 [ ] Run a dish solution (Test PSO) 
@@ -31,7 +32,9 @@ DishCalculator dc = new(
     0.5f
 ); 
 
-dc.DesignParabolicReflector();
+DctVecF soln = dc.DesignParabolicReflector();
+
+dc.SegmentDesignedReflector( soln );
 
 Console.WriteLine( "\n\nTASK COMPLETE!\n" );
 
