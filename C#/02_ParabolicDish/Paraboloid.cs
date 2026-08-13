@@ -132,7 +132,9 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     
         Console.WriteLine( $"\n\nWinning Solution:\n{soln}" );
         Console.WriteLine( $"Gain: ____ {Gain( soln["D"], lambda_m )  }" );
-        Console.WriteLine( $"Beamwidth: {Beamwidth_rad( soln["D"], lambda_m )/MathF.PI*180f} deg\n" );
+        Console.WriteLine( $"Beamwidth: {Beamwidth_rad( soln["D"], lambda_m )/MathF.PI*180f} deg" );
+        Console.WriteLine( $"Gain: ____ {Gain( 1f, lambda_m )}, (1m)" );
+        Console.WriteLine( $"Beamwidth: {Beamwidth_rad( 1f, lambda_m )/MathF.PI*180f} deg, (1m)\n" );
 
     }
 
