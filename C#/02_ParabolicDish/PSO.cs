@@ -161,6 +161,7 @@ public class PSOptimizer {
     /// </summary>
     public void AddField( string field, float lo, float hi, int div = 10 ){
         if( lo > hi ){  throw new Exception( $"Domain [{lo}, {hi}] is MALFORMED!" );  }
+        fields.Add( field );
         ranges[ field ] = [lo, hi, div, (hi-lo)/div,];
     }
 
@@ -209,6 +210,19 @@ public class PSOptimizer {
     }
 
 
+     /// <summary>
+    /// Random `DctVecF` within problem bounds
+    /// </summary>
+    public DctVecF ZeroVector(){
+        DctVecF vec = [];
+        foreach( string field in fields ){
+            vec[ field ] = 0f;
+        }
+        vec[ "score" ] = float.NaN;
+        return vec;
+    }
+
+
     /// <summary>
     /// Prevent particle from being kicked outside of the problem domain!
     /// </summary>
@@ -244,11 +258,16 @@ public class PSOptimizer {
     public void PopulateInit( int N = 0 ){
         if( N < 1 ){  
             N = 1;   
-            foreach( string field in fields ){  N *= (int) ranges[ field ][2];  }
+            foreach( string field in fields ){  
+                N *= (int) ranges[ field ][2];  
+                Console.WriteLine( $"\tAbout to init {N} particles!" );
+            }
             N /= 2;
         }
         particles.Clear();
+        Console.WriteLine( $"About to init {N} particles!" );
         for( int i = 0; i < N; ++i ){  particles.AddLast( RandGridParticle() );  }
+        bestPrtcl = RandGridParticle();
     }
 
 
@@ -258,6 +277,7 @@ public class PSOptimizer {
     public float AverageSwarmSpeed(){
         float velAvg = 0;
         foreach( Particle prtcl in particles ){  velAvg += prtcl.velocity.Length();  }
+        Console.WriteLine( $"Total vel {velAvg}" );
         return velAvg / particles.Count;
     }
 
@@ -277,6 +297,8 @@ public class PSOptimizer {
     /// Source: https://en.wikipedia.org/wiki/Particle_swarm_optimization#Algorithm
     /// </summary>
     public DctVecF Solve( int N = 2000, float haltFrac = 0.01f ){
+
+        EvalParticlePosn( bestPrtcl );
 
         if( Score is null ){  throw new Exception( "`Score` function is UNDEFINED!" );  }
 
@@ -303,6 +325,7 @@ public class PSOptimizer {
         foreach( Particle prtcl in particles ){
             particle = RandGridParticle();
             prtScl   = MathF.Min( (prtcl.position - particle.position).Length(), scale );
+            Console.WriteLine( $"{(prtcl.position - particle.position).Length()}, {scale}" );
             if( Score( prtcl.position ) > Score( particle.position ) ){
                 prtcl.velocity = (prtcl.position - particle.position).Normalized() * prtScl;
                 prtcl.bestPosn = prtcl.position.Copy();
@@ -316,16 +339,26 @@ public class PSOptimizer {
                 prtcl.bestPosn["score"] = Score( prtcl.bestPosn );
             }
         }
-        initSpd = AverageSwarmSpeed();
-        lastSpd = initSpd;
+        initSpd = 1f;
+        lastSpd = 1f;
         
         /// Stage 2: Search ///
         int count = 0;
+
+        Console.WriteLine( $"About to iterate ..." );
+        Console.WriteLine( $"({count} < {N}) && (({lastSpd} / {initSpd}) > {haltFrac})" );
+
+
         while( (count < N) && ((lastSpd / initSpd) > haltFrac) ){
+
+            Console.WriteLine( $"Iteration {count+1} ..." );
 
             foreach( Particle prtcl in particles ){
                 frac   = rand.NextSingle(); // Random blend of global / personal best
-                vel_ij = [];
+                vel_ij = ZeroVector();
+                // Console.WriteLine( $"Particle:    {prtcl.position}" );
+                // Console.WriteLine( $"Local Best:  {prtcl.bestPosn}" );
+                // Console.WriteLine( $"Global Best: {bestPrtcl.bestPosn}" );
 
                 // Fields can be DIFFERENT scales, So treat each individually!
                 foreach( string field in fields ){
@@ -346,8 +379,9 @@ public class PSOptimizer {
             }
             UpdateSwarmBest();
 
-            randTemp = MathF.Max( 0F, randTemp-coolRate );
+            randTemp = MathF.Max( 0F, randTemp-coolRate*1.5f );
             lastSpd  = AverageSwarmSpeed();
+            if( count == 0 ){  initSpd = lastSpd;  }
             ++count;
         }
         

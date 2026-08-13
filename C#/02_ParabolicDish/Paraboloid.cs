@@ -21,12 +21,12 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     public const float _K_FACTOR_70DEG_RAD = 1.2217f;
 
     /// Rewards ///
-    public const float _GAIN_REWARD /**/ = 200f; // Dimensionless 
-    public const float _BEAMWIDTH_REWARD =  15f; // Radians
+    public const float _GAIN_REWARD /**/ = 20f; // Dimensionless 
+    public const float _BEAMWIDTH_REWARD = 10f; // Radians
 
     /// Penalties ///
-    public const float _DIAMETER_PENALTY = 75f; // Meters
-    public const float _DEPTH_PENALTY    =  5f; // Meters
+    public const float _DIAMETER_PENALTY = 10f; // Meters
+    public const float _DEPTH_PENALTY    = 10f; // Meters
     public const float _FOCL_LEN_PENALTY = 10f; // Meters
     
     /// Constraints ///
@@ -106,13 +106,14 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     }
 
 
-    public float Score( Dictionary<string,float> dsgn ){
+    public float Score( DctVecF dsgn ){
+        Console.WriteLine( $"Eval: {dsgn}" );
         float f = FocalLength_m( dsgn["D"], dsgn["z"] );
-        return (Gain( dsgn["D"], lambda_m ) - Gdesired)  * _GAIN_REWARD + // ------------------ Reward gain beyond desired / Penalize low
-               (Beamwidth_rad( dsgn["D"], lambda_m ) - BWdesired_rad) * _BEAMWIDTH_REWARD +  // Reward beamwidth beyond desired / Penalize low
-               (diaMax_m - dsgn["D"]) * _DIAMETER_PENALTY + // -------------------------------- Penalize diameter beyond max / Reward small
-               (depthRatioMax - dsgn["z"]/dsgn["D"]) * _DEPTH_PENALTY + // -------------------- Penalize relative depth beyond max / Reward shallow
-               (focalLengthMax_m - f) * _FOCL_LEN_PENALTY; // --------------------------------- Penalize focal length beyond max / Reward short
+        return Math.Min(Gain( dsgn["D"], lambda_m ), Gdesired) / Gdesired  * _GAIN_REWARD + // ------------------ Reward gain beyond desired / Penalize low
+               (Beamwidth_rad( dsgn["D"], lambda_m ) - BWdesired_rad) / BWdesired_rad * _BEAMWIDTH_REWARD +  // Reward beamwidth beyond desired / Penalize low
+               (diaMax_m - dsgn["D"]) / diaMax_m * _DIAMETER_PENALTY + // -------------------------------- Penalize diameter beyond max / Reward small
+               (depthRatioMax - dsgn["z"]/dsgn["D"]) / depthRatioMax * _DEPTH_PENALTY + // -------------------- Penalize relative depth beyond max / Reward shallow
+               (focalLengthMax_m - f) / focalLengthMax_m * _FOCL_LEN_PENALTY; // --------------------------------- Penalize focal length beyond max / Reward short
     }
 
 
@@ -123,13 +124,15 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     public void DesignParabolicReflector(){
         
         PSOptimizer problem = new();
-        problem.AddField( "D", 0.25f, 2.0f ); // Max diameter [m]
-        problem.AddField( "z", 0.10f, 0.5f ); // Max depth [m]
+        problem.AddField( "D", 0.25f, 2.0f  ); // Max diameter [m]
+        problem.AddField( "z", 0.10f, 0.75f ); // Max depth [m]
         problem.PopulateInit();
         problem.SetScoringFunc( Score );
-        Dictionary<string,float> soln = problem.Solve();
+        DctVecF soln = problem.Solve( N : 100000 );
     
-        Console.WriteLine( $"\n\nWinning Solution:\n{soln}\n" );
+        Console.WriteLine( $"\n\nWinning Solution:\n{soln}" );
+        Console.WriteLine( $"Gain: ____ {Gain( soln["D"], lambda_m )  }" );
+        Console.WriteLine( $"Beamwidth: {Beamwidth_rad( soln["D"], lambda_m )/MathF.PI*180f} deg\n" );
 
     }
 
