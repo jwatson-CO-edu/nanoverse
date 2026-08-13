@@ -59,6 +59,18 @@ public class DctVecF : Dictionary<string,float> {
         return rtnVec;
     }
 
+
+    /// <summary>
+    /// Multiply vector with keyed components by a `factor`
+    /// </summary>
+    public static DctVecF operator*( float factor, DctVecF v1 ){
+        DctVecF rtnVec = [];
+        foreach( (string key, float val1) in v1 ){
+            if( !v1.skip.Contains( key ) ){  rtnVec[key] = val1 * factor;  }
+        }
+        return rtnVec;
+    }
+
     
     /// <summary>
     /// Get Euclidian length of all keyed components
@@ -92,6 +104,19 @@ public class DctVecF : Dictionary<string,float> {
     }
 
 
+    /// <summary>
+    /// Human-readable representation of this vector's keyed components,
+    /// SLOP: https://claude.ai/share/a78d4ef7-7976-4656-a610-f9c013ea41bd
+    /// </summary>
+    public override string ToString(){
+        List<string> parts = [];
+        foreach( (string key, float val) in this ){
+            if( !skip.Contains( key ) ){  parts.Add( $"{key}: {val:F4}" );  }
+        }
+        string rtnStr = string.Join( ", ", parts );
+        if( ContainsKey( "score" ) ){  rtnStr += $" | score: {this["score"]:F4}";  }
+        return "{ " + rtnStr + " }";
+    }
 }
 
 
@@ -149,7 +174,7 @@ public class PSOptimizer {
     /// <summary>
     /// Generate a random particle at a grid point
     /// </summary>
-    public Particle RandParticle(){
+    public Particle RandGridParticle(){
         Particle rtnPrt = new();
         float    value;
         foreach( string field in fields ){
@@ -166,6 +191,18 @@ public class PSOptimizer {
             rtnPrt.bestPosn[ "score" ] = float.NaN;
         }
         return rtnPrt;
+    }
+
+
+    public DctVecF RandVector(){
+        DctVecF vec = [];
+        float   val;
+        foreach( string field in fields ){
+            val = ranges[ field ][0] + (ranges[ field ][1] - ranges[ field ][0]) * rand.NextSingle();
+            vec[ field ] = val;
+        }
+        vec[ "score" ] = float.NaN;
+        return vec;
     }
 
 
@@ -198,7 +235,7 @@ public class PSOptimizer {
             N /= 2;
         }
         particles.Clear();
-        for( int i = 0; i < N; ++i ){  particles.AddLast( RandParticle() );  }
+        for( int i = 0; i < N; ++i ){  particles.AddLast( RandGridParticle() );  }
     }
 
 
@@ -206,6 +243,13 @@ public class PSOptimizer {
         float velAvg = 0;
         foreach( Particle prtcl in particles ){  velAvg += prtcl.velocity.Length();  }
         return velAvg / particles.Count;
+    }
+
+
+    public void UpdateSwarmBest(){
+        foreach( Particle prtcl in particles ){    
+            if( prtcl.position["score"] > bestPrtcl.position["score"] ){  bestPrtcl = prtcl;  }
+        }
     }
 
 
@@ -218,16 +262,27 @@ public class PSOptimizer {
         if( Score is null ){  throw new Exception( "`Score` function is UNDEFINED!" );  }
 
         /// Stage 0: Init problem scale ///
-        float    scale  = 0f;
-        float    prtScl;
-        float    initSpd;
-        float    lastSpd;
-        foreach( string field in fields ){  scale += MathF.Pow( ranges[ field ][3], 2f );  }
+        float scale  = 0f;
+        float width  = 0f;
+        float prtScl;
+        float initSpd;
+        float lastSpd;
+        float randTemp = 1.0f;
+        float coolRate = 1f / N;
+        float frac;
+        float momentum = 0.5f;
+        DctVecF vel_ij;
+        foreach( string field in fields ){  
+            scale += MathF.Pow( ranges[ field ][3], 2f );  
+            width += MathF.Pow( ranges[ field ][1] - ranges[ field ][0], 2f );  
+        }
         scale = MathF.Sqrt( scale );
+        width = MathF.Sqrt( width );
+        float factor = scale / width;
 
         /// Stage 1: Init particle velocities ///
         foreach( Particle prtcl in particles ){
-            particle = RandParticle();
+            particle = RandGridParticle();
             prtScl   = MathF.Min( (prtcl.position - particle.position).Length(), scale );
             if( Score( prtcl.position ) > Score( particle.position ) ){
                 prtcl.velocity = (prtcl.position - particle.position).Normalized() * prtScl;
@@ -242,9 +297,24 @@ public class PSOptimizer {
         /// Stage 2: Search ///
         int count = 0;
         while( (count < N) && ((lastSpd / initSpd) > haltFrac) ){
-            // FIXME: START HERE
-            
-            lastSpd = AverageSpeed();
+
+            foreach( Particle prtcl in particles ){
+                frac   = rand.NextSingle(); // Random blend of global / personal best
+                vel_ij = (momentum * prtcl.velocity) +
+                         (1f-momentum) * (
+                             factor * (1f - frac) * (bestPrtcl.bestPosn - prtcl.position) + // Seeking global best
+                             factor * frac * (prtcl.bestPosn - prtcl.position) + // ---------- Seeking personal best
+                             randTemp * scale * RandVector() // ------------------------------ Seeking cooling random vector
+                         );
+                         
+                prtcl.velocity = vel_ij;
+                prtcl.Advance();
+                UpdateParticleBest( prtcl );
+            }
+            UpdateSwarmBest();
+
+            randTemp = MathF.Min( 0F, randTemp-coolRate );
+            lastSpd  = AverageSpeed();
             ++count;
         }
         
