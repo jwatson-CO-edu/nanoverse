@@ -222,10 +222,14 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
         List<Polygon> supports = [];
         List<Vector3> tempTop  = [];
         List<Vector3> tempBtm  = [];
+        List<Vector3> top /**/ = [];
+        List<Vector3> btm /**/ = [];
         supports.Capacity = Nradial*2;
         tempTop.Capacity  = Nradial*2;
         tempBtm.Capacity  = Nradial*2;        
-        Vector3 mid1, mid2, norm;
+        top.Capacity /**/ = Nradial+1;
+        btm.Capacity /**/ = Nradial+1;
+        Vector3 mid1, mid2, norm, p1, p2, p3, p4, vtx;
         float height = 0f;
 
         for( int i = 0; i < Nradial; ++i ){  height += segments[i].attrs["trapTop"];  }
@@ -248,7 +252,32 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
             tempBtm.Add( mid2 );
         }
 
-        // FIXME: ITERATE TEMP TOP/BTM OFFSET SEGMENTS, FIND INTERSECTIONS, CONSTRUCT RIBS
+        int j;
+        top.Add( tempTop[0] );
+        btm.Add( tempBtm[0] );        
+        for( int i = 0; i < (Nradial-1); ++i ){
+            j   = 2*i;
+        
+            p1  = tempTop[j  ];
+            p2  = tempTop[j+1];
+            p3  = tempTop[j+2];
+            p4  = tempTop[j+4];
+            vtx = MathVec3.ClosestPointBetweenLineSegments( p1, p2, p3, p4 );
+            top.Add( vtx );
+
+            p1  = tempBtm[j  ];
+            p2  = tempBtm[j+1];
+            p3  = tempBtm[j+2];
+            p4  = tempBtm[j+4];
+            vtx = MathVec3.ClosestPointBetweenLineSegments( p1, p2, p3, p4 );
+            btm.Add( vtx );
+        }
+        top.Add( tempTop[^1] );
+        btm.Add( tempBtm[^1] );        
+
+
+        // FIXME: CONSTRUCT RIB(S)
+
 
         return supports;
     }
