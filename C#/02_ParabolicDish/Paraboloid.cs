@@ -4,11 +4,17 @@ using geo3d;
 
 namespace paraboloid {
 
+
+
+/// <summary>
+/// Useful constants for audible sound frequencies
+/// </summary>
 public class Constants {
     public const float _SPEED_OF_SOUND_MPS =  343f;
     public const float _BIRD_FREQ_LO /*-*/ = 3750f; // Brown Creeper, Source: https://www.allaboutbirds.org/news/do-bird-songs-have-frequencies-higher-than-humans-can-hear/
     public const float _BIRD_FREQ_HI /*-*/ = 1E4f; //- Blackpoll Warbler, Source: https://www.allaboutbirds.org/news/do-bird-songs-have-frequencies-higher-than-humans-can-hear/
 }
+
 
 
 /// <summary>
@@ -110,6 +116,9 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     }
 
 
+    /// <summary>
+    /// Scoring function for the PSO designer, See "PSO.cs"
+    /// </summary>
     public float Score( DctVecF dsgn ){
         Console.WriteLine( $"Eval: {dsgn}" );
         float f = FocalLength_m( dsgn["D"], dsgn["z"] );
@@ -147,6 +156,9 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     }
 
 
+    /// <summary>
+    /// Round up a quantity in [m] to the next 0.050
+    /// </summary>
     public static float RoundUpToNext5cm( float meters ){
         int units = (int) (meters / 0.050f);
         if( (meters - units * 0.050f) > 0.0001f ){ return (units + 1) * 0.050f;  }
@@ -154,6 +166,9 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     }
 
 
+    /// <summary>
+    /// Quadratic Equation in Vertex Form, Positive X only
+    /// </summary>
     public static float QuadraticPositiveX( float dia_m, float depth_m, float x_m ){
         float rad_m = dia_m / 2f;
         return depth_m * MathF.Pow( x_m, 2f ) / MathF.Pow( rad_m, 2f ) - depth_m;
