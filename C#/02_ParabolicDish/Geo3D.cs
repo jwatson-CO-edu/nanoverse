@@ -88,8 +88,53 @@ public class MathVec3 {
         if( center ){  return ShiftPoints( rtnLst, -UniformPointCentroid( rtnLst ) );  }
         return rtnLst;
     }
+
+
+    /// <summary>
+    /// Return the closest point between two line segments,
+    /// Source: "wes", https://math.stackexchange.com/a/4289668
+    /// </summary>
+    public static Vector3 ClosestPointBetweenLineSegments( Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4 ){
+
+        Vector3 P1  = p1;
+        Vector3 P2  = p3;
+        Vector3 V1  = p2 - p1;
+        Vector3 V2  = p4 - p3;
+        Vector3 V21 = P2 - P1;
+
+        float v22   = Vector3.Dot( V2 , V2 );
+        float v11   = Vector3.Dot( V1 , V1 );
+        float v21   = Vector3.Dot( V2 , V1 );
+        float v21_1 = Vector3.Dot( V21, V1 );
+        float v21_2 = Vector3.Dot( V21, V2 );
+        float denom = v21 * v21 - v22 * v11;
+        float s, t;
+
+        if( denom < 0.00001f ){
+            s = 0f;
+            t = (v11 * s - v21_1) / v21;
+        }else{
+            s = (v21_2 * v21 - v22 * v21_1) / denom;
+            t = (-v21_1 * v21 + v11 * v21_2) / denom;
+        }
+        
+        s = Math.Max( Math.Min( s, 1f ), 0f );
+        t = Math.Max( Math.Min( t, 1f ), 0f );
+
+        Vector3 p_a = P1 + s * V1;
+        Vector3 p_b = P2 + t * V2;
+
+        return (p_a + p_b)/2f;
+    }
+    
+
 }
 
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////// GEOMETRIC STRUCTS ///////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 ////////// TRIANGLES ///////////////////////////////////////////////////////////////////////////////
@@ -97,7 +142,7 @@ public class MathVec3 {
 /// <summary>
 /// Triangle
 /// </summary>
-public readonly struct Tri{
+public readonly struct Tri {
     private readonly Vector3[] verts = new Vector3[3]; // Array ref cannot change, values can 
 
     
@@ -239,12 +284,13 @@ public readonly struct Tri{
 /// <summary>
 /// Quad
 /// </summary>
-public readonly struct Quad{
-    private readonly Vector3[] verts = new Vector3[4]; // Array ref cannot change, values can 
+public readonly struct Quad {
 
+    private readonly Vector3[] /*----------*/ verts = new Vector3[4]; // Array ref cannot change, values can 
+    public readonly  Dictionary<string,float> attrs = []; // ----------- Dict ref cannot change, key-value pairs can
     
     /// <summary>
-    /// Three points as a Triangle
+    /// Four points as a Quad
     /// </summary>
     public Quad( Vector3 a, Vector3 b, Vector3 c, Vector3 d ){
         verts[0] = a;
@@ -255,6 +301,29 @@ public readonly struct Quad{
 
 
     /// <summary>
+    /// First point (CCW)
+    /// </summary>
+    public readonly Vector3 V0() => verts[0];
+    
+
+    /// <summary>
+    /// Second point (CCW)
+    /// </summary>
+    public readonly Vector3 V1() => verts[1];
+    
+    
+    /// <summary>
+    /// Third point (CCW)
+    /// </summary>
+    public readonly Vector3 V2() => verts[2];
+
+    /// <summary>
+    /// Third point (CCW)
+    /// </summary>
+    public readonly Vector3 V3() => verts[3];
+
+
+    /// <summary>
     /// Centroid of the Quad
     /// </summary>
     public Vector3 Center(){
@@ -262,7 +331,19 @@ public readonly struct Quad{
         foreach( Vector3 vec in verts ){  rtnVec += vec;  }
         return rtnVec / 4.0f;
     }
-    
 }
+
+
+
+////////// POLYGON /////////////////////////////////////////////////////////////////////////////////
+
+/// <summary>
+/// 3D N-gon, Flatness NOT guaranteed
+/// </summary>
+public class Polygon {
+    public List<Vector3> verts = [];
+}
+
+
 
 }

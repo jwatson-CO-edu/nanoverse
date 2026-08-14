@@ -80,11 +80,13 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
 
 
     /// <summary>
-    /// Get the distance from the "bottom" of the dish where the microphone should be placed ,
-    /// Source: https://diymics.com/parabolic-microphones/
+    /// Get the distance from the "bottom" of the dish where the microphone should be placed,
+    /// Sources: https://en.wikipedia.org/wiki/Parabola#As_a_graph_of_a_function, https://diymics.com/parabolic-microphones/
     /// </summary>
     public static float FocalLength_m( float dia_m, float dishDepth_m ){
-        return (float) Math.Pow( dia_m / (16f * dishDepth_m), 2 );
+        float rad_m = dia_m / 2f;
+        // return MathF.Pow( dia_m / (16f * dishDepth_m), 2f );
+        return MathF.Pow( rad_m, 2f ) / (4f * dishDepth_m);
     }
 
 
@@ -94,7 +96,7 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     /// </summary>
     public static float GetDiaFromFreqGain( float lowestFreq_Hz, float Gdesired, float appEff = _BAD_PARABOLOID_EFF ){
         float lambda_m = SoundFreq2Lambda_m( lowestFreq_Hz );
-        return (float) Math.Sqrt( Gdesired / appEff ) * lambda_m / (float) Math.PI;
+        return MathF.Sqrt( Gdesired / appEff ) * lambda_m / (float) Math.PI;
     }
 
 
@@ -160,11 +162,10 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
 
     /// <summary>
     /// Output `Quad`s representing one radial "slice" of the discretized dish, Not including the central poly
-    /// Sources: 
     /// </summary>
     public List<Quad> SegmentDesignedReflector( DctVecF soln, int Nradial = 5, int Ncircum = 20 ){
         List<Quad> rtnLst = [];
-        rtnLst.Capacity = Nradial;
+        rtnLst.Capacity = Nradial * Ncircum;
         diameter_m = RoundUpToNext5cm( soln["D"] );
         zDepth_m   = RoundUpToNext5cm( soln["z"] );
         lFocus_m   = FocalLength_m( diameter_m, zDepth_m );
@@ -176,20 +177,64 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
         float arcStep = 2f * MathF.PI / Ncircum;
         float radStep = diameter_m / 2f / (Nradial+1); // Central step is a flat polygon?
         float rad1, rad2;
-        Vector3 v0, v1, v2, v3;
-        for( int i = 1; i <= Nradial; ++i ){
-            rad1 = i*radStep;
-            rad2 = (i+1)*radStep;
-            v0   = new Vector3( rad1, 0f, QuadraticPositiveX( diameter_m, zDepth_m, rad1 ) );
-            v1   = new Vector3( rad2, 0f, QuadraticPositiveX( diameter_m, zDepth_m, rad2 ) );
-            v2   = new Vector3( rad2*MathF.Cos( arcStep ), rad2*MathF.Sin( arcStep ), QuadraticPositiveX( diameter_m, zDepth_m, rad2 ) );
-            v3   = new Vector3( rad1*MathF.Cos( arcStep ), rad1*MathF.Sin( arcStep ), QuadraticPositiveX( diameter_m, zDepth_m, rad1 ) );
-            rtnLst.Add( new Quad( v0, v1, v2, v3 ) );
+        Vector3 v0, v1, v2, v3, mid1, mid2;
+        Quad qd;
+        for( int j = 0; j < Ncircum; ++j ){
+            for( int i = 1; i <= Nradial; ++i ){
+                rad1 = i*radStep;
+                rad2 = (i+1)*radStep;
+                v0   = new Vector3( rad1, 0f, QuadraticPositiveX( diameter_m, zDepth_m, rad1 ) );
+                v1   = new Vector3( rad2, 0f, QuadraticPositiveX( diameter_m, zDepth_m, rad2 ) );
+                v2   = new Vector3( rad2*MathF.Cos( arcStep ), rad2*MathF.Sin( arcStep ), QuadraticPositiveX( diameter_m, zDepth_m, rad2 ) );
+                v3   = new Vector3( rad1*MathF.Cos( arcStep ), rad1*MathF.Sin( arcStep ), QuadraticPositiveX( diameter_m, zDepth_m, rad1 ) );
+                qd   = new Quad( v0, v1, v2, v3 );
+                mid1 = (v0+v3)/2f;
+                mid2 = (v1+v2)/2f;
+                qd.attrs["trapHeight"] = (mid2 - mid1).Length;
+                qd.attrs["trapTop"]    = (v2 - v1).Length;
+                qd.attrs["trapBottom"] = (v3 - v0).Length;
+                Console.WriteLine( $"Trapezoid - Height: {qd.attrs["trapHeight"]}, Top: {qd.attrs["trapTop"]}, Bottom: {qd.attrs["trapBottom"]}, " );
+                rtnLst.Add( qd );
+            }
         }
         return rtnLst;
     }
 
 
+    /// <summary>
+    /// Design rib(s) as polygon(s)
+    /// </summary>
+    public static List<Polygon> DesignReflectorSupports( float matlThickness, List<Quad> segments, int Nradial = 5, int Ncircum = 20 ){
+        List<Polygon> supports = [];
+        List<Vector3> tempTop  = [];
+        List<Vector3> tempBtm  = [];
+        Vector3 mid1, mid2, norm;
+        float height = 0f;
+
+        for( int i = 0; i < Nradial; ++i ){  height += segments[i].attrs["trapTop"];  }
+        height /= Nradial;
+
+        /// For one radial strip, Design one Radial Rib ///
+        for( int i = 0; i < Nradial; ++i ){
+            mid1 = (segments[i].V0() + segments[i].V3())/2f;
+            mid2 = (segments[i].V1() + segments[i].V2())/2f;
+            norm = Vector3.Cross( segments[i].V2() - segments[i].V1(), segments[i].V0() - segments[i].V1() ).Normalized(); 
+            
+            mid1 -= norm * matlThickness;
+            mid2 -= norm * matlThickness;
+            tempTop.Add( mid1 );
+            tempTop.Add( mid2 );
+
+            mid1 -= norm * height;
+            mid2 -= norm * height;
+            tempBtm.Add( mid1 );
+            tempBtm.Add( mid2 );
+        }
+
+        // FIXME: ITERATE TEMP TOP/BTM OFFSET SEGMENTS, FIND INTERSECTIONS, CONSTRUCT RIBS
+
+        return supports;
+    }
 
 }
 
