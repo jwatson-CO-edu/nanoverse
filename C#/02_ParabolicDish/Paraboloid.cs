@@ -137,11 +137,11 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     public DctVecF DesignParabolicReflector(){
         
         PSOptimizer problem = new();
-        problem.AddField( "D", 0.25f, 2.0f  ); // Max diameter [m]
-        problem.AddField( "z", 0.10f, 0.75f ); // Max depth [m]
-        problem.PopulateInit();
+        problem.AddField( "D", 0.25f, 2.0f , 20 ); // Max diameter [m]
+        problem.AddField( "z", 0.10f, 0.75f, 20 ); // Max depth [m]
+        problem.PopulateInit( 300 );
         problem.SetScoringFunc( Score );
-        DctVecF soln = problem.Solve( N : 50000 );
+        DctVecF soln = problem.Solve( N : 12500 );
     
         Console.WriteLine( $"\n\nFrequency: {lowestFreq_Hz} [Hz]" );
         Console.WriteLine( $"Wavelength: {lambda_m:F4} [m]" );
@@ -152,7 +152,6 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
         Console.WriteLine( $"Beamwidth: {Beamwidth_rad( 1f, lambda_m )/MathF.PI*180f} [deg], (1m)\n" );
 
         return soln;
-
     }
 
 
@@ -223,6 +222,9 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
         List<Polygon> supports = [];
         List<Vector3> tempTop  = [];
         List<Vector3> tempBtm  = [];
+        supports.Capacity = Nradial*2;
+        tempTop.Capacity  = Nradial*2;
+        tempBtm.Capacity  = Nradial*2;        
         Vector3 mid1, mid2, norm;
         float height = 0f;
 
