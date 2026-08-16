@@ -341,7 +341,10 @@ public readonly struct Quad {
 /// 3D N-gon, Flatness NOT guaranteed
 /// </summary>
 public class Polygon {
-    public List<Vector3> verts = [];
+    public List<Vector3> /*------*/ verts = [];
+    public List<Tri> /*----------*/ mesh  = [];
+    public List<Quad> /*---------*/ qMesh = [];
+    public Dictionary<string,float> attrs = []; // General data payload
 }
 
 

@@ -220,6 +220,7 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     /// </summary>
     public static List<Polygon> DesignReflectorSupports( float matlThickness, List<Quad> segments, int Nradial = 5, int Ncircum = 20 ){
         List<Polygon> supports = [];
+        Polygon /*-*/ support;
         List<Vector3> tempTop  = [];
         List<Vector3> tempBtm  = [];
         List<Vector3> top /**/ = [];
@@ -274,9 +275,22 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
         }
         top.Add( tempTop[^1] );
         btm.Add( tempBtm[^1] );        
+        top.Reverse();
 
+        support = new();
+        support.verts.AddRange( btm );
+        support.verts.AddRange( top );
 
-        // FIXME: CONSTRUCT RIB(S)
+        for( int i = 0; i < (top.Count-1); ++i ){
+            p1  = top[i  ];
+            p2  = btm[i  ];
+            p3  = btm[i+1];
+            p4  = top[i+1];
+            support.mesh.Add( new Tri( p1, p2, p3 ) );
+            support.mesh.Add( new Tri( p3, p4, p1 ) );
+        }
+        
+        
 
 
         return supports;
