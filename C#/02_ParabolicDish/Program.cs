@@ -2,14 +2,19 @@
 using pso;
 /* ////////// DEV_PLAN /////////////////////////////////////////////////////////////////////////////
 
-[ ] Run a dish solution (Test PSO) 
-[ ] Construct Discretized Dish
-[ ] Display dish w Phong Shading
+[Y] Run a dish solution (Test PSO) 
+[Y] Construct Discretized Dish
+[Y] Design ribs
+[>] Display dish + Rib(s) w Phong Shading
 [ ] Allow user to rotate dish
 [ ] Lay out discretized units onto standard size rectangles in OpenGL
+    [ ] Choose cutter
+    [ ] Confirm working area
+    [ ] Choose "Curroplast" sheet (size(s))
+    [ ] Confirm working area of sheet
 [ ] Confirm SVG instructions for laser cutting
+    [ ] Watch library instruction video
 [ ] Lay out discretized units onto standard size rectangles in SVG
-[ ] Design ribs
 [ ] Lay out ribs onto standard size rectangles in SVG
 [ ] Construct Dish, Install mic at focus
 [ ] Test Dish + Mic
