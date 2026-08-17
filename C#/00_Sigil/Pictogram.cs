@@ -356,8 +356,7 @@ public class Pictogram ( float scale = 0.75f, float thickness = 0.2f ) {
 /// normal, well-tested way; OnLoad fires once bindings are ready, and we close the window
 /// as soon as the frame is captured.
 /// </summary>
-public sealed class SigilWindow : GameWindow
-{
+public sealed class SigilWindow : GameWindow{
     const int RenderSize = 2048; // supersampled; downsampled to OutputSize on save for anti-aliasing
     const int OutputSize = 1024;
 

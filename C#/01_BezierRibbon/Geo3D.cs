@@ -98,7 +98,11 @@ public class MathVec3 {
 /// Triangle
 /// </summary>
 public readonly struct Tri{
-    private readonly Vector3[] verts = new Vector3[3]; // Array ref cannot change, values can 
+
+    /// Members ///
+    // Array refs cannot change, values can
+    private readonly Vector3[] verts = new Vector3[3]; // Vertex Positions 
+    private readonly Vector4[] color = new Vector4[3]; // Vertex Colors 
 
     
     /// <summary>
@@ -108,6 +112,56 @@ public readonly struct Tri{
         verts[0] = a;
         verts[1] = b;
         verts[2] = c;
+    }
+
+
+    /// <summary>
+    /// Set uniform color for all vertices
+    /// </summary>
+    public void SetColor( Vector4 colr ){
+        color[0] = colr;
+        color[1] = colr;
+        color[2] = colr;
+    }
+
+
+    /// <summary>
+    /// Set uniform color for all vertices
+    /// </summary>
+    public void SetColor( Vector3 colr, float alpha = 1f ){
+        color[0] = new Vector4( colr[0], colr[1], colr[2], alpha );
+        color[1] = new Vector4( colr[0], colr[1], colr[2], alpha );
+        color[2] = new Vector4( colr[0], colr[1], colr[2], alpha );
+    }
+
+
+    /// <summary>
+    /// Set per vertex colors
+    /// </summary>
+    public void SetColor( Vector4 a, Vector4 b, Vector4 c ){
+        color[0] = a;
+        color[1] = b;
+        color[2] = c;
+    }
+
+
+    /// <summary>
+    /// Set per vertex colors
+    /// </summary>
+    public void SetColor( Vector4 a, Vector3 b, Vector3 c, float alpha = 1f ){
+        color[0] = new Vector4( a[0], a[1], a[2], alpha );
+        color[1] = new Vector4( b[0], b[1], b[2], alpha );
+        color[2] = new Vector4( c[0], c[1], c[2], alpha );
+    }
+
+
+    /// <summary>
+    /// Set uniform opacity for all vertices
+    /// </summary>
+    public void SetAlpha( float alpha ){
+        color[0][3] = alpha;
+        color[1][3] = alpha;
+        color[2][3] = alpha;
     }
 
 
