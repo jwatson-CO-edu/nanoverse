@@ -289,10 +289,6 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
             support.mesh.Add( new Tri( p1, p2, p3 ) );
             support.mesh.Add( new Tri( p3, p4, p1 ) );
         }
-        
-        
-
-
         return supports;
     }
 
