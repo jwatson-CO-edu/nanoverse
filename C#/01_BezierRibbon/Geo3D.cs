@@ -272,6 +272,36 @@ public readonly struct Tri{
 
 
     /// <summary>
+    /// Alt vertex accessor (CCW)
+    /// </summary>
+    public readonly Vector3 V( int index ) => verts[ index ];
+
+
+    /// <summary>
+    /// First vertex color (CCW)
+    /// </summary>
+    public readonly Vector4 C0() => color[0];
+    
+
+    /// <summary>
+    /// Second vertex color (CCW)
+    /// </summary>
+    public readonly Vector4 C1() => color[1];
+    
+    
+    /// <summary>
+    /// Third vertex color (CCW)
+    /// </summary>
+    public readonly Vector4 C2() => color[2];
+
+
+    /// <summary>
+    /// Alt vertex color accessor (CCW)
+    /// </summary>
+    public readonly Vector4 C( int index ) => color[ index ];
+
+
+    /// <summary>
     /// Convert a list of `Tri` as a plain array (for OGL)
     /// </summary>
     public static float[] Triangles2Arr( List<Tri> triangles ){

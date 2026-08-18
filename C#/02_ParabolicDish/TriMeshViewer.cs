@@ -6,12 +6,9 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace geo3d {
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-////////// PUBLIC ENTRY POINT /////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// <summary>
-/// Opens a window and renders a `List&lt;Tri&gt;` mesh with flat-shaded Phong lighting.
+/// Opens a window and renders a `List<Tri>;` mesh with flat-shaded Phong lighting.
 /// Call this from your `Main`/entry point; it blocks until the window is closed.
 /// </summary>
 public static class TriMeshViewer {
@@ -44,24 +41,24 @@ public static class TriMeshViewer {
 internal sealed class TriMeshWindow : GameWindow {
 
     // --- Mesh data ---
-    private readonly List<Tri> _mesh;
-    private int _vao, _vbo, _vertCount;
+    private readonly List<Tri> mesh;
+    private int vao, vbo, vertCount;
 
     // --- Shader ---
-    private int _program;
-    private int _uModel, _uView, _uProj, _uLightPos, _uViewPos, _uObjColor, _uLightColor, _uAmbient;
+    private int program;
+    private int uModel, uView, uProj, uLightPos, uViewPos, uObjColor, uLightColor, uAmbient;
 
     // --- Camera ---
-    private CadBallCamera _camera = null!;
+    private CadBallCamera camera = null!;
 
     // --- Colors ---
-    private static readonly Vector3 ObjectColor = new( 0.15f, 0.35f, 0.85f ); // blue
-    private static readonly Vector3 LightColor  = new( 1.0f,  1.0f,  1.0f  ); // white
-    private const float AmbientStrength = 0.55f; // generous ambient
+    private static readonly Vector3 ObjectColor     = new( 0.15f, 0.35f, 0.85f ); // blue
+    private static readonly Vector3 LightColor /**/ = new( 1.0f,  1.0f,  1.0f  ); // white
+    private const float /*-------*/ AmbientStrength = 0.55f; // generous ambient
 
-    public TriMeshWindow( List<Tri> mesh, GameWindowSettings gwSettings, NativeWindowSettings nwSettings )
+    public TriMeshWindow( List<Tri> mesh_, GameWindowSettings gwSettings, NativeWindowSettings nwSettings )
         : base( gwSettings, nwSettings ){
-        _mesh = mesh;
+        mesh = mesh_;
     }
 
 
@@ -74,17 +71,16 @@ internal sealed class TriMeshWindow : GameWindow {
         GL.Enable( EnableCap.DepthTest );
         GL.Enable( EnableCap.CullFace ); // comment out if source meshes aren't consistently wound
         GL.CullFace( TriangleFace.Back );
-        // GL.CullFace( CullFaceMode.Back );
 
         BuildMeshBuffers();
         BuildShader();
 
-        Vector3[] bbox   = Tri.MeshBBox( _mesh );
+        Vector3[] bbox   = Tri.MeshBBox( mesh );
         Vector3   center = ( bbox[0] + bbox[1] ) * 0.5f;
         float     radius = ( bbox[1] - bbox[0] ).Length * 0.5f;
         if( radius < 0.001f ){  radius = 1.0f;  }
 
-        _camera = new CadBallCamera( center, distance: radius * 3.0f, clientSize: ClientSize );
+        camera = new CadBallCamera( center, distance: radius * 3.0f, clientSize: ClientSize );
 
         CursorState = CursorState.Normal;
     }
@@ -96,11 +92,11 @@ internal sealed class TriMeshWindow : GameWindow {
     /// a faceted look without needing a `flat` qualifier).
     /// </summary>
     private void BuildMeshBuffers(){
-        _vertCount = _mesh.Count * 3;
-        float[] data = new float[ _vertCount * 6 ]; // xyz + nxnynz per vertex
+        vertCount = mesh.Count * 3;
+        float[] data = new float[ vertCount * 6 ]; // xyz + nxnynz per vertex
 
         int i = 0;
-        foreach( Tri tri in _mesh ){
+        foreach( Tri tri in mesh ){
             Vector3 ab     = tri.V1() - tri.V0();
             Vector3 ac     = tri.V2() - tri.V0();
             Vector3 normal = Vector3.Cross( ab, ac );
@@ -119,11 +115,11 @@ internal sealed class TriMeshWindow : GameWindow {
             }
         }
 
-        _vao = GL.GenVertexArray();
-        _vbo = GL.GenBuffer();
+        vao = GL.GenVertexArray();
+        vbo = GL.GenBuffer();
 
-        GL.BindVertexArray( _vao );
-        GL.BindBuffer( BufferTarget.ArrayBuffer, _vbo );
+        GL.BindVertexArray( vao );
+        GL.BindBuffer( BufferTarget.ArrayBuffer, vbo );
         GL.BufferData( BufferTarget.ArrayBuffer, data.Length * sizeof(float), data, BufferUsageHint.StaticDraw );
 
         int stride = 6 * sizeof(float);
@@ -190,27 +186,27 @@ internal sealed class TriMeshWindow : GameWindow {
         int vert = CompileShader( ShaderType.VertexShader, vertSrc );
         int frag = CompileShader( ShaderType.FragmentShader, fragSrc );
 
-        _program = GL.CreateProgram();
-        GL.AttachShader( _program, vert );
-        GL.AttachShader( _program, frag );
-        GL.LinkProgram( _program );
-        GL.GetProgram( _program, GetProgramParameterName.LinkStatus, out int linked );
+        program = GL.CreateProgram();
+        GL.AttachShader( program, vert );
+        GL.AttachShader( program, frag );
+        GL.LinkProgram( program );
+        GL.GetProgram( program, GetProgramParameterName.LinkStatus, out int linked );
         if( linked == 0 ){
-            string log = GL.GetProgramInfoLog( _program );
+            string log = GL.GetProgramInfoLog( program );
             throw new Exception( $"Shader link error: {log}" );
         }
 
         GL.DeleteShader( vert );
         GL.DeleteShader( frag );
 
-        _uModel      = GL.GetUniformLocation( _program, "uModel" );
-        _uView       = GL.GetUniformLocation( _program, "uView" );
-        _uProj       = GL.GetUniformLocation( _program, "uProj" );
-        _uLightPos   = GL.GetUniformLocation( _program, "uLightPos" );
-        _uViewPos    = GL.GetUniformLocation( _program, "uViewPos" );
-        _uObjColor   = GL.GetUniformLocation( _program, "uObjectColor" );
-        _uLightColor = GL.GetUniformLocation( _program, "uLightColor" );
-        _uAmbient    = GL.GetUniformLocation( _program, "uAmbientStrength" );
+        uModel      = GL.GetUniformLocation( program, "uModel" );
+        uView       = GL.GetUniformLocation( program, "uView" );
+        uProj       = GL.GetUniformLocation( program, "uProj" );
+        uLightPos   = GL.GetUniformLocation( program, "uLightPos" );
+        uViewPos    = GL.GetUniformLocation( program, "uViewPos" );
+        uObjColor   = GL.GetUniformLocation( program, "uObjectColor" );
+        uLightColor = GL.GetUniformLocation( program, "uLightColor" );
+        uAmbient    = GL.GetUniformLocation( program, "uAmbientStrength" );
     }
 
 
@@ -233,32 +229,32 @@ internal sealed class TriMeshWindow : GameWindow {
         base.OnRenderFrame( args );
 
         GL.Clear( ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit );
-        GL.UseProgram( _program );
+        GL.UseProgram( program );
 
         Matrix4 model = Matrix4.Identity;
-        Matrix4 view  = _camera.GetViewMatrix();
+        Matrix4 view  = camera.GetViewMatrix();
         Matrix4 proj  = Matrix4.CreatePerspectiveFieldOfView(
                             MathHelper.DegreesToRadians( 45.0f ),
                             ClientSize.X / (float) MathF.Max( ClientSize.Y, 1 ),
                             0.01f, 1000.0f );
 
-        GL.UniformMatrix4( _uModel, false, ref model );
-        GL.UniformMatrix4( _uView,  false, ref view  );
-        GL.UniformMatrix4( _uProj,  false, ref proj  );
+        GL.UniformMatrix4( uModel, false, ref model );
+        GL.UniformMatrix4( uView,  false, ref view  );
+        GL.UniformMatrix4( uProj,  false, ref proj  );
 
         // Light sits behind the camera (further back along the eye->target axis), gentle & white.
-        Vector3 eye       = _camera.EyePosition;
-        Vector3 behindDir = ( eye - _camera.Target ).Normalized();
-        Vector3 lightPos  = eye + behindDir * ( _camera.Distance * 0.5f + 2.0f );
+        Vector3 eye       = camera.EyePosition;
+        Vector3 behindDir = ( eye - camera.Target ).Normalized();
+        Vector3 lightPos  = eye + behindDir * ( camera.Distance * 0.5f + 2.0f );
 
-        GL.Uniform3( _uLightPos,   lightPos );
-        GL.Uniform3( _uViewPos,    eye );
-        GL.Uniform3( _uObjColor,   ObjectColor );
-        GL.Uniform3( _uLightColor, LightColor );
-        GL.Uniform1( _uAmbient,    AmbientStrength );
+        GL.Uniform3( uLightPos,   lightPos );
+        GL.Uniform3( uViewPos,    eye );
+        GL.Uniform3( uObjColor,   ObjectColor );
+        GL.Uniform3( uLightColor, LightColor );
+        GL.Uniform1( uAmbient,    AmbientStrength );
 
-        GL.BindVertexArray( _vao );
-        GL.DrawArrays( PrimitiveType.Triangles, 0, _vertCount );
+        GL.BindVertexArray( vao );
+        GL.DrawArrays( PrimitiveType.Triangles, 0, vertCount );
         GL.BindVertexArray( 0 );
 
         SwapBuffers();
@@ -268,7 +264,7 @@ internal sealed class TriMeshWindow : GameWindow {
     protected override void OnResize( ResizeEventArgs e ){
         base.OnResize( e );
         GL.Viewport( 0, 0, e.Width, e.Height );
-        _camera?.OnResize( ClientSize );
+        camera?.OnResize( ClientSize );
     }
 
 
@@ -279,31 +275,31 @@ internal sealed class TriMeshWindow : GameWindow {
 
     protected override void OnMouseDown( MouseButtonEventArgs e ){
         base.OnMouseDown( e );
-        if( e.Button == MouseButton.Left  ){  _camera.BeginRotate( MousePosition );  }
-        if( e.Button == MouseButton.Right ){  _camera.BeginPan( MousePosition );  }
+        if( e.Button == MouseButton.Left  ){  camera.BeginRotate( MousePosition );  }
+        if( e.Button == MouseButton.Right ){  camera.BeginPan( MousePosition );  }
     }
 
     protected override void OnMouseUp( MouseButtonEventArgs e ){
         base.OnMouseUp( e );
-        if( e.Button == MouseButton.Left  ){  _camera.EndRotate();  }
-        if( e.Button == MouseButton.Right ){  _camera.EndPan();  }
+        if( e.Button == MouseButton.Left  ){  camera.EndRotate();  }
+        if( e.Button == MouseButton.Right ){  camera.EndPan();  }
     }
 
     protected override void OnMouseMove( MouseMoveEventArgs e ){
         base.OnMouseMove( e );
-        _camera.OnMouseMove( MousePosition );
+        camera.OnMouseMove( MousePosition );
     }
 
     protected override void OnMouseWheel( MouseWheelEventArgs e ){
         base.OnMouseWheel( e );
-        _camera.OnScroll( e.OffsetY );
+        camera.OnScroll( e.OffsetY );
     }
 
 
     protected override void OnUnload(){
-        GL.DeleteBuffer( _vbo );
-        GL.DeleteVertexArray( _vao );
-        GL.DeleteProgram( _program );
+        GL.DeleteBuffer( vbo );
+        GL.DeleteVertexArray( vao );
+        GL.DeleteProgram( program );
         base.OnUnload();
     }
 }
