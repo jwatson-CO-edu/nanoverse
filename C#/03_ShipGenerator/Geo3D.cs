@@ -53,6 +53,14 @@ public class MathVec3 {
 
 
     /// <summary>
+    /// Generate a 3D vector with random {X,Y,Z,} components of a specified `scale`
+    /// </summary>
+    public static Vector3 NoiseXYZ( Random rand, float scale = 1.0f ){
+        return new Vector3( rand.NextSingle()-0.5f, rand.NextSingle()-0.5f, rand.NextSingle()-0.5f ).Normalized() * scale;
+    }
+
+
+    /// <summary>
     /// Get the (uniformly weighted) centroid of the collection of points
     /// </summary>
     public static Vector3 UniformPointCentroid( List<Vector3> points ){
