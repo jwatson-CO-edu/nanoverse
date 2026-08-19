@@ -7,6 +7,55 @@ public class MeshGen {
 
     public Random rand = new();
 
+
+    public static List<Tri> Cube( Vector3 center, float side = 1f ){
+        List<Tri> rtnShp = [];
+        float     sHalf  = side / 2f;
+        rtnShp.Capacity = 12;
+        Vector3 p0 = center - Vector3.UnitX * sHalf - Vector3.UnitY * sHalf - Vector3.UnitZ * sHalf;
+        Vector3 p1 = center - Vector3.UnitX * sHalf + Vector3.UnitY * sHalf - Vector3.UnitZ * sHalf;
+        Vector3 p2 = center + Vector3.UnitX * sHalf + Vector3.UnitY * sHalf - Vector3.UnitZ * sHalf;
+        Vector3 p3 = center + Vector3.UnitX * sHalf - Vector3.UnitY * sHalf - Vector3.UnitZ * sHalf;
+        Vector3 p4 = center - Vector3.UnitX * sHalf - Vector3.UnitY * sHalf + Vector3.UnitZ * sHalf;
+        Vector3 p5 = center + Vector3.UnitX * sHalf - Vector3.UnitY * sHalf + Vector3.UnitZ * sHalf;
+        Vector3 p6 = center + Vector3.UnitX * sHalf + Vector3.UnitY * sHalf + Vector3.UnitZ * sHalf;
+        Vector3 p7 = center - Vector3.UnitX * sHalf + Vector3.UnitY * sHalf + Vector3.UnitZ * sHalf;
+        
+        /*   6 ---- 5
+           / |    / |
+         7 ---- 4   |
+         |   2 -|-- 3
+         | /    | / 
+         1 ---- 0   */
+        
+        // Bottom //
+        rtnShp.Add( new Tri( p0, p1, p2 ) );
+        rtnShp.Add( new Tri( p2, p3, p0 ) );
+
+        // Top //
+        rtnShp.Add( new Tri( p4, p5, p6 ) );
+        rtnShp.Add( new Tri( p6, p7, p4 ) );
+
+        // Front //
+        rtnShp.Add( new Tri( p0, p4, p7 ) );
+        rtnShp.Add( new Tri( p7, p1, p0 ) );
+
+        // Back //
+        rtnShp.Add( new Tri( p2, p6, p5 ) );
+        rtnShp.Add( new Tri( p5, p3, p2 ) );
+
+        // Right //
+        rtnShp.Add( new Tri( p4, p0, p3 ) );
+        rtnShp.Add( new Tri( p3, p5, p4 ) );
+        
+        // Left //
+        rtnShp.Add( new Tri( p1, p7, p6 ) );
+        rtnShp.Add( new Tri( p6, p2, p1 ) );
+
+        return rtnShp;
+    }
+
+
     public List<Tri> Cylinder( Vector3 center, Vector3 axis, float radius = 1f, float height = 1f, int arcDiv = 16, int hgtDiv = 2 ){
         List<Tri>     rtnShp = [];
         List<Vector3> segCtr = [];
