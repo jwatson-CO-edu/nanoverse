@@ -46,13 +46,14 @@ internal sealed class TriMeshWindow : GameWindow {
 
     // --- Shader ---
     private int program;
-    private int uModel, uView, uProj, uLightPos, uViewPos, uObjColor, uLightColor, uAmbient;
+    private int uModel, uView, uProj, uLightPos, uViewPos, uLightColor, uAmbient;
 
     // --- Camera ---
     private CadBallCamera camera = null!;
 
     // --- Colors ---
-    private static readonly Vector3 ObjectColor     = new( 0.15f, 0.35f, 0.85f ); // blue
+    // Per-vertex color now comes from `Tri.C(v)` (baked into the vertex buffer below),
+    // so there is no longer a single uniform object color.
     private static readonly Vector3 LightColor /**/ = new( 1.0f,  1.0f,  1.0f  ); // white
     private const float /*-------*/ AmbientStrength = 0.55f; // generous ambient
 
@@ -69,8 +70,8 @@ internal sealed class TriMeshWindow : GameWindow {
 
         GL.ClearColor( 0.0f, 0.0f, 0.0f, 1.0f ); // black clear color
         GL.Enable( EnableCap.DepthTest );
-        GL.Enable( EnableCap.CullFace ); // comment out if source meshes aren't consistently wound
-        GL.CullFace( TriangleFace.Back );
+        // GL.Enable( EnableCap.CullFace ); // comment out if source meshes aren't consistently wound
+        // GL.CullFace( TriangleFace.Back );
 
         BuildMeshBuffers();
         BuildShader();
@@ -87,30 +88,33 @@ internal sealed class TriMeshWindow : GameWindow {
 
 
     /// <summary>
-    /// Upload position + face-normal interleaved vertex data (flat-shaded: every vertex
-    /// of a triangle shares that triangle's normal, so smooth interpolation reproduces
-    /// a faceted look without needing a `flat` qualifier).
+    /// Upload position + face-normal + per-vertex color interleaved vertex data
+    /// (flat-shaded: every vertex of a triangle shares that triangle's normal, so smooth
+    /// interpolation reproduces a faceted look without needing a `flat` qualifier).
+    /// Color comes straight from `Tri.C(v)` (RGBA), so each vertex can carry its own tint.
     /// </summary>
     private void BuildMeshBuffers(){
         vertCount = mesh.Count * 3;
-        float[] data = new float[ vertCount * 6 ]; // xyz + nxnynz per vertex
+        float[] data = new float[ vertCount * 10 ]; // xyz + nxnynz + rgba per vertex
 
         int i = 0;
         foreach( Tri tri in mesh ){
-            Vector3 ab     = tri.V1() - tri.V0();
-            Vector3 ac     = tri.V2() - tri.V0();
-            Vector3 normal = Vector3.Cross( ab, ac );
-            normal = normal.LengthSquared > 1e-12f ? normal.Normalized() : Vector3.UnitY;
-
+           
             for( int v = 0; v < 3; ++v ){
                 Vector3 p = tri[v];
-                int off = i * 6;
+                Vector3 n = tri.N(v);
+                Vector4 c = tri.C(v);
+                int off = i * 10;
                 data[off + 0] = p.X;
                 data[off + 1] = p.Y;
                 data[off + 2] = p.Z;
-                data[off + 3] = normal.X;
-                data[off + 4] = normal.Y;
-                data[off + 5] = normal.Z;
+                data[off + 3] = n.X;
+                data[off + 4] = n.Y;
+                data[off + 5] = n.Z;
+                data[off + 6] = c.X;
+                data[off + 7] = c.Y;
+                data[off + 8] = c.Z;
+                data[off + 9] = c.W;
                 ++i;
             }
         }
@@ -122,11 +126,13 @@ internal sealed class TriMeshWindow : GameWindow {
         GL.BindBuffer( BufferTarget.ArrayBuffer, vbo );
         GL.BufferData( BufferTarget.ArrayBuffer, data.Length * sizeof(float), data, BufferUsageHint.StaticDraw );
 
-        int stride = 6 * sizeof(float);
+        int stride = 10 * sizeof(float);
         GL.VertexAttribPointer( 0, 3, VertexAttribPointerType.Float, false, stride, 0 );
         GL.EnableVertexAttribArray( 0 );
         GL.VertexAttribPointer( 1, 3, VertexAttribPointerType.Float, false, stride, 3 * sizeof(float) );
         GL.EnableVertexAttribArray( 1 );
+        GL.VertexAttribPointer( 2, 4, VertexAttribPointerType.Float, false, stride, 6 * sizeof(float) );
+        GL.EnableVertexAttribArray( 2 );
 
         GL.BindVertexArray( 0 );
     }
@@ -137,6 +143,7 @@ internal sealed class TriMeshWindow : GameWindow {
             #version 330 core
             layout(location = 0) in vec3 aPos;
             layout(location = 1) in vec3 aNormal;
+            layout(location = 2) in vec4 aColor;
 
             uniform mat4 uModel;
             uniform mat4 uView;
@@ -144,10 +151,12 @@ internal sealed class TriMeshWindow : GameWindow {
 
             out vec3 vFragPos;
             out vec3 vNormal;
+            out vec4 vColor;
 
             void main(){
                 vFragPos    = vec3( uModel * vec4( aPos, 1.0 ) );
                 vNormal     = mat3( transpose( inverse( uModel ) ) ) * aNormal;
+                vColor      = aColor;
                 gl_Position = uProj * uView * vec4( vFragPos, 1.0 );
             }
             """;
@@ -156,11 +165,11 @@ internal sealed class TriMeshWindow : GameWindow {
             #version 330 core
             in vec3 vFragPos;
             in vec3 vNormal;
+            in vec4 vColor;
             out vec4 FragColor;
 
             uniform vec3  uLightPos;
             uniform vec3  uViewPos;
-            uniform vec3  uObjectColor;
             uniform vec3  uLightColor;
             uniform float uAmbientStrength;
 
@@ -178,8 +187,9 @@ internal sealed class TriMeshWindow : GameWindow {
                 vec3 diffuse  = diff * uLightColor;
                 vec3 specular = 0.25 * spec * uLightColor;
 
-                vec3 result = ( ambient + diffuse + specular ) * uObjectColor;
-                FragColor   = vec4( result, 1.0 );
+                // Per-vertex color (from `Tri.C(v)`) stands in for the old flat uObjectColor.
+                vec3 result = ( ambient + diffuse + specular ) * vColor.rgb;
+                FragColor   = vec4( result, vColor.a );
             }
             """;
 
@@ -193,18 +203,17 @@ internal sealed class TriMeshWindow : GameWindow {
         GL.GetProgram( program, GetProgramParameterName.LinkStatus, out int linked );
         if( linked == 0 ){
             string log = GL.GetProgramInfoLog( program );
-            throw new Exception( $"Shader link error: {log}" );
+            throw new Exception( $"Shader link error:\n{log}" );
         }
 
         GL.DeleteShader( vert );
         GL.DeleteShader( frag );
 
-        uModel      = GL.GetUniformLocation( program, "uModel" );
-        uView       = GL.GetUniformLocation( program, "uView" );
-        uProj       = GL.GetUniformLocation( program, "uProj" );
+        uModel /**/ = GL.GetUniformLocation( program, "uModel" );
+        uView /*-*/ = GL.GetUniformLocation( program, "uView" );
+        uProj /*-*/ = GL.GetUniformLocation( program, "uProj" );
         uLightPos   = GL.GetUniformLocation( program, "uLightPos" );
         uViewPos    = GL.GetUniformLocation( program, "uViewPos" );
-        uObjColor   = GL.GetUniformLocation( program, "uObjectColor" );
         uLightColor = GL.GetUniformLocation( program, "uLightColor" );
         uAmbient    = GL.GetUniformLocation( program, "uAmbientStrength" );
     }
@@ -217,7 +226,7 @@ internal sealed class TriMeshWindow : GameWindow {
         GL.GetShader( handle, ShaderParameter.CompileStatus, out int compiled );
         if( compiled == 0 ){
             string log = GL.GetShaderInfoLog( handle );
-            throw new Exception( $"{type} compile error: {log}" );
+            throw new Exception( $"{type} compile error:\n{log}" );
         }
         return handle;
     }
@@ -234,9 +243,10 @@ internal sealed class TriMeshWindow : GameWindow {
         Matrix4 model = Matrix4.Identity;
         Matrix4 view  = camera.GetViewMatrix();
         Matrix4 proj  = Matrix4.CreatePerspectiveFieldOfView(
-                            MathHelper.DegreesToRadians( 45.0f ),
-                            ClientSize.X / (float) MathF.Max( ClientSize.Y, 1 ),
-                            0.01f, 1000.0f );
+            MathHelper.DegreesToRadians( 45.0f ),
+            ClientSize.X / (float) MathF.Max( ClientSize.Y, 1 ),
+            0.01f, 1000.0f 
+        );
 
         GL.UniformMatrix4( uModel, false, ref model );
         GL.UniformMatrix4( uView,  false, ref view  );
@@ -249,7 +259,6 @@ internal sealed class TriMeshWindow : GameWindow {
 
         GL.Uniform3( uLightPos,   lightPos );
         GL.Uniform3( uViewPos,    eye );
-        GL.Uniform3( uObjColor,   ObjectColor );
         GL.Uniform3( uLightColor, LightColor );
         GL.Uniform1( uAmbient,    AmbientStrength );
 

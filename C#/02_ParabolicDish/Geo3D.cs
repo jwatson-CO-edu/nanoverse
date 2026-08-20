@@ -158,8 +158,8 @@ public readonly struct Tri{
         verts[0] = a;
         verts[1] = b;
         verts[2] = c;
-        Vector3 ab     = V1() - V0();
-        Vector3 ac     = V2() - V0();
+        Vector3 ab = V1() - V0();
+        Vector3 ac = V2() - V0();
         SetNorms( Vector3.Cross( ac, ab ) );
     }
 
@@ -348,6 +348,30 @@ public readonly struct Tri{
 
 
     /// <summary>
+    /// First normal (CCW)
+    /// </summary>
+    public readonly Vector3 N0() => norms[0];
+    
+
+    /// <summary>
+    /// Second normal (CCW)
+    /// </summary>
+    public readonly Vector3 N1() => norms[1];
+    
+    
+    /// <summary>
+    /// Third normal (CCW)
+    /// </summary>
+    public readonly Vector3 N2() => norms[2];
+
+
+    /// <summary>
+    /// Alt normal accessor (CCW)
+    /// </summary>
+    public readonly Vector3 N( int index ) => norms[ index ];
+
+
+    /// <summary>
     /// First vertex color (CCW)
     /// </summary>
     public readonly Vector4 C0() => color[0];
@@ -369,6 +393,9 @@ public readonly struct Tri{
     /// Alt vertex color accessor (CCW)
     /// </summary>
     public readonly Vector4 C( int index ) => color[ index ];
+
+
+    
 
 
     /// <summary>
