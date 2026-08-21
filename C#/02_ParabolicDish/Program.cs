@@ -42,7 +42,9 @@ DishCalculator dc = new(
 
 DctVecF soln = dc.DesignParabolicReflector();
 
-List<Quad> qDish = dc.SegmentDesignedReflector( soln );
+List<Quad>    qDish    = dc.SegmentDesignedReflector( soln );
+List<Polygon> supports = DishCalculator.DesignReflectorSupports( 0.004f, qDish );
+qDish.AddRange(  );
 List<Tri>  tMesh = Quad.AsTriMesh( qDish );
 tMesh = Tri.ColorMesh( tMesh, new Vector4(0,0,1,1) );
 

@@ -187,8 +187,6 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
         Console.WriteLine( $"Design discretized paraboloid reflector with diameter {diameter_m:F2} [m], depth {zDepth_m:F2} [m], focal length {lFocus_m:F4} [m]," );
         Console.WriteLine( $"{Nradial} radial segments, and {Ncircum} circumferential segments" );
 
-        // Console.WriteLine( $"f({0f}) = {QuadraticPositiveX( diameter_m, zDepth_m, 0f )}" );
-        // Console.WriteLine( $"f({diameter_m/2}) = {QuadraticPositiveX( diameter_m, zDepth_m, diameter_m/2 )}" );
         float arcStep = 2f * MathF.PI / Ncircum;
         float radStep = diameter_m / 2f / (Nradial+1); // Central step is a flat polygon?
         float rad1, rad2;
