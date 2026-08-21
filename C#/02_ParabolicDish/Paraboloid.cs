@@ -120,7 +120,7 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     /// Scoring function for the PSO designer, See "PSO.cs"
     /// </summary>
     public float Score( DctVecF dsgn ){
-        Console.WriteLine( $"Eval: {dsgn}" );
+        
         float f = FocalLength_m( dsgn["D"], dsgn["z"] );
         return Math.Min(Gain( dsgn["D"], lambda_m ), Gdesired) / Gdesired  * _GAIN_REWARD + // ---------------- Reward gain beyond desired / Penalize low
                (Beamwidth_rad( dsgn["D"], lambda_m ) - BWdesired_rad) / BWdesired_rad * _BEAMWIDTH_REWARD +  // Reward beamwidth beyond desired / Penalize low
@@ -179,7 +179,8 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     /// </summary>
     public List<Quad> SegmentDesignedReflector( DctVecF soln, int Nradial = 5, int Ncircum = 20 ){
         List<Quad> rtnLst = [];
-        rtnLst.Capacity = Nradial * Ncircum;
+        List<Quad> petal;
+        rtnLst.Capacity = Nradial * Ncircum * 2;
         diameter_m = RoundUpToNext5cm( soln["D"] );
         zDepth_m   = RoundUpToNext5cm( soln["z"] );
         lFocus_m   = FocalLength_m( diameter_m, zDepth_m );
@@ -191,9 +192,11 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
         float arcStep = 2f * MathF.PI / Ncircum;
         float radStep = diameter_m / 2f / (Nradial+1); // Central step is a flat polygon?
         float rad1, rad2;
+        Vector3 eps = Vector3.UnitZ * 0.001f;
         Vector3 v0, v1, v2, v3, mid1, mid2;
-        Quad qd;
+        Quad qd, qr;
         for( int j = 0; j < Ncircum; ++j ){
+            petal = [];
             for( int i = 1; i <= Nradial; ++i ){
                 rad1 = i*radStep;
                 rad2 = (i+1)*radStep;
@@ -202,14 +205,18 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
                 v2   = new Vector3( rad2*MathF.Cos( arcStep ), rad2*MathF.Sin( arcStep ), QuadraticPositiveX( diameter_m, zDepth_m, rad2 ) );
                 v3   = new Vector3( rad1*MathF.Cos( arcStep ), rad1*MathF.Sin( arcStep ), QuadraticPositiveX( diameter_m, zDepth_m, rad1 ) );
                 qd   = new Quad( v0, v1, v2, v3 );
+                qr   = new Quad( v3 + eps, v2 + eps, v1 + eps, v0 + eps );
                 mid1 = (v0+v3)/2f;
                 mid2 = (v1+v2)/2f;
                 qd.attrs["trapHeight"] = (mid2 - mid1).Length;
                 qd.attrs["trapTop"]    = (v2 - v1).Length;
                 qd.attrs["trapBottom"] = (v3 - v0).Length;
-                Console.WriteLine( $"Trapezoid - Height: {qd.attrs["trapHeight"]}, Top: {qd.attrs["trapTop"]}, Bottom: {qd.attrs["trapBottom"]}, " );
-                rtnLst.Add( qd );
+                // Console.WriteLine( $"Trapezoid - Height: {qd.attrs["trapHeight"]}, Top: {qd.attrs["trapTop"]}, Bottom: {qd.attrs["trapBottom"]}, " );
+                petal.Add( qd );
+                petal.Add( qr );
             }
+            petal = Quad.RotateMesh( petal, Vector3.UnitZ, j*arcStep );
+            rtnLst.AddRange( petal );
         }
         return rtnLst;
     }

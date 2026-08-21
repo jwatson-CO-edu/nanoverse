@@ -309,6 +309,7 @@ public class PSOptimizer {
         float initSpd;
         float lastSpd;
         float randTemp = 1.0f;
+        float veloTemp = 1.0f;
         float coolRate = 1f / N;
         float frac;
         float momentum = 0.5f;
@@ -323,6 +324,7 @@ public class PSOptimizer {
 
         /// Stage 1: Init particle velocities ///
         foreach( Particle prtcl in particles ){
+            if( rand.Next( 10 ) == 1 ){  Console.Write( "." );  }
             particle = RandGridParticle();
             prtScl   = MathF.Min( (prtcl.position - particle.position).Length(), scale );
             Console.WriteLine( $"{(prtcl.position - particle.position).Length()}, {scale}" );
@@ -351,7 +353,7 @@ public class PSOptimizer {
 
         while( (count < N) && ((lastSpd / initSpd) > haltFrac) ){
 
-            Console.WriteLine( $"Iteration {count+1} ..." );
+            Console.WriteLine( $"Iteration {count+1} " );
 
             foreach( Particle prtcl in particles ){
                 frac   = rand.NextSingle(); // Random blend of global / personal best
@@ -366,8 +368,8 @@ public class PSOptimizer {
                     vel_ij[ field ] = 
                         (momentum * prtcl.velocity[ field ]) + // Momentum is important for convergence!
                         (1f-momentum) * (
-                            factor * (1f - frac) * (bestPrtcl.bestPosn[ field ] - prtcl.position[ field ]) + // Seeking global best
-                            factor * frac * (prtcl.bestPosn[ field ] - prtcl.position[ field ]) + // ---------- Seeking personal best
+                            veloTemp * factor * (1f - frac) * (bestPrtcl.bestPosn[ field ] - prtcl.position[ field ]) + // Seeking global best
+                            veloTemp * factor * frac * (prtcl.bestPosn[ field ] - prtcl.position[ field ]) + // ---------- Seeking personal best
                             randTemp * ranges[ field ][3] * rand.NextSingle() // ------------------------------ Seeking cooled random vector
                         );
                 }
@@ -380,6 +382,7 @@ public class PSOptimizer {
             UpdateSwarmBest();
 
             randTemp = MathF.Max( 0F, randTemp-coolRate*1.5f );
+            veloTemp = MathF.Max( 0F, veloTemp-coolRate*0.75f );
             lastSpd  = AverageSwarmSpeed();
             if( count == 0 ){  initSpd = lastSpd;  }
             ++count;

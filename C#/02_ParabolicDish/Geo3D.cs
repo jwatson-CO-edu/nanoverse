@@ -282,6 +282,9 @@ public readonly struct Tri{
     }
 
 
+    /// <summary>
+    /// Calculate the mesh Axis-Aligned Bounding Box (AABB)
+    /// </summary>
     public static Vector3[] MeshBBox( List<Tri> mesh ){
         Vector3 lo = new(  6e10f,  6e10f,  6e10f );
         Vector3 hi = new( -6e10f, -6e10f, -6e10f );
@@ -298,7 +301,7 @@ public readonly struct Tri{
 
 
     /// <summary>
-    /// Shift a collection of triangles
+    /// Return a shifted a collection of triangles
     /// </summary>
     public static List<Tri> ShiftMesh( List<Tri> mesh, Vector3 shift ){
         Tri tri_i;
@@ -310,6 +313,50 @@ public readonly struct Tri{
                          tri.V2() + shift );
             rtnMsh.Add( tri_i );
         }
+        return rtnMsh;
+    }
+
+
+    /// <summary>
+    /// Return a shifted a collection of triangles
+    /// </summary>
+    public static List<Tri> RotateMesh( List<Tri> mesh, Vector3 axis, float theta ){
+        Tri tri_i;
+        List<Tri> rtnMsh = [];
+        rtnMsh.Capacity = mesh.Count;
+        axis.Normalize();
+        Quaternion quat = MathVec3.AxisAngleQuat( axis, theta );
+        foreach( Tri tri in mesh ){
+            tri_i = new( quat * tri.V0(), 
+                         quat * tri.V1(), 
+                         quat * tri.V2() );
+            rtnMsh.Add( tri_i );
+        }
+        return rtnMsh;
+    }
+
+
+    /// <summary>
+    /// Copy the entire mesh
+    /// </summary>
+    public static List<Tri> CopyMesh( List<Tri> mesh ){
+        List<Tri> rtnMsh = [];
+        rtnMsh.Capacity = mesh.Count;
+        foreach( Tri tri in mesh ){
+            rtnMsh.Add( new Tri( tri.V0(), 
+                                 tri.V1(), 
+                                 tri.V2() ) );
+        }
+        return rtnMsh;
+    }
+
+
+    /// <summary>
+    /// Apply one color to the entire mesh
+    /// </summary>
+    public static List<Tri> ColorMesh( List<Tri> mesh, Vector4 color ){
+        List<Tri> rtnMsh = CopyMesh( mesh );
+        foreach( Tri tri in rtnMsh ){  tri.SetColor( color );  }
         return rtnMsh;
     }
 
@@ -435,6 +482,33 @@ public readonly struct Quad {
         verts[3] = d;
     }
 
+    
+    /// <summary>
+    /// Express the Quad as 2 `Tri`s, Either left slash or right slash
+    /// </summary>
+    public Tri[] AsTris( bool left = true ){
+        Tri[] rtnTri = new Tri[2];
+        if( left ){
+            rtnTri[0] = new Tri( verts[0], verts[1], verts[2] );
+            rtnTri[1] = new Tri( verts[2], verts[3], verts[0] );
+        }else{
+            rtnTri[0] = new Tri( verts[1], verts[2], verts[3] );
+            rtnTri[1] = new Tri( verts[3], verts[0], verts[1] );
+        }
+        return rtnTri;
+    }
+
+
+    /// <summary>
+    /// Return a copy of the Quad mesh as a Tri Mesh
+    /// </summary>
+    public static List<Tri> AsTriMesh( List<Quad> qMesh ){
+        List<Tri> rtnMsh = [];
+        rtnMsh.Capacity = qMesh.Count * 2;
+        foreach( Quad quad in qMesh ){  foreach( Tri tri in quad.AsTris() ){  rtnMsh.Add( tri );  }  }
+        return rtnMsh;
+    }
+
 
     /// <summary>
     /// First point (CCW)
@@ -466,6 +540,25 @@ public readonly struct Quad {
         Vector3 rtnVec = new(0,0,0);
         foreach( Vector3 vec in verts ){  rtnVec += vec;  }
         return rtnVec / 4.0f;
+    }
+
+    /// <summary>
+    /// Return a shifted a collection of triangles
+    /// </summary>
+    public static List<Quad> RotateMesh( List<Quad> mesh, Vector3 axis, float theta ){
+        Quad quad_i;
+        List<Quad> rtnMsh = [];
+        rtnMsh.Capacity = mesh.Count;
+        axis.Normalize();
+        Quaternion quat = MathVec3.AxisAngleQuat( axis, theta );
+        foreach( Quad quad in mesh ){
+            quad_i = new( quat * quad.V0(), 
+                          quat * quad.V1(), 
+                          quat * quad.V2(),
+                          quat * quad.V3() );
+            rtnMsh.Add( quad_i );
+        }
+        return rtnMsh;
     }
 }
 

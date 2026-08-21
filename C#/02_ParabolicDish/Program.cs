@@ -1,5 +1,8 @@
 ﻿using paraboloid;
 using pso;
+using geo3d;
+using OpenTK.Mathematics;
+
 /* ////////// DEV_PLAN /////////////////////////////////////////////////////////////////////////////
 
 [Y] Run a dish solution (Test PSO) 
@@ -39,7 +42,11 @@ DishCalculator dc = new(
 
 DctVecF soln = dc.DesignParabolicReflector();
 
-dc.SegmentDesignedReflector( soln );
+List<Quad> qDish = dc.SegmentDesignedReflector( soln );
+List<Tri>  tMesh = Quad.AsTriMesh( qDish );
+tMesh = Tri.ColorMesh( tMesh, new Vector4(0,0,1,1) );
+
+TriMeshViewer.Show( tMesh );
 
 Console.WriteLine( "\n\nTASK COMPLETE!\n" );
 

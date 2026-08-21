@@ -124,14 +124,14 @@ internal sealed class TriMeshWindow : GameWindow {
 
         GL.BindVertexArray( vao );
         GL.BindBuffer( BufferTarget.ArrayBuffer, vbo );
-        GL.BufferData( BufferTarget.ArrayBuffer, data.Length * sizeof(float), data, BufferUsageHint.StaticDraw );
+        GL.BufferData( BufferTarget.ArrayBuffer, data.Length * sizeof( float ), data, BufferUsageHint.StaticDraw );
 
-        int stride = 10 * sizeof(float);
+        int stride = 10 * sizeof( float );
         GL.VertexAttribPointer( 0, 3, VertexAttribPointerType.Float, false, stride, 0 );
         GL.EnableVertexAttribArray( 0 );
-        GL.VertexAttribPointer( 1, 3, VertexAttribPointerType.Float, false, stride, 3 * sizeof(float) );
+        GL.VertexAttribPointer( 1, 3, VertexAttribPointerType.Float, false, stride, 3 * sizeof( float ) );
         GL.EnableVertexAttribArray( 1 );
-        GL.VertexAttribPointer( 2, 4, VertexAttribPointerType.Float, false, stride, 6 * sizeof(float) );
+        GL.VertexAttribPointer( 2, 4, VertexAttribPointerType.Float, false, stride, 6 * sizeof( float ) );
         GL.EnableVertexAttribArray( 2 );
 
         GL.BindVertexArray( 0 );
@@ -139,6 +139,8 @@ internal sealed class TriMeshWindow : GameWindow {
 
 
     private void BuildShader(){
+
+        // Vertex Shader Code
         const string vertSrc = """
             #version 330 core
             layout(location = 0) in vec3 aPos;
@@ -161,6 +163,7 @@ internal sealed class TriMeshWindow : GameWindow {
             }
             """;
 
+        // Fragment Shader Code
         const string fragSrc = """
             #version 330 core
             in vec3 vFragPos;
