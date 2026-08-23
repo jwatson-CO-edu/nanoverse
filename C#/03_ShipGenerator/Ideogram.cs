@@ -3,11 +3,17 @@ using OpenTK.Mathematics;
 
 namespace ideogram {
 
+/// <summary>
+/// Generate meshes suitable for composable models
+/// </summary>
 public class MeshGen {
 
-    public Random rand = new();
+    public Random rand = new(); // Local RNG
 
 
+    /// <summary>
+    /// Return a cuboid mesh with arbitrary, axis-aligned side lengths
+    /// </summary>
     public static List<Tri> Cuboid( Vector3 center, float Xside = 1f, float Yside = 1f, float Zside = 1f ){
         List<Tri> rtnShp = [];
         float     xHalf  = Xside / 2f;
@@ -58,6 +64,9 @@ public class MeshGen {
     }
 
 
+    /// <summary>
+    /// Return a trapezoidal slab mesh with specified XY alignment of the top and bottom
+    /// </summary>
     public static List<Tri> TrapezoidSlab( Vector3 center, float thickness = 1f,
                                            float xSideTop    = 1f, float ySideTop    = 1f, 
                                            float xSideBottom = 1f, float ySideBottom = 1f, 
@@ -121,12 +130,13 @@ public class MeshGen {
         rtnShp.Add( new Tri( p1, p7, p6 ) );
         rtnShp.Add( new Tri( p6, p2, p1 ) );
 
-
         return rtnShp;
-
     } 
 
 
+    /// <summary>
+    /// Return a cylindrical mesh with a specified longitudinal axis
+    /// </summary>
     public List<Tri> Cylinder( Vector3 center, Vector3 axis, float radius = 1f, float height = 1f, int arcDiv = 16, int hgtDiv = 2 ){
         List<Tri>     rtnShp = [];
         List<Vector3> segCtr = [];
@@ -162,16 +172,27 @@ public class MeshGen {
             }
             lSpr = spar;
         }
-        
 
         return rtnShp;
     }
 
 }
 
+
+
+public class Face {
+    public List<Tri>     mesh /**/ = [];
+    public List<Vector3> perimeter = [];
+}
+
+
+
+/// <summary>
+/// Composable 3D model with specified connection points
+/// </summary>
 public class IdeoComponent {
-    public List<Tri>     mesh  = [];
-    public List<Matrix4> ports = [];
+    public List<Tri> /*-----*/ mesh  = []; // Displayed mesh
+    public List<Matrix4> /*-*/ ports = []; // Connection points
 }
 
 }
