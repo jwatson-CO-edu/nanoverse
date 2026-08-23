@@ -8,15 +8,15 @@ using OpenTK.Mathematics;
 [Y] Run a dish solution (Test PSO) 
 [Y] Construct Discretized Dish
 [Y] Design ribs
-[>] Display dish + Rib(s) w Phong Shading
-[ ] Allow user to rotate dish
-[ ] Lay out discretized units onto standard size rectangles in OpenGL
-    [ ] Choose cutter
-    [ ] Confirm working area
+[Y] Display dish + Rib(s) w Phong Shading
+[Y] Allow user to rotate dish
+[>] Lay out discretized units onto standard size rectangles in OpenGL
+    [Y] Choose cutter
+    [>] Confirm working area
     [ ] Choose "Curroplast" sheet (size(s))
     [ ] Confirm working area of sheet
-[ ] Confirm SVG instructions for laser cutting
-    [ ] Watch library instruction video
+[Y] Confirm SVG instructions for laser cutting
+    [Y] Watch library instruction video
 [ ] Lay out discretized units onto standard size rectangles in SVG
 [ ] Lay out ribs onto standard size rectangles in SVG
 [ ] Construct Dish, Install mic at focus
@@ -46,7 +46,11 @@ List<Quad>    qDish    = dc.SegmentDesignedReflector( soln );
 List<Quad> supports = DishCalculator.DesignReflectorSupports( 0.004f, qDish );
 qDish.AddRange( supports );
 List<Tri>  tMesh = Quad.AsTriMesh( qDish );
+
+tMesh.AddRange( dc.backPlate );
+
 tMesh = Tri.ColorMesh( tMesh, new Vector4(0,0,1,1) );
+
 
 TriMeshViewer.Show( tMesh );
 

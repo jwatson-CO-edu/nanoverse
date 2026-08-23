@@ -55,6 +55,12 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     public int   radSegN    = 0; //- Number of radial segments
     public int   arcSegN    = 0; //- Number of circumferential segments
 
+    /// Components ///
+    public List<Vector3> backCirc  = [];
+    public List<Tri>     backPlate = [];
+    // public List<Tri>     cntrPlate = [];
+    // public List<Tri>     edgePlate = [];
+
 
     /// <summary>
     /// Get wavelength [m] from frequency, ASSUMPTION: STP conditions ?,
@@ -185,6 +191,8 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
         List<Quad> rtnLst = [];
         List<Quad> petal;
         rtnLst.Capacity = Nradial * Ncircum * 2;
+        backCirc.Capacity = Ncircum;
+        backPlate.Capacity = Ncircum;
         diameter_m = RoundUpToNext5cm( soln["D"] );
         zDepth_m   = RoundUpToNext5cm( soln["z"] );
         lFocus_m   = FocalLength_m( diameter_m, zDepth_m );
@@ -220,8 +228,19 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
                 // petal.Add( qr );
             }
             petal = Quad.RotateMesh( petal, Vector3.UnitZ, j*arcStep );
+            backCirc.Add( petal[0].V0() );
             rtnLst.AddRange( petal );
         }
+
+        Vector3 curPnt;
+        Vector3 lstPnt = backCirc[^1];
+        Vector3 center = MathVec3.UniformPointCentroid( backCirc );
+        for( int j = 0; j < Ncircum; ++j ){
+            curPnt = backCirc[j];
+            backPlate.Add( new Tri( center, curPnt, lstPnt ) );
+            lstPnt = curPnt;
+        }
+
         return rtnLst;
     }
 
@@ -234,13 +253,9 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
         List<Quad>    supports = [];
         List<Vector3> tempTop  = [];
         List<Vector3> tempBtm  = [];
-        // List<Vector3> top /**/ = [];
-        // List<Vector3> btm /**/ = [];
         supports.Capacity = Nradial*Ncircum*2;
         tempTop.Capacity  = Nradial*2;
         tempBtm.Capacity  = Nradial*2;        
-        // top.Capacity /**/ = Nradial+1;
-        // btm.Capacity /**/ = Nradial+1;
         Vector3 mid1, mid2, norm, p1, p2, p3, p4;
         float height = 0f;
         float dTheta = MathF.PI * 2 / Ncircum;
@@ -249,8 +264,6 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
         height /= Nradial;
         height *= 0.75f;
 
-
-        
         /// For one radial strip, Design one Radial Rib ///
         for( int i = 0; i < Nradial; ++i ){
 
@@ -278,18 +291,12 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
             p2  = tempBtm[i  ];
             p3  = tempBtm[i+1];
             p4  = tempTop[i+1];
-            // support.Add( new Quad( p2, p1, p4, p3 ) );
-            // support.Add( new Quad( p1, p2, p4, p3 ) );
             support.Add( new Quad( p1, p2, p3, p4 ) );
-            // support.Add( new Quad( p2, p1, p3, p4 ) );
         }
-
 
         for( int i = 0; i < Ncircum; ++i ){
             supports.AddRange( Quad.RotateMesh( support, Vector3.UnitZ, i*dTheta ) );
         }
-
-
 
         return supports;
     }
