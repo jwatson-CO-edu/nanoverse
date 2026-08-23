@@ -180,9 +180,22 @@ public class MeshGen {
 
 
 
+/// <summary>
+/// Flat face of a larger model
+/// </summary>
 public class Face {
-    public List<Tri>     mesh /**/ = [];
-    public List<Vector3> perimeter = [];
+    public List<Tri>     mesh /**/ = []; // Triangles that make up a flat face
+    public List<Vector3> perimeter = []; // Cycle of vertices that define the edges of the face
+}
+
+
+
+/// <summary>
+/// Directed edge between components
+/// </summary>
+public class Edge {
+    public Matrix4 /*-*/ port = new();
+    public IdeoComponent node = new();
 }
 
 
@@ -191,8 +204,9 @@ public class Face {
 /// Composable 3D model with specified connection points
 /// </summary>
 public class IdeoComponent {
-    public List<Tri> /*-----*/ mesh  = []; // Displayed mesh
-    public List<Matrix4> /*-*/ ports = []; // Connection points
+    public List<Tri>  mesh  = []; // Displayed mesh
+    public List<Face> faces = []; // Flat faces for relative placement of components
+    public List<Edge> edges = []; // Component neighbors
 }
 
 }
