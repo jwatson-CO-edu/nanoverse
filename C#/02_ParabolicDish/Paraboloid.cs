@@ -151,6 +151,10 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
         Console.WriteLine( $"Gain: ____ {Gain( 1f, lambda_m )}, (1m)" );
         Console.WriteLine( $"Beamwidth: {Beamwidth_rad( 1f, lambda_m )/MathF.PI*180f} [deg], (1m)\n" );
 
+        diameter_m = soln["D"]; // --------------------------- Dish diameter [m]
+        zDepth_m   = soln["z"]; // --------------------------- Vertical distance of dish edge from dish bottom [m]
+        lFocus_m   = FocalLength_m( soln["D"], soln["z"] ); // Vertical distance of focus from dish bottom [m]
+
         return soln;
     }
 
@@ -192,7 +196,7 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
         float rad1, rad2;
         Vector3 eps = Vector3.UnitZ * 0.001f;
         Vector3 v0, v1, v2, v3, mid1, mid2;
-        Quad qd, qr;
+        Quad qd;//, qr;
         for( int j = 0; j < Ncircum; ++j ){
             petal = [];
             for( int i = 1; i <= Nradial; ++i ){
@@ -203,15 +207,17 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
                 v2   = new Vector3( rad2*MathF.Cos( arcStep ), rad2*MathF.Sin( arcStep ), QuadraticPositiveX( diameter_m, zDepth_m, rad2 ) );
                 v3   = new Vector3( rad1*MathF.Cos( arcStep ), rad1*MathF.Sin( arcStep ), QuadraticPositiveX( diameter_m, zDepth_m, rad1 ) );
                 qd   = new Quad( v0, v1, v2, v3 );
-                qr   = new Quad( v3 + eps, v2 + eps, v1 + eps, v0 + eps );
+                // qr   = new Quad( v3 + eps, v2 + eps, v1 + eps, v0 + eps );
                 mid1 = (v0+v3)/2f;
                 mid2 = (v1+v2)/2f;
+
                 qd.attrs["trapHeight"] = (mid2 - mid1).Length;
                 qd.attrs["trapTop"]    = (v2 - v1).Length;
                 qd.attrs["trapBottom"] = (v3 - v0).Length;
+                
                 // Console.WriteLine( $"Trapezoid - Height: {qd.attrs["trapHeight"]}, Top: {qd.attrs["trapTop"]}, Bottom: {qd.attrs["trapBottom"]}, " );
                 petal.Add( qd );
-                petal.Add( qr );
+                // petal.Add( qr );
             }
             petal = Quad.RotateMesh( petal, Vector3.UnitZ, j*arcStep );
             rtnLst.AddRange( petal );
@@ -223,28 +229,37 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     /// <summary>
     /// Design rib(s) as polygon(s)
     /// </summary>
-    public static List<Polygon> DesignReflectorSupports( float matlThickness, List<Quad> segments, int Nradial = 5, int Ncircum = 20 ){
-        List<Polygon> supports = [];
-        Polygon /*-*/ support;
+    public static List<Quad> DesignReflectorSupports( float matlThickness, List<Quad> segments, int Nradial = 5, int Ncircum = 20 ){
+        List<Quad>    support  = [];
+        List<Quad>    supports = [];
         List<Vector3> tempTop  = [];
         List<Vector3> tempBtm  = [];
-        List<Vector3> top /**/ = [];
-        List<Vector3> btm /**/ = [];
-        supports.Capacity = Nradial*2;
+        // List<Vector3> top /**/ = [];
+        // List<Vector3> btm /**/ = [];
+        supports.Capacity = Nradial*Ncircum*2;
         tempTop.Capacity  = Nradial*2;
         tempBtm.Capacity  = Nradial*2;        
-        top.Capacity /**/ = Nradial+1;
-        btm.Capacity /**/ = Nradial+1;
-        Vector3 mid1, mid2, norm, p1, p2, p3, p4, vtx;
+        // top.Capacity /**/ = Nradial+1;
+        // btm.Capacity /**/ = Nradial+1;
+        Vector3 mid1, mid2, norm, p1, p2, p3, p4;
         float height = 0f;
+        float dTheta = MathF.PI * 2 / Ncircum;
 
-        for( int i = 0; i < Nradial; ++i ){  height += segments[i].attrs["trapTop"];  }
+        for( int i = 0; i < Nradial; ++i ){  height += segments[i].attrs["trapHeight"];  }
         height /= Nradial;
+        height *= 0.75f;
 
+
+        
         /// For one radial strip, Design one Radial Rib ///
         for( int i = 0; i < Nradial; ++i ){
+
             mid1 = (segments[i].V0() + segments[i].V3())/2f;
             mid2 = (segments[i].V1() + segments[i].V2())/2f;
+            
+            // mid1 = (segments[i].V0() + segments[i].V1())/2f;
+            // mid2 = (segments[i].V2() + segments[i].V3())/2f;
+            
             norm = Vector3.Cross( segments[i].V2() - segments[i].V1(), segments[i].V0() - segments[i].V1() ).Normalized(); 
             
             mid1 -= norm * matlThickness;
@@ -258,42 +273,24 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
             tempBtm.Add( mid2 );
         }
 
-        int j;
-        top.Add( tempTop[0] );
-        btm.Add( tempBtm[0] );        
-        for( int i = 0; i < (Nradial-1); ++i ){
-            j   = 2*i;
-        
-            p1  = tempTop[j  ];
-            p2  = tempTop[j+1];
-            p3  = tempTop[j+2];
-            p4  = tempTop[j+4];
-            vtx = MathVec3.ClosestPointBetweenLineSegments( p1, p2, p3, p4 );
-            top.Add( vtx );
-
-            p1  = tempBtm[j  ];
-            p2  = tempBtm[j+1];
-            p3  = tempBtm[j+2];
-            p4  = tempBtm[j+4];
-            vtx = MathVec3.ClosestPointBetweenLineSegments( p1, p2, p3, p4 );
-            btm.Add( vtx );
+        for( int i = 0; i < (tempTop.Count-1); ++i ){
+            p1  = tempTop[i  ];
+            p2  = tempBtm[i  ];
+            p3  = tempBtm[i+1];
+            p4  = tempTop[i+1];
+            // support.Add( new Quad( p2, p1, p4, p3 ) );
+            // support.Add( new Quad( p1, p2, p4, p3 ) );
+            support.Add( new Quad( p1, p2, p3, p4 ) );
+            // support.Add( new Quad( p2, p1, p3, p4 ) );
         }
-        top.Add( tempTop[^1] );
-        btm.Add( tempBtm[^1] );        
-        top.Reverse();
 
-        support = new();
-        support.verts.AddRange( btm );
-        support.verts.AddRange( top );
 
-        for( int i = 0; i < (top.Count-1); ++i ){
-            p1  = top[i  ];
-            p2  = btm[i  ];
-            p3  = btm[i+1];
-            p4  = top[i+1];
-            support.mesh.Add( new Tri( p1, p2, p3 ) );
-            support.mesh.Add( new Tri( p3, p4, p1 ) );
+        for( int i = 0; i < Ncircum; ++i ){
+            supports.AddRange( Quad.RotateMesh( support, Vector3.UnitZ, i*dTheta ) );
         }
+
+
+
         return supports;
     }
 

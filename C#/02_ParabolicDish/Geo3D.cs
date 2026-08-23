@@ -482,6 +482,22 @@ public readonly struct Quad {
         verts[3] = d;
     }
 
+
+    /// <summary>
+    /// Indexer: {get, set,}
+    /// </summary>
+    public readonly Vector3 this[int index]{
+        get => verts[ index ];
+        set => verts[ index ] = value;
+    }
+
+
+    public Quad Copy(){
+        Quad qRtn = new( verts[0], verts[1], verts[2], verts[3] );
+        foreach( (string k, float v) in attrs ){  qRtn.attrs[k] = v;  }
+        return qRtn;
+    }
+
     
     /// <summary>
     /// Express the Quad as 2 `Tri`s, Either left slash or right slash
@@ -552,10 +568,11 @@ public readonly struct Quad {
         axis.Normalize();
         Quaternion quat = MathVec3.AxisAngleQuat( axis, theta );
         foreach( Quad quad in mesh ){
-            quad_i = new( quat * quad.V0(), 
-                          quat * quad.V1(), 
-                          quat * quad.V2(),
-                          quat * quad.V3() );
+            quad_i = quad.Copy();
+            quad_i[0] = quat * quad.V0(); 
+            quad_i[1] = quat * quad.V1(); 
+            quad_i[2] = quat * quad.V2();
+            quad_i[3] = quat * quad.V3(); 
             rtnMsh.Add( quad_i );
         }
         return rtnMsh;
