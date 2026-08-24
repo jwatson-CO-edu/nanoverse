@@ -190,6 +190,8 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     public List<Quad> SegmentDesignedReflector( DctVecF soln, int Nradial = 5, int Ncircum = 20 ){
         List<Quad> rtnLst = [];
         List<Quad> petal;
+        radSegN = Nradial; //- Number of radial segments
+        arcSegN = Ncircum; // 
         rtnLst.Capacity = Nradial * Ncircum * 2;
         backCirc.Capacity = Ncircum;
         backPlate.Capacity = Ncircum;
@@ -248,31 +250,27 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     /// <summary>
     /// Design rib(s) as polygon(s)
     /// </summary>
-    public static List<Quad> DesignReflectorSupports( float matlThickness, List<Quad> segments, int Nradial = 5, int Ncircum = 20 ){
+    public List<Quad> DesignReflectorSupports( float matlThickness, List<Quad> segments ){
         List<Quad>    support  = [];
         List<Quad>    supports = [];
         List<Vector3> tempTop  = [];
         List<Vector3> tempBtm  = [];
-        supports.Capacity = Nradial*Ncircum*2;
-        tempTop.Capacity  = Nradial*2;
-        tempBtm.Capacity  = Nradial*2;        
+        supports.Capacity = radSegN*arcSegN*2;
+        tempTop.Capacity  = radSegN*2;
+        tempBtm.Capacity  = radSegN*2;        
         Vector3 mid1, mid2, norm, p1, p2, p3, p4;
         float height = 0f;
-        float dTheta = MathF.PI * 2 / Ncircum;
+        float dTheta = MathF.PI * 2 / arcSegN;
 
-        for( int i = 0; i < Nradial; ++i ){  height += segments[i].attrs["trapHeight"];  }
-        height /= Nradial;
+        for( int i = 0; i < radSegN; ++i ){  height += segments[i].attrs["trapHeight"];  }
+        height /= radSegN;
         height *= 0.75f;
 
         /// For one radial strip, Design one Radial Rib ///
-        for( int i = 0; i < Nradial; ++i ){
+        for( int i = 0; i < radSegN; ++i ){
 
             mid1 = (segments[i].V0() + segments[i].V3())/2f;
             mid2 = (segments[i].V1() + segments[i].V2())/2f;
-            
-            // mid1 = (segments[i].V0() + segments[i].V1())/2f;
-            // mid2 = (segments[i].V2() + segments[i].V3())/2f;
-            
             norm = Vector3.Cross( segments[i].V2() - segments[i].V1(), segments[i].V0() - segments[i].V1() ).Normalized(); 
             
             mid1 -= norm * matlThickness;
@@ -294,12 +292,39 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
             support.Add( new Quad( p1, p2, p3, p4 ) );
         }
 
-        for( int i = 0; i < Ncircum; ++i ){
+        for( int i = 0; i < arcSegN; ++i ){
             supports.AddRange( Quad.RotateMesh( support, Vector3.UnitZ, i*dTheta ) );
         }
 
         return supports;
     }
+
+
+    /// <summary>
+    /// Get one "petal" from the design `Quad`s
+    /// </summary>
+    public void PetalAsSVG( List<Quad> reflectorQuads ){
+        List<Quad> petal = reflectorQuads[0..radSegN];
+        
+    }
+
+
+    /// <summary>
+    /// Get one "strut" from the support `Quad`s
+    /// </summary>
+    public void SupportAsSVG( List<Quad> supportQuads ){
+        List<Quad> strut = supportQuads[0..radSegN];
+        
+    }
+
+
+    /// <summary>
+    /// Layout a design ready for cutting
+    /// </summary>
+    public static void FullPlotSVG(){
+
+    }
+
 
 }
 

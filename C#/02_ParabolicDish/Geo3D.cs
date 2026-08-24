@@ -442,9 +442,6 @@ public readonly struct Tri{
     public readonly Vector4 C( int index ) => color[ index ];
 
 
-    
-
-
     /// <summary>
     /// Convert a list of `Tri` as a plain array (for OGL)
     /// </summary>

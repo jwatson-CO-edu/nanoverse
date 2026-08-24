@@ -335,6 +335,30 @@ public readonly struct Tri{
 
 
     /// <summary>
+    /// Alt vertex accessor (CCW)
+    /// </summary>
+    public readonly Vector3 N( int index ) => norms[ index ];
+
+
+    /// <summary>
+    /// First normal (CCW)
+    /// </summary>
+    public readonly Vector3 N0() => norms[0];
+    
+
+    /// <summary>
+    /// Second normal (CCW)
+    /// </summary>
+    public readonly Vector3 N1() => norms[1];
+    
+    
+    /// <summary>
+    /// Third normal (CCW)
+    /// </summary>
+    public readonly Vector3 N2() => norms[2];
+
+
+    /// <summary>
     /// Convert a list of `Tri` as a plain array (for OGL)
     /// </summary>
     public static float[] Triangles2Arr( List<Tri> triangles ){
