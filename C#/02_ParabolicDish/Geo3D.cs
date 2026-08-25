@@ -1,4 +1,5 @@
 using OpenTK.Mathematics;
+using System.Text;
 
 
 /// <summary>
@@ -13,7 +14,7 @@ namespace geo3d {
 /// <summary>
 /// Working with `OpenTK.Mathematics.Vector3`
 /// </summary>
-public class MathVec3 {
+public static class MathVec3 {
 
     const float _EPSILON = 0.00001f;
 
@@ -556,7 +557,7 @@ public readonly struct Quad {
     }
 
     /// <summary>
-    /// Return a shifted a collection of triangles
+    /// Return a rotated a collection of `Quad`s
     /// </summary>
     public static List<Quad> RotateMesh( List<Quad> mesh, Vector3 axis, float theta ){
         Quad quad_i;
@@ -573,6 +574,22 @@ public readonly struct Quad {
             rtnMsh.Add( quad_i );
         }
         return rtnMsh;
+    }
+
+
+    /// <summary>
+    /// Print the 4 CCW points on one line, followed by indented dictionary attributes,
+    /// SLOP: https://claude.ai/share/a8e79d71-ba4c-434c-85b7-c2601bd2b4bf
+    /// </summary>
+    public override readonly string ToString(){
+        StringBuilder sb = new();
+        sb.Append( $"[{verts[0]}, {verts[1]}, {verts[2]}, {verts[3]}]" );
+        if( attrs.Count > 0 ){
+            foreach( string key in attrs.Keys.OrderBy( k => k, StringComparer.Ordinal ) ){
+                sb.Append( $"\n\t{key}: {attrs[key]}" );
+            }
+        }
+        return sb.ToString();
     }
 }
 

@@ -305,6 +305,9 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     /// </summary>
     public void PetalAsSVG( List<Quad> reflectorQuads ){
         List<Quad> petal = reflectorQuads[0..radSegN];
+        foreach( Quad q in petal ){
+            Console.WriteLine(q);
+        }
         
     }
 
