@@ -56,19 +56,19 @@ public static class MathVec3 {
     /// <summary>
     /// Get the (uniformly weighted) centroid of the collection of points
     /// </summary>
-    public static Vector3 UniformPointCentroid( List<Vector3> points ){
+    public static Vector3 UniformPointCentroid( IEnumerable<Vector3> points ){
         Vector3 rtnPnt = new(0,0,0);
         foreach( Vector3 pnt in points ){  rtnPnt += pnt;  }
-        return rtnPnt / points.Count;
+        return rtnPnt / points.Count();
     }
 
 
     /// <summary>
     /// Return a shifted copy of the collection of points
     /// </summary>
-    public static List<Vector3> ShiftPoints( List<Vector3> points, Vector3 shift ){
+    public static List<Vector3> ShiftPoints( IEnumerable<Vector3> points, Vector3 shift ){
         List<Vector3> rtnLst = [];
-        rtnLst.Capacity = points.Count;
+        rtnLst.Capacity = points.Count();
         foreach( Vector3 pnt in points ){  rtnLst.Add( pnt + shift);  }
         return rtnLst;
     }
@@ -260,7 +260,7 @@ public readonly struct Tri{
     /// <summary>
     /// Return the area centroid of a collection of triangles
     /// </summary>
-    public static float MeshArea( List<Tri> mesh ){
+    public static float MeshArea( IEnumerable<Tri> mesh ){
         float   totArea  = 0.0f;
         foreach( Tri tri in mesh ){  totArea += tri.Area();  }
         return totArea;
@@ -270,7 +270,7 @@ public readonly struct Tri{
     /// <summary>
     /// Return the area centroid of a collection of triangles
     /// </summary>
-    public static Vector3 MeshAreaCentroid( List<Tri> mesh ){
+    public static Vector3 MeshAreaCentroid( IEnumerable<Tri> mesh ){
         float   area_i;
         float   totArea  = 0.0f;
         Vector3 centroid = new(0,0,0);
@@ -286,7 +286,7 @@ public readonly struct Tri{
     /// <summary>
     /// Calculate the mesh Axis-Aligned Bounding Box (AABB)
     /// </summary>
-    public static Vector3[] MeshBBox( List<Tri> mesh ){
+    public static Vector3[] MeshBBox( IEnumerable<Tri> mesh ){
         Vector3 lo = new(  6e10f,  6e10f,  6e10f );
         Vector3 hi = new( -6e10f, -6e10f, -6e10f );
         foreach( Tri tri in mesh ){
@@ -304,10 +304,10 @@ public readonly struct Tri{
     /// <summary>
     /// Return a shifted a collection of triangles
     /// </summary>
-    public static List<Tri> ShiftMesh( List<Tri> mesh, Vector3 shift ){
+    public static List<Tri> ShiftMesh( IEnumerable<Tri> mesh, Vector3 shift ){
         Tri tri_i;
         List<Tri> rtnMsh = [];
-        rtnMsh.Capacity = mesh.Count;
+        rtnMsh.Capacity = mesh.Count();
         foreach( Tri tri in mesh ){
             tri_i = new( tri.V0() + shift, 
                          tri.V1() + shift, 
@@ -321,10 +321,10 @@ public readonly struct Tri{
     /// <summary>
     /// Return a shifted a collection of triangles
     /// </summary>
-    public static List<Tri> RotateMesh( List<Tri> mesh, Vector3 axis, float theta ){
+    public static List<Tri> RotateMesh( IEnumerable<Tri> mesh, Vector3 axis, float theta ){
         Tri tri_i;
         List<Tri> rtnMsh = [];
-        rtnMsh.Capacity = mesh.Count;
+        rtnMsh.Capacity = mesh.Count();
         axis.Normalize();
         Quaternion quat = MathVec3.AxisAngleQuat( axis, theta );
         foreach( Tri tri in mesh ){
@@ -340,9 +340,9 @@ public readonly struct Tri{
     /// <summary>
     /// Copy the entire mesh
     /// </summary>
-    public static List<Tri> CopyMesh( List<Tri> mesh ){
+    public static List<Tri> CopyMesh( IEnumerable<Tri> mesh ){
         List<Tri> rtnMsh = [];
-        rtnMsh.Capacity = mesh.Count;
+        rtnMsh.Capacity = mesh.Count();
         foreach( Tri tri in mesh ){
             rtnMsh.Add( new Tri( tri.V0(), 
                                  tri.V1(), 
@@ -355,7 +355,7 @@ public readonly struct Tri{
     /// <summary>
     /// Apply one color to the entire mesh
     /// </summary>
-    public static List<Tri> ColorMesh( List<Tri> mesh, Vector4 color ){
+    public static List<Tri> ColorMesh( IEnumerable<Tri> mesh, Vector4 color ){
         List<Tri> rtnMsh = CopyMesh( mesh );
         foreach( Tri tri in rtnMsh ){  tri.SetColor( color );  }
         return rtnMsh;
@@ -516,9 +516,9 @@ public readonly struct Quad {
     /// <summary>
     /// Return a copy of the Quad mesh as a Tri Mesh
     /// </summary>
-    public static List<Tri> AsTriMesh( List<Quad> qMesh ){
+    public static List<Tri> AsTriMesh( IEnumerable<Quad> qMesh ){
         List<Tri> rtnMsh = [];
-        rtnMsh.Capacity = qMesh.Count * 2;
+        rtnMsh.Capacity = qMesh.Count() * 2;
         foreach( Quad quad in qMesh ){  foreach( Tri tri in quad.AsTris() ){  rtnMsh.Add( tri );  }  }
         return rtnMsh;
     }
@@ -559,10 +559,10 @@ public readonly struct Quad {
     /// <summary>
     /// Return a rotated a collection of `Quad`s
     /// </summary>
-    public static List<Quad> RotateMesh( List<Quad> mesh, Vector3 axis, float theta ){
+    public static List<Quad> RotateMesh( IEnumerable<Quad> mesh, Vector3 axis, float theta ){
         Quad quad_i;
         List<Quad> rtnMsh = [];
-        rtnMsh.Capacity = mesh.Count;
+        rtnMsh.Capacity = mesh.Count();
         axis.Normalize();
         Quaternion quat = MathVec3.AxisAngleQuat( axis, theta );
         foreach( Quad quad in mesh ){

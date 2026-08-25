@@ -224,7 +224,7 @@ public readonly struct Triangle{
     /// <summary>
     /// Return the area centroid of a collection of triangles
     /// </summary>
-    public static float MeshArea( List<Triangle> mesh ){
+    public static float MeshArea( IEnumerable<Triangle> mesh ){
         float   totArea  = 0.0f;
         foreach( Triangle tri in mesh ){  totArea += tri.Area();  }
         return totArea;
@@ -234,7 +234,7 @@ public readonly struct Triangle{
     /// <summary>
     /// Return the area centroid of a collection of triangles
     /// </summary>
-    public static Vector2 MeshAreaCentroid( List<Triangle> mesh ){
+    public static Vector2 MeshAreaCentroid( IEnumerable<Triangle> mesh ){
         float   area_i;
         float   totArea  = 0.0f;
         Vector2 centroid = new(0,0);
@@ -250,7 +250,7 @@ public readonly struct Triangle{
     /// <summary>
     /// Calculate the mesh Axis-Aligned Bounding Box (AABB)
     /// </summary>
-    public static Vector2[] MeshBBox( List<Triangle> mesh ){
+    public static Vector2[] MeshBBox( IEnumerable<Triangle> mesh ){
         Vector2 lo = new(  6e10f,  6e10f );
         Vector2 hi = new( -6e10f, -6e10f );
         foreach( Triangle tri in mesh ){
@@ -268,10 +268,10 @@ public readonly struct Triangle{
     /// <summary>
     /// Return a shifted a collection of triangles
     /// </summary>
-    public static List<Triangle> ShiftMesh( List<Triangle> mesh, Vector2 shift ){
+    public static List<Triangle> ShiftMesh( IEnumerable<Triangle> mesh, Vector2 shift ){
         Triangle tri_i;
         List<Triangle> rtnMsh = [];
-        rtnMsh.Capacity = mesh.Count;
+        rtnMsh.Capacity = mesh.Count();
         foreach( Triangle tri in mesh ){
             tri_i = new( tri.V0() + shift, 
                          tri.V1() + shift, 
@@ -285,7 +285,7 @@ public readonly struct Triangle{
     /// <summary>
     /// Return a shifted a collection of triangles
     /// </summary>
-    public static List<Triangle> RotateMesh( List<Triangle> mesh, Vector2 center, float theta ){
+    public static List<Triangle> RotateMesh( IEnumerable<Triangle> mesh, Vector2 center, float theta ){
         List<Triangle> rtnMsh = ShiftMesh( mesh, -center );
         Matrix2 /*--*/ matx   = Matrix2.CreateRotation( theta );
         for( int i = 0; i < rtnMsh.Count; ++i ){
@@ -300,9 +300,9 @@ public readonly struct Triangle{
     /// <summary>
     /// Copy the entire mesh
     /// </summary>
-    public static List<Triangle> CopyMesh( List<Triangle> mesh ){
+    public static List<Triangle> CopyMesh( IEnumerable<Triangle> mesh ){
         List<Triangle> rtnMsh = [];
-        rtnMsh.Capacity = mesh.Count;
+        rtnMsh.Capacity = mesh.Count();
         foreach( Triangle tri in mesh ){
             rtnMsh.Add( new Triangle( tri.V0(), 
                                       tri.V1(), 
@@ -315,7 +315,7 @@ public readonly struct Triangle{
     /// <summary>
     /// Apply one color to the entire mesh
     /// </summary>
-    public static List<Triangle> ColorMesh( List<Triangle> mesh, Vector4 color ){
+    public static List<Triangle> ColorMesh( IEnumerable<Triangle> mesh, Vector4 color ){
         List<Triangle> rtnMsh = CopyMesh( mesh );
         foreach( Triangle tri in rtnMsh ){  tri.SetColor( color );  }
         return rtnMsh;
