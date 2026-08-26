@@ -43,7 +43,7 @@ DishCalculator dc = new(
 DctVecF soln = dc.DesignParabolicReflector();
 
 List<Quad> qDish    = dc.SegmentDesignedReflector( soln );
-dc.PetalAsSVG( qDish );
+// dc.PetalAsSVG( qDish );
 List<Quad> supports = dc.DesignReflectorSupports( 0.004f, qDish );
 qDish.AddRange( supports );
 List<Tri> tMesh = Quad.AsTriMesh( qDish );

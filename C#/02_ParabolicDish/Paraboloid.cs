@@ -1,6 +1,7 @@
 using pso;
 using OpenTK.Mathematics;
 using geo3d;
+using geo2d;
 
 namespace paraboloid {
 
@@ -303,12 +304,26 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     /// <summary>
     /// Get one "petal" from the design `Quad`s
     /// </summary>
-    public void PetalAsSVG( List<Quad> reflectorQuads ){
-        List<Quad> petal = reflectorQuads[0..radSegN];
-        foreach( Quad q in petal ){
+    public List<Segment> PetalSegments( List<Quad> reflectorQuads ){
+        List<Segment> fig   = [];
+        List<Quad>    petal = reflectorQuads[0..radSegN];
+        fig.Capacity = 4 + petal.Count - 1;
+        float height = 0f;
+        foreach( Quad q in petal ){  
             Console.WriteLine(q);
+            height += q.attrs["trapHeight"];
         }
-        
+        float segHlf, y_i = -height/2f + petal[0].attrs["trapHeight"];
+        float topLen = petal[^1].attrs["trapTop"   ];
+        float btmLen = petal[0 ].attrs["trapBottom"];
+        fig.AddRange( Figure.MakeTrapezoid( height, topLen, btmLen ) );
+        for( int i = 1; i < petal.Count; ++i ){
+            segHlf = petal[i].attrs["trapBottom"] / 2f;
+            fig.Add( new Segment( new Vector2( -segHlf, y_i ), new Vector2( segHlf, y_i ) ) );
+            y_i += petal[i].attrs["trapHeight"];
+        }
+        Segment.SetWeight( fig, 0f ); // Hairline
+        return fig;
     }
 
 

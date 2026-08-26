@@ -41,9 +41,9 @@ public readonly struct Segment{
 
     /// Members ///
     // Array refs cannot change, values can
-    private readonly Vector2[] verts = new Vector2[2]; // Vertex Positions 
-    private readonly Vector4[] color = new Vector4[3]; // Vertex Colors 
-
+    private readonly Vector2[] /*----------*/ verts = new Vector2[2]; // Vertex Positions 
+    private readonly Vector4[] /*----------*/ color = new Vector4[2]; // Vertex Colors 
+    public  readonly Dictionary<string,float> attrs = []; // ----------- Attributes
     
     /// <summary>
     /// Three points as a Triangle
@@ -112,18 +112,85 @@ public readonly struct Segment{
 
 
     /// <summary>
+    /// Centroid of a collection of `Segment`s
+    /// </summary>
+    public static Vector2 Centroid( IEnumerable<Segment> cllctn ){
+        Vector2 center = new(0,0);
+        foreach( Segment seg in cllctn ){  center += seg.V0() + seg.V1();  }
+        return center / (cllctn.Count() * 2);
+    }
+
+
+    /// <summary>
+    /// Calculate the collection Axis-Aligned Bounding Box (AABB)
+    /// </summary>
+    public static Vector2[] BBox( IEnumerable<Segment> cllctn ){
+        Vector2 lo = new(  6e10f,  6e10f );
+        Vector2 hi = new( -6e10f, -6e10f );
+        foreach( Segment seg in cllctn ){
+            foreach( Vector2 pt in seg.verts ){
+                for( int k = 0; k < 2; ++k ){
+                    lo[k] = Math.Min( lo[k], pt[k] );
+                    hi[k] = Math.Max( hi[k], pt[k] );
+                }
+            }
+        }
+        return [lo, hi,];
+    }
+
+
+    /// <summary>
     /// Return a shifted a collection of `Segment`s
     /// </summary>
-    public static List<Segment> ShiftSegments( IEnumerable<Segment> cllctn, Vector2 shift ){
+    public static List<Segment> CopySegments( IEnumerable<Segment> cllctn ){
         List<Segment> rtnLst = [];
+        Segment nuSeg;
         rtnLst.Capacity = cllctn.Count();
         foreach( Segment seg in cllctn ){
-            rtnLst.Add( new Segment( seg.V0() + shift, seg.V1() + shift ) );
+            nuSeg = new Segment( seg.V0(), seg.V1() );
+            foreach( (string k, float v) in seg.attrs ){  nuSeg.attrs[k] = v;  }
+            rtnLst.Add( nuSeg );
         }
         return rtnLst;
     }
 
+
+    /// <summary>
+    /// Return a shifted a collection of `Segment`s
+    /// </summary>
+    public static List<Segment> ShiftSegments( IEnumerable<Segment> cllctn, Vector2 shift ){
+        List<Segment> rtnLst = CopySegments( cllctn );
+        for( int i = 0; i < rtnLst.Count; ++i ){
+            rtnLst[i].verts[0] += shift; 
+            rtnLst[i].verts[1] += shift; 
+        }
+        return rtnLst;
+    }
+
+
+    /// <summary>
+    /// Set a uniform weight for collection of `Segment`s
+    /// </summary>
+    public static void SetWeight( IEnumerable<Segment> cllctn, float weight ){
+        foreach( Segment seg in cllctn ){  seg.attrs["weight"] = weight;  }
+    }
+
+
+    /// <summary>
+    /// Return a rotated a collection of `Segment`s
+    /// </summary>
+    public static List<Segment> RotateSegments( IEnumerable<Segment> segments, Vector2 center, float theta ){
+        List<Segment> rtnLst = ShiftSegments( segments, -center );
+        Matrix2 /*-*/ matx   = Matrix2.CreateRotation( theta );
+        for( int i = 0; i < rtnLst.Count; ++i ){
+            rtnLst[i].verts[0] = matx * rtnLst[i].verts[0]; 
+            rtnLst[i].verts[1] = matx * rtnLst[i].verts[1]; 
+        }
+        return ShiftSegments( rtnLst, center );
+    }
+
 }
+
 
 
 ////////// TRIANGLES ///////////////////////////////////////////////////////////////////////////////
@@ -255,7 +322,7 @@ public readonly struct Triangle{
         Vector2 hi = new( -6e10f, -6e10f );
         foreach( Triangle tri in mesh ){
             foreach( Vector2 pt in tri.verts ){
-                for( int k = 0; k < 3; ++k ){
+                for( int k = 0; k < 2; ++k ){
                     lo[k] = Math.Min( lo[k], pt[k] );
                     hi[k] = Math.Max( hi[k], pt[k] );
                 }
@@ -405,7 +472,11 @@ public readonly struct Triangle{
 /// 2D Figure composed of 2D `Segment`s
 /// </summary>
 public class Figure {
-    public Queue<Segment> segments = [];
+    public List<Segment> segments = [];
+
+
+    public void AddSegments( IEnumerable<Segment> nuSegments ){  segments.AddRange( nuSegments );  }
+
 
     public static List<Segment> MakeTrapezoid( float height, float topLength, float bottomLength ){
         List<Segment> rtnLst = [];
