@@ -468,6 +468,7 @@ public readonly struct Tri{
 public readonly struct Quad {
 
     private readonly Vector3[] /*----------*/ verts = new Vector3[4]; // Array ref cannot change, values can 
+    private readonly Vector3[] /*----------*/ norms = new Vector3[4]; // Norm Directions 
     public readonly  Dictionary<string,float> attrs = []; // ----------- Dict ref cannot change, key-value pairs can
     
     /// <summary>
@@ -478,6 +479,11 @@ public readonly struct Quad {
         verts[1] = b;
         verts[2] = c;
         verts[3] = d;
+        Vector3 BA = a - b;
+        Vector3 BC = c - b;
+        Vector3 DC = c - d;
+        Vector3 DA = a - d;
+        SetNorms(  ((Vector3.Cross( BC, BA ) + Vector3.Cross( DA, DC ))/2f).Normalized()  );
     }
 
 
@@ -490,10 +496,69 @@ public readonly struct Quad {
     }
 
 
+    /// <summary>
+    /// First normal (CCW)
+    /// </summary>
+    public readonly Vector3 N0() => norms[0];
+    
+
+    /// <summary>
+    /// Second normal (CCW)
+    /// </summary>
+    public readonly Vector3 N1() => norms[1];
+    
+    
+    /// <summary>
+    /// Third normal (CCW)
+    /// </summary>
+    public readonly Vector3 N2() => norms[2];
+
+    
+    /// <summary>
+    /// Third normal (CCW)
+    /// </summary>
+    public readonly Vector3 N3() => norms[3];
+
+
+    /// <summary>
+    /// Alt normal accessor (CCW)
+    /// </summary>
+    public readonly Vector3 N( int index ) => norms[ index ];
+
+
+    /// <summary>
+    /// Alt normal accessor (CCW)
+    /// </summary>
+    public readonly Vector3 Navg() => (N0() + N1() + N2() + N3())/4f;
+
+
     public Quad Copy(){
         Quad qRtn = new( verts[0], verts[1], verts[2], verts[3] );
         foreach( (string k, float v) in attrs ){  qRtn.attrs[k] = v;  }
         return qRtn;
+    }
+
+
+    /// <summary>
+    /// Set uniform norm for all vertices
+    /// </summary>
+    public void SetNorms( Vector3 norm ){
+        norm.Normalize();
+        norms[0] = norm;
+        norms[1] = norm;
+        norms[2] = norm;
+        norms[3] = norm;
+    }
+
+
+    /// <summary>
+    /// Set per vertex norms
+    /// </summary>
+    public void SetNorms( Vector3 a, Vector3 b, Vector3 c, Vector3 d ){
+        norms[0] = a.Normalized();
+        norms[1] = b.Normalized();
+        norms[2] = c.Normalized();
+        norms[3] = d.Normalized();
     }
 
     
@@ -590,6 +655,43 @@ public readonly struct Quad {
             }
         }
         return sb.ToString();
+    }
+
+
+    public static List<List<int>> GetFaces( List<Quad> qMesh ){
+        List<List<int>> faces = [];
+        List<int> /*-*/ face  = [];
+        int /*-------*/ N     = qMesh.Count;
+        Quad /*------*/ q_i, q_j;
+        float /*-----*/ thresh = 2.5f / 180f * MathF.PI;
+        HashSet<int>    used   = [];
+
+        for( int i = 0; i < N-1; ++i ){
+            if( !used.Contains(i) ){
+                face.Add(i);
+                used.Add(i);
+            }else{  continue;  }
+            q_i = qMesh[i];
+            for( int j = i+1; j < N; ++j ){
+                q_j = qMesh[j];
+                if( MathVec3.AngleBetween( q_i.Navg(), q_j.Navg() ) <= thresh ){
+                    face.Add(j);
+                    used.Add(j);
+                }
+                
+            }
+            faces.Add( face );
+            face = [];
+        }
+        return faces;
+    }
+
+
+    public static List<Vector3> GetPerimeter( List<Quad> qMesh ){
+        List<Vector3> perimeter = [];
+        Quad /*----*/ q_i, q_j;
+        
+        return perimeter;
     }
 }
 

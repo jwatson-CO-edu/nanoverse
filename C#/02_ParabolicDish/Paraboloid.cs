@@ -330,8 +330,9 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     /// <summary>
     /// Get one "strut" from the support `Quad`s
     /// </summary>
-    public void SupportAsSVG( List<Quad> supportQuads ){
-        List<Quad> strut = supportQuads[0..radSegN];
+    public void SupportSegments( List<Quad> supportQuads ){
+        int N = 2 * radSegN - 1;
+        List<Quad> strut = supportQuads[0..N];
         
     }
 
