@@ -1,5 +1,5 @@
 using OpenTK.Mathematics;
-
+using geo3d;
 
 
 /// <summary>
@@ -23,6 +23,16 @@ public static class MathVec2 {
     /// Are the vectors equal?
     /// </summary>
     public static bool Equal( Vector2 vec1 , Vector2 vec2 ){  return (vec1 - vec2).Length < _EPSILON;  }
+
+    public static List<Segment> ProjectSegmentsDown( List<LinSeg> segments3d ){
+        List<Segment> rtnLst = [];
+
+        /// Phase 1: Find Projection Plane ///
+        
+        /// Phase 2: Project Onto Plane ///
+
+        return rtnLst;
+    }
 
 }
 

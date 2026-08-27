@@ -1,6 +1,9 @@
 using OpenTK.Mathematics;
 using System.Text;
 
+using MathNet.Numerics.LinearAlgebra;
+
+
 
 /// <summary>
 /// Helper functions for 3D Geometry
@@ -127,6 +130,33 @@ public static class MathVec3 {
 
         return (p_a + p_b)/2f;
     }
+
+
+    /// <summary>
+    /// Intepret a collection of OpenTK `Vector3` as a Math.NET matrix,
+    /// SLOP: https://claude.ai/share/79b43aee-2f43-4161-bd11-2bbb725ed2db
+    /// </summary>
+    public static Matrix<double> ToMathNet( this IReadOnlyList<Vector3> points ){
+        var m = Matrix<double>.Build.Dense( points.Count, 3 );
+        for( int i = 0; i < points.Count; i++ ){
+            m[i, 0] = points[i].X;
+            m[i, 1] = points[i].Y;
+            m[i, 2] = points[i].Z;
+        }
+        return m;
+    }
+
+
+    /// <summary>
+    /// Interpret a Math.NET vector as an OpenTK `Vector3`,
+    /// SLOP: https://claude.ai/share/79b43aee-2f43-4161-bd11-2bbb725ed2db
+    /// </summary>
+    public static Vector3 ToOpenTK( this Vector<double> v ){
+        if( v.Count != 3 ){  throw new ArgumentException( "Vector must have exactly 3 elements." );  }
+        return new Vector3( (float)v[0], (float)v[1], (float)v[2] );
+    }
+
+
 }
 
 
