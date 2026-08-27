@@ -16,7 +16,7 @@ namespace geo3d {
 /// </summary>
 public static class MathVec3 {
 
-    const float _EPSILON = 0.00001f;
+    const float _EPSILON = 0.00001f; // Error margin, 1/100 [mm], We don't care about anything smaller!
 
     
     /// <summary>
@@ -127,8 +127,6 @@ public static class MathVec3 {
 
         return (p_a + p_b)/2f;
     }
-    
-
 }
 
 
@@ -136,6 +134,179 @@ public static class MathVec3 {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////// GEOMETRIC STRUCTS ///////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+////////// SEGMENTS ///////////////////////////////////////////////////////////////////////////////
+
+/// <summary>
+/// Segment
+/// </summary>
+public readonly struct LinSeg{
+
+    /// Members ///
+    // Array refs cannot change, values can
+    private readonly Vector3[] /*----------*/ verts = new Vector3[2]; // Vertex Positions 
+    private readonly Vector4[] /*----------*/ color = new Vector4[2]; // Vertex Colors 
+    public  readonly Dictionary<string,float> attrs = []; // ----------- Attributes
+    
+    /// <summary>
+    /// Three points as a Triangle
+    /// </summary>
+    public LinSeg( Vector3 a, Vector3 b ){
+        verts[0] = a;
+        verts[1] = b;
+    }
+
+
+    /// <summary>
+    /// Set uniform color for all vertices
+    /// </summary>
+    public void SetColor( Vector4 colr ){
+        color[0] = colr;
+        color[1] = colr;
+    }
+
+
+    /// <summary>
+    /// Set uniform color for all vertices
+    /// </summary>
+    public void SetColor( Vector3 colr, float alpha = 1f ){
+        color[0] = new Vector4( colr[0], colr[1], colr[2], alpha );
+        color[1] = new Vector4( colr[0], colr[1], colr[2], alpha );
+    }
+
+
+    /// <summary>
+    /// Set per vertex colors
+    /// </summary>
+    public void SetColor( Vector4 a, Vector4 b ){
+        color[0] = a;
+        color[1] = b;
+    }
+
+
+    /// <summary>
+    /// Set per vertex colors
+    /// </summary>
+    public void SetColor( Vector3 a, Vector3 b, Vector3 c, float alpha = 1f ){
+        color[0] = new Vector4( a[0], a[1], a[2], alpha );
+        color[1] = new Vector4( b[0], b[1], b[2], alpha );
+    }
+
+
+    /// <summary>
+    /// Set uniform opacity for all vertices
+    /// </summary>
+    public void SetAlpha( float alpha ){
+        color[0][3] = alpha;
+        color[1][3] = alpha;
+    }
+
+
+    /// <summary>
+    /// First point (CCW)
+    /// </summary>
+    public readonly Vector3 V0() => verts[0];
+    
+
+    /// <summary>
+    /// Second point (CCW)
+    /// </summary>
+    public readonly Vector3 V1() => verts[1];
+
+
+    /// <summary>
+    /// Centroid of a collection of `Segment`s
+    /// </summary>
+    public static Vector3 Centroid( IEnumerable<LinSeg> cllctn ){
+        Vector3 center = new(0,0,0);
+        foreach( LinSeg seg in cllctn ){  center += seg.V0() + seg.V1();  }
+        return center / (cllctn.Count() * 2);
+    }
+
+
+    /// <summary>
+    /// Calculate the collection Axis-Aligned Bounding Box (AABB)
+    /// </summary>
+    public static Vector3[] BBox( IEnumerable<LinSeg> cllctn ){
+        Vector3 lo = new(  6e10f,  6e10f,  6e10f );
+        Vector3 hi = new( -6e10f, -6e10f, -6e10f );
+        foreach( LinSeg seg in cllctn ){
+            foreach( Vector3 pt in seg.verts ){
+                for( int k = 0; k < 3; ++k ){
+                    lo[k] = Math.Min( lo[k], pt[k] );
+                    hi[k] = Math.Max( hi[k], pt[k] );
+                }
+            }
+        }
+        return [lo, hi,];
+    }
+
+
+    /// <summary>
+    /// Return a shifted a collection of `Segment`s
+    /// </summary>
+    public static List<LinSeg> CopySegments( IEnumerable<LinSeg> cllctn ){
+        List<LinSeg> rtnLst = [];
+        LinSeg nuSeg;
+        rtnLst.Capacity = cllctn.Count();
+        foreach( LinSeg seg in cllctn ){
+            nuSeg = new LinSeg( seg.V0(), seg.V1() );
+            foreach( (string k, float v) in seg.attrs ){  nuSeg.attrs[k] = v;  }
+            rtnLst.Add( nuSeg );
+        }
+        return rtnLst;
+    }
+
+
+    /// <summary>
+    /// Return a shifted a collection of `Segment`s
+    /// </summary>
+    public static List<LinSeg> ShiftSegments( IEnumerable<LinSeg> cllctn, Vector3 shift ){
+        List<LinSeg> rtnLst = CopySegments( cllctn );
+        for( int i = 0; i < rtnLst.Count; ++i ){
+            rtnLst[i].verts[0] += shift; 
+            rtnLst[i].verts[1] += shift; 
+        }
+        return rtnLst;
+    }
+
+
+    /// <summary>
+    /// Set a uniform weight for collection of `Segment`s
+    /// </summary>
+    public static void SetWeight( IEnumerable<LinSeg> cllctn, float weight ){
+        foreach( LinSeg seg in cllctn ){  seg.attrs["weight"] = weight;  }
+    }
+
+
+    /// <summary>
+    /// Return a rotated a collection of `Segment`s
+    /// </summary>
+    public static List<LinSeg> RotateSegments( IEnumerable<LinSeg> segments, Vector3 center, Vector3 axis, float theta ){
+        List<LinSeg> rtnLst = ShiftSegments( segments, -center );
+        Quaternion   quat   = MathVec3.AxisAngleQuat( axis, theta );
+        for( int i = 0; i < rtnLst.Count; ++i ){
+            rtnLst[i].verts[0] = quat * rtnLst[i].verts[0]; 
+            rtnLst[i].verts[1] = quat * rtnLst[i].verts[1]; 
+        }
+        return ShiftSegments( rtnLst, center );
+    }
+
+
+    /// <summary>
+    /// Do the `Segment`s overlap?
+    /// </summary>
+    public bool IsShared( LinSeg other ){
+        if( MathVec3.Equal( V0(), other.V0() ) && MathVec3.Equal( V1(), other.V1() ) ){  return true;  }
+        if( MathVec3.Equal( V0(), other.V1() ) && MathVec3.Equal( V1(), other.V0() ) ){  return true;  }
+        return false;
+    }
+
+
+}
+
 
 
 ////////// TRIANGLES ///////////////////////////////////////////////////////////////////////////////
@@ -467,10 +638,12 @@ public readonly struct Tri{
 /// </summary>
 public readonly struct Quad {
 
+    /// Members ///
     private readonly Vector3[] /*----------*/ verts = new Vector3[4]; // Array ref cannot change, values can 
     private readonly Vector3[] /*----------*/ norms = new Vector3[4]; // Norm Directions 
     public readonly  Dictionary<string,float> attrs = []; // ----------- Dict ref cannot change, key-value pairs can
     
+
     /// <summary>
     /// Four points as a Quad
     /// </summary>
@@ -532,6 +705,9 @@ public readonly struct Quad {
     public readonly Vector3 Navg() => (N0() + N1() + N2() + N3())/4f;
 
 
+    /// <summary>
+    /// Return a new `Quad` with the same coordinates and attributes
+    /// </summary>
     public Quad Copy(){
         Quad qRtn = new( verts[0], verts[1], verts[2], verts[3] );
         foreach( (string k, float v) in attrs ){  qRtn.attrs[k] = v;  }
@@ -687,28 +863,118 @@ public readonly struct Quad {
     }
 
 
-    public static List<Vector3> GetPerimeter( List<Quad> qMesh ){
-        List<Vector3> perimeter = [];
-        Quad /*----*/ q_i, q_j;
+    /// <summary>
+    /// Return a the CCW edges of the `Quad` as a list of line segments
+    /// </summary>
+    public List<LinSeg> GetEdges(){
+        List<LinSeg> edges =[];
+        edges.Capacity = 4;
+        edges.Add( new LinSeg( V0(), V1() ) );
+        edges.Add( new LinSeg( V1(), V2() ) );
+        edges.Add( new LinSeg( V2(), V3() ) );
+        edges.Add( new LinSeg( V3(), V0() ) );
+        return edges;
+    }
+
+
+    /// <summary>
+    /// (Local) Int array comparator class,
+    /// SLOP: https://claude.ai/share/b45d2337-0051-4268-a530-a3733ae491e2
+    /// </summary>
+    public class IntArrayComparer : IEqualityComparer<int[]> {
         
-        return perimeter;
+        /// <summary>
+        /// Are two arrays equal?
+        /// </summary>
+        public bool Equals( int[]? x, int[]? y ){
+            if (x is null || y is null) return x == y;
+            return x.AsSpan().SequenceEqual(y);
+        }
+
+        /// <summary>
+        /// Hashcode of the array
+        /// </summary>
+        public int GetHashCode( int[] arr ){
+            var hash = new HashCode();
+            foreach( var i in arr ){  hash.Add(i);  }
+            return hash.ToHashCode();
+        }
+    }
+
+
+    /// <summary>
+    /// Return an ordered list of unshared line segments at the border of the `Quad` mesh,
+    /// NOTE: Returned list may contain MULTIPLE LOOPS
+    /// </summary>
+    public static List<LinSeg> GetPerimeter( List<Quad> qMesh ){
+        List<LinSeg>   perimeter = [];
+        List<LinSeg>   ordered   = [];
+        int /*------*/ N /*---*/ = qMesh.Count;
+        Quad /*-----*/ q_i, q_j;
+        List<LinSeg>   edges_i, edges_j;
+        LinSeg /*---*/ edge_k , edge_l;
+        HashSet<int[]> shared  = new( new IntArrayComparer() );
+        HashSet<int>   used    = [];
+
+        /// Phase 1: Find Unshared Edges ///
+
+        for( int i = 0; i < N; ++i ){
+            q_i     = qMesh[i];
+            edges_i = q_i.GetEdges();
+            for( int k = 0; k < 4; ++k ){
+                if( shared.Contains([i,k]) ){  continue;  }
+                edge_k = edges_i[k];
+                for( int j = i+1; j < N; ++j ){
+                    q_j     = qMesh[j];
+                    edges_j = q_j.GetEdges();
+                    for( int l = 0; l < 4; ++l ){
+                        edge_l = edges_j[4];
+                        if( edge_k.IsShared( edge_l ) ){
+                            shared.Add([i,k]);
+                            shared.Add([j,l]);
+                        }
+                    }
+                }
+                if( !shared.Contains([i,k]) ){  perimeter.Add( edges_i[k] );  }
+            }
+        }
+
+        /// Phase 2: Order Unshared Edges ///
+        ordered = [ perimeter[0], ];
+        ordered.Capacity = perimeter.Count;
+        LinSeg periSeg;
+        int    count = 0;
+        bool   added;
+        bool   latch = false;
+
+        while( (ordered.Count < perimeter.Count) && (count < (perimeter.Count*2)) ){
+            added = false;
+            for( int i = 1; i < perimeter.Count; ++i ){
+                if( used.Contains(i) ){  continue;  }
+                periSeg = perimeter[i];
+                if( MathVec3.Equal( ordered[^1].V1(), periSeg.V0() ) ){
+                    ordered.Add( periSeg );
+                    used.Add(i);
+                    added = true;
+                }
+            }
+            // If we made two passes without adding, Just add next unadded
+            if( (!added) && latch ){  
+                for( int i = 1; i < perimeter.Count; ++i ){
+                    if( used.Contains(i) ){  continue;  }
+                    ordered.Add( perimeter[i] );
+                    used.Add(i);
+                    added = true;
+                    break;
+                }
+            }
+            latch = !added;
+            ++count;
+        }
+
+        return ordered;
     }
 }
-
-
-
-////////// POLYGON /////////////////////////////////////////////////////////////////////////////////
-
-/// <summary>
-/// 3D N-gon, Flatness NOT guaranteed
-/// </summary>
-public class Polygon {
-    public List<Vector3> /*------*/ verts = [];
-    public List<Tri> /*----------*/ mesh  = [];
-    public List<Quad> /*---------*/ qMesh = [];
-    public Dictionary<string,float> attrs = []; // General data payload
-}
-
 
 
 }
