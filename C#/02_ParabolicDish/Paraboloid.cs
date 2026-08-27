@@ -293,6 +293,8 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
             support.Add( new Quad( p1, p2, p3, p4 ) );
         }
 
+        Console.WriteLine( $"There are ${support.Count} `Quad`s in the designed support." );
+
         for( int i = 0; i < arcSegN; ++i ){
             supports.AddRange( Quad.RotateMesh( support, Vector3.UnitZ, i*dTheta ) );
         }
@@ -302,7 +304,7 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
 
 
     /// <summary>
-    /// Get one "petal" from the design `Quad`s
+    /// Get one "petal" from the design `Quad`s as a collection of line `Segment`s
     /// </summary>
     public List<Segment> PetalSegments( List<Quad> reflectorQuads ){
         List<Segment> fig   = [];
@@ -328,12 +330,28 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
 
 
     /// <summary>
-    /// Get one "strut" from the support `Quad`s
+    /// Get one "strut" from the support `Quad`s as a collection of line `Segment`s
     /// </summary>
-    public void SupportSegments( List<Quad> supportQuads ){
-        int N = 2 * radSegN - 1;
-        List<Quad> strut = supportQuads[0..N];
-        
+    public List<Segment> SupportSegments( List<Quad> supportQuads ){
+        List<Segment> fig = [];
+        int /*-----*/ N   = 2 * radSegN - 1;
+        Console.WriteLine( $"Fetch the first {N} `Quad`s" );
+        List<Quad>    strut = supportQuads[0..N];
+        List<LinSeg>  perim = Quad.GetPerimeter( strut );
+        List<Vector3> pPnts = [];
+        pPnts.Capacity = pPnts.Count * 2;
+        foreach( LinSeg seg in perim ){
+            pPnts.Add( seg.V0() );
+            pPnts.Add( seg.V1() );
+        }
+        List<Vector2> fPnts = Ops2D3D.Project3dPointsTo2d( pPnts );
+        N = perim.Count;
+        int j;
+        for( int i = 0; i < N; ++i ){
+            j = 2*i;
+            fig.Add( new Segment( fPnts[j], fPnts[j+1] ) );
+        }
+        return fig;   
     }
 
 
