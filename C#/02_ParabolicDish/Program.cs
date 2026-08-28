@@ -47,7 +47,7 @@ DctVecF soln = dc.DesignParabolicReflector();
 
 List<Quad> qDish    = dc.SegmentDesignedReflector( soln );
 // dc.PetalAsSVG( qDish );
-List<Quad> supports = dc.DesignReflectorSupports( 0.004f, qDish );
+List<Quad> supports = dc.DesignReflectorSupports( 0.00125f, qDish );
 qDish.AddRange( supports );
 List<Tri> tMesh = Quad.AsTriMesh( qDish );
 
@@ -79,9 +79,15 @@ strut = Segment.RotateSegments( strut, new Vector2(), MathF.PI/2f );
 
 strutSVG.PatternGroup( strut, half, new Vector2( half[0] + 0.5f * CutSVG._IN_TO_M, 0f ), 0f, 4 );
 
-
-// strutSVG.AddSegments_m(  );
 strutSVG.WriteSVG( "strut.svg" );
+
+CutSVG backSVG = new();
+List<Segment> back = dc.BackSegments();
+
+// backSVG.AddSegments_m( back );
+backSVG.PatternGroup( back, new Vector2( 2f * CutSVG._IN_TO_M, 2f * CutSVG._IN_TO_M ), new Vector2( 0f, 3.25f * CutSVG._IN_TO_M ), 0f, 3 );
+
+backSVG.WriteSVG( "back.svg" );
 
 TriMeshViewer.Show( tMesh );
 

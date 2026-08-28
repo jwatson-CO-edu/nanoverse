@@ -224,7 +224,6 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
         float arcStep = 2f * MathF.PI / Ncircum;
         float radStep = diameter_m / 2f / (Nradial+1); // Central step is a flat polygon?
         float rad1, rad2;
-        Vector3 eps = Vector3.UnitZ * 0.001f;
         Vector3 v0, v1, v2, v3, mid1, mid2;
         Quad qd;//, qr;
         for( int j = 0; j < Ncircum; ++j ){
@@ -391,10 +390,17 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     /// <summary>
     /// Layout a design ready for cutting
     /// </summary>
-    public static void FullPlotSVG(){
-
-        
-
+    public List<Segment> BackSegments(){
+        List<Segment> fig   = [];
+        List<Vector2> fPnts = Ops2D3D.Project3dPointsTo2d( backCirc );
+        Vector2 /*-*/ lst   = fPnts[^1];
+        Segment /*-*/ seg_i;
+        foreach(Vector2 pnt in fPnts ){
+            seg_i = new Segment( pnt, lst );
+            fig.Add( seg_i );
+            lst = pnt; 
+        }
+        return fig;
     }
 
 
