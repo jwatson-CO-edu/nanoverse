@@ -1,5 +1,7 @@
-using pso;
 using OpenTK.Mathematics;
+using Svg;
+
+using pso;
 using geo3d;
 using geo2d;
 
@@ -170,9 +172,20 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     /// Round up a quantity in [m] to the next 0.050
     /// </summary>
     public static float RoundUpToNext5cm( float meters ){
-        int units = (int) (meters / 0.050f);
-        if( (meters - units * 0.050f) > 0.0001f ){ return (units + 1) * 0.050f;  }
-        return units * 0.050f;
+        float unit_m = 0.050f;
+        int units = (int) (meters / unit_m);
+        if( (meters - units * unit_m) > 0.0001f ){ return (units + 1) * unit_m;  }
+        return units * unit_m;
+    }
+
+
+    /// <summary>
+    /// Round up a quantity in [m] to the next 0.050
+    /// </summary>
+    public static float RoundUpToNextUnit( float meters, float unit_m = 0.050f ){
+        int units = (int) (meters / unit_m);
+        if( (meters - units * unit_m) > 0.0001f ){ return (units + 1) * unit_m;  }
+        return units * unit_m;
     }
 
 
@@ -191,13 +204,19 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     public List<Quad> SegmentDesignedReflector( DctVecF soln, int Nradial = 5, int Ncircum = 20 ){
         List<Quad> rtnLst = [];
         List<Quad> petal;
+        float /**/ designUnit_m = 0.010f;
         radSegN = Nradial; //- Number of radial segments
         arcSegN = Ncircum; // 
         rtnLst.Capacity = Nradial * Ncircum * 2;
         backCirc.Capacity = Ncircum;
         backPlate.Capacity = Ncircum;
-        diameter_m = RoundUpToNext5cm( soln["D"] );
-        zDepth_m   = RoundUpToNext5cm( soln["z"] );
+
+        // diameter_m = RoundUpToNext5cm( soln["D"] );
+        // zDepth_m   = RoundUpToNext5cm( soln["z"] );
+        
+        diameter_m = RoundUpToNextUnit( soln["D"], unit_m : designUnit_m );
+        zDepth_m   = RoundUpToNextUnit( soln["z"], unit_m : designUnit_m );
+        
         lFocus_m   = FocalLength_m( diameter_m, zDepth_m );
         Console.WriteLine( $"Design discretized paraboloid reflector with diameter {diameter_m:F2} [m], depth {zDepth_m:F2} [m], focal length {lFocus_m:F4} [m]," );
         Console.WriteLine( $"{Nradial} radial segments, and {Ncircum} circumferential segments" );
@@ -308,6 +327,7 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     /// </summary>
     public List<Segment> PetalSegments( List<Quad> reflectorQuads ){
         List<Segment> fig   = [];
+        Segment seg;
         List<Quad>    petal = reflectorQuads[0..radSegN];
         fig.Capacity = 4 + petal.Count - 1;
         float height = 0f;
@@ -319,9 +339,18 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
         float topLen = petal[^1].attrs["trapTop"   ];
         float btmLen = petal[0 ].attrs["trapBottom"];
         fig.AddRange( Figure.MakeTrapezoid( height, topLen, btmLen ) );
-        for( int i = 1; i < petal.Count; ++i ){
-            segHlf = petal[i].attrs["trapBottom"] / 2f;
-            fig.Add( new Segment( new Vector2( -segHlf, y_i ), new Vector2( segHlf, y_i ) ) );
+        // for( int i = 1; i < petal.Count; ++i ){
+        for( int i = 0; i < petal.Count-1; ++i ){
+
+            // segHlf = petal[i].attrs["trapBottom"] / 2f;
+            // segHlf = petal[i].attrs["trapTop"] / 2f;
+            // segHlf = petal[i+1].attrs["trapTop"] / 2f;
+            // segHlf = (petal[i+1].attrs["trapBottom"] + petal[i+1].attrs["trapTop"]) / 4f;
+            segHlf = petal[i+1].attrs["trapBottom"] / 2f;
+
+            seg = new Segment( new Vector2( -segHlf, y_i ), new Vector2( segHlf, y_i ) );
+            seg.SetColor( new Vector3(0,0,1) );
+            fig.Add( seg );
             y_i += petal[i].attrs["trapHeight"];
         }
         Segment.SetWeight( fig, 0f ); // Hairline
@@ -359,6 +388,8 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     /// Layout a design ready for cutting
     /// </summary>
     public static void FullPlotSVG(){
+
+        
 
     }
 

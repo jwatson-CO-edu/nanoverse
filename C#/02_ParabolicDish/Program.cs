@@ -1,7 +1,10 @@
-﻿using paraboloid;
+﻿using OpenTK.Mathematics;
+
+using paraboloid;
 using pso;
 using geo3d;
-using OpenTK.Mathematics;
+using geo2d;
+using cut_svg;
 
 /* ////////// DEV_PLAN /////////////////////////////////////////////////////////////////////////////
 
@@ -51,6 +54,11 @@ List<Tri> tMesh = Quad.AsTriMesh( qDish );
 tMesh.AddRange( dc.backPlate );
 
 tMesh = Tri.ColorMesh( tMesh, new Vector4(0,0,1,1) );
+
+
+CutSVG outSVG = new();
+outSVG.AddSegments_m( Segment.ShiftSegments( dc.PetalSegments( qDish ), new Vector2( 1f/CutSVG._M_TO_IN * 8.5f/2f, 1f/CutSVG._M_TO_IN * 11f/2f ) ) );
+outSVG.WriteSVG();
 
 
 TriMeshViewer.Show( tMesh );

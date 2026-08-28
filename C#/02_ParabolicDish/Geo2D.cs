@@ -2,6 +2,7 @@ using OpenTK.Mathematics;
 using geo3d;
 
 
+
 /// <summary>
 /// Helper functions for 2D Geometry
 /// </summary>
@@ -122,6 +123,18 @@ public readonly struct Segment{
 
 
     /// <summary>
+    /// First point (CCW)
+    /// </summary>
+    public readonly Vector4 C0() => color[0];
+    
+
+    /// <summary>
+    /// Second point (CCW)
+    /// </summary>
+    public readonly Vector4 C1() => color[1];
+
+
+    /// <summary>
     /// Centroid of a collection of `Segment`s
     /// </summary>
     public static Vector2 Centroid( IEnumerable<Segment> cllctn ){
@@ -158,6 +171,8 @@ public readonly struct Segment{
         rtnLst.Capacity = cllctn.Count();
         foreach( Segment seg in cllctn ){
             nuSeg = new Segment( seg.V0(), seg.V1() );
+            nuSeg.color[0] = new Vector4( seg.C0() );
+            nuSeg.color[1] = new Vector4( seg.C1() );
             foreach( (string k, float v) in seg.attrs ){  nuSeg.attrs[k] = v;  }
             rtnLst.Add( nuSeg );
         }
@@ -502,5 +517,6 @@ public class Figure {
     }
 }
 
-
 }
+
+

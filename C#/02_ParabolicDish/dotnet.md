@@ -3,7 +3,7 @@
 1. Nav to folder
 1. `dotnet new gitignore`
 1. `dotnet add Paraboloid.csproj package OpenTK`
-1. `dotnet add Paraboloid.csproj package SVG.NET`
+1. `dotnet add Paraboloid.csproj package Svg`
 1. `dotnet add Paraboloid.csproj package MathNet.Numerics`
 # Build
 1. Dev
