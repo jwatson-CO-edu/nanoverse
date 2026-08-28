@@ -57,7 +57,7 @@ public class CutSVG {
             EndX /*--*/ = InchUnitFromMeters( segment.V1().X ),
             EndY /*--*/ = InchUnitFromMeters( segment.V1().Y ),
             Stroke /**/ = new SvgColourServer( Color.FromArgb( 255, 255, 0, 0 ) ),
-            StrokeWidth = new SvgUnit( SvgUnitType.Inch, _HAIRLINE_INCH ),
+            StrokeWidth = new SvgUnit( SvgUnitType.User, _HAIRLINE_INCH ),
             Fill /*--*/ = SvgPaintServer.None, // NEVER Fill!
         };
         cutGroup.Children.Add( line );
@@ -71,7 +71,7 @@ public class CutSVG {
             EndX /*--*/ = InchUnitFromMeters( segment.V1().X ),
             EndY /*--*/ = InchUnitFromMeters( segment.V1().Y ),
             Stroke /**/ = new SvgColourServer( Color.FromArgb( 255, 0, 0, 255 ) ),
-            StrokeWidth = new SvgUnit( SvgUnitType.Inch, _HAIRLINE_INCH ),
+            StrokeWidth = new SvgUnit( SvgUnitType.User, _HAIRLINE_INCH ),
             Fill /*--*/ = SvgPaintServer.None, // NEVER Fill!
         };
         scoreGroup.Children.Add( line );
