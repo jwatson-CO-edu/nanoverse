@@ -958,7 +958,7 @@ public readonly struct Quad {
                     q_j     = qMesh[j];
                     edges_j = q_j.GetEdges();
                     for( int l = 0; l < 4; ++l ){
-                        edge_l = edges_j[4];
+                        edge_l = edges_j[l];
                         if( edge_k.IsShared( edge_l ) ){
                             shared.Add([i,k]);
                             shared.Add([j,l]);

@@ -57,9 +57,31 @@ tMesh = Tri.ColorMesh( tMesh, new Vector4(0,0,1,1) );
 
 
 CutSVG outSVG = new();
-outSVG.AddSegments_m( Segment.ShiftSegments( dc.PetalSegments( qDish ), new Vector2( 1f/CutSVG._M_TO_IN * 8.5f/2f, 1f/CutSVG._M_TO_IN * 11f/2f ) ) );
+List<Segment> petal = dc.PetalSegments( qDish );
+Vector2[]     aabb  = Segment.BBox( petal );
+Vector2 /*-*/ half  = new( aabb[1][0] - aabb[0][0] + 0.5f * CutSVG._IN_TO_M, aabb[1][1] - aabb[0][1] + 0.5f * CutSVG._IN_TO_M );
+half /= 2f;
+Console.WriteLine( half );
+
+outSVG.PatternGroup( petal, half, new Vector2( half[0] + 0.5f * CutSVG._IN_TO_M, 0f ), MathF.PI, 3 );
+
+// outSVG.AddSegments_m( Segment.ShiftSegments( , new Vector2( 1f/CutSVG._M_TO_IN * 8.5f/2f, 1f/CutSVG._M_TO_IN * 11f/2f ) ) );
 outSVG.WriteSVG();
 
+CutSVG strutSVG = new();
+List<Segment> strut = dc.SupportSegments( supports );
+
+aabb  = Segment.BBox( strut );
+half  = new( aabb[1][1] - aabb[0][1] + 0.5f * CutSVG._IN_TO_M, aabb[1][0] - aabb[0][0] + 1f * CutSVG._IN_TO_M );
+half /= 2f;
+
+strut = Segment.RotateSegments( strut, new Vector2(), MathF.PI/2f );
+
+strutSVG.PatternGroup( strut, half, new Vector2( half[0] + 0.5f * CutSVG._IN_TO_M, 0f ), 0f, 4 );
+
+
+// strutSVG.AddSegments_m(  );
+strutSVG.WriteSVG( "strut.svg" );
 
 TriMeshViewer.Show( tMesh );
 

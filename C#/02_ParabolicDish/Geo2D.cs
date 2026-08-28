@@ -3,6 +3,7 @@ using geo3d;
 
 
 
+
 /// <summary>
 /// Helper functions for 2D Geometry
 /// </summary>
@@ -27,10 +28,21 @@ public static class MathVec2 {
 
     public static List<Segment> ProjectSegmentsDown( List<LinSeg> segments3d ){
         List<Segment> rtnLst = [];
+        List<Vector3> segPts = [];
+        segPts.Capacity = segments3d.Count;
+        rtnLst.Capacity = segments3d.Count;
 
-        /// Phase 1: Find Projection Plane ///
+        foreach( LinSeg lSeg in segments3d ){  segPts.Add( lSeg.V0() );  }
+
+        /// Phase 1: Project Onto Plane ///
+        List<Vector2> flatList = Ops2D3D.Project3dPointsTo2d( segPts );
         
-        /// Phase 2: Project Onto Plane ///
+        /// Phase 2: Create segments ///
+        Vector2 lst = flatList[^1];
+        foreach( Vector2 pnt in flatList ){
+            rtnLst.Add( new Segment( pnt, lst ) );
+            lst = pnt;
+        }
 
         return rtnLst;
     }

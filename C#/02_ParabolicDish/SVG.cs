@@ -1,6 +1,7 @@
-using geo2d;
+using OpenTK.Mathematics;
 using Svg;
 using System.Drawing;
+using geo2d;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17,6 +18,7 @@ public class CutSVG {
 
     // Page / layout configuration //
     public const float _HAIRLINE_INCH = 0.001f;
+    public const float _IN_TO_M = 0.0254f; // 1 inch = 0.0254 m, exactly
     public const float _M_TO_IN = 1f / 0.0254f; // 1 inch = 0.0254 m, exactly
 
     // Page / layout configuration //
@@ -81,6 +83,21 @@ public class CutSVG {
     public void AddSegments_m( IEnumerable<Segment> segments ){
         foreach( Segment seg in segments ){
             if( seg.C0()[2] > 0.75 ){  AddScoreSegment_m( seg );  }else{  AddCutSegment_m( seg );  }
+        }
+    }
+
+
+    public void PatternGroup( IEnumerable<Segment> segments, Vector2 origin, Vector2 step_m, float dTheta_rad, int Nstep = 2 ){
+        List<Segment> lstGrp  = Segment.ShiftSegments( segments, origin );
+        List<Segment> lstRot  = Segment.RotateSegments( segments, new Vector2(), dTheta_rad );
+        Vector2 /*-*/ totStep = origin + step_m;
+
+        AddSegments_m( lstGrp );
+
+        for( int i = 1; i < Nstep; ++i ){
+            AddSegments_m( Segment.ShiftSegments( lstRot, totStep ) );
+            totStep += step_m;
+            lstRot   = Segment.RotateSegments( lstRot, new Vector2(), dTheta_rad );
         }
     }
 

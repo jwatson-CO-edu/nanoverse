@@ -362,6 +362,7 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     /// Get one "strut" from the support `Quad`s as a collection of line `Segment`s
     /// </summary>
     public List<Segment> SupportSegments( List<Quad> supportQuads ){
+        Segment /*-*/ seg_i;
         List<Segment> fig = [];
         int /*-----*/ N   = 2 * radSegN - 1;
         Console.WriteLine( $"Fetch the first {N} `Quad`s" );
@@ -378,8 +379,11 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
         int j;
         for( int i = 0; i < N; ++i ){
             j = 2*i;
-            fig.Add( new Segment( fPnts[j], fPnts[j+1] ) );
+            seg_i = new Segment( fPnts[j], fPnts[j+1] );
+            seg_i.SetColor( new Vector3(1,0,0) );
+            fig.Add( seg_i );
         }
+
         return fig;   
     }
 
