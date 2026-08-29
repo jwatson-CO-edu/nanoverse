@@ -152,23 +152,24 @@ public class MeshGen {
         float   dTheta = 2f * MathF.PI / arcDiv;
         float   dHgt   = height / hgtDiv;
 
-        for( int j = 1; j < hgtDiv; ++j ){  segCtr.Add( btm + axis * j *  dHgt );  }
+        for( int j = 1; j <= hgtDiv; ++j ){  segCtr.Add( btm + axis * j *  dHgt );  }
 
         for( int i = 1; i <= arcDiv; ++i ){
             // Rotate radial spar
             spar = MathVec3.AxisAngleQuat( axis, dTheta ) * lSpr;
             // Generate Top `Tri`
-            rtnShp.Add( new Tri( top, top + lSpr, top + spar ) );
+            rtnShp.Add( new Tri( top + lSpr, top, top + spar ) );
             // Generate Bottom `Tri`
-            rtnShp.Add( new Tri( btm, btm + spar, btm + lSpr ) );
+            rtnShp.Add( new Tri( btm + spar, btm, btm + lSpr ) );
             // Generate longitudinal quad strip
             for( int j = 1; j <= hgtDiv; ++j ){
+                Console.WriteLine( $"i: {i}, j: {j}" );
                 p0 = segCtr[j-1] + lSpr;
                 p1 = segCtr[j-1] + spar;
                 p2 = segCtr[j  ] + lSpr;
                 p3 = segCtr[j  ] + spar;
-                rtnShp.Add( new Tri( p0, p1, p2 ) );
-                rtnShp.Add( new Tri( p2, p3, p0 ) );
+                rtnShp.Add( new Tri( p1, p0, p2 ) );
+                rtnShp.Add( new Tri( p1, p2, p3 ) );
             }
             lSpr = spar;
         }
@@ -176,46 +177,53 @@ public class MeshGen {
     }
 
 
-    // /// <summary>
-    // /// Return a cylindrical mesh with a specified longitudinal axis
-    // /// </summary>
-    // public List<Tri> CircFrustum( Vector3 center, Vector3 axis, float radius1 = 1f, radius2 = 1f, float height = 1f, int arcDiv = 16, int hgtDiv = 2 ){
-    //     List<Tri>     rtnShp = [];
-    //     List<Vector3> segCtr = [];
-    //     rtnShp.Capacity = 2 * arcDiv + 2 * arcDiv * hgtDiv; // 2x Endcaps + `arcDiv` x `hgtDiv` Quads
-    //     segCtr.Capacity = hgtDiv + 1;
-    //     axis.Normalize();
-    //     Vector3 top = center + axis * (height * 0.5f);
-    //     Vector3 btm = center - axis * (height * 0.5f);
-    //     segCtr.Add( btm );
-    //     Vector3 zSpr = Vector3.Cross( axis, MathVec3.NoiseXYZ( rand ) ).Normalized() * radius;
-    //     Vector3 spar, p0, p1, p2, p3;
-    //     Vector3 lSpr = zSpr;
-    //     float   dTheta = 2f * MathF.PI / arcDiv;
-    //     float   dHgt   = height / hgtDiv;
+    /// <summary>
+    /// Return a cylindrical mesh with a specified longitudinal axis
+    /// </summary>
+    public List<Tri> CircFrustum( Vector3 center, Vector3 axis, 
+                                  float radius1 = 1f, float radius2 = 1f, float height = 1f, 
+                                  int arcDiv = 16, int hgtDiv = 2 ){
+        List<Tri>     rtnShp = [];
+        List<Vector3> segCtr = [];
+        rtnShp.Capacity = 2 * arcDiv + 2 * arcDiv * hgtDiv; // 2x Endcaps + `arcDiv` x `hgtDiv` Quads
+        segCtr.Capacity = hgtDiv + 1;
+        axis.Normalize();
+        Vector3 top = center + axis * (height * 0.5f);
+        Vector3 btm = center - axis * (height * 0.5f);
+        segCtr.Add( btm );
+        Vector3 unit = Vector3.Cross( axis, MathVec3.NoiseXYZ( rand ) ).Normalized();
+        Vector3 p0, p1, p2, p3;
+        Vector3 lUnt = unit;
+        float   dTheta = 2f * MathF.PI / arcDiv;
+        float   dHgt   = height / hgtDiv;
+        float   radius_i;
+        float   radius_l = radius1;
+        float   radStep = (radius2 - radius1)/hgtDiv;
 
-    //     for( int j = 1; j < hgtDiv; ++j ){  segCtr.Add( btm + axis * j *  dHgt );  }
+        for( int j = 1; j <= hgtDiv; ++j ){  segCtr.Add( btm + axis * j *  dHgt );  }
 
-    //     for( int i = 1; i <= arcDiv; ++i ){
-    //         // Rotate radial spar
-    //         spar = MathVec3.AxisAngleQuat( axis, dTheta ) * lSpr;
-    //         // Generate Top `Tri`
-    //         rtnShp.Add( new Tri( top, top + lSpr, top + spar ) );
-    //         // Generate Bottom `Tri`
-    //         rtnShp.Add( new Tri( btm, btm + spar, btm + lSpr ) );
-    //         // Generate longitudinal quad strip
-    //         for( int j = 1; j <= hgtDiv; ++j ){
-    //             p0 = segCtr[j-1] + lSpr;
-    //             p1 = segCtr[j-1] + spar;
-    //             p2 = segCtr[j  ] + lSpr;
-    //             p3 = segCtr[j  ] + spar;
-    //             rtnShp.Add( new Tri( p0, p1, p2 ) );
-    //             rtnShp.Add( new Tri( p2, p3, p0 ) );
-    //         }
-    //         lSpr = spar;
-    //     }
-    //     return rtnShp;
-    // }
+        for( int i = 1; i <= arcDiv; ++i ){
+            radius_i = radius1 + i * radStep;
+            // Rotate radial spar
+            unit = MathVec3.AxisAngleQuat( axis, dTheta ) * lUnt;
+            // Generate Top `Tri`
+            rtnShp.Add( new Tri( top + lUnt*radius1, top, top + unit*radius1 ) );
+            // Generate Bottom `Tri`
+            rtnShp.Add( new Tri( btm + unit*radius2, btm, btm + lUnt*radius2 ) );
+            // Generate longitudinal quad strip
+            for( int j = 1; j <= hgtDiv; ++j ){
+                Console.WriteLine( $"i: {i}, j: {j}" );
+                p0 = segCtr[j-1] + lUnt * radius_l;
+                p1 = segCtr[j-1] + unit * radius_i;
+                p2 = segCtr[j  ] + lUnt * radius_l;
+                p3 = segCtr[j  ] + unit * radius_i;
+                rtnShp.Add( new Tri( p1, p0, p2 ) );
+                rtnShp.Add( new Tri( p1, p2, p3 ) );
+            }
+            lUnt = unit;
+        }
+        return rtnShp;
+    }
 
 }
 
