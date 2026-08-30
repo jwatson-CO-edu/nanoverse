@@ -163,7 +163,7 @@ public class MeshGen {
             rtnShp.Add( new Tri( btm + spar, btm, btm + lSpr ) );
             // Generate longitudinal quad strip
             for( int j = 1; j <= hgtDiv; ++j ){
-                Console.WriteLine( $"i: {i}, j: {j}" );
+                // Console.WriteLine( $"i: {i}, j: {j}" );
                 p0 = segCtr[j-1] + lSpr;
                 p1 = segCtr[j-1] + spar;
                 p2 = segCtr[j  ] + lSpr;
@@ -196,8 +196,7 @@ public class MeshGen {
         Vector3 lUnt = unit;
         float   dTheta = 2f * MathF.PI / arcDiv;
         float   dHgt   = height / hgtDiv;
-        float   radius_i;
-        float   radius_l = radius1;
+        float   radius_i, radius_l;
         float   radStep = (radius1 - radius2)/hgtDiv;
 
         for( int j = 1; j <= hgtDiv; ++j ){  segCtr.Add( btm + axis * j *  dHgt );  }
@@ -214,7 +213,7 @@ public class MeshGen {
             radius_l = radius2;
             for( int j = 1; j <= hgtDiv; ++j ){
                 radius_i = radius2 + j * radStep;
-                Console.WriteLine( $"i: {i}, j: {j}" );
+                // Console.WriteLine( $"i: {i}, j: {j}" );
                 p0 = segCtr[j-1] + lUnt * radius_l;
                 p1 = segCtr[j-1] + unit * radius_l;
                 p2 = segCtr[j  ] + unit * radius_i;
@@ -222,10 +221,8 @@ public class MeshGen {
                 rtnShp.Add( new Tri( p1, p0, p2 ) );
                 rtnShp.Add( new Tri( p2, p0, p3 ) );
                 radius_l = radius_i;
-                
             }
             lUnt = unit;
-            
         }
         return rtnShp;
     }
