@@ -515,6 +515,9 @@ public class Figure {
     public void AddSegments( IEnumerable<Segment> nuSegments ){  segments.AddRange( nuSegments );  }
 
 
+    /// <summary>
+    /// Return a list of `Segment`s that form a trapezoid
+    /// </summary>
     public static List<Segment> MakeTrapezoid( float height, float topLength, float bottomLength ){
         List<Segment> rtnLst = [];
         rtnLst.Capacity = 4;

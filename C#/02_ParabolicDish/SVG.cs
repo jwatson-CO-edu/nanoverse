@@ -12,6 +12,9 @@ using geo2d;
 namespace cut_svg {
 
 
+/// <summary>
+/// For creating SVGs suitable for laser cutting (Epilog, etc) 
+/// </summary>
 public class CutSVG {
 
     /// Members ///
@@ -32,7 +35,9 @@ public class CutSVG {
     public SvgGroup    scoreGroup;
 
 
-    /// Default Constructor ///
+    /// <summary>
+    /// Default Constructor 
+    /// </summary>
     public CutSVG(){
         PageWidthIn  =  8.5f;   
         PageHeightIn = 11f;
@@ -49,9 +54,15 @@ public class CutSVG {
     }
 
 
+    /// <summary>
+    /// [m] --to-> [in], Following SVG convention 
+    /// </summary>
     static SvgUnit InchUnitFromMeters( float meters ) => new( SvgUnitType.User, meters * _M_TO_IN );
 
 
+    /// <summary>
+    /// Add a `Segment` [m] coded for cutting (red) 
+    /// </summary>
     public void AddCutSegment_m( Segment segment ){
         SvgLine line = new(){
             StartX /**/ = InchUnitFromMeters( segment.V0().X ),
@@ -66,6 +77,9 @@ public class CutSVG {
     }
 
 
+    /// <summary>
+    /// Add a `Segment` [m] coded for scoring (blue) 
+    /// </summary>
     public void AddScoreSegment_m( Segment segment ){
         SvgLine line = new(){
             StartX /**/ = InchUnitFromMeters( segment.V0().X ),
@@ -80,6 +94,9 @@ public class CutSVG {
     }
 
 
+    /// <summary>
+    /// Add a collection of `Segment`s [m] read color code from `Segment` data  
+    /// </summary>
     public void AddSegments_m( IEnumerable<Segment> segments ){
         foreach( Segment seg in segments ){
             if( seg.C0()[2] > 0.75 ){  AddScoreSegment_m( seg );  }else{  AddCutSegment_m( seg );  }
@@ -87,6 +104,9 @@ public class CutSVG {
     }
 
 
+    /// <summary>
+    /// Add a linear pattern of `Segment`s [m] groups with specified translation and rotation steps  
+    /// </summary>
     public void PatternGroup( IEnumerable<Segment> segments, Vector2 origin, Vector2 step_m, float dTheta_rad, int Nstep = 2 ){
         List<Segment> lstGrp  = Segment.ShiftSegments( segments, origin );
         List<Segment> lstRot  = Segment.RotateSegments( segments, new Vector2(), dTheta_rad );
@@ -102,9 +122,10 @@ public class CutSVG {
     }
 
 
-    public void WriteSVG( string outputPath = "OUTPUT.svg" ){
-        doc.Write( outputPath );
-    }
+    /// <summary>
+    /// Write the file
+    /// </summary>
+    public void WriteSVG( string outputPath = "OUTPUT.svg" ){  doc.Write( outputPath );  }
 
 }
 

@@ -45,9 +45,16 @@ public static class PCA {
 }
 
 
+
+/// <summary>
+/// Functions that span 2D <--> 3D
+/// </summary>
 public static class Ops2D3D {
 
     
+    /// <summary>
+    /// Form 2D bases for the points and return 2D points projected onto those bases
+    /// </summary>
     public static List<Vector2> Project3dPointsTo2d( List<Vector3> points ){
         List<Vector2> rtnLst = [];
         Vector3 /*-*/ center = MathVec3.UniformPointCentroid( points );

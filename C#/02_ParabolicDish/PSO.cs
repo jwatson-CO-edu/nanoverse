@@ -358,9 +358,6 @@ public class PSOptimizer {
             foreach( Particle prtcl in particles ){
                 frac   = rand.NextSingle(); // Random blend of global / personal best
                 vel_ij = ZeroVector();
-                // Console.WriteLine( $"Particle:    {prtcl.position}" );
-                // Console.WriteLine( $"Local Best:  {prtcl.bestPosn}" );
-                // Console.WriteLine( $"Global Best: {bestPrtcl.bestPosn}" );
 
                 // Fields can be DIFFERENT scales, So treat each individually!
                 foreach( string field in fields ){

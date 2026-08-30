@@ -864,6 +864,10 @@ public readonly struct Quad {
     }
 
 
+    /// <summary>
+    /// Return a list of faces, each of which is a list of `Quad`s with nearly identical normals,
+    /// NOTE: I KNOW FOR A FACT THIS IS WRONG, ALLOWS DISJOINT FACES, GROW INSTEAD OF ITERATING
+    /// </summary>
     public static List<List<int>> GetFaces( List<Quad> qMesh ){
         List<List<int>> faces = [];
         List<int> /*-*/ face  = [];

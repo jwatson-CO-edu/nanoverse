@@ -1,5 +1,4 @@
 using OpenTK.Mathematics;
-using Svg;
 
 using pso;
 using geo3d;
@@ -61,8 +60,6 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
     /// Components ///
     public List<Vector3> backCirc  = [];
     public List<Tri>     backPlate = [];
-    // public List<Tri>     cntrPlate = [];
-    // public List<Tri>     edgePlate = [];
 
 
     /// <summary>
@@ -211,9 +208,6 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
         backCirc.Capacity = Ncircum;
         backPlate.Capacity = Ncircum;
 
-        // diameter_m = RoundUpToNext5cm( soln["D"] );
-        // zDepth_m   = RoundUpToNext5cm( soln["z"] );
-        
         diameter_m = RoundUpToNextUnit( soln["D"], unit_m : designUnit_m );
         zDepth_m   = RoundUpToNextUnit( soln["z"], unit_m : designUnit_m );
         
