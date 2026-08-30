@@ -37,6 +37,8 @@ cyl = Tri.ColorMesh( cyl, new Vector4(0,1,0,1) );
 totMesh.AddRange( cyl );
 
 
+///// Cicular Frustum ////////////////////////////
+
 List<Tri> frust = mg.CircFrustum( new Vector3(4,4,0), new Vector3(-1,1,1), 
                                   0.5f, 1f, 2f, 
                                   16, 2 );
@@ -44,15 +46,21 @@ frust = Tri.ColorMesh( frust, new Vector4(1,1,0,1) );
 totMesh.AddRange( frust );
 
 
+///// Icosahedron ////////////////////////////////
+
 List<Tri> icos = MeshGen.Icosahedron( 1f, new Vector3(0,0,4) );
 icos = Tri.ColorMesh( icos, new Vector4(0,0,1,1) );
 totMesh.AddRange( icos );
 
 
+///// Sphere /////////////////////////////////////
+
 List<Tri> sphr = MeshGen.Sphere( 1f, new Vector3(4,0,4) );
 sphr = Tri.ColorMesh( sphr, new Vector4(1,0,1,1) );
 totMesh.AddRange( sphr );
 
+
+///// Torus //////////////////////////////////////
 
 List<Tri> torus = MeshGen.EllipticalTorusXY( new Vector3(0,4,4), 2, 1, 0.5f );
 torus = Tri.ColorMesh( torus, new Vector4(0,1,1,1) );

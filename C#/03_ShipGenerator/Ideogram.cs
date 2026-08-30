@@ -178,7 +178,7 @@ public class MeshGen {
 
 
     /// <summary>
-    /// Return a cylindrical mesh with a specified longitudinal axis
+    /// Return a truncated conical mesh with a specified longitudinal axis
     /// </summary>
     public List<Tri> CircFrustum( Vector3 center, Vector3 axis, 
                                   float radius1 = 1f, float radius2 = 1f, float height = 1f, 
@@ -228,6 +228,9 @@ public class MeshGen {
     }
 
 
+    /// <summary>
+    /// Return an icosahedron mesh
+    /// </summary>
     public static List<Tri> Icosahedron( float rad , Vector3 cntr ) {
         // Compute the vertices and faces
         List<Tri>     rtnShp = [];
@@ -283,6 +286,9 @@ public class MeshGen {
     }
 
 
+    /// <summary>
+    /// Locate a 3D point within an arbitrary relative 2D basis
+    /// </summary>
     public static Vector3 Vec3d_from_arbitrary_2D_basis( float x, float y, Vector3 xBasis, Vector3 yBasis ){
         // Return a coordinate in an arbitrary (non-orthoginal) 2D basis nested within a 3D frame
         // DO NOT normalize the basis vectors , see below!
@@ -290,6 +296,9 @@ public class MeshGen {
     }
 
 
+    /// <summary>
+    /// Return a sphere (stellated icosahedron) mesh
+    /// </summary>
     public static List<Tri> Sphere( float rad , Vector3 cntr, int div = 3 ) {
         // Compute the vertices and faces
         List<Tri> tris = [];
@@ -332,6 +341,9 @@ public class MeshGen {
     }
 
 
+    /// <summary>
+    /// Return an Elliptical Torus mesh in the XY plane
+    /// </summary>
     public static List<Tri> EllipticalTorusXY( Vector3 cntr, float a, float b, float dia, int rotationRes = 32, int revolveRes = 16 ) {
         // Compute the vertices and faces
         List<Tri> tris = [];
