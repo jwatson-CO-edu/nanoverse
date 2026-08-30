@@ -198,12 +198,12 @@ public class MeshGen {
         float   dHgt   = height / hgtDiv;
         float   radius_i;
         float   radius_l = radius1;
-        float   radStep = (radius2 - radius1)/hgtDiv;
+        float   radStep = (radius1 - radius2)/hgtDiv;
 
         for( int j = 1; j <= hgtDiv; ++j ){  segCtr.Add( btm + axis * j *  dHgt );  }
 
         for( int i = 1; i <= arcDiv; ++i ){
-            radius_i = radius1 + i * radStep;
+            
             // Rotate radial spar
             unit = MathVec3.AxisAngleQuat( axis, dTheta ) * lUnt;
             // Generate Top `Tri`
@@ -211,16 +211,21 @@ public class MeshGen {
             // Generate Bottom `Tri`
             rtnShp.Add( new Tri( btm + unit*radius2, btm, btm + lUnt*radius2 ) );
             // Generate longitudinal quad strip
+            radius_l = radius2;
             for( int j = 1; j <= hgtDiv; ++j ){
+                radius_i = radius2 + j * radStep;
                 Console.WriteLine( $"i: {i}, j: {j}" );
                 p0 = segCtr[j-1] + lUnt * radius_l;
-                p1 = segCtr[j-1] + unit * radius_i;
-                p2 = segCtr[j  ] + lUnt * radius_l;
-                p3 = segCtr[j  ] + unit * radius_i;
+                p1 = segCtr[j-1] + unit * radius_l;
+                p2 = segCtr[j  ] + unit * radius_i;
+                p3 = segCtr[j  ] + lUnt * radius_i;
                 rtnShp.Add( new Tri( p1, p0, p2 ) );
-                rtnShp.Add( new Tri( p1, p2, p3 ) );
+                rtnShp.Add( new Tri( p2, p0, p3 ) );
+                radius_l = radius_i;
+                
             }
             lUnt = unit;
+            
         }
         return rtnShp;
     }
