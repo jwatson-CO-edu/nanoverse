@@ -244,7 +244,7 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
                 qd.attrs["trapTop"]    = (v2 - v1).Length;
                 qd.attrs["trapBottom"] = (v3 - v0).Length;
                 
-                // Console.WriteLine( $"Trapezoid - Height: {qd.attrs["trapHeight"]}, Top: {qd.attrs["trapTop"]}, Bottom: {qd.attrs["trapBottom"]}, " );
+                Console.WriteLine( $"Trapezoid - Height: {qd.attrs["trapHeight"]}, Top: {qd.attrs["trapTop"]}, Bottom: {qd.attrs["trapBottom"]}, " );
                 petal.Add( qd );
                 // petal.Add( qr );
             }
@@ -334,23 +334,49 @@ public class DishCalculator ( float lowestFreq_Hz, float Gdesired, float BWdesir
             Console.WriteLine(q);
             height += q.attrs["trapHeight"];
         }
-        float segHlf, y_i = -height/2f + petal[0].attrs["trapHeight"];
+        float segHlf, y_i = -height/2f;
+        float y_l = -height/2f;
         float topLen = petal[^1].attrs["trapTop"   ];
         float btmLen = petal[0 ].attrs["trapBottom"];
-        fig.AddRange( Figure.MakeTrapezoid( height, topLen, btmLen ) );
+        float lstHlf = btmLen/2f;
+
+        // fig.AddRange( Figure.MakeTrapezoid( height, topLen, btmLen ) );
+        Vector2 upRght = new(  topLen/2f,  height/2f );
+        Vector2 upLeft = new( -topLen/2f,  height/2f );
+        Vector2 loLeft = new( -btmLen/2f, -height/2f );
+        Vector2 loRght = new(  btmLen/2f, -height/2f );
+
+        seg = new( upRght, upLeft );
+        seg.SetColor( new Vector3(1,0,0) );
+        fig.Add( seg );
+
+        seg = new( loLeft, loRght );
+        seg.SetColor( new Vector3(1,0,0) );
+        fig.Add( seg );
+        
         // for( int i = 1; i < petal.Count; ++i ){
-        for( int i = 0; i < petal.Count-1; ++i ){
+        for( int i = 0; i < petal.Count; ++i ){
 
-            // segHlf = petal[i].attrs["trapBottom"] / 2f;
-            // segHlf = petal[i].attrs["trapTop"] / 2f;
-            // segHlf = petal[i+1].attrs["trapTop"] / 2f;
-            // segHlf = (petal[i+1].attrs["trapBottom"] + petal[i+1].attrs["trapTop"]) / 4f;
-            segHlf = petal[i+1].attrs["trapBottom"] / 2f;
+            y_i   += petal[i].attrs["trapHeight"];
+            segHlf = petal[i].attrs["trapTop"] / 2f;
 
-            seg = new Segment( new Vector2( -segHlf, y_i ), new Vector2( segHlf, y_i ) );
-            seg.SetColor( new Vector3(0,0,1) );
+            if( i < petal.Count-1 ){
+                seg = new Segment( new Vector2( -segHlf, y_i ), new Vector2( segHlf, y_i ) );
+                seg.SetColor( new Vector3(0,0,1) );
+                fig.Add( seg );
+            }
+
+            seg = new Segment( new Vector2( -lstHlf, y_l ), new Vector2( -segHlf, y_i ) );
+            seg.SetColor( new Vector3(1,0,0) );
             fig.Add( seg );
-            y_i += petal[i].attrs["trapHeight"];
+
+            seg = new Segment( new Vector2( lstHlf, y_l ), new Vector2( segHlf, y_i ) );
+            seg.SetColor( new Vector3(1,0,0) );
+            fig.Add( seg );
+
+            y_l = y_i;
+            lstHlf = segHlf;
+            
         }
         Segment.SetWeight( fig, 0f ); // Hairline
         return fig;
