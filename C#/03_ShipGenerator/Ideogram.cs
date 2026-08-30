@@ -227,6 +227,152 @@ public class MeshGen {
         return rtnShp;
     }
 
+
+    public static List<Tri> Icosahedron( float rad , Vector3 cntr ) {
+        // Compute the vertices and faces
+        List<Tri>     rtnShp = [];
+        rtnShp.Capacity = 20;
+
+        // ~ Constants ~
+        float sqrt5 = MathF.Sqrt( 5.0f ); // ----------------------------------- Square root of 5
+        float phi   = ( 1.0f + sqrt5 ) * 0.5f; // ------------------------- The Golden Ratio
+        float ratio = MathF.Sqrt( 10.0f + ( 2.0f * sqrt5 ) ) / ( 4.0f * phi ); // ratio of edge length to radius
+        float a     =  rad / ratio  * 0.5f;
+        float b     =  rad / ratio  / ( 2.0f * phi );
+
+        List<Vector3> V = [];
+        V.Capacity = 12;
+
+        // Define the icosahedron's 12 vertices:
+        V.Add( new Vector3(  0,  b, -a ) + cntr );
+        V.Add( new Vector3(  b,  a,  0 ) + cntr );
+        V.Add( new Vector3( -b,  a,  0 ) + cntr );
+        V.Add( new Vector3(  0,  b,  a ) + cntr );
+        V.Add( new Vector3(  0, -b,  a ) + cntr );
+        V.Add( new Vector3( -a,  0,  b ) + cntr );
+        V.Add( new Vector3(  0, -b, -a ) + cntr );
+        V.Add( new Vector3(  a,  0, -b ) + cntr );
+        V.Add( new Vector3(  a,  0,  b ) + cntr );
+        V.Add( new Vector3( -a,  0, -b ) + cntr );
+        V.Add( new Vector3(  b, -a,  0 ) + cntr );
+        V.Add( new Vector3( -b, -a,  0 ) + cntr );
+
+        // Define the icosahedron's 20 triangular faces: CCW-out
+        rtnShp.Add( new Tri( V[ 2], V[ 1], V[ 0] ) );
+        rtnShp.Add( new Tri( V[ 1], V[ 2], V[ 3] ) );
+        rtnShp.Add( new Tri( V[ 5], V[ 4], V[ 3] ) );
+        rtnShp.Add( new Tri( V[ 4], V[ 8], V[ 3] ) );
+        rtnShp.Add( new Tri( V[ 7], V[ 6], V[ 0] ) );
+        rtnShp.Add( new Tri( V[ 6], V[ 9], V[ 0] ) );
+        rtnShp.Add( new Tri( V[11], V[10], V[ 4] ) );
+        rtnShp.Add( new Tri( V[10], V[11], V[ 6] ) );
+        rtnShp.Add( new Tri( V[ 9], V[ 5], V[ 2] ) );
+        rtnShp.Add( new Tri( V[ 5], V[ 9], V[11] ) );
+        rtnShp.Add( new Tri( V[ 8], V[ 7], V[ 1] ) );
+        rtnShp.Add( new Tri( V[ 7], V[ 8], V[10] ) );
+        rtnShp.Add( new Tri( V[ 2], V[ 5], V[ 3] ) );
+        rtnShp.Add( new Tri( V[ 8], V[ 1], V[ 3] ) );
+        rtnShp.Add( new Tri( V[ 9], V[ 2], V[ 0] ) );
+        rtnShp.Add( new Tri( V[ 1], V[ 7], V[ 0] ) );
+        rtnShp.Add( new Tri( V[11], V[ 9], V[ 6] ) );
+        rtnShp.Add( new Tri( V[ 7], V[10], V[ 6] ) );
+        rtnShp.Add( new Tri( V[ 5], V[11], V[ 4] ) );
+        rtnShp.Add( new Tri( V[10], V[ 8], V[ 4] ) );
+
+        return rtnShp;
+    }
+
+
+    public static Vector3 Vec3d_from_arbitrary_2D_basis( float x, float y, Vector3 xBasis, Vector3 yBasis ){
+        // Return a coordinate in an arbitrary (non-orthoginal) 2D basis nested within a 3D frame
+        // DO NOT normalize the basis vectors , see below!
+        return xBasis * x + yBasis * y; 
+    }
+
+
+    public static List<Tri> Sphere( float rad , Vector3 cntr, int div = 3 ) {
+        // Compute the vertices and faces
+        List<Tri> tris = [];
+        tris.Capacity = 20 * (div*(div+1)/2 + (div-1)*div/2);
+        List<Tri> icos = Icosahedron( rad, cntr );
+        Vector3 v0, v1, v2, xTri, yTri, vA, vB, vC, nA, nB, nC;
+        foreach( Tri tri in icos ){
+            v0 = tri[0];  v1 = tri[1];  v2 = tri[2];
+            xTri = ( v1 - v0 ) * (1.0f/div) ;
+            yTri = ( v2 - v0 ) * (1.0f/div) ;
+
+            for( int row = 1; row <= div; ++row ){
+                for( int j = row ; j > 0 ; j-- ){ // Construct the v0-pointing tris
+                    vA = v0 + Vec3d_from_arbitrary_2D_basis( j  , row-j  , xTri, yTri ) - cntr;
+                    vB = v0 + Vec3d_from_arbitrary_2D_basis( j-1, row-j+1, xTri, yTri ) - cntr;
+                    vC = v0 + Vec3d_from_arbitrary_2D_basis( j-1, row-j  , xTri, yTri ) - cntr;
+                    nA = vA.Normalized();
+                    nB = vB.Normalized();
+                    nC = vC.Normalized();
+                    vA = nA * rad + cntr;
+                    vB = nB * rad + cntr;
+                    vC = nC * rad + cntr;
+                    tris.Add( new Tri( vA, vB, vC ) );
+                }
+                for( int j = row - 1 ; j > 0 ; j-- ){ // Construct the anti-v0-pointing tris
+                    vA = v0 + Vec3d_from_arbitrary_2D_basis( j  , row-1-j  , xTri, yTri ) - cntr;
+                    vB = v0 + Vec3d_from_arbitrary_2D_basis( j  , row-1-j+1, xTri, yTri ) - cntr;
+                    vC = v0 + Vec3d_from_arbitrary_2D_basis( j-1, row-1-j+1, xTri, yTri ) - cntr;
+                    nA = vA.Normalized();
+                    nB = vB.Normalized();
+                    nC = vC.Normalized();
+                    vA = nA * rad + cntr;
+                    vB = nB * rad + cntr;
+                    vC = nC * rad + cntr;
+                    tris.Add( new Tri( vA, vB, vC ) );
+                }
+            }
+        }
+        return tris;
+    }
+
+
+    public static List<Tri> EllipticalTorusXY( Vector3 cntr, float a, float b, float dia, int rotationRes = 32, int revolveRes = 16 ) {
+        // Compute the vertices and faces
+        List<Tri> tris = [];
+        tris.Capacity = rotationRes * revolveRes * 2;
+
+        Vector3 circCntr_i, circCntr_ip1, axis_i, axis_ip1;
+        Vector3 rad_i, rad_ip1;
+        Vector3 p1, p2, p3, p4;
+
+        float theta   = 0.0f, phi;
+        float rotStep = 2.0f * MathF.PI / (1.0f * rotationRes);
+        float revStep = 2.0f * MathF.PI / (1.0f * revolveRes );
+
+        for( uint i = 0; i < rotationRes; ++i ){ 
+
+            circCntr_i   = new Vector3( a*MathF.Cos(theta)        , b*MathF.Sin(theta)        , 0.0f );
+            circCntr_ip1 = new Vector3( a*MathF.Cos(theta+rotStep), b*MathF.Sin(theta+rotStep), 0.0f );
+            axis_i /*-*/ = Vector3.Cross( new Vector3( 0.0f,0.0f,-1.0f ), circCntr_i   );
+            axis_ip1     = Vector3.Cross( new Vector3( 0.0f,0.0f,-1.0f ), circCntr_ip1 );
+            phi /*----*/ = 0.0f;
+            rad_i /*--*/ = circCntr_i.Normalized()   * dia/2.0f;
+            rad_ip1 /**/ = circCntr_ip1.Normalized() * dia/2.0f;
+
+            for( uint j = 0; j < revolveRes; ++j ){
+
+                p1 =  circCntr_i   + MathVec3.AxisAngleQuat( axis_i  , phi         ) * rad_i   + cntr; 
+                p2 =  circCntr_ip1 + MathVec3.AxisAngleQuat( axis_ip1, phi         ) * rad_ip1 + cntr; 
+                p3 =  circCntr_i   + MathVec3.AxisAngleQuat( axis_i  , phi+revStep ) * rad_i   + cntr; 
+                p4 =  circCntr_ip1 + MathVec3.AxisAngleQuat( axis_ip1, phi+revStep ) * rad_ip1 + cntr; 
+
+                tris.Add( new Tri(p3, p1, p2) );
+                tris.Add( new Tri(p3, p2, p4) );
+
+                phi += revStep;
+            }
+            theta += rotStep;
+        }
+
+        return tris;
+    }
+
 }
 
 

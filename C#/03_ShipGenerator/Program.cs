@@ -44,6 +44,19 @@ frust = Tri.ColorMesh( frust, new Vector4(1,1,0,1) );
 totMesh.AddRange( frust );
 
 
+List<Tri> icos = MeshGen.Icosahedron( 1f, new Vector3(0,0,4) );
+icos = Tri.ColorMesh( icos, new Vector4(0,0,1,1) );
+totMesh.AddRange( icos );
+
+
+List<Tri> sphr = MeshGen.Sphere( 1f, new Vector3(4,0,4) );
+sphr = Tri.ColorMesh( sphr, new Vector4(1,0,1,1) );
+totMesh.AddRange( sphr );
+
+
+List<Tri> torus = MeshGen.EllipticalTorusXY( new Vector3(0,4,4), 2, 1, 0.5f );
+torus = Tri.ColorMesh( torus, new Vector4(0,1,1,1) );
+totMesh.AddRange( torus );
 
 
 TriMeshViewer.Show( totMesh );
