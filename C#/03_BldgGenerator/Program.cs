@@ -69,7 +69,7 @@ totMesh.AddRange( torus );
 
 ///// Plane //////////////////////////////////////
 
-List<Tri> plane = MeshGen.PlaneXY( new Vector3( 2, 2, -2  ), 7f, 7f, 0.5f );
+List<Tri> plane = MeshGen.PlaneXY( new Vector3( 4, 4, -2  ), 14f, 14f, 0.5f );
 plane = Tri.ColorMesh( plane, new Vector4(0.5f,0.5f,0.5f,1) );
 totMesh.AddRange( plane );
 
@@ -80,6 +80,15 @@ List<Tri> wedge = MeshGen.Wedge( new Vector3(4,4,4), new Vector3(0,0,1), new Vec
                                  MathF.PI/2, 1, 2 );
 wedge = Tri.ColorMesh( wedge, new Vector4(0.85f,0.85f,0.85f,1) );
 totMesh.AddRange( wedge );
+
+
+///// Twisted Frustum ////////////////////////////
+
+List<Tri> tFrust = MeshGen.TwistFrustum( new Vector3(8,4,0), new Vector3(1,2,3), Vector3.UnitX, MathF.PI/4f,
+                                          1f, 2f, 2f, 
+                                          6, 16 );
+tFrust = Tri.ColorMesh( tFrust, new Vector4(1,0.5f,0,1) );
+totMesh.AddRange( tFrust );
 
 
 TriMeshViewer.Show( totMesh );

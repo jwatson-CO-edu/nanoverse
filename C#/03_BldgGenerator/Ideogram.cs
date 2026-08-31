@@ -481,27 +481,78 @@ public class MeshGen {
 
     public static List<Tri> TwistFrustum( Vector3 center, Vector3 axis, Vector3 begin, float twist = 0f,
                                           float radius1 = 1f, float radius2 = 1f, float height = 1f, 
-                                          int arcDiv = 16, int hgtDiv = 2 ){
-        List<Tri> /*--*/ rtnShp = [];
-        List<Parametric> ribs   = [];
-        Matrix4 /*----*/ frame  = MathMatx4.HomogFromXZBases( begin.Normalized(), axis.Normalized(), center );
-        float /*------*/ half   = height/2f;
-        float /*------*/ dt     = 1f/hgtDiv;
-        float /*------*/ dTheta = 2f*MathF.PI/arcDiv;
-        Vector3 /*----*/ top    = center + axis * half;
-        Vector3 /*----*/ btm    = center - axis * half;
+                                          int arcDiv = 4, int hgtDiv = 16 ){
+        axis.Normalize();
+        List<Tri> /*--*/ rtnShp  = [];
+        Matrix4 /*----*/ frame   = MathMatx4.HomogFromXZBases( begin.Normalized(), axis.Normalized(), center );
+        Vector3 /*----*/ xDir    = MathMatx4.GetXBasis( frame );
+        float /*------*/ half    = height/2f;
+        float /*------*/ dt /**/ = 1f/hgtDiv;
+        float /*------*/ dTheta  = 2f*MathF.PI/arcDiv;
+        Vector3 /*----*/ top     = center + axis * half;
+        Vector3 /*----*/ btm     = center - axis * half;
+        List<Vector3>    btmRing = [];
+        List<Vector3>    topRing = [];
+        List<Vector3>    P0 /**/ = [];
+        List<Vector3>    P1 /**/ = [];
+        List<Vector3>    P2 /**/ = [];
+        List<Vector3>    P3 /**/ = [];
+        Vector3 /*----*/ spar, btm_i, top_i, temp, lTop, lBtm, pnt0, pnt1, pnt2, pnt3;
+        float /*------*/ ctrlDiv = 6f, t_i, t_ip1;
 
         /// Construct Ribs ///
-        // 1. Bottom ring
-        // 2. Top ring (Pre-rotation)
-        // 3. Inner control points
-        // 4. Rotated Top ring 
-        // 5. Outer control points
-         
-        /// Top Face ///
-        /// Bottom Face ///
-        /// Twisted Sides ///
+        for( int i = 0; i < arcDiv; ++i ){
+            spar = MathVec3.AxisAngleQuat( axis, i*dTheta ) * xDir;
+            // 1. Bottom ring
+            btmRing.Add( btm + spar * radius2 );
+            // 2. Top ring (Pre-rotation)
+            topRing.Add( top + spar * radius1 );
+            btm_i = btmRing[^1];
+            top_i = topRing[^1];
+            // Bottom to Top //
+            P0.Add( btm_i );
+            // 3. Inner control points
+            P1.Add( btm_i + (top_i - btm_i) / ctrlDiv );
+            // Top to Bottom (Relative) //
+            P2.Add( (btm_i - top_i) / ctrlDiv );
+        }
 
+        for( int i = 0; i < arcDiv; ++i ){
+    
+            // 4. Rotated Top ring 
+            spar = MathVec3.AxisAngleQuat( axis, i*dTheta+twist ) * xDir;
+            temp = top + spar * radius1;
+            topRing[i] = temp;
+            P2[i] += temp;
+            P3.Add( temp );
+        }
+        
+        lTop = topRing[^1];
+        lBtm = btmRing[^1];
+        for( int i = 0; i < arcDiv; ++i ){
+            /// Top Face ///
+            rtnShp.Add( new Tri( top, topRing[i], lTop ) );
+            lTop = topRing[i];
+            
+            /// Bottom Face ///    
+            rtnShp.Add( new Tri( btm, lBtm, btmRing[i] ) );
+            lBtm = btmRing[i];
+    
+        }
+
+        /// Twisted Sides ///
+        for( int i = 0; i < hgtDiv; ++i ){
+            t_i   = i * dt;
+            t_ip1 = (i+1) * dt;
+            for( int j = 0; j < arcDiv; ++j ){
+                pnt0 = Bezier.Cubic.Value( P0[j  ], P1[j  ], P2[j  ], P3[j  ], t_i   );
+                pnt1 = Bezier.Cubic.Value( P0[(j+1)%arcDiv], P1[(j+1)%arcDiv], P2[(j+1)%arcDiv], P3[(j+1)%arcDiv], t_i   );
+                pnt2 = Bezier.Cubic.Value( P0[(j+1)%arcDiv], P1[(j+1)%arcDiv], P2[(j+1)%arcDiv], P3[(j+1)%arcDiv], t_ip1 );
+                pnt3 = Bezier.Cubic.Value( P0[j  ], P1[j  ], P2[j  ], P3[j  ], t_ip1 );
+                rtnShp.Add( new Tri( pnt1, pnt0, pnt2 ) );
+                rtnShp.Add( new Tri( pnt2, pnt0, pnt3 ) );
+            }
+        }
 
         return rtnShp;
     }
