@@ -69,7 +69,7 @@ totMesh.AddRange( torus );
 
 ///// Plane //////////////////////////////////////
 
-List<Tri> plane = MeshGen.PlaneXY( new Vector3( 4, 4, -2  ), 14f, 14f, 0.5f );
+List<Tri> plane = MeshGen.PlaneXY( new Vector3( 4, 4, -2 ), 14f, 14f, 0.5f );
 plane = Tri.ColorMesh( plane, new Vector4(0.5f,0.5f,0.5f,1) );
 totMesh.AddRange( plane );
 
