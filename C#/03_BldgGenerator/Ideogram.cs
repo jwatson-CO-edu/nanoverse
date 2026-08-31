@@ -1,6 +1,7 @@
 using OpenTK.Mathematics;
 using geo3d;
 using pose3d;
+using parametric;
 
 namespace ideogram {
 
@@ -475,6 +476,34 @@ public class MeshGen {
         tris.Add( new Tri( p2, p0, p3 ) );
 
         return tris;
+    }
+
+
+    public static List<Tri> TwistFrustum( Vector3 center, Vector3 axis, Vector3 begin, float twist = 0f,
+                                          float radius1 = 1f, float radius2 = 1f, float height = 1f, 
+                                          int arcDiv = 16, int hgtDiv = 2 ){
+        List<Tri> /*--*/ rtnShp = [];
+        List<Parametric> ribs   = [];
+        Matrix4 /*----*/ frame  = MathMatx4.HomogFromXZBases( begin.Normalized(), axis.Normalized(), center );
+        float /*------*/ half   = height/2f;
+        float /*------*/ dt     = 1f/hgtDiv;
+        float /*------*/ dTheta = 2f*MathF.PI/arcDiv;
+        Vector3 /*----*/ top    = center + axis * half;
+        Vector3 /*----*/ btm    = center - axis * half;
+
+        /// Construct Ribs ///
+        // 1. Bottom ring
+        // 2. Top ring (Pre-rotation)
+        // 3. Inner control points
+        // 4. Rotated Top ring 
+        // 5. Outer control points
+         
+        /// Top Face ///
+        /// Bottom Face ///
+        /// Twisted Sides ///
+
+
+        return rtnShp;
     }
 
 }
