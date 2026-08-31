@@ -78,28 +78,28 @@ public class MeshGen {
          1 ---- 0   */
         
         // Bottom //
-        rtnShp.Add( new Tri( p0, p1, p2 ) );
-        rtnShp.Add( new Tri( p2, p3, p0 ) );
+        rtnShp.Add( new Tri( p0, p2, p1 ) );
+        rtnShp.Add( new Tri( p2, p0, p3 ) );
 
         // Top //
-        rtnShp.Add( new Tri( p4, p5, p6 ) );
-        rtnShp.Add( new Tri( p6, p7, p4 ) );
+        rtnShp.Add( new Tri( p4, p6, p5 ) );
+        rtnShp.Add( new Tri( p6, p4, p7 ) );
 
         // Front //
-        rtnShp.Add( new Tri( p0, p4, p7 ) );
-        rtnShp.Add( new Tri( p7, p1, p0 ) );
+        rtnShp.Add( new Tri( p0, p7, p4 ) );
+        rtnShp.Add( new Tri( p7, p0, p1 ) );
 
         // Back //
-        rtnShp.Add( new Tri( p2, p6, p5 ) );
-        rtnShp.Add( new Tri( p5, p3, p2 ) );
+        rtnShp.Add( new Tri( p2, p5, p6 ) );
+        rtnShp.Add( new Tri( p5, p2, p3 ) );
 
         // Right //
-        rtnShp.Add( new Tri( p4, p0, p3 ) );
-        rtnShp.Add( new Tri( p3, p5, p4 ) );
+        rtnShp.Add( new Tri( p4, p3, p0 ) );
+        rtnShp.Add( new Tri( p3, p4, p5 ) );
         
         // Left //
-        rtnShp.Add( new Tri( p1, p7, p6 ) );
-        rtnShp.Add( new Tri( p6, p2, p1 ) );
+        rtnShp.Add( new Tri( p1, p6, p7 ) );
+        rtnShp.Add( new Tri( p6, p1, p2 ) );
 
         return rtnShp;
     }
@@ -301,26 +301,26 @@ public class MeshGen {
         V.Add( new Vector3( -b, -a,  0 ) + cntr );
 
         // Define the icosahedron's 20 triangular faces: CCW-out
-        rtnShp.Add( new Tri( V[ 2], V[ 1], V[ 0] ) );
-        rtnShp.Add( new Tri( V[ 1], V[ 2], V[ 3] ) );
-        rtnShp.Add( new Tri( V[ 5], V[ 4], V[ 3] ) );
-        rtnShp.Add( new Tri( V[ 4], V[ 8], V[ 3] ) );
-        rtnShp.Add( new Tri( V[ 7], V[ 6], V[ 0] ) );
-        rtnShp.Add( new Tri( V[ 6], V[ 9], V[ 0] ) );
-        rtnShp.Add( new Tri( V[11], V[10], V[ 4] ) );
-        rtnShp.Add( new Tri( V[10], V[11], V[ 6] ) );
-        rtnShp.Add( new Tri( V[ 9], V[ 5], V[ 2] ) );
-        rtnShp.Add( new Tri( V[ 5], V[ 9], V[11] ) );
-        rtnShp.Add( new Tri( V[ 8], V[ 7], V[ 1] ) );
-        rtnShp.Add( new Tri( V[ 7], V[ 8], V[10] ) );
-        rtnShp.Add( new Tri( V[ 2], V[ 5], V[ 3] ) );
-        rtnShp.Add( new Tri( V[ 8], V[ 1], V[ 3] ) );
-        rtnShp.Add( new Tri( V[ 9], V[ 2], V[ 0] ) );
-        rtnShp.Add( new Tri( V[ 1], V[ 7], V[ 0] ) );
-        rtnShp.Add( new Tri( V[11], V[ 9], V[ 6] ) );
-        rtnShp.Add( new Tri( V[ 7], V[10], V[ 6] ) );
-        rtnShp.Add( new Tri( V[ 5], V[11], V[ 4] ) );
-        rtnShp.Add( new Tri( V[10], V[ 8], V[ 4] ) );
+        rtnShp.Add( new Tri( V[ 2], V[ 0], V[ 1] ) );
+        rtnShp.Add( new Tri( V[ 1], V[ 3], V[ 2] ) );
+        rtnShp.Add( new Tri( V[ 5], V[ 3], V[ 4] ) );
+        rtnShp.Add( new Tri( V[ 4], V[ 3], V[ 8] ) );
+        rtnShp.Add( new Tri( V[ 7], V[ 0], V[ 6] ) );
+        rtnShp.Add( new Tri( V[ 6], V[ 0], V[ 9] ) );
+        rtnShp.Add( new Tri( V[11], V[ 4], V[10] ) );
+        rtnShp.Add( new Tri( V[10], V[ 6], V[11] ) );
+        rtnShp.Add( new Tri( V[ 9], V[ 2], V[ 5] ) );
+        rtnShp.Add( new Tri( V[ 5], V[11], V[ 9] ) );
+        rtnShp.Add( new Tri( V[ 8], V[ 1], V[ 7] ) );
+        rtnShp.Add( new Tri( V[ 7], V[10], V[ 8] ) );
+        rtnShp.Add( new Tri( V[ 2], V[ 3], V[ 5] ) );
+        rtnShp.Add( new Tri( V[ 8], V[ 3], V[ 1] ) );
+        rtnShp.Add( new Tri( V[ 9], V[ 0], V[ 2] ) );
+        rtnShp.Add( new Tri( V[ 1], V[ 0], V[ 7] ) );
+        rtnShp.Add( new Tri( V[11], V[ 6], V[ 9] ) );
+        rtnShp.Add( new Tri( V[ 7], V[ 6], V[10] ) );
+        rtnShp.Add( new Tri( V[ 5], V[ 4], V[11] ) );
+        rtnShp.Add( new Tri( V[10], V[ 4], V[ 8] ) );
 
         return rtnShp;
     }
@@ -414,8 +414,8 @@ public class MeshGen {
                 p3 =  circCntr_i   + MathVec3.AxisAngleQuat( axis_i  , phi+revStep ) * rad_i   + cntr; 
                 p4 =  circCntr_ip1 + MathVec3.AxisAngleQuat( axis_ip1, phi+revStep ) * rad_ip1 + cntr; 
 
-                tris.Add( new Tri(p3, p1, p2) );
-                tris.Add( new Tri(p3, p2, p4) );
+                tris.Add( new Tri(p3, p2, p1) );
+                tris.Add( new Tri(p3, p4, p2) );
 
                 phi += revStep;
             }
@@ -425,32 +425,54 @@ public class MeshGen {
         return tris;
     }
 
+
     /// <summary>
     /// Return an Elliptical Torus mesh in the XY plane
     /// </summary>
     public static List<Tri> Wedge( Vector3 center, Vector3 axis, Vector3 begin, 
-                                 float arcTheta, float height, float width, int div = 16 ){
+                                   float arcTheta, float height, float width, int div = 16 ){
         axis.Normalize();
-        List<Tri> tris   = [];
-        float     half   = height/2f;
-        float     dTheta = arcTheta / div;
-        Matrix4   frame  = MathMatx4.HomogFromXZBases( begin.Normalized(), axis.Normalized(), center );
-        Vector3   xDir   = MathMatx4.GetXBasis( frame );
-        Vector3   top    = center + axis * half;
-        Vector3   btm    = center - axis * half;
-        Vector3   spar   = xDir * width;
-        Vector3   rib1, rib2;
+        List<Tri> tris = [];
+        tris.Capacity = div * 4 + 4;
+        float   half   = height/2f;
+        float   dTheta = arcTheta / div;
+        Matrix4 frame  = MathMatx4.HomogFromXZBases( begin.Normalized(), axis.Normalized(), center );
+        Vector3 xDir   = MathMatx4.GetXBasis( frame );
+        Vector3 top    = center + axis * half;
+        Vector3 btm    = center - axis * half;
+        Vector3 spar   = xDir * width;
+        Vector3 rib1, rib2, p0, p1, p2, p3;
 
         /// Begining Face ///
+        p0 = top;
+        p1 = btm;
+        p2 = btm + spar;
+        p3 = top + spar;
+        tris.Add( new Tri( p1, p0, p2 ) );
+        tris.Add( new Tri( p2, p0, p3 ) );
 
         /// Arc ///
         for( int i = 0; i < div; ++i ){
             rib1 = MathVec3.AxisAngleQuat( axis, dTheta * i     ) * spar;
             rib2 = MathVec3.AxisAngleQuat( axis, dTheta * (i+1) ) * spar;
+            p0   = btm + rib1;
+            p1   = top + rib1;
+            p2   = top + rib2;
+            p3   = btm + rib2;
+            tris.Add( new Tri( top, p2, p1 ) ); // Top Pie Slice
+            tris.Add( new Tri( p1 , p2, p0 ) ); // Outer 1/2
+            tris.Add( new Tri( p2 , p3, p0 ) ); // Outer 2/2
+            tris.Add( new Tri( btm, p0, p3 ) ); // Bottom Pie Slice
         }
 
         /// Ending Face ///
-
+        rib2 = MathVec3.AxisAngleQuat( axis, dTheta * div ) * spar;
+        p0   = btm;
+        p1   = top;
+        p2   = top + rib2;
+        p3   = btm + rib2;
+        tris.Add( new Tri( p1, p0, p2 ) );
+        tris.Add( new Tri( p2, p0, p3 ) );
 
         return tris;
     }

@@ -14,7 +14,7 @@ List<Tri> totMesh = [];
 ///// Cuboid /////////////////////////////////////
 
 List<Tri> cuboid = MeshGen.Cuboid( new Vector3(0,0,0), 1f, 2f, 3f );
-cuboid = Tri.ColorMesh( cuboid, new Vector4(0.25f,0.25f,0.25f,1) );
+cuboid = Tri.ColorMesh( cuboid, new Vector4(0.15f,0.15f,0.15f,1) );
 totMesh.AddRange( cuboid );
 
 
@@ -72,6 +72,14 @@ totMesh.AddRange( torus );
 List<Tri> plane = MeshGen.PlaneXY( new Vector3( 2, 2, -2  ), 7f, 7f, 0.5f );
 plane = Tri.ColorMesh( plane, new Vector4(0.5f,0.5f,0.5f,1) );
 totMesh.AddRange( plane );
+
+
+///// Wedge //////////////////////////////////////
+
+List<Tri> wedge = MeshGen.Wedge( new Vector3(4,4,4), new Vector3(0,0,1), new Vector3(1,0,0), 
+                                 MathF.PI/2, 1, 2 );
+wedge = Tri.ColorMesh( wedge, new Vector4(0.85f,0.85f,0.85f,1) );
+totMesh.AddRange( wedge );
 
 
 TriMeshViewer.Show( totMesh );
