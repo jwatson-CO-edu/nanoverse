@@ -85,11 +85,13 @@ totMesh.AddRange( wedge );
 ///// Twisted Frustum ////////////////////////////
 
 List<Tri> tFrust = MeshGen.TwistFrustum( new Vector3(8,4,0), new Vector3(1,2,3), Vector3.UnitX, MathF.PI/4f,
-                                          1f, 2f, 2f, 
-                                          6, 16 );
+                                         1f, 2f, 2f, 
+                                         6, 16 );
 tFrust = Tri.ColorMesh( tFrust, new Vector4(1,0.5f,0,1) );
 totMesh.AddRange( tFrust );
 
+
+///// Display Aggregate Mesh /////////////////////
 
 TriMeshViewer.Show( totMesh );
 
