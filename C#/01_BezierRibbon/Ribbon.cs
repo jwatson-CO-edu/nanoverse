@@ -112,9 +112,8 @@ public class Ribbon {
     }
 
 
-
     /// <summary>
-    /// Create mesh for drawing. 
+    /// Create meshes for drawing. 
     /// </summary>
     public void BuildGeo( float width1, float width2 = 0f ){
         float t_i, t_ip1, w_i, w_ip1, h_i, h_ip1;
@@ -154,28 +153,48 @@ public class Ribbon {
             mid.Add( new Tri( pt0, pt3, pt1 ) );
             mid.Add( new Tri( pt2, pt1, pt3 ) );
 
-            // FIXME: START HERE - USE THE ABOVE CONVENTION
-
             /// Top (Visual) Geometry ///
-            pt0 = mid1 + Xdir[i  ].Normalized() * hlf + Ydir * Constants._LAYER_SEP;
-            pt1 = mid1 - Xdir[i  ].Normalized() * hlf + Ydir * Constants._LAYER_SEP;
-            pt2 = mid2 + Xdir[i+1].Normalized() * hlf + Ydir * Constants._LAYER_SEP;
-            pt3 = mid2 - Xdir[i+1].Normalized() * hlf + Ydir * Constants._LAYER_SEP;
+            pt0 = mid_i   + X_i   * h_i   + Y_i * Constants._LAYER_SEP;
+            pt1 = mid_i   - X_i   * h_i   + Y_i * Constants._LAYER_SEP;
+            pt2 = mid_ip1 + X_ip1 * h_ip1 + Y_i * Constants._LAYER_SEP;
+            pt3 = mid_ip1 - X_ip1 * h_ip1 + Y_i * Constants._LAYER_SEP;
 
-            top.Add( new Tri( pt0, pt1, pt3 ) ); // FIXME: USE ABOVE ORDER
-            top.Add( new Tri( pt2, pt3, pt0 ) );
+            top.Add( new Tri( pt0, pt1, pt3 ) ); 
+            top.Add( new Tri( pt2, pt3, pt1 ) );
 
             /// Bottom (Visual) Geometry ///
-            pt0 = mid1 + Xdir[i  ].Normalized() * hlf - Ydir * Constants._LAYER_SEP;
-            pt1 = mid1 - Xdir[i  ].Normalized() * hlf - Ydir * Constants._LAYER_SEP;
-            pt2 = mid2 + Xdir[i+1].Normalized() * hlf - Ydir * Constants._LAYER_SEP;
-            pt3 = mid2 - Xdir[i+1].Normalized() * hlf - Ydir * Constants._LAYER_SEP;
+            pt0 = mid_i   + X_i   * h_i   - Y_i * Constants._LAYER_SEP;
+            pt1 = mid_i   - X_i   * h_i   - Y_i * Constants._LAYER_SEP;
+            pt2 = mid_ip1 + X_ip1 * h_ip1 - Y_i * Constants._LAYER_SEP;
+            pt3 = mid_ip1 - X_ip1 * h_ip1 - Y_i * Constants._LAYER_SEP;
 
-            btm.Add( new Tri( pt0, pt1, pt3 ) ); // FIXME: USE ABOVE ORDER
-            btm.Add( new Tri( pt2, pt3, pt0 ) );
+            btm.Add( new Tri( pt0, pt3, pt1 ) ); 
+            btm.Add( new Tri( pt2, pt1, pt3 ) );
         }
     }
     
+
+    /// <summary>
+    /// Set color meshes 
+    /// </summary>
+    public void SetColor( Vector4 stroke, Vector4 border ){
+        top = Tri.ColorMesh( top, stroke );
+        btm = Tri.ColorMesh( btm, stroke );
+        mid = Tri.ColorMesh( mid, border );
+    }
+
+
+    /// <summary>
+    /// Return the aggregate mesh
+    /// </summary>
+    public List<Tri> GetTotalMesh(){
+        List<Tri> rtnMsh = [];
+        rtnMsh.Capacity = top.Count + mid.Count + btm.Count;
+        rtnMsh.AddRange( top );
+        rtnMsh.AddRange( mid );
+        rtnMsh.AddRange( btm );
+        return rtnMsh;
+    }
 
 }
     
