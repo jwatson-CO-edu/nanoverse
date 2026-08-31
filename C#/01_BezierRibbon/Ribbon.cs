@@ -7,7 +7,7 @@ namespace ribbon {
 
 public class Constants {
     public const int   _DEFAULT_DIV = 64;
-    public const float _LAYER_SEP   = 1f / 64f;
+    public const float _LAYER_SEP   = 1f / 32f; //1f / 64f;
 }
 
 /// <summary>
@@ -147,11 +147,11 @@ public class Ribbon {
             pt3 = mid_ip1 - X_ip1 * (h_ip1 + margin);
 
             // Top Middle // 
-            mid.Add( new Tri( pt0, pt1, pt3 ) );
-            mid.Add( new Tri( pt2, pt3, pt1 ) );
+            mid.Add( new Tri( pt1, pt0, pt3 ) ); 
+            mid.Add( new Tri( pt2, pt3, pt0 ) );
             // Bottom Middle //
-            mid.Add( new Tri( pt0, pt3, pt1 ) );
-            mid.Add( new Tri( pt2, pt1, pt3 ) );
+            mid.Add( new Tri( pt3, pt0, pt1 ) ); 
+            mid.Add( new Tri( pt3, pt2, pt0 ) );
 
             /// Top (Visual) Geometry ///
             pt0 = mid_i   + X_i   * h_i   + Y_i * Constants._LAYER_SEP;
@@ -159,8 +159,8 @@ public class Ribbon {
             pt2 = mid_ip1 + X_ip1 * h_ip1 + Y_i * Constants._LAYER_SEP;
             pt3 = mid_ip1 - X_ip1 * h_ip1 + Y_i * Constants._LAYER_SEP;
 
-            top.Add( new Tri( pt0, pt1, pt3 ) ); 
-            top.Add( new Tri( pt2, pt3, pt1 ) );
+            top.Add( new Tri( pt1, pt0, pt3 ) ); 
+            top.Add( new Tri( pt2, pt3, pt0 ) );
 
             /// Bottom (Visual) Geometry ///
             pt0 = mid_i   + X_i   * h_i   - Y_i * Constants._LAYER_SEP;
@@ -168,8 +168,8 @@ public class Ribbon {
             pt2 = mid_ip1 + X_ip1 * h_ip1 - Y_i * Constants._LAYER_SEP;
             pt3 = mid_ip1 - X_ip1 * h_ip1 - Y_i * Constants._LAYER_SEP;
 
-            btm.Add( new Tri( pt0, pt3, pt1 ) ); 
-            btm.Add( new Tri( pt2, pt1, pt3 ) );
+            btm.Add( new Tri( pt3, pt0, pt1 ) ); 
+            btm.Add( new Tri( pt3, pt2, pt0 ) );
         }
     }
     
