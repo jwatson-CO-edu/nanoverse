@@ -433,25 +433,27 @@ public class MeshGen {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-/// <summary>
-/// Flat face of a larger model
-/// </summary>
-public class Face {
-    public List<Tri>     mesh /**/ = []; // Triangles that make up a flat face
-    public List<Vector3> perimeter = []; // Cycle of vertices that define the edges of the face
-}
+// /// <summary>
+// /// Flat face of a larger model
+// /// </summary>
+// public class Face {
+//     public List<Tri>     mesh /**/ = []; // Triangles that make up a flat face
+//     public List<Vector3> perimeter = []; // Cycle of vertices that define the edges of the face
+// }
 
 
 
 /// <summary>
 /// Composable 3D model with specified connection points
 /// </summary>
-public class Model {
-    public List<Tri>   mesh    = []; // Displayed mesh
-    public List<Face>  faces   = []; // Flat faces for relative placement of components
-    public List<Model> edges   = []; // Component neighbors
-    public Matrix4     relPose = new();
-    public Matrix4     curPose = new();
+public class Node {
+    public Matrix4 /*-------------*/ pose  = new(); // Location + Orientation in space
+    public List<Tri> /*-----------*/ mesh  = []; // -- Displayed mesh
+    public List<Matrix4> /*-------*/ ports = []; // -- Relative  
+    public List<Node> /*----------*/ edges = []; // -- Component neighbors
+    public Dictionary<string,string> tags  = []; // -- Categorical Descriptors
+    public Dictionary<string,float>  attrs = []; // -- Numeric Attributes
+    
 }
 
 }
