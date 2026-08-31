@@ -1,5 +1,6 @@
-using geo3d;
 using OpenTK.Mathematics;
+using geo3d;
+using pose3d;
 
 namespace ideogram {
 
@@ -420,6 +421,36 @@ public class MeshGen {
             }
             theta += rotStep;
         }
+
+        return tris;
+    }
+
+    /// <summary>
+    /// Return an Elliptical Torus mesh in the XY plane
+    /// </summary>
+    public static List<Tri> Wedge( Vector3 center, Vector3 axis, Vector3 begin, 
+                                 float arcTheta, float height, float width, int div = 16 ){
+        axis.Normalize();
+        List<Tri> tris   = [];
+        float     half   = height/2f;
+        float     dTheta = arcTheta / div;
+        Matrix4   frame  = MathMatx4.HomogFromXZBases( begin.Normalized(), axis.Normalized(), center );
+        Vector3   xDir   = MathMatx4.GetXBasis( frame );
+        Vector3   top    = center + axis * half;
+        Vector3   btm    = center - axis * half;
+        Vector3   spar   = xDir * width;
+        Vector3   rib1, rib2;
+
+        /// Begining Face ///
+
+        /// Arc ///
+        for( int i = 0; i < div; ++i ){
+            rib1 = MathVec3.AxisAngleQuat( axis, dTheta * i     ) * spar;
+            rib2 = MathVec3.AxisAngleQuat( axis, dTheta * (i+1) ) * spar;
+        }
+
+        /// Ending Face ///
+
 
         return tris;
     }
