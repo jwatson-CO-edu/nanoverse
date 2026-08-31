@@ -114,7 +114,7 @@ public class Ribbon {
 
 
     /// <summary>
-    /// Create mesh for drawing. WARNING: This function req's that backface culling is >>OFF<<
+    /// Create mesh for drawing. 
     /// </summary>
     public void BuildGeo( float width1, float width2 = 0f ){
         float t_i, t_ip1, w_i, w_ip1, h_i, h_ip1;
