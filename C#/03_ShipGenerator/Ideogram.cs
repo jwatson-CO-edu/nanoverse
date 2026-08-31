@@ -3,6 +3,12 @@ using OpenTK.Mathematics;
 
 namespace ideogram {
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////// MESH GENERATION /////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 /// <summary>
 /// Generate meshes suitable for composable models
 /// </summary>
@@ -213,7 +219,6 @@ public class MeshGen {
             radius_l = radius2;
             for( int j = 1; j <= hgtDiv; ++j ){
                 radius_i = radius2 + j * radStep;
-                // Console.WriteLine( $"i: {i}, j: {j}" );
                 p0 = segCtr[j-1] + lUnt * radius_l;
                 p1 = segCtr[j-1] + unit * radius_l;
                 p2 = segCtr[j  ] + unit * radius_i;
@@ -233,12 +238,12 @@ public class MeshGen {
     /// </summary>
     public static List<Tri> Icosahedron( float rad , Vector3 cntr ) {
         // Compute the vertices and faces
-        List<Tri>     rtnShp = [];
+        List<Tri> rtnShp = [];
         rtnShp.Capacity = 20;
 
         // ~ Constants ~
-        float sqrt5 = MathF.Sqrt( 5.0f ); // ----------------------------------- Square root of 5
-        float phi   = ( 1.0f + sqrt5 ) * 0.5f; // ------------------------- The Golden Ratio
+        float sqrt5 = MathF.Sqrt( 5.0f ); // ------------------------------------ Square root of 5
+        float phi   = ( 1.0f + sqrt5 ) * 0.5f; // ------------------------------- The Golden Ratio
         float ratio = MathF.Sqrt( 10.0f + ( 2.0f * sqrt5 ) ) / ( 4.0f * phi ); // ratio of edge length to radius
         float a     =  rad / ratio  * 0.5f;
         float b     =  rad / ratio  / ( 2.0f * phi );
@@ -389,6 +394,11 @@ public class MeshGen {
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////// COMPOSITE MODELS ////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 /// <summary>
 /// Flat face of a larger model
 /// </summary>
@@ -400,22 +410,14 @@ public class Face {
 
 
 /// <summary>
-/// Directed edge between components
-/// </summary>
-public class Edge {
-    public Matrix4 /*-*/ port = new();
-    public IdeoComponent node = new();
-}
-
-
-
-/// <summary>
 /// Composable 3D model with specified connection points
 /// </summary>
-public class IdeoComponent {
-    public List<Tri>  mesh  = []; // Displayed mesh
-    public List<Face> faces = []; // Flat faces for relative placement of components
-    public List<Edge> edges = []; // Component neighbors
+public class Model {
+    public List<Tri>   mesh    = []; // Displayed mesh
+    public List<Face>  faces   = []; // Flat faces for relative placement of components
+    public List<Model> edges   = []; // Component neighbors
+    public Matrix4     relPose = new();
+    public Matrix4     curPose = new();
 }
 
 }
