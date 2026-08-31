@@ -19,7 +19,7 @@ namespace geo3d {
 /// </summary>
 public static class MathVec3 {
 
-    const float _EPSILON = 0.00001f; // Error margin, 1/100 [mm], We don't care about anything smaller!
+    public const float _EPSILON = 0.00001f; // Error margin, 1/100 [mm], We don't care about anything smaller!
 
     
     /// <summary>

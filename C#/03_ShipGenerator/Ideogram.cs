@@ -18,6 +18,40 @@ public class MeshGen {
 
 
     /// <summary>
+    /// Return a recilinear mesh in the XY plane
+    /// </summary>
+    public static List<Tri> PlaneXY( Vector3 center, float Xlength = 1f, float Ylength = 1f, float unit = 0f ) {
+        if( unit > Math.Min( Xlength, Ylength ) ){  unit = 0f;  }
+        if( unit < MathVec3._EPSILON ){  unit = Math.Min( Xlength, Ylength ) / 8f;  }
+        List<Tri> rtnShp = [];
+
+        Vector3 start = new( center[0] - Xlength/2f, center[1] - Xlength/2f, center[2] );
+        int     Nx    = (int) (Xlength / unit) + 1;
+        int     Ny    = (int) (Ylength / unit) + 1;
+        rtnShp.Capacity = Nx * Ny;
+        float   x0, y0, x1, y1;
+        Vector3 p0, p1, p2, p3;
+
+        for( int i = 0; i < Nx-1; ++i ){
+            x0 = start[0] + Math.Min( i     * unit, Xlength );
+            x1 = start[0] + Math.Min( (i+1) * unit, Xlength );
+            for( int j = 0; j < Ny-1; ++j ){
+                y0 = start[1] + Math.Min( j     * unit, Ylength );
+                y1 = start[1] + Math.Min( (j+1) * unit, Ylength );
+                p0 = new( x0, y0, center[2] );
+                p1 = new( x1, y0, center[2] );
+                p2 = new( x1, y1, center[2] );
+                p3 = new( x0, y1, center[2] );
+                rtnShp.Add( new Tri( p1, p0, p2 ) );
+                rtnShp.Add( new Tri( p3, p2, p0 ) );
+            }               
+        }
+
+        return rtnShp;
+    }
+
+
+    /// <summary>
     /// Return a cuboid mesh with arbitrary, axis-aligned side lengths
     /// </summary>
     public static List<Tri> Cuboid( Vector3 center, float Xside = 1f, float Yside = 1f, float Zside = 1f ){

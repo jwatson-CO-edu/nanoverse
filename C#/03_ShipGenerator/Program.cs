@@ -67,6 +67,13 @@ torus = Tri.ColorMesh( torus, new Vector4(0,1,1,1) );
 totMesh.AddRange( torus );
 
 
+///// Plane //////////////////////////////////////
+
+List<Tri> plane = MeshGen.PlaneXY( new Vector3( 2, 2, -2  ), 7f, 7f, 0.5f );
+plane = Tri.ColorMesh( plane, new Vector4(0.5f,0.5f,0.5f,1) );
+totMesh.AddRange( plane );
+
+
 TriMeshViewer.Show( totMesh );
 
 
