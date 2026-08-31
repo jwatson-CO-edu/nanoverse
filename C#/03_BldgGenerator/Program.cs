@@ -95,5 +95,4 @@ totMesh.AddRange( tFrust );
 
 TriMeshViewer.Show( totMesh );
 
-
 Console.WriteLine( "Program COMPLETE!" );
