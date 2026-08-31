@@ -452,8 +452,7 @@ public class Node {
     public List<Matrix4> /*-------*/ ports = []; // -- Relative  
     public List<Node> /*----------*/ edges = []; // -- Component neighbors
     public Dictionary<string,string> tags  = []; // -- Categorical Descriptors
-    public Dictionary<string,float>  attrs = []; // -- Numeric Attributes
-    
+    public Dictionary<string,float>  attrs = []; // -- Numeric Attributes   
 }
 
 }
