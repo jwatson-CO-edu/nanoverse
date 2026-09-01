@@ -25,7 +25,7 @@ List<Tri> slab = MeshGen.TrapezoidSlab( new Vector3(4,0,0), 0.5f,
                                          1.5f, 2f, 
                                          xPlaceTop    : -1, yPlaceTop    : -1,
                                          xPlaceBottom : 0, yPlaceBottom : 0 );
-slab = Tri.ColorMesh( slab, new Vector4(1,0,0,1) );
+slab = Tri.ColorMesh( slab, new Vector4(0.35f,0,0,1) );
 
 totMesh.AddRange( slab );
 
@@ -33,7 +33,7 @@ totMesh.AddRange( slab );
 ///// Cylinder ///////////////////////////////////
 
 List<Tri> cyl = mg.Cylinder( new Vector3(0,4,0), new Vector3(1,1,1), 0.5f, 2f, 16, 3 );
-cyl = Tri.ColorMesh( cyl, new Vector4(0,1,0,1) );
+cyl = Tri.ColorMesh( cyl, new Vector4(0,0.35f,0,1) );
 totMesh.AddRange( cyl );
 
 
@@ -42,13 +42,34 @@ totMesh.AddRange( cyl );
 List<Tri> frust = mg.CircFrustum( new Vector3(4,4,0), new Vector3(-1,1,1), 
                                   0.5f, 1f, 2f, 
                                   16, 2 );
-frust = Tri.ColorMesh( frust, new Vector4(1,1,0,1) );
+frust = Tri.ColorMesh( frust, new Vector4(0.35f,0.35f,0,1) );
 totMesh.AddRange( frust );
+
+
+///// Tetrahedron ////////////////////////////////
+
+List<Tri> tetra = MeshGen.Tetrahedron( new Vector3(8,0,0), 2f );
+tetra = Tri.ColorMesh( tetra, new Vector4(1,0,0,1) );
+totMesh.AddRange( tetra );
+
+
+///// Octahedron /////////////////////////////////
+
+List<Tri> octa = MeshGen.Octahedron( new Vector3(0,8,0), 2f );
+octa = Tri.ColorMesh( octa, new Vector4(0,1,0,1) );
+totMesh.AddRange( octa );
+
+
+///// Dodecahedron /////////////////////////////////
+
+List<Tri> dodec = MeshGen.Dodecahedron( new Vector3(8,8,0), 1f );
+dodec = Tri.ColorMesh( dodec, new Vector4(1,1,0,1) );
+totMesh.AddRange( dodec );
 
 
 ///// Icosahedron ////////////////////////////////
 
-List<Tri> icos = MeshGen.Icosahedron( 1f, new Vector3(0,0,4) );
+List<Tri> icos = MeshGen.Icosahedron( new Vector3(0,0,4), 2f );
 icos = Tri.ColorMesh( icos, new Vector4(0,0,1,1) );
 totMesh.AddRange( icos );
 

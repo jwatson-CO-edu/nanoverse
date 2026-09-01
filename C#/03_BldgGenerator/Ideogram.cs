@@ -272,7 +272,7 @@ public class MeshGen {
     /// <summary>
     /// Return an icosahedron mesh
     /// </summary>
-    public static List<Tri> Icosahedron( float rad , Vector3 cntr ) {
+    public static List<Tri> Icosahedron( Vector3 cntr, float rad ) {
         // Compute the vertices and faces
         List<Tri> rtnShp = [];
         rtnShp.Capacity = 20;
@@ -327,7 +327,147 @@ public class MeshGen {
     }
 
 
-    // FIXME: ADD THE OTHER SOLIDS: https://danielsieger.com/blog/2021/01/03/generating-platonic-solids.html
+    /// <summary>
+    /// Return an icosahedron mesh
+    /// </summary>
+    public static List<Tri> Tetrahedron( Vector3 center, float height ) {
+        List<Tri> rtnShp = [];
+        rtnShp.Capacity = 4;
+
+        // choose coordinates on the unit sphere
+        float a = 1.0f / 3.0f;
+        float b = MathF.Sqrt( 8.0f / 9.0f );
+        float c = MathF.Sqrt( 2.0f / 9.0f );
+        float d = MathF.Sqrt( 2.0f / 3.0f );
+
+        // add the 4 vertices
+        Vector3 v0 = new(  0,  0,  1 );
+        Vector3 v1 = new( -c,  d, -a );
+        Vector3 v2 = new( -c, -d, -a );
+        Vector3 v3 = new(  b,  0, -a );
+        v0 = v0 * height + center;
+        v1 = v1 * height + center;
+        v2 = v2 * height + center;
+        v3 = v3 * height + center;
+
+        // add the 4 faces
+        rtnShp.Add( new Tri( v0, v2, v1 ) );
+        rtnShp.Add( new Tri( v0, v3, v2 ) );
+        rtnShp.Add( new Tri( v0, v1, v3 ) );
+        rtnShp.Add( new Tri( v3, v1, v2 ) );
+
+        return rtnShp;
+    }
+
+
+    /// <summary>
+    /// Return an icosahedron mesh
+    /// </summary>
+    public static List<Tri> Octahedron( Vector3 center, float height ) {
+        List<Tri> rtnShp = [];
+        rtnShp.Capacity = 8;
+
+        List<Vector3> V = [];
+        V.Capacity = 6;
+
+        V.Add( new Vector3(  0,  0, -1 ) );
+        V.Add( new Vector3( -1,  0,  0 ) );
+        V.Add( new Vector3(  0,  1,  0 ) );
+        V.Add( new Vector3(  1,  0,  0 ) );
+        V.Add( new Vector3(  0, -1,  0 ) );
+        V.Add( new Vector3(  0,  0,  1 ) );
+
+        for( int i = 0; i < V.Count; ++i ){  V[i] = V[i] * (height/2) + center;  }
+
+        rtnShp.Add( new Tri( V[0], V[2], V[1] ) );
+        rtnShp.Add( new Tri( V[3], V[2], V[0] ) );
+        rtnShp.Add( new Tri( V[1], V[4], V[0] ) );
+        rtnShp.Add( new Tri( V[2], V[5], V[1] ) );
+        rtnShp.Add( new Tri( V[3], V[5], V[2] ) );
+        rtnShp.Add( new Tri( V[4], V[3], V[0] ) );
+        rtnShp.Add( new Tri( V[5], V[4], V[1] ) );
+        rtnShp.Add( new Tri( V[5], V[3], V[4] ) );     
+
+        return rtnShp;
+    }
+
+
+    /// <summary>
+    /// Return an icosahedron mesh
+    /// </summary>
+    public static List<Tri> Dodecahedron( Vector3 center, float height ) {
+        List<Tri> rtnShp = [];
+        rtnShp.Capacity = 36;
+        
+        float sqrt5 = MathF.Sqrt( 5.0f ); // ------------------------------------ Square root of 5
+        float p     = ( 1.0f + sqrt5 ) * 0.5f; // ------------------------------- The Golden Ratio
+        float ip    = 1f / p;
+
+        List<Vector3> V = [];
+        V.Capacity = 20;
+    
+        V.Add( new Vector3( -1 ,  1 , -1  ) );
+        V.Add( new Vector3( -p ,  0 ,  ip ) );
+        V.Add( new Vector3( -p ,  0 , -ip ) );
+        V.Add( new Vector3( -1 ,  1 ,  1  ) );
+        V.Add( new Vector3( -ip,  p ,  0  ) );
+        V.Add( new Vector3(  1 ,  1 ,  1  ) );
+        V.Add( new Vector3(  ip,  p ,  0  ) );
+        V.Add( new Vector3(  0 ,  ip,  p  ) );
+        V.Add( new Vector3( -1 , -1 ,  1  ) );
+        V.Add( new Vector3(  0 , -ip,  p  ) );
+        V.Add( new Vector3( -1 , -1 , -1  ) );
+        V.Add( new Vector3( -ip, -p ,  0  ) );
+        V.Add( new Vector3(  0 , -ip, -p  ) );
+        V.Add( new Vector3(  0 ,  ip, -p  ) );
+        V.Add( new Vector3(  1 ,  1 , -1  ) );
+        V.Add( new Vector3(  p ,  0 , -ip ) );
+        V.Add( new Vector3(  p ,  0 ,  ip ) );
+        V.Add( new Vector3(  1 , -1 ,  1  ) );
+        V.Add( new Vector3(  ip, -p ,  0  ) );
+        V.Add( new Vector3(  1 , -1 , -1  ) );
+
+        for( int i = 0; i < V.Count; ++i ){  V[i] = V[i] * (height/2) + center;  }
+
+        rtnShp.Add( new Tri( V[ 1], V[ 2], V[ 0] ) );
+        rtnShp.Add( new Tri( V[ 0], V[ 3], V[ 1] ) );
+        rtnShp.Add( new Tri( V[ 0], V[ 4], V[ 3] ) );
+        rtnShp.Add( new Tri( V[ 4], V[ 6], V[ 5] ) );
+        rtnShp.Add( new Tri( V[ 5], V[ 3], V[ 4] ) );
+        rtnShp.Add( new Tri( V[ 5], V[ 7], V[ 3] ) );
+        rtnShp.Add( new Tri( V[ 8], V[ 1], V[ 3] ) );
+        rtnShp.Add( new Tri( V[ 3], V[ 7], V[ 8] ) );
+        rtnShp.Add( new Tri( V[ 7], V[ 9], V[ 8] ) );
+        rtnShp.Add( new Tri( V[ 8], V[11], V[10] ) );
+        rtnShp.Add( new Tri( V[10], V[ 2], V[ 8] ) );
+        rtnShp.Add( new Tri( V[ 2], V[ 1], V[ 8] ) );
+        rtnShp.Add( new Tri( V[ 0], V[ 2], V[10] ) );
+        rtnShp.Add( new Tri( V[10], V[12], V[ 0] ) );
+        rtnShp.Add( new Tri( V[12], V[13], V[ 0] ) );
+        rtnShp.Add( new Tri( V[ 0], V[13], V[14] ) );
+        rtnShp.Add( new Tri( V[14], V[ 6], V[ 0] ) );
+        rtnShp.Add( new Tri( V[ 6], V[ 4], V[ 0] ) );
+        rtnShp.Add( new Tri( V[15], V[16], V[ 5] ) );
+        rtnShp.Add( new Tri( V[ 5], V[14], V[15] ) );
+        rtnShp.Add( new Tri( V[ 5], V[ 6], V[14] ) );
+        rtnShp.Add( new Tri( V[ 9], V[ 7], V[ 5] ) );
+        rtnShp.Add( new Tri( V[ 5], V[17], V[ 9] ) );
+        rtnShp.Add( new Tri( V[ 5], V[16], V[17] ) );
+        rtnShp.Add( new Tri( V[18], V[11], V[ 8] ) );
+        rtnShp.Add( new Tri( V[ 8], V[17], V[18] ) );
+        rtnShp.Add( new Tri( V[ 8], V[ 9], V[17] ) );
+        rtnShp.Add( new Tri( V[19], V[12], V[10] ) );
+        rtnShp.Add( new Tri( V[10], V[11], V[19] ) );
+        rtnShp.Add( new Tri( V[11], V[18], V[19] ) );
+        rtnShp.Add( new Tri( V[13], V[12], V[19] ) );
+        rtnShp.Add( new Tri( V[19], V[14], V[13] ) );
+        rtnShp.Add( new Tri( V[19], V[15], V[14] ) );
+        rtnShp.Add( new Tri( V[19], V[18], V[17] ) );
+        rtnShp.Add( new Tri( V[17], V[16], V[19] ) );
+        rtnShp.Add( new Tri( V[16], V[15], V[19] ) );
+    
+        return rtnShp;
+    }
 
 
     /// <summary>
@@ -347,7 +487,7 @@ public class MeshGen {
         // Compute the vertices and faces
         List<Tri> tris = [];
         tris.Capacity = 20 * (div*(div+1)/2 + (div-1)*div/2);
-        List<Tri> icos = Icosahedron( rad, cntr );
+        List<Tri> icos = Icosahedron( cntr, rad );
         Vector3 v0, v1, v2, xTri, yTri, vA, vB, vC, nA, nB, nC;
         foreach( Tri tri in icos ){
             v0 = tri[0];  v1 = tri[1];  v2 = tri[2];
