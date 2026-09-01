@@ -1,6 +1,6 @@
-﻿using geo3d;
+﻿using OpenTK.Mathematics;
+using geo3d;
 using ideogram;
-using OpenTK.Mathematics;
 
 
 // See https://aka.ms/new-console-template for more information
