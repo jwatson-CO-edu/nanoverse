@@ -1,3 +1,4 @@
+using geo3d;
 using OpenTK.Mathematics;
 
 
@@ -76,6 +77,18 @@ public static class MathMatx4 {
     public static Vector3 GetPosition( Matrix4 homog ){  return new Vector3( homog.M41, homog.M42, homog.M43 );  }
 
 
+    /// <summary>
+    /// Return a transformed copy of the mesh, ASSUMPTION: AFFINE TRANSFORMATION 
+    /// </summary>
+    public static List<Tri> TransformMesh( List<Tri> mesh, Matrix4 xform ){
+        List<Tri> movMsh = Tri.CopyMesh( mesh );
+        foreach( Tri tri in movMsh ){
+            tri[0] = new Vector3( new Vector4( tri[0], 1f ) * xform );
+            tri[1] = new Vector3( new Vector4( tri[1], 1f ) * xform );
+            tri[2] = new Vector3( new Vector4( tri[2], 1f ) * xform );
+        }
+        return movMsh;
+    }
 }
 
 

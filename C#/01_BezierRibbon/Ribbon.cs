@@ -5,13 +5,20 @@ using pose3d;
 
 namespace ribbon {
 
+
+
+/// <summary>
+/// Useful `Ribbon` Constants
+/// </summary>
 public class Constants {
     public const int   _DEFAULT_DIV = 64;
     public const float _LAYER_SEP   = 1f / 32f; //1f / 64f;
 }
 
+
+
 /// <summary>
-/// Flat 
+/// Double-sided flat stroke that sweeps through space with a border
 /// </summary>
 public class Ribbon {
     
@@ -28,6 +35,7 @@ public class Ribbon {
     public List<Tri>     mid; // -- Middle border
     public List<Tri>     btm; // -- Bottom ribbon
     public bool /*----*/ hasMid; // Flag: Should the middle layer be constructed?
+    public List<Ribbon>  edges;
 
 
     /*     Y  +X ====================
@@ -55,6 +63,7 @@ public class Ribbon {
         mid    = [];
         btm    = [];
         hasMid = makeMid;
+        edges  = [];
         // Reserve Geo
         matx.Capacity = N;
         tLst.Capacity = N;
@@ -200,5 +209,28 @@ public class Ribbon {
     }
 
 }
+
+/* ////////// DEV_PLAN /////////////////////////////////////////////////////////////////////////////
+[Y] Choose a camera angle, Negative Z
+[>] Spawn a root `Ribbon`
+[ ] Prefer moving in the current layer
+[ ] Move up a layer
+[ ] Move down a layer
+[ ] Output image
+[ ] Posterize
+ */
+
+public class GenRibbon {
+    
+    
+    /// <summary>
+    /// Return the aggregate mesh
+    /// </summary>
+    public static void MakeLogo(){
+        Ribbon root = new();
+    }
+
+}
+
     
 }
