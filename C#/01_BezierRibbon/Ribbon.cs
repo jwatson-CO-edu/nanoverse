@@ -75,6 +75,9 @@ public class Ribbon {
     }
 
 
+    public Matrix4 GetFrameAt( float t ){  return matx[ GetSegment(t) ];  }
+
+
     /// <summary>
     /// Set the twist across the curve 
     /// </summary>
