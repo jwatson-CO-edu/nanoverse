@@ -327,6 +327,9 @@ public class MeshGen {
     }
 
 
+    // FIXME: ADD THE OTHER SOLIDS: https://danielsieger.com/blog/2021/01/03/generating-platonic-solids.html
+
+
     /// <summary>
     /// Locate a 3D point within an arbitrary relative 2D basis
     /// </summary>
