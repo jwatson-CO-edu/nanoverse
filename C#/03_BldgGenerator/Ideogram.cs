@@ -328,7 +328,8 @@ public class MeshGen {
 
 
     /// <summary>
-    /// Return an icosahedron mesh
+    /// Return an tetrahedron mesh,
+    /// Source: https://github.com/thinks/platonic-solids/blob/master/thinks/platonic_solids/platonic_solids.h
     /// </summary>
     public static List<Tri> Tetrahedron( Vector3 center, float height ) {
         List<Tri> rtnShp = [];
@@ -361,7 +362,8 @@ public class MeshGen {
 
 
     /// <summary>
-    /// Return an icosahedron mesh
+    /// Return an octahedron mesh,
+    /// Source: https://github.com/thinks/platonic-solids/blob/master/thinks/platonic_solids/platonic_solids.h
     /// </summary>
     public static List<Tri> Octahedron( Vector3 center, float height ) {
         List<Tri> rtnShp = [];
@@ -393,7 +395,8 @@ public class MeshGen {
 
 
     /// <summary>
-    /// Return an icosahedron mesh
+    /// Return an dodecahedron mesh,
+    /// Source: https://github.com/thinks/platonic-solids/blob/master/thinks/platonic_solids/platonic_solids.h
     /// </summary>
     public static List<Tri> Dodecahedron( Vector3 center, float height ) {
         List<Tri> rtnShp = [];
