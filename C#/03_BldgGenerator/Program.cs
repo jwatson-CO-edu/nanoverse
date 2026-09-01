@@ -82,6 +82,14 @@ wedge = Tri.ColorMesh( wedge, new Vector4(0.85f,0.85f,0.85f,1) );
 totMesh.AddRange( wedge );
 
 
+///// Arc ////////////////////////////////////////
+
+List<Tri> arc = MeshGen.Arc( new Vector3(4,8,0), new Vector3(0,0,1), new Vector3(1,0,0), 
+                             MathF.PI/2, 1f, 2f, 3f );
+arc = Tri.ColorMesh( arc, new Vector4(0.50f,1f,0,1) );
+totMesh.AddRange( arc );
+
+
 ///// Twisted Frustum ////////////////////////////
 
 List<Tri> tFrust = MeshGen.TwistFrustum( new Vector3(8,4,0), new Vector3(1,2,3), Vector3.UnitX, MathF.PI/4f,

@@ -479,6 +479,74 @@ public class MeshGen {
     }
 
 
+    /// <summary>
+    /// Return an Elliptical Torus mesh in the XY plane
+    /// </summary>
+    public static List<Tri> Arc( Vector3 center, Vector3 axis, Vector3 begin, 
+                                 float arcTheta, float height, float radInner, float radOuter, int div = 16 ){
+        axis.Normalize();
+        List<Tri> tris = [];
+        tris.Capacity = div * 8 + 4;
+        float   half   = height/2f;
+        float   dTheta = arcTheta / div;
+        Matrix4 frame  = MathMatx4.HomogFromXZBases( begin.Normalized(), axis.Normalized(), center );
+        Vector3 xDir   = MathMatx4.GetXBasis( frame );
+        Vector3 top    = center + axis * half;
+        Vector3 btm    = center - axis * half;
+        Vector3 sparInner   = xDir * radInner;
+        Vector3 sparOuter   = xDir * radOuter;
+        Vector3 rib1, rib2, rib3, rib4, p0, p1, p2, p3, p4, p5, p6, p7;
+
+        /// Begining Face ///
+        p0 = top + sparInner;
+        p1 = btm + sparInner;
+        p2 = btm + sparOuter;
+        p3 = top + sparOuter;
+        tris.Add( new Tri( p1, p0, p2 ) );
+        tris.Add( new Tri( p2, p0, p3 ) );
+
+        /// Arc ///
+        for( int i = 0; i < div; ++i ){
+            rib1 = MathVec3.AxisAngleQuat( axis, dTheta * i     ) * sparInner;
+            rib2 = MathVec3.AxisAngleQuat( axis, dTheta * (i+1) ) * sparInner;
+            rib3 = MathVec3.AxisAngleQuat( axis, dTheta * i     ) * sparOuter;
+            rib4 = MathVec3.AxisAngleQuat( axis, dTheta * (i+1) ) * sparOuter;
+            p0   = btm + rib1;
+            p1   = top + rib1;
+            p2   = top + rib2;
+            p3   = btm + rib2;
+            p4   = btm + rib3;
+            p5   = top + rib3;
+            p6   = top + rib4;
+            p7   = btm + rib4;
+
+            tris.Add( new Tri( p5, p1, p6 ) ); // Top 1/2
+            tris.Add( new Tri( p6, p1, p2 ) ); // Top 2/2
+            
+            tris.Add( new Tri( p1 , p2, p0 ) ); // Outer 1/2
+            tris.Add( new Tri( p2 , p3, p0 ) ); // Outer 2/2
+
+            tris.Add( new Tri( p5, p6, p4 ) ); // Inner 1/2
+            tris.Add( new Tri( p6, p7, p4 ) ); // Inner 2/2
+            
+            tris.Add( new Tri( p4, p7, p0 ) ); // Bottom 1/2
+            tris.Add( new Tri( p7, p3, p0 ) ); // Bottom 2/2
+        }
+
+        /// Ending Face ///
+        rib1 = MathVec3.AxisAngleQuat( axis, dTheta * div ) * sparInner;
+        rib2 = MathVec3.AxisAngleQuat( axis, dTheta * div ) * sparOuter;
+        p0   = btm + rib1;
+        p1   = top + rib1;
+        p2   = top + rib2;
+        p3   = btm + rib2;
+        tris.Add( new Tri( p1, p0, p2 ) );
+        tris.Add( new Tri( p2, p0, p3 ) );
+
+        return tris;
+    }
+
+
     public static List<Tri> TwistFrustum( Vector3 center, Vector3 axis, Vector3 begin, float twist = 0f,
                                           float radius1 = 1f, float radius2 = 1f, float height = 1f, 
                                           int arcDiv = 4, int hgtDiv = 16 ){
