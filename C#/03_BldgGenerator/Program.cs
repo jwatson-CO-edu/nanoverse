@@ -18,6 +18,13 @@ cuboid = Tri.ColorMesh( cuboid, new Vector4(0.15f,0.15f,0.15f,1) );
 totMesh.AddRange( cuboid );
 
 
+///// Cuboid Spar ////////////////////////////////
+
+List<Tri> spar = MeshGen.CuboidSpar( new Vector3(0,-4,0), new Vector3(-1,-1,1), new Vector3(-1,1,0), 0.5f, 1f, 2f );
+spar = Tri.ColorMesh( spar, new Vector4(0,1,0,1) );
+totMesh.AddRange( spar );
+
+
 ///// Trapezoid Slab /////////////////////////////
 
 List<Tri> slab = MeshGen.TrapezoidSlab( new Vector3(4,0,0), 0.5f,
@@ -118,6 +125,13 @@ List<Tri> tFrust = MeshGen.TwistFrustum( new Vector3(8,4,0), new Vector3(1,2,3),
                                          6, 16 );
 tFrust = Tri.ColorMesh( tFrust, new Vector4(1,0.5f,0,1) );
 totMesh.AddRange( tFrust );
+
+
+///// Incline ////////////////////////////////////
+
+List<Tri> incline = MeshGen.Incline( new Vector3(-4,0,0), 1, 2, 0.5f );
+incline = Tri.ColorMesh( incline, new Vector4(1,0,0,1) );
+totMesh.AddRange( incline );
 
 
 ///// Stacked Apartment Building /////////////////

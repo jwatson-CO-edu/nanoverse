@@ -107,6 +107,65 @@ public class MeshGen {
 
 
     /// <summary>
+    /// Return a cuboid mesh with arbitrary axes
+    /// </summary>
+    public static List<Tri> CuboidSpar( Vector3 center, Vector3 axis, Vector3 xDir, float Xside = 1f, float Yside = 1f, float Zside = 1f ){
+        List<Tri> rtnShp = [];
+        float     xHalf  = Xside / 2f;
+        float     yHalf  = Yside / 2f;
+        float     zHalf  = Zside / 2f;
+        rtnShp.Capacity = 12;
+
+        Matrix4 frame = MathMatx4.HomogFromXZBases( xDir, axis, center );
+        Vector3 unitX = MathMatx4.GetXBasis( frame );
+        Vector3 unitY = MathMatx4.GetYBasis( frame );
+        Vector3 unitZ = MathMatx4.GetZBasis( frame );
+
+        Vector3 p0 = center - unitX * xHalf - unitY * yHalf - unitZ * zHalf;
+        Vector3 p1 = center - unitX * xHalf + unitY * yHalf - unitZ * zHalf;
+        Vector3 p2 = center + unitX * xHalf + unitY * yHalf - unitZ * zHalf;
+        Vector3 p3 = center + unitX * xHalf - unitY * yHalf - unitZ * zHalf;
+        Vector3 p4 = center - unitX * xHalf - unitY * yHalf + unitZ * zHalf;
+        Vector3 p5 = center + unitX * xHalf - unitY * yHalf + unitZ * zHalf;
+        Vector3 p6 = center + unitX * xHalf + unitY * yHalf + unitZ * zHalf;
+        Vector3 p7 = center - unitX * xHalf + unitY * yHalf + unitZ * zHalf;
+        
+        /*   6 ---- 5
+           / |    / |
+         7 ---- 4   |
+         |   2 -|-- 3
+         | /    | / 
+         1 ---- 0   */
+        
+        // Bottom //
+        rtnShp.Add( new Tri( p0, p2, p1 ) );
+        rtnShp.Add( new Tri( p2, p0, p3 ) );
+
+        // Top //
+        rtnShp.Add( new Tri( p4, p6, p5 ) );
+        rtnShp.Add( new Tri( p6, p4, p7 ) );
+
+        // Front //
+        rtnShp.Add( new Tri( p0, p7, p4 ) );
+        rtnShp.Add( new Tri( p7, p0, p1 ) );
+
+        // Back //
+        rtnShp.Add( new Tri( p2, p5, p6 ) );
+        rtnShp.Add( new Tri( p5, p2, p3 ) );
+
+        // Right //
+        rtnShp.Add( new Tri( p4, p3, p0 ) );
+        rtnShp.Add( new Tri( p3, p4, p5 ) );
+        
+        // Left //
+        rtnShp.Add( new Tri( p1, p6, p7 ) );
+        rtnShp.Add( new Tri( p6, p1, p2 ) );
+
+        return rtnShp;
+    }
+
+
+    /// <summary>
     /// Return a trapezoidal slab mesh with specified XY alignment of the top and bottom
     /// </summary>
     public static List<Tri> TrapezoidSlab( Vector3 center, float thickness = 1f,
@@ -574,7 +633,7 @@ public class MeshGen {
 
 
     /// <summary>
-    /// Return an Elliptical Torus mesh in the XY plane
+    /// Return a wedge with a rounded back
     /// </summary>
     public static List<Tri> Wedge( Vector3 center, Vector3 axis, Vector3 begin, 
                                    float arcTheta, float height, float width, int div = 16 ){
@@ -626,7 +685,7 @@ public class MeshGen {
 
 
     /// <summary>
-    /// Return an Elliptical Torus mesh in the XY plane
+    /// Return an arc with a rectangular profile
     /// </summary>
     public static List<Tri> Arc( Vector3 center, Vector3 axis, Vector3 begin, 
                                  float arcTheta, float height, float radInner, float radOuter, int div = 16 ){
@@ -693,6 +752,52 @@ public class MeshGen {
     }
 
 
+    /// <summary>
+    /// Return an inclined plane
+    /// </summary>
+    public static List<Tri> Incline( Vector3 center, float xLen, float zHeight, float yWidth ){
+        List<Tri> rtnShp  = [];
+        rtnShp.Capacity = 8;
+
+        Vector3 xBar = Vector3.UnitX * xLen;
+        Vector3 zBar = Vector3.UnitZ * zHeight;
+        Vector3 yHlf = Vector3.UnitY * (yWidth/2f);
+        Vector3 p0, p1, p2, p3;
+        
+        p0 = center + yHlf;
+        p1 = center + yHlf + xBar;
+        p2 = center - yHlf + xBar;
+        p3 = center - yHlf;
+        rtnShp.Add( new Tri( p1, p0, p2 ) );
+        rtnShp.Add( new Tri( p2, p0, p3 ) );
+
+        p1 = center + yHlf + zBar;
+        p2 = center - yHlf + zBar;
+        rtnShp.Add( new Tri( p1, p2, p0 ) );
+        rtnShp.Add( new Tri( p2, p3, p0 ) );
+
+        p0 = center + yHlf+ xBar;
+        p3 = center - yHlf+ xBar;
+        rtnShp.Add( new Tri( p1, p0, p2 ) );
+        rtnShp.Add( new Tri( p2, p0, p3 ) );
+
+        p0 = center + yHlf;
+        p1 = center + yHlf + xBar;
+        p2 = center + yHlf + zBar;
+        rtnShp.Add( new Tri( p0, p1, p2 ) );
+        
+        p0 = center - yHlf;
+        p1 = center - yHlf + zBar;
+        p2 = center - yHlf + xBar;
+        rtnShp.Add( new Tri( p0, p1, p2 ) );
+
+        return rtnShp;
+    }
+
+
+    /// <summary>
+    /// Return a frustrum with a profile that rotates as it moves from bottom to top
+    /// </summary>
     public static List<Tri> TwistFrustum( Vector3 center, Vector3 axis, Vector3 begin, float twist = 0f,
                                           float radius1 = 1f, float radius2 = 1f, float height = 1f, 
                                           int arcDiv = 4, int hgtDiv = 16 ){
