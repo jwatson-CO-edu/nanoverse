@@ -12,7 +12,8 @@ namespace ribbon {
 /// </summary>
 public class Constants {
     public const int   _DEFAULT_DIV = 64;
-    public const float _LAYER_SEP   = 1f / 32f; //1f / 64f;
+    public const float _PLY_SEP     = 1f / 32f; //1f / 64f;
+    public const float _LAYER_SEP   = 3f * _PLY_SEP; //1f / 64f;
 }
 
 
@@ -166,19 +167,19 @@ public class Ribbon {
             mid.Add( new Tri( pt3, pt2, pt0 ) );
 
             /// Top (Visual) Geometry ///
-            pt0 = mid_i   + X_i   * h_i   + Y_i * Constants._LAYER_SEP;
-            pt1 = mid_i   - X_i   * h_i   + Y_i * Constants._LAYER_SEP;
-            pt2 = mid_ip1 + X_ip1 * h_ip1 + Y_i * Constants._LAYER_SEP;
-            pt3 = mid_ip1 - X_ip1 * h_ip1 + Y_i * Constants._LAYER_SEP;
+            pt0 = mid_i   + X_i   * h_i   + Y_i * Constants._PLY_SEP;
+            pt1 = mid_i   - X_i   * h_i   + Y_i * Constants._PLY_SEP;
+            pt2 = mid_ip1 + X_ip1 * h_ip1 + Y_i * Constants._PLY_SEP;
+            pt3 = mid_ip1 - X_ip1 * h_ip1 + Y_i * Constants._PLY_SEP;
 
             top.Add( new Tri( pt1, pt0, pt3 ) ); 
             top.Add( new Tri( pt2, pt3, pt0 ) );
 
             /// Bottom (Visual) Geometry ///
-            pt0 = mid_i   + X_i   * h_i   - Y_i * Constants._LAYER_SEP;
-            pt1 = mid_i   - X_i   * h_i   - Y_i * Constants._LAYER_SEP;
-            pt2 = mid_ip1 + X_ip1 * h_ip1 - Y_i * Constants._LAYER_SEP;
-            pt3 = mid_ip1 - X_ip1 * h_ip1 - Y_i * Constants._LAYER_SEP;
+            pt0 = mid_i   + X_i   * h_i   - Y_i * Constants._PLY_SEP;
+            pt1 = mid_i   - X_i   * h_i   - Y_i * Constants._PLY_SEP;
+            pt2 = mid_ip1 + X_ip1 * h_ip1 - Y_i * Constants._PLY_SEP;
+            pt3 = mid_ip1 - X_ip1 * h_ip1 - Y_i * Constants._PLY_SEP;
 
             btm.Add( new Tri( pt3, pt0, pt1 ) ); 
             btm.Add( new Tri( pt3, pt2, pt0 ) );
@@ -234,9 +235,9 @@ public class Elements {
 
         for( int i = 0; i < div; ++i ){
 
-            p0 = center + normal * Constants._LAYER_SEP;
-            p1 = center + MathVec3.AxisAngleQuat( normal, i     * dTheta ) * spar * radius + normal * Constants._LAYER_SEP;
-            p2 = center + MathVec3.AxisAngleQuat( normal, (i+1) * dTheta ) * spar * radius + normal * Constants._LAYER_SEP;
+            p0 = center + normal * Constants._PLY_SEP;
+            p1 = center + MathVec3.AxisAngleQuat( normal, i     * dTheta ) * spar * radius + normal * Constants._PLY_SEP;
+            p2 = center + MathVec3.AxisAngleQuat( normal, (i+1) * dTheta ) * spar * radius + normal * Constants._PLY_SEP;
             top.Add( new Tri( p0, p2, p1 ) );
 
             p0 = center;
@@ -248,9 +249,9 @@ public class Elements {
             p2 = center + MathVec3.AxisAngleQuat( -normal, (i+1) * dTheta ) * spar * (radius + margin);
             mid.Add( new Tri( p0, p2, p1 ) );
 
-            p0 = center - normal * Constants._LAYER_SEP;
-            p1 = center + MathVec3.AxisAngleQuat( -normal, i     * dTheta ) * spar * radius - normal * Constants._LAYER_SEP;
-            p2 = center + MathVec3.AxisAngleQuat( -normal, (i+1) * dTheta ) * spar * radius - normal * Constants._LAYER_SEP;
+            p0 = center - normal * Constants._PLY_SEP;
+            p1 = center + MathVec3.AxisAngleQuat( -normal, i     * dTheta ) * spar * radius - normal * Constants._PLY_SEP;
+            p2 = center + MathVec3.AxisAngleQuat( -normal, (i+1) * dTheta ) * spar * radius - normal * Constants._PLY_SEP;
             btm.Add( new Tri( p0, p2, p1 ) );
         }
 
@@ -288,20 +289,20 @@ public class Elements {
         mid.Add( new Tri( center, p3, p2 ) );
         mid.Add( new Tri( center, p0, p3 ) );
 
-        p0 = center + align * half + yDir * half + normal * Constants._LAYER_SEP;
-        p1 = center - align * half + yDir * half + normal * Constants._LAYER_SEP;
-        p2 = center - align * half - yDir * half + normal * Constants._LAYER_SEP;
-        p3 = center + align * half - yDir * half + normal * Constants._LAYER_SEP;
+        p0 = center + align * half + yDir * half + normal * Constants._PLY_SEP;
+        p1 = center - align * half + yDir * half + normal * Constants._PLY_SEP;
+        p2 = center - align * half - yDir * half + normal * Constants._PLY_SEP;
+        p3 = center + align * half - yDir * half + normal * Constants._PLY_SEP;
 
         top.Add( new Tri( center, p0, p1 ) );
         top.Add( new Tri( center, p1, p2 ) );
         top.Add( new Tri( center, p2, p3 ) );
         top.Add( new Tri( center, p3, p0 ) );
 
-        p0 = center + align * half + yDir * half - normal * Constants._LAYER_SEP;
-        p1 = center - align * half + yDir * half - normal * Constants._LAYER_SEP;
-        p2 = center - align * half - yDir * half - normal * Constants._LAYER_SEP;
-        p3 = center + align * half - yDir * half - normal * Constants._LAYER_SEP;
+        p0 = center + align * half + yDir * half - normal * Constants._PLY_SEP;
+        p1 = center - align * half + yDir * half - normal * Constants._PLY_SEP;
+        p2 = center - align * half - yDir * half - normal * Constants._PLY_SEP;
+        p3 = center + align * half - yDir * half - normal * Constants._PLY_SEP;
 
         btm.Add( new Tri( center, p1, p0 ) );
         btm.Add( new Tri( center, p2, p1 ) );
