@@ -327,7 +327,7 @@ public class Elements {
 
 /* ////////// DEV_PLAN /////////////////////////////////////////////////////////////////////////////
 * No root, Only growth points
-[Y] Choose a camera angle, Negative Z
+[Y] Choose a camera angle, Negative Z above <0,0>
 [Y] Establish Grid
 
 * Generate Glyph
@@ -387,14 +387,26 @@ public class RNode {
 /// </summary>
 public class GlyphGen {
     
-    public Vector3 gridCntr = Vector3.Zero; // Center of the grid
-    public float   gridUnit = 0f; // --------- Grid step size in the XY plane (`_LAYER_SEP` in Z)
-    
+    // Grid Params //
+    public Vector3 gridCntr  = Vector3.Zero; // Center of the grid
+    public float   gridUnit  = 0.5f; // ------- Grid step size in the XY plane (`_LAYER_SEP` in Z)
+    public int     gridLimit = 5; // ---------- Number of steps from the center that the grid is allowed to grow
+
+    // Stroke Params //
+    public float   strokeWidth = 0.20f;
+    public Vector4 strokeColor = new(1,1,1,1);
+    public Vector4 borderColor = new(0,0,0,1);
+
+
     /// <summary>
-    /// Return the aggregate mesh
+    /// Generate a layered glyph in the form of a triangle mesh
     /// </summary>
-    public static void MakeGlyph(){
+    public static List<Tri> MakeGlyph(){
+        List<Tri>   mesh  = [];
         List<RNode> nodes = []; // Junctions, Both occupied and empty
+
+
+        return mesh;
     }
 
 }
