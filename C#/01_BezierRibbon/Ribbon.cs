@@ -210,14 +210,59 @@ public class Ribbon {
 
 }
 
+/// <summary>
+/// Ribbon-like elements other than curves
+/// </summary>
+public class Elements {
+
+    public Random rand = new();
+
+    public List<Tri> CircleCap( Vector3 center, Vector3 normal, float radius, int div = 16 ){
+        List<Tri> circ = [];
+        circ.Capacity = div * 4;
+        normal.Normalize();
+        float   dTheta = 2f * MathF.PI / div;
+        float   margin = radius / 4f;
+        Vector3 spar   = Vector3.Cross( MathVec3.NoiseXYZ( rand ), normal );
+        Vector3 p0, p1, p2;
+
+        for( int i = 0; i < div; ++i ){
+
+            p0 = center + normal * Constants._LAYER_SEP;
+            p1 = center + MathVec3.AxisAngleQuat( normal, i     * dTheta ) * spar * radius + normal * Constants._LAYER_SEP;
+            p2 = center + MathVec3.AxisAngleQuat( normal, (i+1) * dTheta ) * spar * radius + normal * Constants._LAYER_SEP;
+            circ.Add( new Tri( p0, p1, p2 ) );
+
+            p0 = center;
+            p1 = center + MathVec3.AxisAngleQuat( normal, i     * dTheta ) * spar * (radius + margin);
+            p2 = center + MathVec3.AxisAngleQuat( normal, (i+1) * dTheta ) * spar * (radius + margin);
+            circ.Add( new Tri( p0, p1, p2 ) );
+
+            p1 = center + MathVec3.AxisAngleQuat( -normal, i     * dTheta ) * spar * (radius + margin);
+            p2 = center + MathVec3.AxisAngleQuat( -normal, (i+1) * dTheta ) * spar * (radius + margin);
+            circ.Add( new Tri( p0, p1, p2 ) );
+
+            p0 = center - normal * Constants._LAYER_SEP;
+            p1 = center + MathVec3.AxisAngleQuat( -normal, i     * dTheta ) * spar * radius - normal * Constants._LAYER_SEP;
+            p2 = center + MathVec3.AxisAngleQuat( -normal, (i+1) * dTheta ) * spar * radius - normal * Constants._LAYER_SEP;
+            circ.Add( new Tri( p0, p1, p2 ) );
+        }
+
+        return circ;
+    }
+}
+
 /* ////////// DEV_PLAN /////////////////////////////////////////////////////////////////////////////
 [Y] Choose a camera angle, Negative Z
 [>] Spawn a root `Ribbon`
 [ ] Prefer moving in the current layer
+[ ] `Elements`
+    [ ] Circle corner
+    [ ] Square corner
 [ ] Move up a layer
 [ ] Move down a layer
 [ ] Output image
-[ ] Posterize
+[ ] Disable lighting
  */
 
 public class GenRibbon {
