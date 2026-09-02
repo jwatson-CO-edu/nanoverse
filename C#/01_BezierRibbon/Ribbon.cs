@@ -36,7 +36,7 @@ public class Ribbon {
     public List<Tri>     mid; // -- Middle border
     public List<Tri>     btm; // -- Bottom ribbon
     public bool /*----*/ hasMid; // Flag: Should the middle layer be constructed?
-    public List<Ribbon>  edges;
+    public List<Ribbon>  edges; //- Graph structure, Unused?
 
 
     /*     Y  +X ====================
@@ -85,6 +85,9 @@ public class Ribbon {
     }
 
 
+    /// <summary>
+    /// Get the control frame for the segment that contains `t` 
+    /// </summary>
     public Matrix4 GetFrameAt( float t ){  return matx[ GetSegment(t) ];  }
 
 
@@ -218,6 +221,9 @@ public class Elements {
 
     public Random rand = new();
 
+    /// <summary>
+    /// Rounded stroke cap
+    /// </summary>
     public List<Tri> CircleCap( Vector3 center, Vector3 normal, float radius, Vector4 strokeColor, Vector4 borderColor, int div = 16 ){
         List<Tri> circ = [];
         List<Tri> top  = [];
@@ -262,6 +268,9 @@ public class Elements {
     }
 
 
+    /// <summary>
+    /// Square stroke cap
+    /// </summary>
     public static List<Tri> SquareCap( Vector3 center, Vector3 normal, Vector3 align, float sideLength, Vector4 strokeColor, Vector4 borderColor, int div = 16 ){
         List<Tri> squ = [];
         List<Tri> top = [];
@@ -269,7 +278,7 @@ public class Elements {
         List<Tri> btm = [];
         normal.Normalize();
         align.Normalize();
-        Vector3 yDir = Vector3.Cross( normal, align );
+        Vector3 yDir = Vector3.Cross( normal, align ).Normalized();
         Vector3 p0, p1, p2, p3;
         float   half   = sideLength/2f;
         float   margin = sideLength/8f;
@@ -317,26 +326,75 @@ public class Elements {
 }
 
 /* ////////// DEV_PLAN /////////////////////////////////////////////////////////////////////////////
+* No root, Only growth points
 [Y] Choose a camera angle, Negative Z
-[>] Spawn a root `Ribbon`
-[ ] Prefer moving in the current layer
-[ ] `Elements`
-    [ ] Circle corner
-    [ ] Square corner
-[ ] Move up a layer
-[ ] Move down a layer
-[ ] Output image
-[ ] Disable lighting
- */
+[Y] Establish Grid
 
-public class GenRibbon {
+* Generate Glyph
     
+    * Gen Params
+        [ ] Prefer moving in the current layer
+        [ ] Max number of edges per node
+        [ ] Max number of strokes
+        [ ] Chance to halt early
+
+    [ ] Start with straight lines only
+    [ ] Add Quadratic Bezier
+    [ ] Add Cubic Bezier
+    [ ] Add Circles
+
+    * Generation Steps
+        [ ] Initialize 2 Nodes
+        * Loop
+            [ ] Choose whether to generate a new node
+                [ ] PREVENT vertically stacking nodes 
+                [ ] Choose Open grid -or- Along stroke
+                [ ] Choose whether to layer jump
+            [ ] Choose a start node
+            [ ] If new node above then edge to new, Otherwise edge to existing
+            [ ] Choose edge curve
+        [ ] Finish Nodes
+            [ ] Terminate stroke ends (one edge)
+            [ ] Add circles to nodes w multiple edges
+
+[Y] `Elements`
+    [Y] Circle corner
+    [Y] Square corner
+[ ] Disable lighting
+[ ] Output image
+*/
+
+
+/// <summary>
+/// Model junction between `Ribbon`s
+/// </summary>
+public class RNode {
+    public Vector3 /*-*/ posn   = Vector3.Zero; // Anchor Point
+    public List<Vector3> edges  = []; // --------- Strokes leaving this node
+    public Vector3 /*-*/ bias   = Vector3.Zero; // Bias direction (Central bias ray)
+    public float /*---*/ bTheta = -1f; // -------- Bias ray step
+
+    /// <summary>
+    /// How many strokes join here?
+    /// </summary>
+    public int Occupancy(){  return edges.Count;  }
+}
+
+
+
+/// <summary>
+/// Create a layered glyph
+/// </summary>
+public class GlyphGen {
+    
+    public Vector3 gridCntr = Vector3.Zero; // Center of the grid
+    public float   gridUnit = 0f; // --------- Grid step size in the XY plane (`_LAYER_SEP` in Z)
     
     /// <summary>
     /// Return the aggregate mesh
     /// </summary>
-    public static void MakeLogo(){
-        Ribbon root = new();
+    public static void MakeGlyph(){
+        List<RNode> nodes = []; // Junctions, Both occupied and empty
     }
 
 }
