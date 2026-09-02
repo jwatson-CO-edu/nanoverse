@@ -217,9 +217,15 @@ public class Elements {
 
     public Random rand = new();
 
-    public List<Tri> CircleCap( Vector3 center, Vector3 normal, float radius, int div = 16 ){
+    public List<Tri> CircleCap( Vector3 center, Vector3 normal, float radius, Vector4 strokeColor, Vector4 borderColor, int div = 16 ){
         List<Tri> circ = [];
+        List<Tri> top = [];
+        List<Tri> mid = [];
+        List<Tri> btm = [];
         circ.Capacity = div * 4;
+        mid.Capacity = div * 2;
+        top.Capacity = div;
+        btm.Capacity = div;
         normal.Normalize();
         float   dTheta = 2f * MathF.PI / div;
         float   margin = radius / 4f;
@@ -231,23 +237,29 @@ public class Elements {
             p0 = center + normal * Constants._LAYER_SEP;
             p1 = center + MathVec3.AxisAngleQuat( normal, i     * dTheta ) * spar * radius + normal * Constants._LAYER_SEP;
             p2 = center + MathVec3.AxisAngleQuat( normal, (i+1) * dTheta ) * spar * radius + normal * Constants._LAYER_SEP;
-            circ.Add( new Tri( p0, p1, p2 ) );
+            top.Add( new Tri( p0, p1, p2 ) );
 
             p0 = center;
             p1 = center + MathVec3.AxisAngleQuat( normal, i     * dTheta ) * spar * (radius + margin);
             p2 = center + MathVec3.AxisAngleQuat( normal, (i+1) * dTheta ) * spar * (radius + margin);
-            circ.Add( new Tri( p0, p1, p2 ) );
+            mid.Add( new Tri( p0, p1, p2 ) );
 
             p1 = center + MathVec3.AxisAngleQuat( -normal, i     * dTheta ) * spar * (radius + margin);
             p2 = center + MathVec3.AxisAngleQuat( -normal, (i+1) * dTheta ) * spar * (radius + margin);
-            circ.Add( new Tri( p0, p1, p2 ) );
+            mid.Add( new Tri( p0, p1, p2 ) );
 
             p0 = center - normal * Constants._LAYER_SEP;
             p1 = center + MathVec3.AxisAngleQuat( -normal, i     * dTheta ) * spar * radius - normal * Constants._LAYER_SEP;
             p2 = center + MathVec3.AxisAngleQuat( -normal, (i+1) * dTheta ) * spar * radius - normal * Constants._LAYER_SEP;
-            circ.Add( new Tri( p0, p1, p2 ) );
+            btm.Add( new Tri( p0, p1, p2 ) );
         }
 
+        top = Tri.ColorMesh( top, strokeColor );
+        btm = Tri.ColorMesh( btm, strokeColor );
+        mid = Tri.ColorMesh( mid, borderColor );
+        circ.AddRange( top );        
+        circ.AddRange( btm );        
+        circ.AddRange( mid );
         return circ;
     }
 }
