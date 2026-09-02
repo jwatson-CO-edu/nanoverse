@@ -11,9 +11,10 @@ namespace ribbon {
 /// Useful `Ribbon` Constants
 /// </summary>
 public class Constants {
-    public const int   _DEFAULT_DIV = 64;
-    public const float _PLY_SEP     = 1f / 32f; //1f / 64f;
-    public const float _LAYER_SEP   = 3f * _PLY_SEP; //1f / 64f;
+    public const int   _DEFAULT_DIV  = 64;
+    public const float _PLY_SEP      = 1f / 32f; //1f / 64f;
+    public const float _LAYER_SEP    = 3f * _PLY_SEP; //1f / 64f;
+    public const float _DEFAULT_GRID = 0.5f; //1f / 64f;
 }
 
 
@@ -369,10 +370,22 @@ public class Elements {
 /// Model junction between `Ribbon`s
 /// </summary>
 public class RNode {
-    public Vector3 /*-*/ posn   = Vector3.Zero; // Anchor Point
-    public List<Vector3> edges  = []; // --------- Strokes leaving this node
-    public Vector3 /*-*/ bias   = Vector3.Zero; // Bias direction (Central bias ray)
-    public float /*---*/ bTheta = -1f; // -------- Bias ray step
+    public Vector3 /*-*/ posn    = Vector3.Zero; // Anchor Point
+    public List<Vector3> edges   = []; // --------- Strokes leaving this node
+    public Vector3 /*-*/ bias    = Vector3.Zero; // Bias direction (Central bias ray)
+    public float /*---*/ bTheta  = -1f; // -------- Bias ray step
+    public float /*---*/ dThresh = Constants._DEFAULT_GRID / 4f; 
+
+
+    public bool IsCloseTo( Vector3 q ){
+        return (new Vector2( posn[0], posn[1] ) - new Vector2( q[0], q[1] )).Length <= dThresh;               
+    }
+
+
+    public bool IsCloseTo( RNode q ){
+        return (new Vector2( posn[0], posn[1] ) - new Vector2( q.posn[0], q.posn[1] )).Length <= dThresh;               
+    }
+
 
     /// <summary>
     /// How many strokes join here?
@@ -386,14 +399,17 @@ public class RNode {
 /// Create a layered glyph
 /// </summary>
 public class GlyphGen {
-    
+
+    // Structure //
+    public List<RNode> nodes = []; // Junctions, Both occupied and empty
+
     // Grid Params //
-    public Vector3 gridCntr  = Vector3.Zero; // Center of the grid
-    public float   gridUnit  = 0.5f; // ------- Grid step size in the XY plane (`_LAYER_SEP` in Z)
-    public int     gridLimit = 5; // ---------- Number of steps from the center that the grid is allowed to grow
+    public Vector3 gridCntr  = Vector3.Zero; // ---------- Center of the grid
+    public float   gridUnit  = Constants._DEFAULT_GRID; // Grid step size in the XY plane (`_LAYER_SEP` in Z)
+    public int     gridLimit = 5; // --------------------- Number of steps from the center that the grid is allowed to grow
 
     // Stroke Params //
-    public float   strokeWidth = 0.20f;
+    public float   strokeWidth = Constants._DEFAULT_GRID * 0.4f;
     public Vector4 strokeColor = new(1,1,1,1);
     public Vector4 borderColor = new(0,0,0,1);
 
@@ -403,7 +419,6 @@ public class GlyphGen {
     /// </summary>
     public static List<Tri> MakeGlyph(){
         List<Tri>   mesh  = [];
-        List<RNode> nodes = []; // Junctions, Both occupied and empty
 
 
         return mesh;
