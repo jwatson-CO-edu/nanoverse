@@ -229,7 +229,7 @@ public class Elements {
         normal.Normalize();
         float   dTheta = 2f * MathF.PI / div;
         float   margin = radius / 4f;
-        Vector3 spar   = Vector3.Cross( MathVec3.NoiseXYZ( rand ), normal );
+        Vector3 spar   = Vector3.Cross( MathVec3.NoiseXYZ( rand ), normal ).Normalized();
         Vector3 p0, p1, p2;
 
         for( int i = 0; i < div; ++i ){
@@ -237,21 +237,21 @@ public class Elements {
             p0 = center + normal * Constants._LAYER_SEP;
             p1 = center + MathVec3.AxisAngleQuat( normal, i     * dTheta ) * spar * radius + normal * Constants._LAYER_SEP;
             p2 = center + MathVec3.AxisAngleQuat( normal, (i+1) * dTheta ) * spar * radius + normal * Constants._LAYER_SEP;
-            top.Add( new Tri( p0, p1, p2 ) );
+            top.Add( new Tri( p0, p2, p1 ) );
 
             p0 = center;
             p1 = center + MathVec3.AxisAngleQuat( normal, i     * dTheta ) * spar * (radius + margin);
             p2 = center + MathVec3.AxisAngleQuat( normal, (i+1) * dTheta ) * spar * (radius + margin);
-            mid.Add( new Tri( p0, p1, p2 ) );
+            mid.Add( new Tri( p0, p2, p1 ) );
 
             p1 = center + MathVec3.AxisAngleQuat( -normal, i     * dTheta ) * spar * (radius + margin);
             p2 = center + MathVec3.AxisAngleQuat( -normal, (i+1) * dTheta ) * spar * (radius + margin);
-            mid.Add( new Tri( p0, p1, p2 ) );
+            mid.Add( new Tri( p0, p2, p1 ) );
 
             p0 = center - normal * Constants._LAYER_SEP;
             p1 = center + MathVec3.AxisAngleQuat( -normal, i     * dTheta ) * spar * radius - normal * Constants._LAYER_SEP;
             p2 = center + MathVec3.AxisAngleQuat( -normal, (i+1) * dTheta ) * spar * radius - normal * Constants._LAYER_SEP;
-            btm.Add( new Tri( p0, p1, p2 ) );
+            btm.Add( new Tri( p0, p2, p1 ) );
         }
 
         circ.AddRange( Tri.ColorMesh( top, strokeColor ) );        
