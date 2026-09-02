@@ -17,15 +17,15 @@ public static class Builder {
 
         for( int i = 0; i < Nunit; ++i ){
 
-            base_i[3] += narrowHeight/2;
+            base_i[2] += narrowHeight/2;
             mesh_i = MeshGen.Cuboid( base_i, narrowWidth, narrowWidth, narrowHeight );
             totMsh.AddRange( mesh_i );
 
-            base_i[3] += narrowHeight/2 + wideHeight/2;
+            base_i[2] += narrowHeight/2 + wideHeight/2;
             mesh_i = MeshGen.Cuboid( base_i, wideWidth, wideWidth, wideHeight );
             totMsh.AddRange( mesh_i );
 
-            base_i[3] += wideHeight/2;
+            base_i[2] += wideHeight/2;
             
         }
 

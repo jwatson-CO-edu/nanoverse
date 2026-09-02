@@ -90,7 +90,7 @@ totMesh.AddRange( torus );
 
 ///// Plane //////////////////////////////////////
 
-List<Tri> plane = MeshGen.PlaneXY( new Vector3( 4, 4, -2 ), 14f, 14f, 0.5f );
+List<Tri> plane = MeshGen.PlaneXY( new Vector3( 4, 4, -2 ), 21f, 21f, 1f );
 plane = Tri.ColorMesh( plane, new Vector4(0.5f,0.5f,0.5f,1) );
 totMesh.AddRange( plane );
 
@@ -118,6 +118,13 @@ List<Tri> tFrust = MeshGen.TwistFrustum( new Vector3(8,4,0), new Vector3(1,2,3),
                                          6, 16 );
 tFrust = Tri.ColorMesh( tFrust, new Vector4(1,0.5f,0,1) );
 totMesh.AddRange( tFrust );
+
+
+///// Twisted Frustum ////////////////////////////
+
+List<Tri> appt = Builder.StackedApartment( new Vector3(12,0,-2), new Vector3(0.25f,0.25f,0.25f), 6, 
+                                           2.5f, 0.25f, 1.75f, 0.25f );
+totMesh.AddRange( appt );
 
 
 ///// Display Aggregate Mesh /////////////////////
