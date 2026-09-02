@@ -219,9 +219,9 @@ public class Elements {
 
     public List<Tri> CircleCap( Vector3 center, Vector3 normal, float radius, Vector4 strokeColor, Vector4 borderColor, int div = 16 ){
         List<Tri> circ = [];
-        List<Tri> top = [];
-        List<Tri> mid = [];
-        List<Tri> btm = [];
+        List<Tri> top  = [];
+        List<Tri> mid  = [];
+        List<Tri> btm  = [];
         circ.Capacity = div * 4;
         mid.Capacity = div * 2;
         top.Capacity = div;
@@ -254,13 +254,64 @@ public class Elements {
             btm.Add( new Tri( p0, p1, p2 ) );
         }
 
-        top = Tri.ColorMesh( top, strokeColor );
-        btm = Tri.ColorMesh( btm, strokeColor );
-        mid = Tri.ColorMesh( mid, borderColor );
-        circ.AddRange( top );        
-        circ.AddRange( btm );        
-        circ.AddRange( mid );
+        circ.AddRange( Tri.ColorMesh( top, strokeColor ) );        
+        circ.AddRange( Tri.ColorMesh( btm, strokeColor ) );        
+        circ.AddRange( Tri.ColorMesh( mid, borderColor ) );
         return circ;
+    }
+
+
+    public static List<Tri> SquareCap( Vector3 center, Vector3 normal, Vector3 align, float sideLength, Vector4 strokeColor, Vector4 borderColor, int div = 16 ){
+        List<Tri> squ = [];
+        List<Tri> top = [];
+        List<Tri> mid = [];
+        List<Tri> btm = [];
+        normal.Normalize();
+        align.Normalize();
+        Vector3 yDir = Vector3.Cross( normal, align );
+        Vector3 p0, p1, p2, p3;
+        float   half   = sideLength/2f;
+        float   margin = sideLength/8f;
+
+        p0 = center + align * (half+margin) + yDir * (half+margin);
+        p1 = center - align * (half+margin) + yDir * (half+margin);
+        p2 = center - align * (half+margin) - yDir * (half+margin);
+        p3 = center + align * (half+margin) - yDir * (half+margin);
+
+        mid.Add( new Tri( center, p0, p1 ) );
+        mid.Add( new Tri( center, p1, p2 ) );
+        mid.Add( new Tri( center, p2, p3 ) );
+        mid.Add( new Tri( center, p3, p0 ) );
+
+        mid.Add( new Tri( center, p1, p0 ) );
+        mid.Add( new Tri( center, p2, p1 ) );
+        mid.Add( new Tri( center, p3, p2 ) );
+        mid.Add( new Tri( center, p0, p3 ) );
+
+        p0 = center + align * half + yDir * half + normal * Constants._LAYER_SEP;
+        p1 = center - align * half + yDir * half + normal * Constants._LAYER_SEP;
+        p2 = center - align * half - yDir * half + normal * Constants._LAYER_SEP;
+        p3 = center + align * half - yDir * half + normal * Constants._LAYER_SEP;
+
+        top.Add( new Tri( center, p0, p1 ) );
+        top.Add( new Tri( center, p1, p2 ) );
+        top.Add( new Tri( center, p2, p3 ) );
+        top.Add( new Tri( center, p3, p0 ) );
+
+        p0 = center + align * half + yDir * half - normal * Constants._LAYER_SEP;
+        p1 = center - align * half + yDir * half - normal * Constants._LAYER_SEP;
+        p2 = center - align * half - yDir * half - normal * Constants._LAYER_SEP;
+        p3 = center + align * half - yDir * half - normal * Constants._LAYER_SEP;
+
+        btm.Add( new Tri( center, p1, p0 ) );
+        btm.Add( new Tri( center, p2, p1 ) );
+        btm.Add( new Tri( center, p3, p2 ) );
+        btm.Add( new Tri( center, p0, p3 ) );
+
+        squ.AddRange( Tri.ColorMesh( top, strokeColor ) );        
+        squ.AddRange( Tri.ColorMesh( btm, strokeColor ) );        
+        squ.AddRange( Tri.ColorMesh( mid, borderColor ) );
+        return squ;
     }
 }
 
