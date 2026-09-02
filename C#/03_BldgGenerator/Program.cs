@@ -120,7 +120,7 @@ tFrust = Tri.ColorMesh( tFrust, new Vector4(1,0.5f,0,1) );
 totMesh.AddRange( tFrust );
 
 
-///// Twisted Frustum ////////////////////////////
+///// Stacked Apartment Building /////////////////
 
 List<Tri> appt = Builder.StackedApartment( new Vector3(12,0,-2), new Vector3(0.25f,0.25f,0.25f), 6, 
                                            2.5f, 0.25f, 1.75f, 0.25f );
