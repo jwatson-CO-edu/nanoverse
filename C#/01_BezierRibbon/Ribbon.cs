@@ -528,6 +528,9 @@ public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAU
     }
 
 
+    // public List<RNode>
+
+
     /// <summary>
     /// Generate a layered glyph in the form of a triangle mesh
     /// </summary>
