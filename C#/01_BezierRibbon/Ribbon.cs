@@ -588,7 +588,7 @@ public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAU
     /// Generate a layered glyph in the form of a triangle mesh
     /// </summary>
     public List<Tri> MakeGlyph(){
-        List<Tri> mesh  = [];
+        List<Tri> mesh = [];
         
         // Restart
         Init();
@@ -597,6 +597,7 @@ public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAU
         for( int i = 0; i < 2; ++i ){  nodes.Add( GetFreeNode() );  }
 
         RNode bgnNode, endNode;
+        Ribbon ribbon;
         // Glyph Generation Loop
         while( true ){
 
@@ -631,12 +632,22 @@ public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAU
                 endNode = availN[ rand.Next( availN.Count ) ];
             }
 
+            /// Create Stroke ///
+            ribbon = new( twist_ : 0 ){
+                spine = new Line.Segment( bgnNode.posn, endNode.posn )
+            };
+            ribbon.SetXdirAt0( Vector3.Cross( Vector3.UnitZ, bgnNode.posn - endNode.posn ).Normalized() );
+            ribbon.BuildGeo( strokeWidth );
+            ribbon.SetColor( strokeColor, borderColor );
+            strokes.Add( ribbon );
+
             /// End Conditions ///
             if( strokes.Count >= maxStrokes ){  break;  }
             if( strokes.Count >= maxNodePop ){  if( rand.NextSingle() < haltProb ){  break;  }  }
         }
 
         // Aggregate Mesh across Strokes and Nodes
+        foreach( Ribbon stroke in strokes ){  mesh.AddRange( stroke.GetTotalMesh() );  }
 
         // Return Mesh
         return mesh;
