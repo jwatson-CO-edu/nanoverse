@@ -528,7 +528,24 @@ public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAU
     }
 
 
-    // public List<RNode>
+    /// <summary>
+    /// Return a list of nodes that are not saturated with connections
+    /// </summary>
+    public List<RNode> AvailableNodes(){
+        List<RNode> available = [];
+        foreach( RNode node in nodes ){  if( node.Occupancy() < maxPop ){  available.Add( node );  }  }
+        return available;
+    }
+
+
+    /// <summary>
+    /// Return a list of strokes that are not saturated with (mid-line) connections
+    /// </summary>
+    public List<Ribbon> AvailableStrokes(){
+        List<Ribbon> available = [];
+        foreach( Ribbon line in strokes ){  if( line.edges < maxPop ){  available.Add( line );  }  }
+        return available;
+    }
 
 
     /// <summary>
