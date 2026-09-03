@@ -376,7 +376,6 @@ public class RNode {
     public Vector3 /*-*/ posn    = Vector3.Zero; // Anchor Point
     public List<Vector3> edges   = []; // --------- Strokes leaving this node
     public Vector3 /*-*/ bias    = Vector3.Zero; // Bias direction (Central bias ray)
-    public float /*---*/ bTheta  = -1f; // -------- Bias ray step
     public float /*---*/ dThresh = Constants._DEFAULT_GRID / 4f; 
 
 
@@ -440,7 +439,7 @@ public class RNode {
 /// <summary>
 /// Create a layered glyph
 /// </summary>
-public class GlyphGen {
+public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAULT_GRID ) {
 
     // Generation //
     public Random rand = new();
@@ -450,17 +449,29 @@ public class GlyphGen {
     public List<Ribbon> strokes = []; // Ribbons that make up the figure
 
     // Grid Params //
-    public Vector3 gridCntr  = Vector3.Zero; // ---------- Center of the grid
-    public float   gridUnit  = Constants._DEFAULT_GRID; // Grid step size in the XY plane (`_LAYER_SEP` in Z)
-    public int     gridLimit = 5; // --------------------- Number of steps from the center that the grid is allowed to grow
+    public Vector3 gridCntr  = Vector3.Zero; // Center of the grid
+    public float   gridUnit  = unitGridSize; // Grid step size in the XY plane (`_LAYER_SEP` in Z)
+    public int     gridLimit = NgridHalf; // -- Number of steps from the center that the grid is allowed to grow
 
     // Node Params //
-    public int maxPop = 5;
+    public int   maxPop /*-*/ = 0;
+    public float biasStep_rad = 0f; 
 
     // Stroke Params //
     public float   strokeWidth = Constants._DEFAULT_GRID * 0.4f; // Width of all strokes
     public Vector4 strokeColor = new(1,1,1,1); // ----------------- Color of all strokes
     public Vector4 borderColor = new(0,0,0,1); // ----------------- Color of all borders (choose BG color!)
+    public float   jumpScale   = NgridHalf * unitGridSize;
+    public int     jumpLimit   = 2;
+
+
+    /// <summary>
+    /// Choose a preferred radial spacing for strokes that meet at a node, Set max node population
+    /// </summary>
+    public void InitBiasDiv(){
+        maxPop /*-*/ = 4 + rand.Next(5);
+        biasStep_rad = 2f*MathF.PI / maxPop;  
+    }
 
 
     /// <summary>
@@ -486,11 +497,32 @@ public class GlyphGen {
 
 
     public RNode GetFreeNode(){
-        RNode rtnNod = new(){
-            addr = ChooseFreeAddress()
-        };
+        RNode rtnNod = new(){  addr = ChooseFreeAddress()  };
         
+        rtnNod.posn[0] = gridCntr[0] + rtnNod.addr[0] * gridUnit;
+        rtnNod.posn[1] = gridCntr[1] + rtnNod.addr[1] * gridUnit;
+        rtnNod.posn[2] = gridCntr[2];
 
+        float dMin = 6e10f;
+        float zMin = 6e10f;
+        float d;
+
+        // Determine Z-separation from nearest neighbor
+        foreach( RNode node in nodes ){
+            d = node.DistanceTo( rtnNod );
+            if( d < dMin ){
+                dMin = d;
+                zMin = Math.Abs( node.posn[2] - rtnNod.posn[2] );
+            }
+        }
+
+        // Compute vertical jump probability and roll to jump up to `jumpLimit` layers 
+        if( zMin <= MathVec3._EPSILON ){
+            float jumpProb = 1f - Math.Min( 1f, dMin / jumpScale );
+            if( rand.NextSingle() < jumpProb ){
+                rtnNod.posn[2] += (rand.Next( 2*jumpLimit+1 ) - jumpLimit) * Constants._LAYER_SEP;
+            }
+        }
 
         return rtnNod;
     }
@@ -499,10 +531,25 @@ public class GlyphGen {
     /// <summary>
     /// Generate a layered glyph in the form of a triangle mesh
     /// </summary>
-    public static List<Tri> MakeGlyph(){
+    public List<Tri> MakeGlyph(){
         List<Tri> mesh  = [];
+        
+        // Restart
+        nodes.Clear();
+        strokes.Clear();
+        InitBiasDiv();
+        
+        // Init 2 nodes
+        for( int i = 0; i < 2; ++i ){  nodes.Add( GetFreeNode() );  }
 
+        // Glyph Generation Loop
+        while( true ){
+            break;
+        }
 
+        // Aggregate Mesh across Strokes and Nodes
+
+        // Return Mesh
         return mesh;
     }
 
