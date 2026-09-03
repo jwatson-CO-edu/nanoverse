@@ -37,7 +37,7 @@ public class Ribbon {
     public List<Tri>     mid; // -- Middle border
     public List<Tri>     btm; // -- Bottom ribbon
     public bool /*----*/ hasMid; // Flag: Should the middle layer be constructed?
-    public List<Ribbon>  edges; //- Graph structure, Unused?
+    public int /*-----*/ edges; //- Graph structure, Unused?
 
 
     /*     Y  +X ====================
@@ -65,7 +65,7 @@ public class Ribbon {
         mid    = [];
         btm    = [];
         hasMid = makeMid;
-        edges  = [];
+        edges  = 0;
         // Reserve Geo
         matx.Capacity = N;
         tLst.Capacity = N;
@@ -347,11 +347,13 @@ public class Elements {
     * Generation Steps
         [ ] Initialize 2 Nodes
         * Loop
+            [ ] Choose a start node
+                [ ] Choose node -or- stroke
             [ ] Choose whether to generate a new node
                 [ ] PREVENT vertically stacking nodes 
                 [ ] Choose Open grid -or- Along stroke
                 [ ] Choose whether to layer jump
-            [ ] Choose a start node
+            
             [ ] If new node above then edge to new, Otherwise edge to existing
             [ ] Choose edge curve
         [ ] Finish Nodes
@@ -370,6 +372,7 @@ public class Elements {
 /// Model junction between `Ribbon`s
 /// </summary>
 public class RNode {
+    public int[] /*---*/ addr    = new int[2];
     public Vector3 /*-*/ posn    = Vector3.Zero; // Anchor Point
     public List<Vector3> edges   = []; // --------- Strokes leaving this node
     public Vector3 /*-*/ bias    = Vector3.Zero; // Bias direction (Central bias ray)
@@ -377,13 +380,52 @@ public class RNode {
     public float /*---*/ dThresh = Constants._DEFAULT_GRID / 4f; 
 
 
+    /// <summary>
+    /// Is this node close to an address?
+    /// </summary>
+    public bool IsCloseTo( int[] q ){
+        return (Math.Abs(addr[0] - q[0]) + Math.Abs(addr[1] - q[1])) == 0;            
+    }
+
+
+    /// <summary>
+    /// Is this node close to a location?
+    /// </summary>
     public bool IsCloseTo( Vector3 q ){
         return (new Vector2( posn[0], posn[1] ) - new Vector2( q[0], q[1] )).Length <= dThresh;               
     }
 
 
+    /// <summary>
+    /// Distance to a location
+    /// </summary>
+    public float DistanceTo( Vector3 q ){
+        return (new Vector2( posn[0], posn[1] ) - new Vector2( q[0], q[1] )).Length;               
+    }
+
+
+    /// <summary>
+    /// Is this node close to another node?
+    /// </summary>
     public bool IsCloseTo( RNode q ){
         return (new Vector2( posn[0], posn[1] ) - new Vector2( q.posn[0], q.posn[1] )).Length <= dThresh;               
+    }
+
+
+    /// <summary>
+    /// Distance to another node
+    /// </summary>
+    public float DistanceTo( RNode q ){
+        return (new Vector2( posn[0], posn[1] ) - new Vector2( q.posn[0], q.posn[1] )).Length;               
+    }
+
+
+    /// <summary>
+    /// Is this node close to any in a list of other nodes?
+    /// </summary>
+    public bool IsCloseTo( List<RNode> q ){
+        foreach( RNode node in q ){  if( IsCloseTo( node ) ){  return true;  }  }
+        return false;
     }
 
 
@@ -400,25 +442,65 @@ public class RNode {
 /// </summary>
 public class GlyphGen {
 
+    // Generation //
+    public Random rand = new();
+
     // Structure //
-    public List<RNode> nodes = []; // Junctions, Both occupied and empty
+    public List<RNode>  nodes   = []; // Junctions, Both occupied and empty
+    public List<Ribbon> strokes = []; // Ribbons that make up the figure
 
     // Grid Params //
     public Vector3 gridCntr  = Vector3.Zero; // ---------- Center of the grid
     public float   gridUnit  = Constants._DEFAULT_GRID; // Grid step size in the XY plane (`_LAYER_SEP` in Z)
     public int     gridLimit = 5; // --------------------- Number of steps from the center that the grid is allowed to grow
 
+    // Node Params //
+    public int maxPop = 5;
+
     // Stroke Params //
-    public float   strokeWidth = Constants._DEFAULT_GRID * 0.4f;
-    public Vector4 strokeColor = new(1,1,1,1);
-    public Vector4 borderColor = new(0,0,0,1);
+    public float   strokeWidth = Constants._DEFAULT_GRID * 0.4f; // Width of all strokes
+    public Vector4 strokeColor = new(1,1,1,1); // ----------------- Color of all strokes
+    public Vector4 borderColor = new(0,0,0,1); // ----------------- Color of all borders (choose BG color!)
+
+
+    /// <summary>
+    /// Create a node in free space
+    /// </summary>
+    public int[] ChooseFreeAddress(){
+        bool  near;
+        int[] posn = new int[2];
+        while( true ){
+            posn[0] =  rand.Next( gridLimit*2+1 ) - gridLimit;
+            posn[1] =  rand.Next( gridLimit*2+1 ) - gridLimit;
+            near = false;
+            foreach( RNode node in nodes ){
+                if( node.IsCloseTo( posn ) ){
+                    near = true;
+                    break;
+                }
+            }
+            if( !near ){  break;  }
+        }
+        return posn;
+    }
+
+
+    public RNode GetFreeNode(){
+        RNode rtnNod = new(){
+            addr = ChooseFreeAddress()
+        };
+        
+
+
+        return rtnNod;
+    }
 
 
     /// <summary>
     /// Generate a layered glyph in the form of a triangle mesh
     /// </summary>
     public static List<Tri> MakeGlyph(){
-        List<Tri>   mesh  = [];
+        List<Tri> mesh  = [];
 
 
         return mesh;
