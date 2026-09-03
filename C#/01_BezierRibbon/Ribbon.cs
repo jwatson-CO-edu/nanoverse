@@ -334,10 +334,10 @@ public class Elements {
 /// </summary>
 public class RNode {
     public int[] /*---*/ addr    = new int[2];
-    public Vector3 /*-*/ posn    = Vector3.Zero; // Anchor Point
-    public List<Vector3> edges   = []; // --------- Strokes leaving this node
-    public Vector3 /*-*/ bias    = Vector3.Zero; // Bias direction (Central bias ray)
-    public float /*---*/ dThresh = Constants._DEFAULT_GRID / 4f; 
+    public Vector3 /*-*/ posn    = Vector3.Zero; //---------------- Anchor Point
+    public List<Vector3> edges   = []; // ------------------------- Strokes leaving this node
+    public Vector3 /*-*/ bias    = Vector3.UnitY; // -------------- Bias direction (Central bias ray)
+    public float /*---*/ dThresh = Constants._DEFAULT_GRID / 4f; // Threshold minimum distance between nodes
 
 
     /// <summary>
@@ -395,6 +395,8 @@ public class RNode {
     public int Occupancy(){  return edges.Count;  }
 }
 
+
+
 /* ////////// DEV_PLAN /////////////////////////////////////////////////////////////////////////////
 * No root, Only growth points
 [Y] Choose a camera angle, Negative Z above <0,0>
@@ -408,7 +410,7 @@ public class RNode {
         [Y] Max number of strokes
         [Y] Chance to halt early
 
-    [ ] Start with straight lines only
+    [>] Start with straight lines only
     [ ] Add Quadratic Bezier
     [ ] Add Cubic Bezier
     [ ] Add Circles
@@ -416,15 +418,14 @@ public class RNode {
     * Generation Steps
         [Y] Initialize 2 Nodes
         * Loop
-            [>] Choose a start node
-                [>] Choose node -or- stroke
-            [ ] Choose whether to generate a new node
+            [Y] Choose a start node
+                [Y] Choose node -or- stroke
+            [Y] Choose whether to end on a new node
                 [Y] PREVENT vertically stacking nodes 
-                [ ] Choose Open grid -or- Along stroke
+                [Y] Choose Open grid -or- Along stroke
                 [Y] Choose whether to layer jump
-            
-            [ ] If new node above then edge to new, Otherwise edge to existing
-            [ ] Choose edge curve
+            [Y] If new node above then edge to new, Otherwise edge to existing
+            [>] Choose edge curve
         [ ] Finish Nodes
             [ ] Terminate stroke ends (one edge)
             [ ] Add circles to nodes w multiple edges
@@ -436,19 +437,22 @@ public class RNode {
 [ ] Output image
 */
 
+
+
 /// <summary>
 /// Create a layered glyph
 /// </summary>
 public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAULT_GRID ) {
 
-    // Generation //
-    public Random rand     = new();
-    public float  haltProb = 0;
-    public float  nodeProb = 0.5f;
-
     // Structure //
     public List<RNode>  nodes   = []; // Junctions, Both occupied and empty
     public List<Ribbon> strokes = []; // Ribbons that make up the figure
+
+    // Generation //
+    public Random rand     = new(); // Local RNG
+    public float  haltProb = 0; // --- Probability of halting at the end of each iteration
+    public float  nodeProb = 0.5f; //- Probability of beginning at an existing node -vs- creating node on stroke
+    public float  newNProb = 0.5f; //- Probability of ending at a new node -vs- using existing
 
     // Grid Params //
     public Vector3 gridCntr  = Vector3.Zero; // Center of the grid
@@ -456,37 +460,41 @@ public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAU
     public int     gridLimit = NgridHalf; // -- Number of steps from the center that the grid is allowed to grow
 
     // Node Params //
-    public int   maxNodePop   = 0;
-    public int   maxStrokes   = Math.Max( NgridHalf, (int) MathF.Pow( 2*NgridHalf+1, 2f)/(4*NgridHalf) );
-    public float biasStep_rad = 0f; 
+    public int   maxNodePop   = 0; //- Maximum stokes that can meet at the same node
+    public int   maxStrokes   = 0; //- Maximum total strokes in the glyph
+    public float biasStep_rad = 0f; // Radial spacing for strokes that meet at a node 
 
     // Stroke Params //
     public float   strokeWidth = Constants._DEFAULT_GRID * 0.4f; // Width of all strokes
     public Vector4 strokeColor = new(1,1,1,1); // ----------------- Color of all strokes
     public Vector4 borderColor = new(0,0,0,1); // ----------------- Color of all borders (choose BG color!)
-    public float   jumpScale   = NgridHalf * unitGridSize;
-    public int     jumpLimit   = 2;
+    public float   jumpScale   = NgridHalf * unitGridSize; // ----- Scale for computing Z jump probability
+    public int     jumpLimit   = 2; // ---------------------------- Max levels that a new node can be moved during Z jump
 
 
     /// <summary>
     /// Choose a preferred radial spacing for strokes that meet at a node, Set max node population
     /// </summary>
-    public void InitBiasDiv(){
+    public void Init(){
         maxNodePop   = 4 + rand.Next(5);
         haltProb     = 1f / maxNodePop; 
         biasStep_rad = 2f*MathF.PI / maxNodePop;  
+        maxStrokes   = Math.Max( gridLimit, (int) MathF.Pow( 2*gridLimit+1, 2f)/(4*gridLimit) );
+        nodes.Clear();
+        strokes.Clear();
     }
 
 
     /// <summary>
-    /// Create a node in free space
+    /// Create an address in free space
     /// </summary>
     public int[] ChooseFreeAddress(){
         bool  near;
         int[] posn = new int[2];
+        int   iter = 0;
         while( true ){
-            posn[0] =  rand.Next( gridLimit*2+1 ) - gridLimit;
-            posn[1] =  rand.Next( gridLimit*2+1 ) - gridLimit;
+            posn[0] = rand.Next( gridLimit*2+1 ) - gridLimit;
+            posn[1] = rand.Next( gridLimit*2+1 ) - gridLimit;
             near = false;
             foreach( RNode node in nodes ){
                 if( node.IsCloseTo( posn ) ){
@@ -495,11 +503,16 @@ public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAU
                 }
             }
             if( !near ){  break;  }
+            ++iter;
+            if( iter > 50 ){  break;  }
         }
         return posn;
     }
 
 
+    /// <summary>
+    /// Create a node in free space
+    /// </summary>
     public RNode GetFreeNode(){
         RNode rtnNod = new(){  addr = ChooseFreeAddress()  };
         
@@ -552,6 +565,25 @@ public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAU
     }
 
 
+    public RNode PlaceNodeOnStroke( Ribbon stroke ){
+        RNode rtnNode;
+        float t = rand.NextSingle();
+        Vector3 nuBias;
+        if( rand.NextSingle() < 0.5 ){
+            if( rand.NextSingle() < 0.5 ){  
+                nuBias = stroke.spine.Tan(t);  
+            }else{
+                nuBias = -stroke.spine.Tan(t);
+            }
+        }else{  nuBias = Vector3.UnitY;  }
+        rtnNode = new(){  
+            posn = stroke.spine.Val(t),
+            bias = nuBias
+        };
+        return rtnNode;
+    }
+
+
     /// <summary>
     /// Generate a layered glyph in the form of a triangle mesh
     /// </summary>
@@ -559,16 +591,16 @@ public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAU
         List<Tri> mesh  = [];
         
         // Restart
-        nodes.Clear();
-        strokes.Clear();
-        InitBiasDiv();
+        Init();
         
         // Init 2 nodes
         for( int i = 0; i < 2; ++i ){  nodes.Add( GetFreeNode() );  }
 
-        RNode bgnNode;
+        RNode bgnNode, endNode;
         // Glyph Generation Loop
         while( true ){
+
+            /// Choose Starting Node ///
 
             // Start from a node
             if( rand.NextSingle() < nodeProb ){
@@ -581,9 +613,25 @@ public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAU
                 List<Ribbon> availS = AvailableStrokes();
                 if( availS.Count == 0 ){  continue;  }
                 Ribbon bgnStroke = availS[ rand.Next( availS.Count ) ];
-
+                bgnNode = PlaceNodeOnStroke( bgnStroke );
+                nodes.Add( bgnNode );
             }
 
+            /// Choose Ending Node ///
+            
+            // End at a new node
+            if( rand.NextSingle() < newNProb ){
+                endNode = GetFreeNode();
+                nodes.Add( endNode );
+            
+            // End at an existing node
+            }else{
+                List<RNode> availN = AvailableNodes();
+                if( availN.Count == 0 ){  break;  }
+                endNode = availN[ rand.Next( availN.Count ) ];
+            }
+
+            /// End Conditions ///
             if( strokes.Count >= maxStrokes ){  break;  }
             if( strokes.Count >= maxNodePop ){  if( rand.NextSingle() < haltProb ){  break;  }  }
         }
