@@ -326,46 +326,7 @@ public class Elements {
     }
 }
 
-/* ////////// DEV_PLAN /////////////////////////////////////////////////////////////////////////////
-* No root, Only growth points
-[Y] Choose a camera angle, Negative Z above <0,0>
-[Y] Establish Grid
 
-* Generate Glyph
-    
-    * Gen Params
-        [ ] Prefer moving in the current layer
-        [ ] Max number of edges per node
-        [ ] Max number of strokes
-        [ ] Chance to halt early
-
-    [ ] Start with straight lines only
-    [ ] Add Quadratic Bezier
-    [ ] Add Cubic Bezier
-    [ ] Add Circles
-
-    * Generation Steps
-        [ ] Initialize 2 Nodes
-        * Loop
-            [ ] Choose a start node
-                [ ] Choose node -or- stroke
-            [ ] Choose whether to generate a new node
-                [ ] PREVENT vertically stacking nodes 
-                [ ] Choose Open grid -or- Along stroke
-                [ ] Choose whether to layer jump
-            
-            [ ] If new node above then edge to new, Otherwise edge to existing
-            [ ] Choose edge curve
-        [ ] Finish Nodes
-            [ ] Terminate stroke ends (one edge)
-            [ ] Add circles to nodes w multiple edges
-
-[Y] `Elements`
-    [Y] Circle corner
-    [Y] Square corner
-[ ] Disable lighting
-[ ] Output image
-*/
 
 
 /// <summary>
@@ -434,7 +395,46 @@ public class RNode {
     public int Occupancy(){  return edges.Count;  }
 }
 
+/* ////////// DEV_PLAN /////////////////////////////////////////////////////////////////////////////
+* No root, Only growth points
+[Y] Choose a camera angle, Negative Z above <0,0>
+[Y] Establish Grid
 
+* Generate Glyph
+    
+    * Gen Params
+        [Y] Prefer moving in the current layer
+        [Y] Max number of edges per node
+        [Y] Max number of strokes
+        [Y] Chance to halt early
+
+    [ ] Start with straight lines only
+    [ ] Add Quadratic Bezier
+    [ ] Add Cubic Bezier
+    [ ] Add Circles
+
+    * Generation Steps
+        [Y] Initialize 2 Nodes
+        * Loop
+            [>] Choose a start node
+                [>] Choose node -or- stroke
+            [ ] Choose whether to generate a new node
+                [Y] PREVENT vertically stacking nodes 
+                [ ] Choose Open grid -or- Along stroke
+                [Y] Choose whether to layer jump
+            
+            [ ] If new node above then edge to new, Otherwise edge to existing
+            [ ] Choose edge curve
+        [ ] Finish Nodes
+            [ ] Terminate stroke ends (one edge)
+            [ ] Add circles to nodes w multiple edges
+
+[Y] `Elements`
+    [Y] Circle corner
+    [Y] Square corner
+[ ] Disable lighting
+[ ] Output image
+*/
 
 /// <summary>
 /// Create a layered glyph
@@ -442,7 +442,9 @@ public class RNode {
 public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAULT_GRID ) {
 
     // Generation //
-    public Random rand = new();
+    public Random rand     = new();
+    public float  haltProb = 0;
+    public float  nodeProb = 0.5f;
 
     // Structure //
     public List<RNode>  nodes   = []; // Junctions, Both occupied and empty
@@ -454,7 +456,8 @@ public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAU
     public int     gridLimit = NgridHalf; // -- Number of steps from the center that the grid is allowed to grow
 
     // Node Params //
-    public int   maxPop /*-*/ = 0;
+    public int   maxNodePop   = 0;
+    public int   maxStrokes   = Math.Max( NgridHalf, (int) MathF.Pow( 2*NgridHalf+1, 2f)/(4*NgridHalf) );
     public float biasStep_rad = 0f; 
 
     // Stroke Params //
@@ -469,8 +472,9 @@ public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAU
     /// Choose a preferred radial spacing for strokes that meet at a node, Set max node population
     /// </summary>
     public void InitBiasDiv(){
-        maxPop /*-*/ = 4 + rand.Next(5);
-        biasStep_rad = 2f*MathF.PI / maxPop;  
+        maxNodePop   = 4 + rand.Next(5);
+        haltProb     = 1f / maxNodePop; 
+        biasStep_rad = 2f*MathF.PI / maxNodePop;  
     }
 
 
@@ -533,7 +537,7 @@ public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAU
     /// </summary>
     public List<RNode> AvailableNodes(){
         List<RNode> available = [];
-        foreach( RNode node in nodes ){  if( node.Occupancy() < maxPop ){  available.Add( node );  }  }
+        foreach( RNode node in nodes ){  if( node.Occupancy() < maxNodePop ){  available.Add( node );  }  }
         return available;
     }
 
@@ -543,7 +547,7 @@ public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAU
     /// </summary>
     public List<Ribbon> AvailableStrokes(){
         List<Ribbon> available = [];
-        foreach( Ribbon line in strokes ){  if( line.edges < maxPop ){  available.Add( line );  }  }
+        foreach( Ribbon line in strokes ){  if( line.edges < maxNodePop ){  available.Add( line );  }  }
         return available;
     }
 
@@ -562,9 +566,26 @@ public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAU
         // Init 2 nodes
         for( int i = 0; i < 2; ++i ){  nodes.Add( GetFreeNode() );  }
 
+        RNode bgnNode;
         // Glyph Generation Loop
         while( true ){
-            break;
+
+            // Start from a node
+            if( rand.NextSingle() < nodeProb ){
+                List<RNode> availN = AvailableNodes();
+                if( availN.Count == 0 ){  break;  }
+                bgnNode = availN[ rand.Next( availN.Count ) ];
+
+            // Start from a stroke
+            }else{
+                List<Ribbon> availS = AvailableStrokes();
+                if( availS.Count == 0 ){  continue;  }
+                Ribbon bgnStroke = availS[ rand.Next( availS.Count ) ];
+
+            }
+
+            if( strokes.Count >= maxStrokes ){  break;  }
+            if( strokes.Count >= maxNodePop ){  if( rand.NextSingle() < haltProb ){  break;  }  }
         }
 
         // Aggregate Mesh across Strokes and Nodes
