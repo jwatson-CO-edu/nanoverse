@@ -465,7 +465,7 @@ public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAU
     public float biasStep_rad = 0f; // Radial spacing for strokes that meet at a node 
 
     // Stroke Params //
-    public float   strokeWidth = Constants._DEFAULT_GRID * 0.4f; // Width of all strokes
+    public float   strokeWidth = unitGridSize * 0.75f; // Width of all strokes
     public Vector4 strokeColor = new(1,1,1,1); // ----------------- Color of all strokes
     public Vector4 borderColor = new(0,0,0,1); // ----------------- Color of all borders (choose BG color!)
     public float   jumpScale   = NgridHalf * unitGridSize; // ----- Scale for computing Z jump probability
@@ -477,12 +477,33 @@ public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAU
     /// </summary>
     public void Init(){
         maxNodePop   = 4 + rand.Next(5);
-        haltProb     = 1f / maxNodePop; 
         biasStep_rad = 2f*MathF.PI / maxNodePop;  
-        maxStrokes   = Math.Max( gridLimit, (int) MathF.Pow( 2*gridLimit+1, 2f)/(4*gridLimit) );
+        maxStrokes   = Math.Max( gridLimit, (int) MathF.Pow( 2*gridLimit+1, 2f)/(2*gridLimit) );
+        haltProb     = 1f / maxStrokes; 
         nodes.Clear();
         strokes.Clear();
     }
+
+
+    /// <summary>
+    /// Get preferred rays from this node
+    /// </summary>
+    public List<Vector3> GetBiasRays( RNode node ){
+        List<Vector3> rays = [];
+        rays.Capacity = maxNodePop;
+        for( int i = 0; i < maxNodePop; ++i ){
+            rays.Add( MathVec3.AxisAngleQuat( Vector3.UnitZ, i * biasStep_rad ) * node.bias );
+        }
+        return rays;
+    }
+
+
+    // /// <summary>
+    // /// Get the amount of radians away from opposite of the two vectors
+    // /// </summary>
+    // public static float GetAlignment( Vector3 v1, Vector3 v2 ){
+    //     return MathF.PI - MathVec3.AngleBetween( v1, v2 );
+    // }
 
 
     /// <summary>
@@ -630,24 +651,54 @@ public class GlyphGen ( int NgridHalf = 5, float unitGridSize = Constants._DEFAU
                 List<RNode> availN = AvailableNodes();
                 if( availN.Count == 0 ){  break;  }
                 endNode = availN[ rand.Next( availN.Count ) ];
+                while( endNode.IsCloseTo( bgnNode) ){  endNode = availN[ rand.Next( availN.Count ) ];  }
             }
 
             /// Create Stroke ///
-            ribbon = new( twist_ : 0 ){
-                spine = new Line.Segment( bgnNode.posn, endNode.posn )
-            };
-            ribbon.SetXdirAt0( Vector3.Cross( Vector3.UnitZ, bgnNode.posn - endNode.posn ).Normalized() );
-            ribbon.BuildGeo( strokeWidth );
-            ribbon.SetColor( strokeColor, borderColor );
-            strokes.Add( ribbon );
+            if( rand.NextSingle() < 0.5f ){ 
+                ribbon = new( twist_ : 0 ){
+                    spine = new Line.Segment( bgnNode.posn, endNode.posn )
+                };
+                ribbon.SetXdirAt0( Vector3.Cross( Vector3.UnitZ, bgnNode.posn - endNode.posn ).Normalized() );
+                ribbon.BuildGeo( strokeWidth );
+                ribbon.SetColor( strokeColor, borderColor );
+                strokes.Add( ribbon );
+            }else{
+                float aMin = 6e10f;
+                float a;
+                float scale = (bgnNode.posn - endNode.posn).Length;
+                Vector3 vMin = Vector3.UnitY;
+                foreach( Vector3 dir in GetBiasRays( bgnNode ) ){
+                    a = MathVec3.AngleBetween( dir, endNode.posn - bgnNode.posn );
+                    if( a < aMin ){
+                        aMin = a;
+                        vMin = dir;
+                    }
+                } 
+                ribbon = new( twist_ : 0 ){
+                    spine = new Bezier.Quad( bgnNode.posn, bgnNode.posn + vMin * (scale * rand.NextSingle()), endNode.posn )
+                };
+                ribbon.SetXdirAt0( Vector3.Cross( Vector3.UnitZ, bgnNode.posn - endNode.posn ).Normalized() );
+                ribbon.BuildGeo( strokeWidth );
+                ribbon.SetColor( strokeColor, borderColor );
+                strokes.Add( ribbon );
+            }
+            bgnNode.edges.Add( endNode.posn - bgnNode.posn );
+            endNode.edges.Add( bgnNode.posn - endNode.posn );
 
             /// End Conditions ///
             if( strokes.Count >= maxStrokes ){  break;  }
             if( strokes.Count >= maxNodePop ){  if( rand.NextSingle() < haltProb ){  break;  }  }
         }
 
+        Elements elem = new();
         // Aggregate Mesh across Strokes and Nodes
         foreach( Ribbon stroke in strokes ){  mesh.AddRange( stroke.GetTotalMesh() );  }
+        foreach( RNode node in nodes ){
+            if( node.Occupancy() > 1 ){
+                mesh.AddRange( elem.CircleCap( node.posn, Vector3.UnitZ, strokeWidth/2f, strokeColor, borderColor ) );
+            }
+        }
 
         // Return Mesh
         return mesh;
