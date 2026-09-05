@@ -124,6 +124,7 @@ public static class Latin {
 /// </summary>
 public class LatinGlyph { // : IMeshHaver 
     // TODO: DON'T FORGET TO ADD OVERLAPS
+    // NOTE: Italics are NOT modeled!
 
 
 }
