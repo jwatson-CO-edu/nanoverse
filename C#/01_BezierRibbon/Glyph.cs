@@ -123,7 +123,7 @@ public static class Latin {
 /// Generate a glyph with Latin components and patterns, Build rules here
 /// </summary>
 public class LatinGlyph { // : IMeshHaver 
-
+    // TODO: DON'T FORGET TO ADD OVERLAPS
 
 
 }
