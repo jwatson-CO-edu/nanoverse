@@ -1,5 +1,6 @@
 using OpenTK.Mathematics;
 using geo3d;
+using pose3d;
 
 namespace parametric {
 
@@ -184,6 +185,81 @@ public class Ellipse {
         /// </summary>
         public override Vector3 Crv( float t ){  return Curvature( norm, radius, t );    }
     }
+
+
+    /// <summary>
+    /// Perfect Circle 
+    /// </summary>
+    public class Oval ( Vector3 cntr, Vector3 norm, Vector3 begin, float aRad, float bRad ) : Parametric {
+
+        public Vector3 cntr  = cntr;
+        public Vector3 norm  = norm;
+        public Vector3 begin = begin;
+        public float   aRad  = aRad;
+        public float   bRad  = bRad;
+
+        /// <summary>
+        /// Radial equation for an ellipse
+        /// </summary>
+        public static float OvalRad( float aRad, float bRad, float theta ){
+            return aRad * bRad / MathF.Sqrt( MathF.Pow( aRad*MathF.Cos( theta ), 2f ) + MathF.Pow( bRad*MathF.Sin( theta ), 2f ) );
+        }
+
+        /// <summary>
+        /// Point on the curve for parameter `t`
+        /// </summary>
+        public static Vector3 Value( Vector3 cntr, Vector3 norm, Vector3 begin, float aRad, float bRad, float t ){
+            Matrix4 basis = MathMatx4.HomogFromXZBases( begin, norm, cntr );
+            Vector3 xDir  = MathMatx4.GetXBasis( basis );
+            float   theta = t*2f*MathF.PI;
+            float   tRad  = OvalRad( aRad, bRad, theta );
+            return cntr + MathVec3.AxisAngleQuat( norm, theta ) * xDir * tRad;
+        }
+
+
+        /// <summary>
+        /// Tangent on the curve for parameter `t`
+        /// </summary>
+        public static Vector3 Tangent( Vector3 cntr, Vector3 norm, Vector3 begin, float aRad, float bRad, float t ){
+            Vector3 pnt = Value( cntr, norm, begin, aRad, bRad, t );
+            Vector3 ray = pnt - cntr;
+            return  Vector3.Cross( ray, norm ).Normalized();
+        }
+
+
+        /// <summary>
+        /// Curvature at parameter `t`
+        /// </summary>
+        public static Vector3 Curvature( Vector3 cntr, Vector3 norm, Vector3 begin, float aRad, float bRad, float t ){
+            Vector3 pnt = Value( cntr, norm, begin, aRad, bRad, t );
+            return (cntr - pnt).Normalized(); 
+        }
+
+        
+        /// <summary>
+        /// Point on the curve for parameter `t`
+        /// </summary>
+        public override Vector3 Val( float t ){
+            return Value( cntr, norm, begin, aRad, bRad, t );
+        }
+
+        
+        /// <summary>
+        /// Tangent on the curve for parameter `t`
+        /// </summary>
+        public override Vector3 Tan( float t ){
+            return Tangent( cntr, norm, begin, aRad, bRad, t );
+        }
+
+
+        /// <summary>
+        /// Curvature at parameter `t`
+        /// </summary>
+        public override Vector3 Crv( float t ){
+            return Curvature( cntr, norm, begin, aRad, bRad, t );
+        }
+    }
+
 }
 
 

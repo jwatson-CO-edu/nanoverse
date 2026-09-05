@@ -59,11 +59,13 @@ public class LatinStroke : IMeshHaver {
 /// </summary>
 public static class Latin {
 
+    public const float aFctr = 1f;
+    public const float bFctr = 1.3f;
 
     /// <summary>
     /// Any closed ellipse in a glyph
     /// </summary>
-    public class Ellipse : LatinStroke {
+    public class Ellipse ( Vector3 center, Vector3 norm, Vector3 begin, float scale ) : LatinStroke {
 
     }
 
