@@ -41,6 +41,17 @@ public class LatinStroke : IMeshHaver {
 
 
     /// Mesh Methods ///
+    
+    public void BuildTotalMesh( float width, Vector4 strokeColor, Vector4 borderColor ){  
+        foreach( Ribbon stroke in strokes ){  
+            Vector3 xDir = Vector3.Cross( Vector3.UnitZ, stroke.spine.Tan(0) ); 
+            stroke.SetXdirAt0( xDir );
+            stroke.BuildGeo( width );
+            stroke.SetColor( strokeColor, borderColor );
+        }
+    }
+    
+
     public List<Tri> GetTotalMesh(){  
         List<Tri> rtnMsh = [];
         foreach( Ribbon stroke in strokes ){  rtnMsh.AddRange( stroke.GetTotalMesh() );  }
