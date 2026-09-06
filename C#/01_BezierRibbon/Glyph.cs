@@ -10,6 +10,7 @@ namespace ribbon;
 * Parent Class
     [ ] "Parent" Parameter `Val`, Meta-`t`
     [ ] Meta-`Tan`
+[Y] Parametric Oval
 [ ] Parametric Arc
 [ ] Ribbon Arc
 
@@ -59,13 +60,49 @@ public class LatinStroke : IMeshHaver {
 /// </summary>
 public static class Latin {
 
+    // Ellipse Constants //
     public const float aFctr = 1f;
     public const float bFctr = 1.3f;
 
     /// <summary>
     /// Any closed ellipse in a glyph
     /// </summary>
-    public class Ellipse ( Vector3 center, Vector3 norm, Vector3 begin, float scale ) : LatinStroke {
+    public class Ellipse : LatinStroke {
+
+        public Vector3 cntr;
+        public Vector3 norm;
+        public Vector3 begin;
+        public float   scale;
+        public float   aScl;
+        public float   bScl;
+
+        /// <summary>
+        /// Default Constructor
+        /// </summary>
+        public Ellipse ( Vector3 cntr_, Vector3 norm_, Vector3 begin_, float scale_ = 0f, float a = 0f, float b = 0f ){
+            cntr  = cntr_;
+            norm  = norm_;
+            begin = begin_;
+            scale = scale_;
+            if( scale_ > MathVec3._EPSILON ){
+                aScl = aFctr * scale_;
+                bScl = bFctr * scale_;
+            }else{
+                aScl = a;                    
+                bScl = b;                        
+            }
+            
+            Ribbon rbbn = new(){
+                spine = new parametric.Ellipse.Oval( cntr, norm, begin, aScl, bScl )
+            };
+            strokes.Add( rbbn );
+
+            center   = new(){  posn = cntr  };
+            mainAxis = ( parametric.Ellipse.Oval.Value( cntr, norm, begin, aScl, bScl, 0.25f ) -
+                         parametric.Ellipse.Oval.Value( cntr, norm, begin, aScl, bScl, 0.75f ) ).Normalized();
+            bgn = new(){  posn = parametric.Ellipse.Oval.Value( cntr, norm, begin, aScl, bScl, 0.75f )  };
+            end = new(){  posn = parametric.Ellipse.Oval.Value( cntr, norm, begin, aScl, bScl, 0.25f )  };
+        }
 
     }
 
