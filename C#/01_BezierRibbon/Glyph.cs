@@ -184,6 +184,19 @@ public static class Latin {
     /// </summary>
     public class QBez : LatinStroke {
 
+        public QBez( Vector3 P0, Vector3 P1, Vector3 P2 ){
+
+            Ribbon rbbn = new(){
+                spine = new Bezier.Quad( P0, P1, P2 )
+            };
+            strokes.Add( rbbn );
+
+            bgn /**/ = new(){  posn = P0  };
+            end /**/ = new(){  posn = P2  };
+            center   = new(){  posn = strokes[0].spine.Val( 0.5f )  };
+            mainAxis = (P2 - P0).Normalized(); 
+        }
+
     }
 
 
@@ -192,6 +205,19 @@ public static class Latin {
     /// </summary>
     public class CBez : LatinStroke {
 
+        public CBez( Vector3 P0, Vector3 P1, Vector3 P2, Vector3 P3 ){
+
+            Ribbon rbbn = new(){
+                spine = new Bezier.Cubic( P0, P1, P2, P3 )
+            };
+            strokes.Add( rbbn );
+
+            bgn /**/ = new(){  posn = P0  };
+            end /**/ = new(){  posn = P3  };
+            center   = new(){  posn = strokes[0].spine.Val( 0.5f )  };
+            mainAxis = strokes[0].spine.Tan( 0.5f ).Normalized(); 
+        }
+
     }
 
 
@@ -199,6 +225,19 @@ public static class Latin {
     /// Fancy terminator that prevents further connection
     /// </summary>
     public class Serif : LatinStroke {
+
+        public Serif( Vector3 linBgn, Vector3 linDir, float linLen ){
+            Vector3 linEnd = linBgn+linDir.Normalized()*linLen;
+            Ribbon rbbn = new(){
+                spine = new Line.Segment( linBgn, linEnd )
+            };
+            strokes.Add( rbbn );
+
+            bgn /**/ = new(){  posn = linBgn  };
+            end /**/ = new(){  posn = linEnd  };
+            center   = new(){  posn = (linBgn + linEnd)/2f  };
+        }
+
         public override int Occupancy(){  return int.MaxValue;  }
     }
 
@@ -207,6 +246,25 @@ public static class Latin {
     /// Floating fragments that should not be connected to
     /// </summary>
     public class Kipple : LatinStroke {
+
+        public Vector3 linBgn;
+        public Vector3 linEnd;
+
+        public Kipple( Vector3 linBgn_, Vector3 linEnd_ ){
+
+            linBgn = linBgn_;                    
+            linEnd = linEnd_; 
+
+            Ribbon rbbn = new(){
+                spine = new Line.Segment( linBgn, linEnd )
+            };
+            strokes.Add( rbbn );
+
+            bgn /**/ = new(){  posn = linBgn  };
+            end /**/ = new(){  posn = linEnd  };
+            center   = new(){  posn = (linBgn + linEnd)/2f  };
+        }
+
         public override int Occupancy(){  return int.MaxValue;  }
     }
 
