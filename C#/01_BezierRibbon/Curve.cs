@@ -260,6 +260,52 @@ public class Ellipse {
         }
     }
 
+
+    /// <summary>
+    /// Perfect Circle 
+    /// </summary>
+    public class OvalSection ( Vector3 cntr, Vector3 norm, Vector3 begin, float aRad, float bRad, float bgnTheta, float endTheta ) : Parametric {
+
+        public Vector3 cntr     = cntr;
+        public Vector3 norm     = norm;
+        public Vector3 begin    = begin;
+        public float   aRad     = aRad;
+        public float   bRad     = bRad;
+        public float   bgnTheta = bgnTheta;
+        public float   endTheta = endTheta;
+        
+
+        public float TPrime( float t ){
+            float theta = bgnTheta + (endTheta - bgnTheta)*t;
+            float tP    = theta / (2f*MathF.PI);
+            return tP;
+        }
+
+
+        /// <summary>
+        /// Point on the curve for parameter `t`
+        /// </summary>
+        public override Vector3 Val( float t ){
+            return Oval.Value( cntr, norm, begin, aRad, bRad, TPrime(t) );
+        }
+
+        
+        /// <summary>
+        /// Tangent on the curve for parameter `t`
+        /// </summary>
+        public override Vector3 Tan( float t ){
+            return Oval.Tangent( cntr, norm, begin, aRad, bRad, TPrime(t) );
+        }
+
+
+        /// <summary>
+        /// Curvature at parameter `t`
+        /// </summary>
+        public override Vector3 Crv( float t ){
+            return Oval.Curvature( cntr, norm, begin, aRad, bRad, TPrime(t) );
+        }
+    }
+
 }
 
 
